@@ -115,7 +115,7 @@ function dum_faktura_info($idf) {
 function dum_faktura_delete($duvod,$idf) {
   $duvod= pdo_real_escape_string($duvod); 
   $dnes= date('Y-m-d');
-  query("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
+  query_track("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
 }
 # --------------------------------------------------------------------------------- dum faktura_save
 # pokud je uvedeno idf je třeba zneplatněnou fakturu pozančit jako smazanou, zpsat důvod opravy,
@@ -143,11 +143,19 @@ function dum_faktura_save($parm,$idf=0) {
       . "'$p->ds_vzorec','$nadpis','$p->vyrizuje','$p->vystavena','$jso',\"$htm\",'$p->soubor')");
   if (!$ok) { 
     $msg= POZOR." nepovedlo se vytvoření faktury - kontaktuj Martina<hr>NEPLATÍ, že: "; 
+    goto end;
   }
-  elseif ($idf) {
-    $idf2= pdo_insert_id();
+  // zapíšeme vytvoření do _track - jen název a vazby
+  $idf2= pdo_insert_id();
+  global $USER;
+  foreach (['nazev'=>$p->nazev,'id_order'=>$order,'id_pobyt'=>$pobyt] as $fld=>$val) {
+    query("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
+        . "VALUE (NOW(),'$USER->abbr','faktura',$idf2,'i','$fld','$val')");
+  }
+  // pokud jde o náhradu za $idf
+  if ($idf) {
     $dnes= date('Y-m-d');
-    query("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
+    query_track("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
     $n= query("UPDATE join_platba SET id_faktura=$idf2 WHERE id_faktura=$idf");
     $msg= "Byla vytvořena nová faktura pod stejným číslem, původní byla označena jako smazaná.";
     if ($n) $msg.= POZOR." opravovaná faktura již byla zaplacena. Rozvaž dobře další kroky ...";
@@ -2010,6 +2018,30 @@ function ds2_vek($narozeni,$fromday) {
   }
   return $vek;
 }
+# -------------------------------------------------------------------------------------- ucast kopie
+# zkopíruje účastníky jednoho pobytu do akce [Zpět]
+#  make=0 žádost o souhlas do msg, chybovou hlášku do err
+#  make=1 provede kopii do akce [Zpět]
+function ucast_kopie($idp,$ida_goal,$make=0) { 
+  $ret= (object)['msg'=>'','err'=>''];
+  $idr= select('i0_rodina','pobyt',"id_pobyt=$idp");
+  $nazev_goal= select1("CONCAT(nazev,' ',YEAR(datum_od))",'akce',"id_duakce=$ida_goal");
+  // příprava dotazu na souhlas s provedením 
+  if (!$make) { 
+    $pobyt= ucast_popis($idp);
+    $konflikt= implode(',',$konflikt);
+    $ret->msg= "Mám zkopírovat '$pobyt' na akci '$nazev_goal' ? ";
+  }
+  // proveď přesun
+  elseif ($make) { 
+    $idp_goal= query_track("INSERT INTO pobyt (id_akce,i0_rodina) VALUE ($ida_goal,$idr)");
+    $rs= pdo_query("SELECT id_osoba FROM spolu WHERE id_pobyt=$idp");
+    while ($rs && (list($ido)= pdo_fetch_array($rs))) {
+      query_track("INSERT INTO spolu (id_pobyt,id_osoba) VALUE ($idp_goal,$ido)");
+    }
+  }
+  return $ret;
+}
 # ------------------------------------------------------------------------------------- ucast presun
 # přesune účastníky jednoho pobytu do vybraného ... 
 #  make=0 žádost o souhlas do msg, chybovou hlášku do err
@@ -2406,11 +2438,11 @@ function ds2_fio($cmd) {
           FROM platba AS p 
           JOIN faktura AS f USING (ss,vs) 
           LEFT JOIN join_platba AS j USING (id_platba,id_faktura)
-          WHERE ucet=2 AND ISNULL(j.id_faktura) AND p.castka IN (f.castka,f.zaloha)
+          WHERE ucet=2 AND ISNULL(j.id_faktura) AND p.castka IN (f.castka,f.zaloha) AND typ!=2
             AND f.deleted='' AND $omezeni AND vystavena BETWEEN '$cmd->od' AND '$cmd->do'");
         while ($rf && (list($idp,$idf,$ido,$yet)= pdo_fetch_array($rf))) {
-          query("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($idp,$idf)");
-          query("UPDATE platba SET id_ord=$ido WHERE id_platba=$idp");
+          query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($idp,$idf)");
+          query_track("UPDATE platba SET id_ord=$ido WHERE id_platba=$idp");
           $nf++;
         }
       }
