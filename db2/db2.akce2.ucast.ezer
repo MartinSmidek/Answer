@@ -2068,7 +2068,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     show access
     show access_web // access + 16 pokud došlo ke změně přes web + 64 pro DS
     show jmeno [,,110,] {title:'jméno'
-      css_cell:'access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys_ds,66:ezer_fa_ds,67:ezer_db_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
+      css_cell:'access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
     }
     show _dup  [,,0,] { title:'duplicita', help:'n-narození, k-kontakty, b-bydliště', format:"t" }
     show vek   [,,30,] {title:'věk', format:'r' }
