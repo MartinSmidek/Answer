@@ -241,26 +241,30 @@ proc change_height(x) { x.property(object('stretch',curr_h.get))}//,'smooth',1))
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
 
 # zobrazí dočasně jinou akci s tlačítkem ZPĚT  (jen z podzáložky Aktivita)
-proc akce_show(xakce,xpobyt,xnadpis,xback) { var idp:number
-  page.page_start;
-  [ u.b.browse_count; idp.set(u.b.key_pobyt) ];
-  back.set(object('ida',the_duakce.get,'idp',idp,'tit',the_title.get,'bck',xback));
+func akce_show(xakce,xpobyt,xnadpis,xback) { var idp:number
+  page.page_start();
+  if (u.b.browse_count()) idp= u.b.key_pobyt;
+  back= {ida:the_duakce, idp:idp, tit:the_title, bck:xback};
   header.zpet.display(1);
   panel.focus(1); // bez vyvolání onfocus
-  the_duakce.set(xakce);
-  header.fill(conc('<i>',xback,': ',xnadpis,'</i>'));
+  the_duakce= xakce;
+  header.fill(`<i>${xback}: ${xnadpis}</i>`);
   reload(xpobyt);
-  [ u.b.browse_count; page.evd.onclick ];
+  if (u.b.browse_count()) page.evd.onclick();
+  u.b.ctx.cpy.enable(1);
 }
-proc akce_back() {
-  the_duakce.set(back.get('ida'));
-  the_title.set(back.get('tit')); header.fill(the_title.get);
-  reload(back.get('idp'));
-  switch(back.get('bck'),
-  'AKTIVITA',{ page.jin.onclick },
-  'EVIDENCE',{ evi.focus(1) });
+func akce_back() {
+  the_duakce= back.ida;
+  the_title= back.tit; 
+  header.fill(the_title);
+  reload(back.idp);
+  back= {};
+  u.b.ctx.cpy.enable(0);
+  switch (back.bck) {
+    case 'AKTIVITA': page.jin.onclick(); break;
+    case 'EVIDENCE': evi.focus(1); break; 
+  }
 }
-
 # -----------------------------------------------------------------------------------==> USE
 # 1. zobrazení normální nebo hlavní akce
 use header:form _header   [  4,  0,,]
@@ -977,12 +981,12 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       if (the_mezinarodni) { xstat.width(15); _nazev.width(85) }
     }
     # ------------------------==> . kontextové_menu
-    menu { type:'context' //, join:frame
+    menu ctx { type:'context' //, join:frame
       item { title:'přijetí webových změn', 
         func onclick () { prijeti_prihlasky() } }
       item { title:'zrušit výběr'
         func onclick () { b.selected('clear') } }
-      item { title:'přesunout do vybraného pobytu'
+      item { title:'-přesunout do vybraného pobytu'
         func onclick () { var ret:object /* {msg,err} */, goal:number /* ID cílového pobytu */
           goal= b.selected('get');
           ret= php.ucast_presun(the_pobyt,goal,0); // připraví dotaz nebo protest
@@ -990,6 +994,14 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
           elseif (confirm(ret.msg)) {
             php.ucast_presun(the_pobyt,goal,1); // provede přesun
             reload(goal);
+          }
+      } }
+      item cpy { title:"zkopírovat do akce [Zpět]", format:'d'
+        func onclick () { var ret:object /* {msg,err} */
+          ret= php.ucast_kopie(the_pobyt,back.ida,0); // připraví dotaz nebo protest
+          if (ret.err) alert(ret.err);
+          elseif (confirm(ret.msg)) {
+            php.ucast_kopie(the_pobyt,back.ida,1); // provede vložení
           }
       } }
     }
