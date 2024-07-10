@@ -323,21 +323,21 @@ table psc_axy { key_id:'psc'
 }
 map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
 # ------------------------------------------------------------------ pohledy
-table $osoba { key_id:'id_osoba'
-  number id_osoba
-  text tab
-  number id
-  text prijmeni
-  text jmeno
-  text rodcis
-  date narozeni
-  text ulice
-  text psc
-  text obec
-  text telefon
-  text email
-  text info
-}
+//table $osoba { key_id:'id_osoba'
+//  number id_osoba
+//  text tab
+//  number id
+//  text prijmeni
+//  text jmeno
+//  text rodcis
+//  date narozeni
+//  text ulice
+//  text psc
+//  text obec
+//  text telefon
+//  text email
+//  text info
+//}
 table ds_osoba_copy { key_id:'id_osoba'
   number id_osoba
   text prijmeni
