@@ -211,7 +211,7 @@ form _vyuctovani [,,623,400] {
       faktura= php.dum_faktura({typ:3,show:1,save:1,strucna:strucna,vystavena:fdate('Y-m-d'),
           adresa:adresa,ds_vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,nadpis:nadpis,
-          num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.order,vyrizuje:vyrizuje});
+          num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.pobyt,vyrizuje:vyrizuje});
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }

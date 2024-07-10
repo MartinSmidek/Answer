@@ -2266,6 +2266,7 @@ function ds2_show_curr($c) {
 # zapsání informace do platby
 #    pobyt - c=id_pobyt
 function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
+  $stav= select('stav','platba',"id_platba=$id_platba");
   switch ($typ) {
     case 'pobyt':
       // provede spojení platby 
@@ -2278,24 +2279,22 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
       query_track("UPDATE platba SET $what WHERE id_platba=$id_platba");
       break;
     case 'dar':
-      query("UPDATE platba SET stav=11
-        WHERE id_platba=$id_platba AND stav IN (5,10)");
+      if (in_array($stav,[5,10]))
+        query_track("UPDATE platba SET stav=11 WHERE id_platba=$id_platba");
       break;
     case 'auto':
-      query("UPDATE platba SET stav=stav+1
-        WHERE id_platba=$id_platba AND stav IN (1,6,8,10)");
+      if (in_array($stav,[1,6,8,10]))
+        query_track("UPDATE platba SET stav=stav+1 WHERE id_platba=$id_platba");
       break;
     case 'akce':
-      query("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=7
+      query_track("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=7
         WHERE id_platba=$id_platba");
       break;
     case 'evi':
-      query("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7
-        WHERE id_platba=$id_platba");
+      query_track("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7 WHERE id_platba=$id_platba");
       break;
     case 'order':
-      query("UPDATE platba SET id_ord={$c->dum->order}, stav=9
-        WHERE id_platba=$id_platba");
+      query_track("UPDATE platba SET id_ord={$c->dum->order}, stav=9 WHERE id_platba=$id_platba");
       break;
   }
 }
@@ -2392,7 +2391,7 @@ function ds2_fio($cmd) {
           : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
       $back= $cmd->back ?: 0; // návrat k odhadu =  ignoruje id_oso, id_pob, id_ord
       if ($back && $cmd->platba) {
-        query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
+        query_track("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
           WHERE id_platba=$cmd->platba");
       }
       // rozpoznání osoby podle protiúčtu
@@ -2402,7 +2401,7 @@ function ds2_fio($cmd) {
       while ($rp && (list($id_platba,$ucet)= pdo_fetch_array($rp))) {
         $ido= select('id_oso','platba',"protiucet='$ucet' AND id_oso!=0 ");
         if ($ido!=false) {
-          query("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
+          query_track("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
           $nu++;
         }
       }
@@ -2427,22 +2426,25 @@ function ds2_fio($cmd) {
       ");
       while ($rp && (list($id_platba,$ido,$idp,$idoso)= pdo_fetch_array($rp))) {
         $o= $idoso==0;
-        query("UPDATE platba SET ".($o ? "id_oso=$ido," : '')." id_pob=$idp, stav=6 WHERE id_platba=$id_platba");
+        query_track("UPDATE platba SET ".($o ? "id_oso=$ido," : '')." id_pob=$idp, stav=6 
+          WHERE id_platba=$id_platba");
         $na++;
       }
       // platby za faktury vydané DS
       if ($cmd->fce=='join-ds') {
         $rf= pdo_qry("
           SELECT /* ------------------------------------------------ */
-            id_platba,id_faktura,id_order
+            id_platba,id_faktura,id_order,id_pobyt
           FROM platba AS p 
-          JOIN faktura AS f USING (ss,vs) 
+          JOIN faktura AS f ON f.vs=p.vs AND f.ss=IF(p.ss2,p.ss2,p.ss) 
           LEFT JOIN join_platba AS j USING (id_platba,id_faktura)
           WHERE ucet=2 AND ISNULL(j.id_faktura) AND p.castka IN (f.castka,f.zaloha) AND typ!=2
-            AND f.deleted='' AND $omezeni AND vystavena BETWEEN '$cmd->od' AND '$cmd->do'");
-        while ($rf && (list($idp,$idf,$ido,$yet)= pdo_fetch_array($rf))) {
+            AND f.deleted='' AND $omezeni 
+            AND datum BETWEEN vystavena AND DATE_ADD(vystavena, INTERVAL 2 MONTH)");
+        while ($rf && (list($idp,$idf,$ido,$idpbt)= pdo_fetch_array($rf))) {
           query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($idp,$idf)");
-          query_track("UPDATE platba SET id_ord=$ido WHERE id_platba=$idp");
+          $pobyt= $idpbt ? ",id_pob=$idpbt" : '';
+          query_track("UPDATE platba SET id_ord=$ido,stav=8$pobyt WHERE id_platba=$idp");
           $nf++;
         }
       }
@@ -2480,11 +2482,11 @@ function ds2_fio($cmd) {
           }
 //        }
         if ($ido && !$idoso) {
-          query("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
+          query_track("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
           $nv++;
         }
         if ($ido && $dar) {
-          query("UPDATE platba SET stav=10 WHERE id_platba=$id_platba");
+          query_track("UPDATE platba SET stav=10 WHERE id_platba=$id_platba");
           $nd++;
         }
       }
