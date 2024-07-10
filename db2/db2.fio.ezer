@@ -190,7 +190,7 @@ form _ucty [,,640,*] {
 //    php.query(`UPDATE platba SET stav=6,ss2='${the_kod}',
 //        id_pob=${the_pobyt} WHERE id_platba=${fio.id_platba}`);
     ss2= prompt2('zadej hodnotu pro opravu SS','');
-    php.query(`UPDATE platba SET ss2='${ss2}' WHERE id_platba=${fio.id_platba}`);
+    php.query_track(`UPDATE platba SET ss2='${ss2}' WHERE id_platba=${fio.id_platba}`);
     back_odhad(id_platba);
   }}
   button find_kod [814,top1,,] {title:'hledat SS', func onclick() { var ss2:text
