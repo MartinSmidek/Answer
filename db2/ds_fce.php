@@ -653,7 +653,6 @@ function dum_objednavka_delete($id_order) {
 # ------------------------------------------------------------------------------ dum objednavka_save
 # objednávka pobytu
 function dum_objednavka_save($id_order,$changed) { 
-  global $answer_db, $setkani_db;
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
   foreach($changed as $fld=>$val) {
@@ -668,11 +667,11 @@ function dum_objednavka_save($id_order,$changed) {
     $set.= "$del$fld='$val'";
     $del= ',';
   }
-  query("UPDATE $setkani_db.tx_gnalberice_order SET $set WHERE uid=$id_order");
+  query_track("UPDATE ds_order SET $set WHERE id_order=$id_order");
   if ($set_akce) {
-    $ida= select('id_akce',"$setkani_db.tx_gnalberice_order","uid=$id_order");
+    $ida= select('id_akce',"ds_order","id_order=$id_order");
     if ($ida)
-      query("UPDATE $answer_db.akce SET $set_akce WHERE id_duakce=$ida");
+      query_track("UPDATE akce SET $set_akce WHERE id_duakce=$ida");
     else
       fce_error("dum_objednavka_save: objednávka $id_order nemá nastavenou akce (id_akce)");
   }
