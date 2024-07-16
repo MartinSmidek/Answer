@@ -13665,11 +13665,13 @@ function mail2_mailist($access,$par=null) {
   $sel= '';
   $AND=  $par && $par->komu ? "AND komu='{$par->komu}'" : '';
   $AND.= $par && $par->ucel ? "AND ucel LIKE '{$par->ucel}'" : '';
-  $mr= pdo_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access $AND 
+  $mr= pdo_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access&$access $AND 
     ORDER BY UPPER(ucel)");
   while ($mr && ($m= pdo_fetch_object($mr))) {
     $a= $m->access;
-    $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
+//    $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
+    $css= ($a&1 && $a&2) ? 'ezer_db' : ($a&2 ? 'ezer_fa' : ($a&1 ? 'ezer_ys' : ''));
+    if ($a&64) $css.= " ezer_ds";
     $sel.= ",{$m->ucel}:{$m->id_mailist}:$css";
   }
   display("SELECTS:$sel");
