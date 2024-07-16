@@ -1143,7 +1143,7 @@ form _info [,,*,50] {
       optimize:{ask:'dum_browse_orders'}
     show id_order [,,40,] { title:'objednávka', format:'rq=' }
     show id_akce  [,,40,] { title:'akce', format:'rq=' 
-        css_cell:'access,0:,1:zeleny,65:zeleny'}
+        css_cell:'access,0:,1:ezer_ys,64:ezer_ds,65:ezer_ys ezer_ds'}
     show access
     show curr 
     show objednal [,,100,] { title:'objednatel', format:'tq*' 
@@ -1179,8 +1179,14 @@ form _info [,,*,50] {
           case 3: dum_objednavka('del',id_order); break; // smazat
         }
       } 
-      else {
-        pracovni(); 
+      else { // zjednodušená verze fce pracovni
+        js.removeClass(&dum,'curr_akce');
+        js.browseShow_addClass(&dum.objednal,dum.browse_active(),'curr_akce');
+        the_order= id_order;
+        set_cookie(`${sys('root')}_order`,the_order);
+        volba_akce(id_akce);
+        a_title= nazev; 
+        page.show_akce(id_akce); 
       }
     }
     func pracovni() { 
