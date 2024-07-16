@@ -229,6 +229,22 @@ function highcharts_simple() {
   });
 }
 // =========================================================================================> funkce
+// --------------------------------------------------------------------------------------- set style
+// odstraní styl předaného elementu
+function removeClass(elem,css) {
+  if (elem.DOM_Block) {
+    jQuery(elem.DOM_Block).find(`td.${css}`).removeClass(css);
+  }
+  return 1;
+}
+// --------------------------------------------------------------------------------------- set style
+// přidá styl danému browse.show 
+function browseShow_addClass(show,i,css) {
+  if (show.DOM_cell[i]) {
+    jQuery(show.DOM_cell[i]).addClass(css);
+  }
+  return 1;
+}
 // ---------------------------------------------------------------------------------------- get type
 // vrátí atribut type
 function get_type(elem) {
