@@ -263,6 +263,25 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $popl= $par->popl;
     $prog= $par->prog;
     $jine= $par->jine;
+    // případně odečteme již provedené fakturace jednotlivých pobytů 
+    $ds_vzorec= $par->ds_vzorec;
+    $fr= pdo_query("SELECT ubyt,stra,popl,prog,jine FROM faktura "
+        . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
+    while ($fr && (list($p_nazev,$p_ubyt,$p_stra,$p_popl,$p_prog,$p_jine)= pdo_fetch_array($fr))) {
+      $p_celkem= $p_ubyt + $p_stra + $p_popl + $p_prog + $p_jine;
+      if ($p_vzorec=='') {
+        $err= "POZOR: rodinná faktura $p_nazev nemá definovanou cenu, 
+          fakturu za celou objednávku neumím vystavit";
+        goto end;
+      }
+      $ubyt-= $p_ubyt;
+      $stra-= $p_stra;
+      $popl-= $p_popl;
+      $prog-= $p_prog;
+      $jine-= $p_jine;
+      $p_celkem= $p_ubyt + $p_stra + $p_popl + $p_prog + $p_jine;
+      display("$p_nazev: odečet ($p_ubyt,$p_stra,$p_popl,$p_prog,$p_jine");      /*DEBUG*/
+    }
     $celkem= $ubyt + $stra + $popl + $prog + $jine;
     $koef= $zaloha ? ($celkem-$zaloha)/$celkem : 1;
 //    display("$celkem $zaloha $koef");
@@ -298,12 +317,12 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   else {
     // případně odečteme již provedené fakturace jednotlivých pobytů 
     $ds_vzorec= $par->ds_vzorec;
-    $fr= pdo_query("SELECT vzorec,nazev FROM faktura "
+    $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
         . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
     while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
       if ($p_vzorec=='') {
         $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
-          fakturu za celou objednávku neumím definovat";
+          fakturu za celou objednávku neumím vystavit";
         goto end;
       }
       $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
