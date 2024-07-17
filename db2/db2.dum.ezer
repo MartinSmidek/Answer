@@ -32,7 +32,7 @@ form _vyuctovani [,,623,400] {
         <br><br>${akce.note}`;
     pob.raise('onrowclick');
   }
-  func load_pob(idp) { var x:object
+  func load_pob(idp) { var x:object, fak:text
     if (!mode) start();
     mode= 'pob'; id_pobyt= idp;
     form.property({aside:-left_hos},'h');
@@ -41,6 +41,8 @@ form _vyuctovani [,,623,400] {
     id_akce= php.select('id_akce','pobyt',`id_pobyt=${idp}`);
     akce_od= php.select('datum_od','akce',`id_duakce=${id_akce}`);
     akce_do= php.select('datum_do','akce',`id_duakce=${id_akce}`);
+    fak= php.select1("IFNULL(nazev,'')",'faktura',`id_pobyt=${idp} AND deleted='' `);
+    vystavena= `<b>${fak}</b>`;
     hos.browse_load(`id_pobyt=${idp}`);
     pob.Load(idp);
   }
@@ -64,6 +66,7 @@ form _vyuctovani [,,623,400] {
   browse pob [0,80,,] { tag:'p', rows:10, key_id:'idp', 
       optimize:{ask:'dum_browse_order'}
     show idp
+    show fak
     show nazev [,,60,] { title:'pobyt' }
     show cena [,,50,] { title:'cena', format:'r', css_cell:'pokoje,0:zluty'  }
     show cleni
@@ -76,6 +79,7 @@ form _vyuctovani [,,623,400] {
 //    show vzorec
     func onrowclick() { 
 //      clear();
+      vystavena= `<b>${fak}</b>`;
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
       form.platby= `${zaplaceno} = ${platby}`;
@@ -156,6 +160,7 @@ form _vyuctovani [,,623,400] {
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
     show ids
+//    show fak
     show prijmeni [,,70,] { title:'příjmení', css_cell:'zamek_spolu,0:,1:cerveny' }
     show jmeno [,,40,] { title:'jméno', css_cell:'ds_dotace,0:,1:zeleny' }
     show vek [,,30,] { title:'věk', format:'c' }
@@ -192,6 +197,7 @@ form _vyuctovani [,,623,400] {
   
   // rodinná faktura
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
+  label vystavena [300,297,100,18] {tag:'h'}
   button [300,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
     func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, je:text
       clear();
@@ -212,6 +218,7 @@ form _vyuctovani [,,623,400] {
           adresa:adresa,ds_vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,nadpis:nadpis,
           num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.pobyt,vyrizuje:vyrizuje});
+      if (faktura.err) { alert(faktura.err); return }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }
@@ -401,6 +408,7 @@ form _obj {
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,
           id_order:uf.id_order,
           num:zal_num,zaloha:zal_zaloha,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
+      if (faktura.err) { alert(faktura.err); return }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }
@@ -459,6 +467,7 @@ form _obj {
             adresa:udaje.adresa,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
             num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+        if (faktura.err) { alert(faktura.err); return }
       }
       else {
         if (udaje.ucet.neubytovani) {
@@ -469,6 +478,7 @@ form _obj {
             adresa:udaje.adresa,ds_vzorec:udaje.vzorec_fak,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
             num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+        if (faktura.err) { alert(faktura.err); return }
       }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
@@ -590,7 +600,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   text   rooms        { sql_pipe:'wu' }
   text   rooms1       { sql_pipe:'wu' }
   number adults       { help:'?|počet dospělých podle objednávky' }
-  number kids_10_15   { help:'?|počet dětí ve věku 10-15 let podle objednávky' }
+  number kids_10_15   { help:'?|počet dětí ve věku 10-18 let podle objednávky' }
   number kids_3_9     { help:'?|počet dětí ve věku 3-9 let podle objednávky' }
   number kids_3       { help:'?|počet dětí do 3 let podle objednávky' }
   number board
