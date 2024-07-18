@@ -170,6 +170,7 @@ end:
 # par.typ: 1=záloha | 2=daňový doklad k záloze | 3=vyúčtování | 4=výjimečná faktura 
 function dum_faktura($par) {  debug($par,'dum_faktura');
   global $dum_faktura_dfl, $dum_faktura_fld; 
+  $err= '';
   // získání parametrů
   $strucna= $par->strucna ?? 0;
   $show= $par->show ?? 0;
@@ -262,6 +263,25 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $popl= $par->popl;
     $prog= $par->prog;
     $jine= $par->jine;
+    // případně odečteme již provedené fakturace jednotlivých pobytů 
+    $ds_vzorec= $par->ds_vzorec;
+    $fr= pdo_query("SELECT ubyt,stra,popl,prog,jine FROM faktura "
+        . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
+    while ($fr && (list($p_nazev,$p_ubyt,$p_stra,$p_popl,$p_prog,$p_jine)= pdo_fetch_array($fr))) {
+      $p_celkem= $p_ubyt + $p_stra + $p_popl + $p_prog + $p_jine;
+      if ($p_vzorec=='') {
+        $err= "POZOR: rodinná faktura $p_nazev nemá definovanou cenu, 
+          fakturu za celou objednávku neumím vystavit";
+        goto end;
+      }
+      $ubyt-= $p_ubyt;
+      $stra-= $p_stra;
+      $popl-= $p_popl;
+      $prog-= $p_prog;
+      $jine-= $p_jine;
+      $p_celkem= $p_ubyt + $p_stra + $p_popl + $p_prog + $p_jine;
+      display("$p_nazev: odečet ($p_ubyt,$p_stra,$p_popl,$p_prog,$p_jine");      /*DEBUG*/
+    }
     $celkem= $ubyt + $stra + $popl + $prog + $jine;
     $koef= $zaloha ? ($celkem-$zaloha)/$celkem : 1;
 //    display("$celkem $zaloha $koef");
@@ -295,8 +315,21 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     if ($jine) $polozky[]= ['jiné služby',$sazba_jine.'%',dum_kc($dph_jine),dum_kc($jine),$prog];
   }
   else {
+    // případně odečteme již provedené fakturace jednotlivých pobytů 
+    $ds_vzorec= $par->ds_vzorec;
+    $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
+        . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
+    while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
+      if ($p_vzorec=='') {
+        $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
+          fakturu za celou objednávku neumím vystavit";
+        goto end;
+      }
+      $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
+      display("$p_nazev: dum_vzorec_minus ( $ds_vzorec , $p_vzorec ) = $ds_vzorec");      /*DEBUG*/
+    }
     // redakce položek ceny pro zobrazení ve sloupcích
-    $cena= dum_vzorec_cena($par->ds_vzorec,$rok);
+    $cena= dum_vzorec_cena($ds_vzorec,$rok);
 //    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
     $celkem= $cena['celkem'];
     $koef= $zaloha ? $zaloha/$celkem : 1;
@@ -548,7 +581,7 @@ __HTML;
   file_put_contents("fakt.html",$html_exp);
 //  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
   return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
-      'parm'=>$par,'err'=>'');
+      'parm'=>$par,'err'=>$err);
 }
 /** ====================================================================================> OBJEDNÁVKY **/
 # ------------------------------------------------------------------------- dum objednavka_akce_make
@@ -604,6 +637,7 @@ function dum_objednavka($id_order) {
   $x->cena= dum_objednavka_cena($rozpis,$f->rok);
   // zjištění skutečně spotřebovaných osobonocí, pokojů, stravy, poplatků, ...
   $y= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
+  debug($y->suma,"y->suma");                                                               /*DEBUG*/                                                /*DEBUG*/
   $x->ucet= $y->suma;  
   $x->vzorec_fak= $y->suma->vzorec;
   foreach (explode(',',$x->vzorec_fak) as $ins) {
@@ -619,7 +653,7 @@ function dum_objednavka($id_order) {
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
       LEFT JOIN platba AS p USING (id_platba) 
-    WHERE deleted='' AND id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
+    WHERE deleted='' AND id_order=$id_order AND id_pobyt=0 AND typ IN (1,2,3,4)",0,0,0,$answer_db);
   while ($rf && ($f= pdo_fetch_object($rf))) {
     if ($f->typ==4) { 
       $x->faktura->vyj_idf= $f->idf;
@@ -910,6 +944,16 @@ function dum_vzorec2rozpis($vzorec) {
   }
   return $rozpis;
 }
+function dum_vzorec_minus($ds_vzorec,$p_vzorec) {
+  $ds_rozpis= dum_vzorec2rozpis($ds_vzorec); 
+  $p_rozpis= dum_vzorec2rozpis($p_vzorec); 
+  foreach ($p_rozpis as $i=>$v012) {
+    foreach ($v012 as $j=>$v) {
+      $ds_rozpis[$i][$j]-= $v;
+    }
+  }
+  return dum_rozpis2vzorec($ds_rozpis);
+}
 # ------------------------------------------------------------------------------ dum objednavka_cena
 # k položkám ceníku přidá spotřebu
 function dum_objednavka_cena($rozpis,$rok_ceniku) { 
@@ -1006,7 +1050,7 @@ function dum_cat_typ() {
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_orders($x) {
   global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
-//  debug($x,"dum_browse_order");
+//  debug($x,"dum_browse_orders");
   $y= (object)array('ok'=>0);
   $curr= $x->sql; // předání pracovní akce
   switch ($x->cmd) {
@@ -1090,7 +1134,7 @@ function dum_browse_order($x) {
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT id_pobyt,c.ikona,prijmeni,/*datum_od,datum_do,DATEDIFF(datum_do,datum_od),*/YEAR(datum_od),
+      SELECT id_pobyt,IFNULL(f.nazev,''),c.ikona,prijmeni,YEAR(datum_od),
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(ds_od='0000-00-00',datum_od,ds_od),'~',IF(ds_do='0000-00-00',datum_do,ds_do),
             '~',TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)),
@@ -1109,7 +1153,8 @@ function dum_browse_order($x) {
             GROUP_CONCAT(CONCAT(castka,' (',DATE_FORMAT(datum,'%e.%c'),')') SEPARATOR ' + ') AS platby 
           FROM platba GROUP BY id_pob
         ) AS x ON id_pob=id_pobyt        
-      WHERE $x->cond
+        LEFT JOIN faktura AS f USING (id_pobyt)
+      WHERE $x->cond AND IFNULL(f.deleted,'')=''
       GROUP BY id_pobyt
       ORDER BY prijmeni
     ");
@@ -1117,7 +1162,7 @@ function dum_browse_order($x) {
     $i_zdarma= 9; $i_dotace= 10; $i_pristylka= 11; $i_postylka= 12; $i_zvire= 13; $i_celkem= 14; 
     $i_fix= 19; $i_delta= 20;
     while ($rp && (list(
-        $idp,$nebyl,$prijmeni,/*$od,$do,$noci,*/$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
+        $idp,$fak,$nebyl,$prijmeni,/*$od,$do,$noci,*/$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
         = pdo_fetch_array($rp))) {
       // projdeme členy a spočteme cenu
       $hostu++;
@@ -1131,7 +1176,7 @@ function dum_browse_order($x) {
         $od= $c[$i+$i_od];
         $do= $c[$i+$i_do];
         $noci= date_diff(date_create($od),date_create($do))->format('%a');
-        $vek= roku_k($c[$i+$i_vek],$od); // věk ns začátku akce
+        $vek= roku_k($c[$i+$i_vek],$od); // věk na začátku akce
         $c[$i+$i_vek]= $vek;
         $c[$i+$i_noci]= $noci;
         $od= $c[$i+$i_od]= sql_date1($od);
@@ -1152,7 +1197,7 @@ function dum_browse_order($x) {
           // počty osob podle věku
           if ($vek<3) $suma->hoste->kids_3++;
           elseif ($vek<10) $suma->hoste->kids_3_9++;
-          elseif ($vek<15) $suma->hoste->kids_10_15++;
+          elseif ($vek<18) $suma->hoste->kids_10_15++; // 240719ms !!!!!!!!!  kids_10_18 !!!!!!!!!!
           else $suma->hoste->adults++;
           // pokud je naplněna položka ds_vzorec tak se použije místo výpočtu
           $vzorec= $c[$i+$i_vzorec];
@@ -1181,6 +1226,7 @@ function dum_browse_order($x) {
       $z[$idp]->pokoje= $pokoje;
       $z[$idp]->cleni= $cleni;
       $z[$idp]->idp= $idp;
+      $z[$idp]->fak= $fak;
       $z[$idp]->nazev= $prijmeni;
       $z[$idp]->cena= $celkem;
       // doplníme platbu
@@ -1311,7 +1357,7 @@ function dum_browse_pobyt($x) {
         // počty osob podle věku
         if ($vek<3) $suma->hoste->kids_3++;
         elseif ($vek<10) $suma->hoste->kids_3_9++;
-        elseif ($vek<15) $suma->hoste->kids_10_15++;
+        elseif ($vek<18) $suma->hoste->kids_10_15++; // 240719ms !!!!!!!!!  kids_10_18 !!!!!!!!!!
         else $suma->hoste->adults++;
         // pokud je naplněna položka ds_vzorec tak se použije místo výpočtu
         $fix= $vzorec ? 1 : 0;

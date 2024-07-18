@@ -26,8 +26,14 @@ menu m {type:'left', format:'f+', active:*
     item {title:'Struktura LK MS od roku 2005',                                      skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005,graf:1
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:'Struktura LK MS letos',                                                   skill:'m'
+      ,par:{typ:'ms_struktura',xls:'Excel',pdf:0,od:2024,graf:1
+        ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:' ... jen tabulka',                                                  skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005,graf:0
+        ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:' ... jen tabulka letos',                                                  skill:'m'
+      ,par:{typ:'ms_struktura',xls:'Excel',pdf:0,od:2024,graf:0
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Cesty na LK MS od roku 2005',                                       skill:'yae;fae'
       ,par:°{typ:'ms_cesty',xls:'Excel',pdf:0,od:2005

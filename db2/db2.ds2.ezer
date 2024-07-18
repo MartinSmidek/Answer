@@ -187,6 +187,7 @@ panel fakt {type:'right', title:"Faktury"
             adresa:adresa,ds_vzorec:zal.vzorec,nadpis:nadpis,
             ic:ic,dic:dic,rok:zal.rok,id_order:fak.id_order,
             num:zal.num,zaloha:zal.zaloha,vs:fak.vs,ss:fak.ss,vyrizuje:zal.vyrizuje});
+        if (faktura.err) { alert(faktura.err); return }
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'ulozeno',title:'[fa-save] Vystavit daňový doklad'});
       }
@@ -208,6 +209,7 @@ panel fakt {type:'right', title:"Faktury"
     button [792,378,,] { title:'[fa-file-pdf-o] Stáhnout fakturu jako PDF' 
       func onclick() { var html:text
         faktura= php.dum_faktura(faktura.parm);
+        if (faktura.err) { alert(faktura.err); return }
         alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
       }
     }
@@ -224,6 +226,7 @@ panel fakt {type:'right', title:"Faktury"
           faktura.parm.prog= prog;
         }
         faktura= php.dum_faktura(faktura.parm);
+        if (faktura.err) { alert(faktura.err); return }
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
       }
@@ -532,7 +535,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   text   rooms        { sql_pipe:'wu' }
   text   rooms1       { sql_pipe:'wu' }
   number adults       { help:'?|počet dospělých podle objednávky' }
-  number kids_10_15   { help:'?|počet dětí ve věku 10-15 let podle objednávky' }
+  number kids_10_15   { help:'?|počet dětí ve věku 10-18 let podle objednávky' }
   number kids_3_9     { help:'?|počet dětí ve věku 3-9 let podle objednávky' }
   number kids_3       { help:'?|počet dětí do 3 let podle objednávky' }
   number board
