@@ -1134,7 +1134,8 @@ function dum_browse_order($x) {
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT id_pobyt,IFNULL(f.nazev,''),c.ikona,prijmeni,YEAR(datum_od),
+      SELECT id_pobyt,IF(ISNULL(f.nazev),'',IF(f.deleted='',f.nazev,'')),
+        c.ikona,prijmeni,YEAR(datum_od),
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(ds_od='0000-00-00',datum_od,ds_od),'~',IF(ds_do='0000-00-00',datum_do,ds_do),
             '~',TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)),
@@ -1154,7 +1155,7 @@ function dum_browse_order($x) {
           FROM platba GROUP BY id_pob
         ) AS x ON id_pob=id_pobyt        
         LEFT JOIN faktura AS f USING (id_pobyt)
-      WHERE $x->cond AND IFNULL(f.deleted,'')=''
+      WHERE $x->cond 
       GROUP BY id_pobyt
       ORDER BY prijmeni
     ");
@@ -2436,7 +2437,7 @@ function ds2_fio($cmd) {
           : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
       $back= $cmd->back ?: 0; // návrat k odhadu =  ignoruje id_oso, id_pob, id_ord
       if ($back && $cmd->platba) {
-        query_track("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
+        query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
           WHERE id_platba=$cmd->platba");
       }
       // rozpoznání osoby podle protiúčtu
@@ -2564,60 +2565,60 @@ function clone_row($tab,$id,$idname='') {
     return $copy;
   }
 }
-# ---------------------------------------------------------------------------------------- clone row
-// split CSV s ohledem na závorky a apostrofy
-function explode_csv($str, $separator=",", $leftbracket="(", $rightbracket=")", $quote="'", $ignore_escaped_quotes=true ) {
-  $buffer = '';
-  $stack = array();
-  $depth = 0;
-  $char= '';
-  $betweenquotes = false;
-  $len = strlen($str);
-  for ($i=0; $i<$len; $i++) {
-    $previouschar = $char;
-    $char = $str[$i];
-    switch ($char) {
-      case $separator:
-        if (!$betweenquotes) {
-          if (!$depth) {
-            if ($buffer !== '') {
-              $stack[] = $buffer;
-              $buffer = '';
-            }
-            continue 2;
-          }
-        }
-        break;
-      case $quote:
-        if ($ignore_escaped_quotes) {
-          if ($previouschar!="\\") {
-            $betweenquotes = !$betweenquotes;
-          }
-        } else {
-          $betweenquotes = !$betweenquotes;
-        }
-        break;
-      case $leftbracket:
-        if (!$betweenquotes) {
-          $depth++;
-        }
-        break;
-      case $rightbracket:
-        if (!$betweenquotes) {
-          if ($depth) {
-            $depth--;
-          } else {
-            $stack[] = $buffer.$char;
-            $buffer = '';
-            continue 2;
-          }
-        }
-        break;
-      }
-      $buffer .= $char;
-  }
-  if ($buffer !== '') {
-    $stack[] = $buffer;
-  }
-  return $stack;
-}
+//# ---------------------------------------------------------------------------------------- clone row
+//// split CSV s ohledem na závorky a apostrofy
+//function explode_csv($str, $separator=",", $leftbracket="(", $rightbracket=")", $quote="'", $ignore_escaped_quotes=true ) {
+//  $buffer = '';
+//  $stack = array();
+//  $depth = 0;
+//  $char= '';
+//  $betweenquotes = false;
+//  $len = strlen($str);
+//  for ($i=0; $i<$len; $i++) {
+//    $previouschar = $char;
+//    $char = $str[$i];
+//    switch ($char) {
+//      case $separator:
+//        if (!$betweenquotes) {
+//          if (!$depth) {
+//            if ($buffer !== '') {
+//              $stack[] = $buffer;
+//              $buffer = '';
+//            }
+//            continue 2;
+//          }
+//        }
+//        break;
+//      case $quote:
+//        if ($ignore_escaped_quotes) {
+//          if ($previouschar!="\\") {
+//            $betweenquotes = !$betweenquotes;
+//          }
+//        } else {
+//          $betweenquotes = !$betweenquotes;
+//        }
+//        break;
+//      case $leftbracket:
+//        if (!$betweenquotes) {
+//          $depth++;
+//        }
+//        break;
+//      case $rightbracket:
+//        if (!$betweenquotes) {
+//          if ($depth) {
+//            $depth--;
+//          } else {
+//            $stack[] = $buffer.$char;
+//            $buffer = '';
+//            continue 2;
+//          }
+//        }
+//        break;
+//      }
+//      $buffer .= $char;
+//  }
+//  if ($buffer !== '') {
+//    $stack[] = $buffer;
+//  }
+//  return $stack;
+//}
