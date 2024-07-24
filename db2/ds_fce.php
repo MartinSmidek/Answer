@@ -269,7 +269,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
         . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
     while ($fr && (list($p_nazev,$p_ubyt,$p_stra,$p_popl,$p_prog,$p_jine)= pdo_fetch_array($fr))) {
       $p_celkem= $p_ubyt + $p_stra + $p_popl + $p_prog + $p_jine;
-      if ($p_vzorec=='') {
+      if (!$p_celkem) {
         $err= "POZOR: rodinná faktura $p_nazev nemá definovanou cenu, 
           fakturu za celou objednávku neumím vystavit";
         goto end;
@@ -1134,7 +1134,7 @@ function dum_browse_order($x) {
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT id_pobyt,IF(ISNULL(f.nazev),'',IF(f.deleted='',f.nazev,'')),
+      SELECT p.id_pobyt,IF(ISNULL(f.nazev),'',IF(f.deleted='',f.nazev,'')) AS _fak,
         c.ikona,prijmeni,YEAR(datum_od),
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(ds_od='0000-00-00',datum_od,ds_od),'~',IF(ds_do='0000-00-00',datum_do,ds_do),
@@ -1145,25 +1145,25 @@ function dum_browse_order($x) {
           SEPARATOR '~' ) AS cleni,d.state,d.board,IFNULL(x.zaplaceno,''),IFNULL(x.nx,''),IFNULL(x.platby,'')
       FROM osoba AS o 
         JOIN spolu AS s USING (id_osoba) 
-        JOIN pobyt AS p USING (id_pobyt) 
+        JOIN pobyt AS p ON p.id_pobyt=s.id_pobyt
         JOIN akce AS a ON id_akce=id_duakce 
         JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
-        JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=id_duakce
+        JOIN setkani4_test.tx_gnalberice_order AS d ON d.id_akce=id_duakce
         LEFT JOIN (
           SELECT id_pob,SUM(castka) AS zaplaceno,COUNT(*) AS nx,
             GROUP_CONCAT(CONCAT(castka,' (',DATE_FORMAT(datum,'%e.%c'),')') SEPARATOR ' + ') AS platby 
           FROM platba GROUP BY id_pob
-        ) AS x ON id_pob=id_pobyt        
-        LEFT JOIN faktura AS f USING (id_pobyt)
-      WHERE $x->cond 
-      GROUP BY id_pobyt
+        ) AS x ON id_pob=p.id_pobyt        
+        LEFT JOIN faktura AS f ON f.id_pobyt=p.id_pobyt AND f.deleted=''
+      WHERE $x->cond
+      GROUP BY p.id_pobyt
       ORDER BY prijmeni
     ");
     $i_prijmeni= 1; $i_vek= 3; $i_noci= 4; $i_od= 5; $i_do= 6; $i_pokoj= 7; $i_vzorec= 8; 
     $i_zdarma= 9; $i_dotace= 10; $i_pristylka= 11; $i_postylka= 12; $i_zvire= 13; $i_celkem= 14; 
     $i_fix= 19; $i_delta= 20;
     while ($rp && (list(
-        $idp,$fak,$nebyl,$prijmeni,/*$od,$do,$noci,*/$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
+        $idp,$fak,$nebyl,$prijmeni,$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
         = pdo_fetch_array($rp))) {
       // projdeme členy a spočteme cenu
       $hostu++;
@@ -1464,11 +1464,9 @@ end:
 # =====================================================================================> KNIHA HOSTU
 # ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
+# par.rozklad=1 přidá na konec čerpání ceníkových položek
 function dum_kniha_hostu($par,$export=0) {
-  global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda;
-
-//          $row_set('cena',$up->celkem);
-//          $row[$clmn_i['cena']]= $up->celkem;
+  global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda, $setkani_db;
   $time_start= getmicrotime();
   // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
   $res= (object)['err'=>'','html'=>'','ref'=>'','t1'=>0,'t2'=>0]; 
@@ -1503,8 +1501,8 @@ function dum_kniha_hostu($par,$export=0) {
     'od'    => '02:d:10: :příjezd',
     'do'    => '03:d:10: :odjezd',
     'kod'   => '04:n:08: :kód YMCA',
-    'pobyt' => '05:n:08: :id_pobyt',
-    'spolu' => '06:n:08: :id_spolu',
+    'pobyt' => '05:n:10: :id_pobyt',
+    'spolu' => '06:n:10: :id_spolu',
     'nazev' => '07:t:20: :název',
     'druh'  => '08:t:12: :typ objed-návky',
     // ukazatele
@@ -1526,6 +1524,23 @@ function dum_kniha_hostu($par,$export=0) {
     'kdy'   => '31:d:10: :dne',
     'fakt'  => '32:t:12: :faktura',
   ];
+  // přidání ceníkových položek pokud je par.rozklad=1
+  if ($par->rozklad) {
+    $cc= 40;
+    $rc= pdo_qry("
+      SELECT druh,typ,dotovana
+      FROM $setkani_db.ds_cena WHERE rok={$par->rok} ORDER BY druh,typ");
+    while ($rc && (list($druh,$typ,$dotovana)= pdo_fetch_array($rc))) {
+      $typx= str_replace('_',' ',$typ);
+      $clmn[$typ]= "$cc:n:7:+:$typx";
+      $cc++;
+      if ($dotovana) {
+        $clmn["$typ/d"]= "$cc:n:7:+:$typx dot.";
+        $cc++;
+      }
+    }
+  } 
+  //
   $row_class= [
     1 => [" class='ezer_ys'",' bcolor=aaff88'],  
     2 => [" class='ezer_fa'",' bcolor=aaccff'],  
@@ -1672,6 +1687,14 @@ function dum_kniha_hostu($par,$export=0) {
           $row_set('rozdil',$fakturace_akce ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
           $row_set('nx',$nx>1 ? "{$nx}x" : ''); 
           $row_set('kdy',$datum);
+          // pokud je chtěn rozklad, doplň jej
+          if ($par->rozklad) {
+            $rozpis= dum_vzorec2rozpis($up->vzorec);
+            foreach ($rozpis as $typ=>list($n,$d,)) {
+              $row_set($typ,$n);
+              if (isset($clmn["$typ/d"])) $row_set("$typ/d",$d?:'');
+            }
+          }
           $tab[]= $row;
           // zapamatuj si další členy pobytu
           if ($par->spolu) {
@@ -1801,11 +1824,11 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
     $html.= "</tr>";
   }
   $html.= "<tr><td style='border:none'>&nbsp;</td></tr>";
-  // řádek jmen sloupců
-  $html.= "<tr>";
+  // záhlaví - řádek jmen sloupců (bude i na konci atbulky)
+  $header= "<tr>";
   foreach (array_keys($clmn_in) as $i) {
     if ($i==0) continue;
-    $html.= "<th>{$clmn_in[$i]}</th>";
+    $header.= "<th>{$clmn_in[$i]}</th>";
     if ($excel) { // záhlaví sloupců
       $A= Excel5_n2col($c++);
       $clmn[$i]= $A; 
@@ -1813,9 +1836,10 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
     }
   } 
   if ($excel) { // obarvení záhlaví sloupců
-    $xls.= "\n\n|A$r1:$A$r1 bold bcolor=aaaaff";
+    $xls.= "\n\n|A$r1:$A$r1 bold top center wrap bcolor=aaaaff |rows $r1=30";
   }
-  $html.= "</tr>";
+  $header.= "</tr>";
+  $html.= $header;
   foreach ($tab as $row) {
     $html.= "<tr>";
     if ($excel) { // obarvení záhlaví sloupců
@@ -1841,10 +1865,10 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
       switch ($clmn_if[$i]) {
         case 'd': 
           // jen SQL datum jako datum - jinak text
+          $xls_fmt= '::date right';
           if (strstr($val,'-')!==false) {
             $align= " align='right'";
             $val= sql_date1($val);
-            $xls_fmt= '::date right';
           }
           break;
         case 'm': 
@@ -1870,6 +1894,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
     } 
     $html.= "</tr>";
   }  
+  $html.= $header;
   $html.= "</table>";
   $res->html= $html; 
   // export Excelu
@@ -2482,10 +2507,10 @@ function ds2_fio($cmd) {
           SELECT /* ------------------------------------------------ */
             id_platba,id_faktura,id_order,id_pobyt
           FROM platba AS p 
-          JOIN faktura AS f ON f.vs=p.vs AND f.ss=IF(p.ss2,p.ss2,p.ss) 
+          JOIN faktura AS f ON f.vs=p.vs AND f.ss=IF(p.ss2,p.ss2,p.ss) AND f.deleted=''
           LEFT JOIN join_platba AS j USING (id_platba,id_faktura)
           WHERE ucet=2 AND ISNULL(j.id_faktura) AND p.castka IN (f.castka,f.zaloha) AND typ!=2
-            AND f.deleted='' AND $omezeni 
+            AND $omezeni 
             AND datum BETWEEN vystavena AND DATE_ADD(vystavena, INTERVAL 2 MONTH)");
         while ($rf && (list($idp,$idf,$ido,$idpbt)= pdo_fetch_array($rf))) {
           query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($idp,$idf)");
@@ -2565,60 +2590,3 @@ function clone_row($tab,$id,$idname='') {
     return $copy;
   }
 }
-//# ---------------------------------------------------------------------------------------- clone row
-//// split CSV s ohledem na závorky a apostrofy
-//function explode_csv($str, $separator=",", $leftbracket="(", $rightbracket=")", $quote="'", $ignore_escaped_quotes=true ) {
-//  $buffer = '';
-//  $stack = array();
-//  $depth = 0;
-//  $char= '';
-//  $betweenquotes = false;
-//  $len = strlen($str);
-//  for ($i=0; $i<$len; $i++) {
-//    $previouschar = $char;
-//    $char = $str[$i];
-//    switch ($char) {
-//      case $separator:
-//        if (!$betweenquotes) {
-//          if (!$depth) {
-//            if ($buffer !== '') {
-//              $stack[] = $buffer;
-//              $buffer = '';
-//            }
-//            continue 2;
-//          }
-//        }
-//        break;
-//      case $quote:
-//        if ($ignore_escaped_quotes) {
-//          if ($previouschar!="\\") {
-//            $betweenquotes = !$betweenquotes;
-//          }
-//        } else {
-//          $betweenquotes = !$betweenquotes;
-//        }
-//        break;
-//      case $leftbracket:
-//        if (!$betweenquotes) {
-//          $depth++;
-//        }
-//        break;
-//      case $rightbracket:
-//        if (!$betweenquotes) {
-//          if ($depth) {
-//            $depth--;
-//          } else {
-//            $stack[] = $buffer.$char;
-//            $buffer = '';
-//            continue 2;
-//          }
-//        }
-//        break;
-//      }
-//      $buffer .= $char;
-//  }
-//  if ($buffer !== '') {
-//    $stack[] = $buffer;
-//  }
-//  return $stack;
-//}

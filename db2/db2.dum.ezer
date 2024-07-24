@@ -523,7 +523,7 @@ form _obj {
     // osoby
     field adults      [10,15,25,] {tag:'obj', title:'^dospělí, děti:', format:'c' }
     field kids_10_15  [69,15,23,] {tag:'obj', title:'^ 10+ ', format:'c' }
-    field kids_3_9    [97,15,23,] {tag:'obj', title:'^ 9 - 3 ', format:'c' }
+    field kids_3_9    [97,15,23,] {tag:'obj', title:'^  9-3 ', format:'c' }
     field kids_3      [124,15,23,] {tag:'obj', title:'^ 3- ', format:'c' }
     // strava - vypočítá se... v plan disabled
     field strava_CC [160,15,24,] {tag:'comp', title:'^penze', format:'c', help:'plná penze' }
