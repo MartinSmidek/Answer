@@ -285,11 +285,12 @@ form _obj {
 //    dan_send= 'Daňový doklad';
     if (udaje.faktura.fakt_idf==0 && udaje.faktura.vyj_idf==0) {
       // konečná faktura
+      fakt_vystavena= now();
       fakt_num= udaje.fld.fakt_num;
       fakt_vs= udaje.fld.fakt_num;
       fakt_ss= id_order;
       fakt_zaloha= zal_zaloha;
-      fakt_castka= udaje.ucet.celkem;
+      fakt_castka= udaje.ucet.celkem2 - fakt_zaloha; // po odečtení rodinných podfaktur a zálohy
       fakt_nadpis= `Za pobyt v Domě setkání ve dnech ${udaje.fld.oddo} Vám fakturujeme:`;
       form.enable(1,'fakt|closed'); 
       plan.enable(1,'.*'); 
@@ -453,7 +454,7 @@ form _obj {
   field vyj_celkem [284,top_fakt,50,] { tag:'vyj', title:'^částka', format:'ron' }
   field fakt_zaloha [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'ro'  }
   field fakt_vyrizuje [422,top_fakt,55,] { tag:'fakt', title:'^kdo vyřizuje' }
-  check fakt_strucna [485,top_fakt+-2,121,] { tag:'zal', title:'stručná' }
+  check fakt_strucna [485,top_fakt+-2,121,] { tag:'fakt', title:'stručná' }
   field fakt_zaplacena [670,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
   field fakt_nadpis  [10,top_fakt+40,450,] { tag:'fakt', title:'^řádek popisující účtovanou částku' }
   
