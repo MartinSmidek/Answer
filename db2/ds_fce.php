@@ -891,6 +891,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
     list($c,$s,$z)= (array)$csz; // cena, sleva, zdarma
     $d= $ds2_cena[$zaco];
     $druh= utf2ascii($d->druh);
+    $dph= 0;
     if ($c) { // plná nákladová cena
       $pocet= $c;
       $kc= $d->cena;
