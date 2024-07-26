@@ -221,7 +221,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{DUZP-datum}']= "<br>$duzp";
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
-  }
+  } // vyúčtování
   elseif ($typ==4) { // výjimečné vyúčtování zadáním konečných částek
     $vyjimecna= 1;
     $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
@@ -231,7 +231,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{DUZP-datum}']= "<br>$duzp";
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
-  }
+  } // výjimečné vyúčtování zadáním konečných částek
   elseif ($typ==1) { // záloha
     $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Zálohová faktura $par->nazev";
@@ -240,7 +240,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{DUZP-datum}']= '';
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
-  }
+  } // záloha
   else { // $typ==2 daňový doklad 
     $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Daňový doklad $par->nazev";
@@ -251,7 +251,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{DUZP-datum}']= "<br>$vystavena";
     $vals['{splatnost-text}']= '';
     $vals['{splatnost-datum}']= '';
-  }
+  } // $typ==2 daňový doklad 
   // ------------------------------------------------------------------------------- redakce tabulky
   $polozky= [];
   $rozpis_dph= []; 
@@ -315,24 +315,27 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     if ($jine) $polozky[]= ['jiné služby',$sazba_jine.'%',dum_kc($dph_jine),dum_kc($jine),$prog];
   }
   else {
-    // případně odečteme již provedené fakturace jednotlivých pobytů 
+    // pro celkovou fakturu případně odečteme již provedené fakturace jednotlivých pobytů 
     $ds_vzorec= $par->ds_vzorec;
-    $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
-        . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
-    while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
-      if ($p_vzorec=='') {
-        $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
-          fakturu za celou objednávku neumím vystavit";
-        goto end;
+    if (!$par->id_pobyt) {
+      $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
+          . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
+      while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
+        if ($p_vzorec=='') {
+          $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
+            fakturu za celou objednávku neumím vystavit";
+          goto end;
+        }
+        $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
+        display("$p_nazev: dum_vzorec_minus ( $ds_vzorec , $p_vzorec ) = $ds_vzorec");      /*DEBUG*/
       }
-      $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
-      display("$p_nazev: dum_vzorec_minus ( $ds_vzorec , $p_vzorec ) = $ds_vzorec");      /*DEBUG*/
     }
     // redakce položek ceny pro zobrazení ve sloupcích
     $cena= dum_vzorec_cena($ds_vzorec,$rok);
-//    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
+    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
     $celkem= $cena['celkem'];
     $koef= $zaloha ? $zaloha/$celkem : 1;
+    $koef_dph= $zaloha ? (1-$zaloha/$celkem) : 1;
     $par->ubyt= $cena['abbr']['ubyt'] * $koef;
     $par->stra= $cena['abbr']['stra'] * $koef;
     $par->popl= $cena['abbr']['popl'] * $koef;
@@ -344,6 +347,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   //      display("$zaco:$pocet");
         $kc_1= $cena['polozka'][$zaco]->cena;
         $kc= $cena['cena'][$zaco];
+        $kc_dph= $typ==2 ? $kc*$koef : $kc*$koef_dph;
         $sazba= $cena['polozka'][$zaco]->dph;
         $polozky[]= [
           $cena['polozka'][$zaco]->polozka,
@@ -354,13 +358,13 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
           dum_kc($kc),
           $kc // 7: celková cena vč. DPH
         ];
-        $rozpis_dph[$sazba]+= ($kc - $zaloha) / ((100 + $sazba) / 100);
+        $rozpis_dph[$sazba]+= $kc_dph / ((100 + $sazba) / 100);
       }
     }
     elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky - jiné
       foreach ($cena['druh2'] as $cc) {
         $kc= $cc['cena'];
-        $kc_dph= $typ==2 ? $kc*$koef : $kc;
+        $kc_dph= $typ==2 ? $kc*$koef : $kc*$koef_dph;
         $sazba= $cc['sazba'];
         $polozky[]= [
           $cc['druh'],
@@ -373,9 +377,9 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
   }
-//  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
+  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
   // zápis rozpisu DPH
-//  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
+  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
   
   // nadpisy položek a šířka polí
   $cs= $strucna==0 ? [6,4,6,3,3] :  [4,2,4,1,1];
@@ -637,39 +641,44 @@ function dum_objednavka($id_order) {
   $x->cena= dum_objednavka_cena($rozpis,$f->rok);
   // zjištění skutečně spotřebovaných osobonocí, pokojů, stravy, poplatků, ...
   $y= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
-  debug($y->suma,"y->suma");                                                               /*DEBUG*/                                                /*DEBUG*/
+//  debug($y->suma,"y->suma");                                                               /*DEBUG*/                                                /*DEBUG*/
   $x->ucet= $y->suma;  
+  $x->ucet->celkem2= $x->ucet->celkem;
   $x->vzorec_fak= $y->suma->vzorec;
   foreach (explode(',',$x->vzorec_fak) as $ins) {
     list($i,$n,$s)= explode(':',$ins);
     $x->vyuziti[$i]= $s ? "$n/$s" : $n;
   }
-//  $x->vzorec_fak= dum_rozpis2vzorec($y->suma->rozpis);
   // a fakturu z tabulky
   $x->faktura= (object)['zal_idf'=>0,'dan_idf'=>0,'fakt_idf'=>0,'vyj_idf'=>0];
   $rf= pdo_qry("
-    SELECT IFNULL(id_faktura,0) AS idf,typ,strucna,nadpis,
+    SELECT IFNULL(id_faktura,0) AS idf,typ,strucna,nadpis,id_pobyt,
       rok,num,f.vs,f.ss,duvod_zmeny,vzorec,zaloha,f.castka,vystavena,p.datum AS zaplacena, vyrizuje 
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
       LEFT JOIN platba AS p USING (id_platba) 
-    WHERE deleted='' AND id_order=$id_order AND id_pobyt=0 AND typ IN (1,2,3,4)",0,0,0,$answer_db);
+    WHERE deleted='' AND id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
   while ($rf && ($f= pdo_fetch_object($rf))) {
-    if ($f->typ==4) { 
-      $x->faktura->vyj_idf= $f->idf;
-      $x->faktura->fakt_vyjimka= 1;
-      $kcs= explode('|',$f->vzorec);
-      list($x->faktura->vyj_ubyt,$x->faktura->vyj_strav,$x->faktura->vyj_popl)= $kcs;
-      $x->faktura->vyj_celkem= array_sum($kcs);
+    if ($f->id_pobyt!=0) { // vystavená rodinná podfaktura
+      $x->ucet->celkem2-= $f->castka;
     }
-    foreach ($f as $fld=>$val) { 
-      if ($fld=='idf' && $f->typ==4) continue;
-      if ($fld=='vystavena' || $fld=='zaplacena') $val= sql_date1($val);
-      $fld= $f->typ==1 ? "zal_$fld" : ($f->typ==2 ? "dan_$fld" : "fakt_$fld");
-      $x->faktura->$fld= $val;
+    else {
+      if ($f->typ==4) { 
+        $x->faktura->vyj_idf= $f->idf;
+        $x->faktura->fakt_vyjimka= 1;
+        $kcs= explode('|',$f->vzorec);
+        list($x->faktura->vyj_ubyt,$x->faktura->vyj_strav,$x->faktura->vyj_popl)= $kcs;
+        $x->faktura->vyj_celkem= array_sum($kcs);
+      }
+      foreach ($f as $fld=>$val) { 
+        if ($fld=='idf' && $f->typ==4) continue;
+        if ($fld=='vystavena' || $fld=='zaplacena') $val= sql_date1($val);
+        $fld= $f->typ==1 ? "zal_$fld" : ($f->typ==2 ? "dan_$fld" : "fakt_$fld");
+        $x->faktura->$fld= $val;
+      }
     }
   }
-//  debug($x,"dum_objednavka($id_order)");                                                  /*DEBUG*/
+  debug($x,"dum_objednavka($id_order)");                                                  /*DEBUG*/
   return $x;
 }
 # ------------------------------------------------------------------------------ dum objednavka_akce

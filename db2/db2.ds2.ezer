@@ -123,8 +123,8 @@ panel fakt {type:'right', title:"Faktury"
       show rok { data:f.rok }
       show num { data:f.num }
       show typ [,,20,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D',IF(f.typ=3,'F','V')))", 
-          format:'c' }
-      show strucna [,,20,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
+          format:'csq' }
+      show strucna [,,20,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'csq' }
       show id_order [,,30,] { data:f.id_order, format:'qs' }
       show vs [,,40,] { title:'VS', data:f.vs, format:'rqs' }
       show ss [,,40,] { title:'SS', data:f.ss, format:'rqs' }
@@ -136,7 +136,7 @@ panel fakt {type:'right', title:"Faktury"
       show prog { data:f.prog }
       show jine { data:f.jine }
       show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'rs-' }
-      show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
+      show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'rs' }
       // funkce
       func onrowclick() { var x:object, a:array
         copy_by_name(fak,form);
