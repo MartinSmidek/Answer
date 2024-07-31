@@ -69,23 +69,25 @@ use vz: form _vzory [10,0,,]    // vzory mailů
 menu m {type:'left',
   menu g {title:'Vytvoření mailu k akci', type:'group'
     item i {title:'všem účastníkům této akce', _sys:'akc', help:'bez funkce, VPS, SVPS, hospodář'
-      par:°{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... všem přítomným na akci', help:'mimo pečounů, odhlášených, náhradníků, nepřijedších, ...'
-      par:°{k:'et',uq:'U5',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... ... tuzemským CZ+SK', help:'jen CZ a SK - mimo odhlášených, náhradníků, nepřijedších, ...'
       par:{k:'et',uq:'U6',on:'akce',off:'gen|skup'} }
     item {title:'... ... zahraničním mimo SK', help:'mimo CZ a SK (a mimo odhlášených, náhradníků, nepřijedších, ...)'
       par:{k:'et',uq:'U7',on:'akce',off:'gen|skup'} }
     item {title:'... účastníkům bez funkce', help:'s funkcí -'
-      par:°{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
-      par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... ... jen VPS'
-      par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup',cond:'p.funkce=1'} }
+      par:{k:'et',uq:'U2',on:'akce',off:'gen|skup',cond:'p.funkce=1'} }
+    item {title:'... kněžím, psychologům akce'
+      par:{k:'et',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
-      par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... s divnou/žádnou občankou'
-      par:°{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
+      par:{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
     item {title:'vzor mailu: Potvrzení platby'
       proc onclick(i) {
         ii.fill(conc(i.owner.title,' - ',i.title),' ');
@@ -95,23 +97,25 @@ menu m {type:'left',
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
-      par:°{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... všem přítomným na akci',
-      par:°{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... ... tuzemským CZ+SK',
-      par:°{k:'es',uq:'U6',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U6',on:'akce',off:'gen|skup'} }
     item {title:'... ... zahraničním mimo SK',
-      par:°{k:'es',uq:'U7',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U7',on:'akce',off:'gen|skup'} }
     item {title:'... účastníkům bez funkce'
-      par:°{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
-      par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... ... jen VPS'
-      par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
+    item {title:'... kněžím, psychologům akce'
+      par:{k:'es',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
-      par:°{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... staré nebo žádné OP'
-      par:°{k:'es',uq:'U4',on:'akce',off:'gen|skup'} }
+      par:{k:'es',uq:'U4',on:'akce',off:'gen|skup'} }
   }
   proc onclick (i) {
     menu_item.set(i); menu_par.set(i.par);
@@ -332,7 +336,8 @@ form _etext  {
       'U4',{ komu.set(3); },
       'U5',{ komu.set(5); },
       'U6',{ komu.set(6); },
-      'U7',{ komu.set(7); }
+      'U7',{ komu.set(7); },
+      'U8',{ komu.set(8); }
       );
       id_duakce.change; hnizdo.change; komu.change; cis_skupina.change; id_mailist.change;
     }
@@ -353,7 +358,7 @@ form _etext  {
       var blokovano: number, pocet: number
       var err: text, cond: text
       echo(debug(menu_par));
-      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6','U7')) return;
+      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6','U7','U8')) return;
       # rozesílání podle nastavené akce
       prazdny(); if (!et_prazdy) return;
       cond= menu_par.cond ? menu_par.cond : '';
@@ -421,6 +426,8 @@ form _etext  {
     case 'U6': texty.browse_load(`${prefix} etd.komu=6`); break;
     // všem zahraničním přítomným (dopis.komu=7)
     case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
+    // kněžím, psychologům (dopis.komu=8)
+    case 'U8': texty.browse_load(`${prefix} etd.komu=8`); break;
     }
     reload2()
   }
@@ -655,6 +662,8 @@ form _esady  {
     case 'U6': texty.browse_load(`${prefix} etd.komu=6`); break;
     // všem zahraničním přítomným (dopis.komu=7)
     case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
+    // kněžím, psychologům (dopis.komu=8)
+    case 'U8': texty.browse_load(`${prefix} etd.komu=8`); break;
     }
     reload2();
   }
