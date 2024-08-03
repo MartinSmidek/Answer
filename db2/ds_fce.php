@@ -1694,8 +1694,9 @@ function dum_kniha_hostu($par,$export=0) {
             $row_set($fld,$fld=='ubyt' && $ne_ubyt && $up->celkem ? [$val,4] : $val);
           }
           $platba= dum_kniha_castka($up->celkem,$castka,$ne_ubyt);
-          $row_set('platba',$fakturace_akce ? 0 : $platba);
-          $row_set('rozdil',$fakturace_akce ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
+          $row_set('platba',$fakturace_akce && !$faktura ? 0 : $platba);
+          $row_set('rozdil',$fakturace_akce && !$faktura 
+              ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
           $row_set('nx',$nx>1 ? "{$nx}x" : ''); 
           $row_set('kdy',$datum);
           // pokud je chtěn rozklad, doplň jej
