@@ -5,10 +5,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
-//    if (ds2) {
-//      x= ds2.curr();
-//      the_curr.dum= x.dum;
-//    }
+    if (ds2) {
+      x= ds2.curr();
+//      echo(debug(x,'x'));
+      the_curr.dum= x.dum;
+    }
     return the_curr;
   } 
   func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }

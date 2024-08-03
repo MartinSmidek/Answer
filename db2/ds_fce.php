@@ -1532,7 +1532,7 @@ function dum_kniha_hostu($par,$export=0) {
     'rozdil'=> '22:k:12:*:rozdíl',
     'nx'    => '30:n:05: :x',
     'kdy'   => '31:d:10: :dne',
-    'fakt'  => '32:t:12: :faktura',
+    'fakt'  => '32:t:12: :faktury',
   ];
   // přidání ceníkových položek pokud je par.rozklad=1
   if ($par->rozklad) {
@@ -1757,9 +1757,10 @@ function dum_kniha_hostu($par,$export=0) {
 function dum_kniha_hostu_fakturace($idd,$idfs,&$row) {
   global $clmn_i;
   // faktury
-  $fakt= select("/* order $idd */ GROUP_CONCAT(nazev SEPARATOR ', ')",
-      'faktura',"id_faktura IN ($idfs)");
+  list($fakt,$nx)= select("/* order $idd */ GROUP_CONCAT(nazev SEPARATOR ', '),COUNT(nazev)",
+      'faktura',"id_faktura IN ($idfs) AND typ NOT IN (2)");
   $row[$clmn_i['fakt']]= $fakt;
+  if ($nx>1) $row[$clmn_i['nx']]= "{$nx}x";
   // vyúčtování
   list($fv['cena'],$fv['ubyt'],$fv['stra'],$fv['popl'],$fv['jine'])= select(
       'SUM(castka),SUM(ubyt),SUM(stra),SUM(popl),SUM(jine)','faktura',
@@ -2301,7 +2302,7 @@ function ds2_fio_filtr_akce($id_pobyt) {
 # ------------------------------------------------------------------------------------ ds2 show_curr
 # čitelné zobrazení objektu získaného funkcí akce2.curr
 function ds2_show_curr($c) {
-  $evi= $ucast= $dum= '';
+  $evi= $ucast= $dum= $fak= '';
   $a_jmeno= $e_jmeno= $a_akce= $d_jmeno= '';
   // akce
   if (($ida= $c->lst->akce)) {
@@ -2329,7 +2330,7 @@ function ds2_show_curr($c) {
     $evi.= ' rodina '.tisk2_ukaz_rodinu($idr,'',$nazev);
     $e_jmeno.= ", $nazev";
   }
-  // Dům setkání - objednávvky
+  // Dům setkání - objednávky pod AKCE
 //  debug($c,'ds2_show_curr');
   if (($idx= $c->dum->order)) {
     list($jmeno,$prijmeni,$od,$do)= select('firstname,name,fromday,untilday',
@@ -2340,11 +2341,20 @@ function ds2_show_curr($c) {
     $do= date('j.n.Y',$do);
     $celkem= $c->dum->celkem ? number_format($c->dum->celkem,2,'.',' ') : '?';
     $d_jmeno.= wu("$jmeno $prijmeni, $od-$do, $celkem").' Kč';
-//    display("$dum|$d_jmeno");
+  }
+  // Dům setkání - faktura
+  if (($idf= $c->dum->faktura)) {
+    list($nazev,$typ,$castka,$zaloha)= select('nazev,typ,castka,zaloha','faktura',"id_faktura=$idf");
+    $fak.= " faktura $nazev";
+    $doplatek= $castka - $zaloha;
+    $fak_text= $typ==1
+        ? "záloha $zaloha Kč" : ( 
+          $zaloha>0 ? "doplatek $doplatek Kč (zálohově $zaloha Kč)" : "částka $castka Kč");
   }
   return (object)['evi'=>$evi,'evi_text'=>$e_jmeno,
       'ucast'=>$ucast,'ucast_text'=>"$a_akce, $a_jmeno",
-      'dum'=>$dum,'dum_text'=>"$d_jmeno",'dum_mmyyyy'=>$mmyyyy];
+      'dum'=>$dum,'dum_text'=>"$d_jmeno",'dum_mmyyyy'=>$mmyyyy,
+      'fak'=>$fak,'fak_text'=>$fak_text];
 }
 # ------------------------------------------------------------------------------------------ ds2 fio
 # zapsání informace do platby
@@ -2378,7 +2388,17 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
       query_track("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7 WHERE id_platba=$id_platba");
       break;
     case 'order':
-      query_track("UPDATE platba SET id_ord={$c->dum->order}, stav=9 WHERE id_platba=$id_platba");
+      query_track("UPDATE platba SET id_ord={$c->dum->order}, stav=8 WHERE id_platba=$id_platba");
+      break;
+    case 'faktura':
+      $idf= $c->dum->faktura;
+      $idjp= select('id_join_platba','join_platba',"id_platba=$id_platba");
+      if ($idjp) {
+        query_track("UPDATE join_platba SET id_faktura=$idf WHERE id_join_platba=$idjp");
+      }
+      else { // nebylo propojení
+        query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($id_platba,$idf)");
+      }
       break;
   }
 }
