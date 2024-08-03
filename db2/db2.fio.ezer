@@ -85,7 +85,7 @@ form _ucty [,,640,*] {
   func filter() { var _and: text
     _and= cconc(
       jen_letosni,' AND YEAR(datum)=YEAR(NOW())',
-      jen_prijmy, ' AND castka>0',
+      jen_prijmy, ' AND p.castka>0',
       skryt_navrzene,  ' AND stav NOT IN (6,8,10)',
       skryt_potvrzene, ' AND stav NOT IN (7,9,11)');
     return `${filter_mode} ${_and}`;
@@ -108,28 +108,34 @@ form _ucty [,,640,*] {
   check skryt_potvrzene [555,0,100,] {tag:'cond', title:' skrýt potvrzené', value:'0', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
+  view p: table platba
+  view jp: table join_platba {join_type:'LEFT', join:"USING (id_platba)"}
+  view f: table faktura {join_type:'LEFT', join:"USING (id_faktura)"}
   browse fio [,105,,] { rows:10, qry_rows:2
     css_rows:'stav,3:cerveny,6:azurovy,7:zeleny,8:azurovy,9:zeleny,10:zluty,11:oranzovy'
-    show id_platba { data:platba.id_platba }
-    show datum_sql { data:platba.datum }
+    show id_platba { data:p.id_platba }
+    show id_faktura { data:jp.id_faktura }
+    show datum_sql { data:p.datum }
     show one { expr:"1" }
-    show ucet [,,15,] { title:'účet', expr:"IF(platba.ucet=1,'S','D')", format:'sqr:e' }
-    show stav [,,20,] { title:'stav', data:platba.stav, format:'sqr:e' }
-    show datum [,,70,] { title:'datum', data:platba.datum, sql_pipe:'sql_date1', format:'s-q/r' }
-    show castka [,,70,] { title:'částka', data:platba.castka, format:'sq/r' }
-    show id_pobyt [,,50,] { title:'pobyt', data:platba.id_pob, format:'sq*r:e' 
+    show ucet [,,15,] { title:'účet', expr:"IF(p.ucet=1,'S','D')", format:'sqr:e' }
+    show stav [,,20,] { title:'stav', data:p.stav, format:'sqr:e' }
+    show datum [,,70,] { title:'datum', data:p.datum, sql_pipe:'sql_date1', format:'s-q/r' }
+    show castka [,,70,] { title:'částka', data:p.castka, format:'sq/r' }
+    show id_pobyt [,,50,] { title:'pobyt', data:p.id_pob, format:'sq*r:e' 
         css_cell:'one,1:transparent'}
-    show id_osoba [,,50,] { title:'osoba', data:platba.id_oso, format:'sq*r:e' 
+    show id_osoba [,,40,] { title:'osoba', data:p.id_oso, format:'sq*r:e' 
         css_cell:'one,1:transparent'}
-    show id_order [,,50,] { title:'objednávka', data:platba.id_ord, format:'sq*r:e' 
+    show id_order [,,40,] { title:'objednávka', data:p.id_ord, format:'sq*r:e' 
         css_cell:'one,1:transparent'}
-    show nazev [,,120,] { title:'název', data:platba.nazev, format:'sq*' }
-    show protiucet [,,145,] { title:'protiúčet', data:platba.protiucet, format:'sq*r' }
-    show vs [,,70,] { title:'vs', data:platba.vs, format:'sq*r:e' }
-    show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r:e' }
-    show ss2 [,,40,] { title:'ss2', data:platba.ss2, format:'sq*r:e' }
+    show faktura [,,70,] { title:'faktura', data:f.nazev, format:'sq*r:e' 
+        css_cell:'one,1:transparent'}
+    show nazev [,,120,] { title:'název', data:p.nazev, format:'sq*' }
+    show protiucet [,,145,] { title:'protiúčet', data:p.protiucet, format:'sq*r' }
+    show vs [,,70,] { title:'vs', data:p.vs, format:'sq*r:e' }
+    show ss [,,40,] { title:'ss', data:p.ss, format:'sq*r:e' }
+    show ss2 [,,40,] { title:'ss2', data:p.ss2, format:'sq*r:e' }
     show zprava [,,300,] { title:'zpráva identifikace', format:'sq*t' 
-      expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
+      expr:"CONCAT(p.zprava,' ',IF(p.ident!=p.nazev,p.ident,''))"}
     // funkce
     func onrowclick() { var _akce:array, _osoba:array, _ido:text, _idx:text, _pobyt:text, nar:text
       form.load(id_platba);
@@ -177,7 +183,7 @@ form _ucty [,,640,*] {
     }
     refresh();
   }
-  label prepis [189,331,154,] { 
+  label prepis [189,331,204,14] { 
       style:'font-size:10pt;color:black;background:yellow;text-align:center'
       title:'... lze měnit pomocí ? ...'}
   const top1=40
@@ -225,13 +231,13 @@ form _ucty [,,640,*] {
   label [584,top1+22,350,] { title:'rozpoznaná osoba (narozena), účast na akci' }
   label platba_za [533,top1+37,360,] { style:'font-size:10pt;color:black' }
   // ------------------------------------------------------------- zobrazení aktuálních nastavení
-  button [10,367,20,66] { tag:'F', title:'?', style:'background:yellow'
+  button [10,367,20,93] { tag:'F', title:'?', style:'background:yellow'
     func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
     func onclick_(c:object) { var t:object, txt:text
       clear();
-      echo(debug(c));
+//      echo(debug(c));
       t= php.ds2_show_curr(c);
-      echo(debug(t));
+//      echo(debug(t));
       txt= t.ucast ? t.ucast : '... nastav pobyt na kartě a stiskni ?';
       x_akce= `<b>ÚČASTNÍCI</b> ${txt}`;
       xx_akce= t.ucast_text;
@@ -239,9 +245,11 @@ form _ucty [,,640,*] {
       x_evid= `<b>EVIDENCE</b>: ${txt}`;
       xx_evid= t.evi_text;
       txt= t.dum ? t.dum : '... nastav ji na kartě a stiskni ?';
-//      x_dum= `<b>Dům setkání</b>: ${txt}`;
       x_dum= `<b>AKCE/OBJEDNÁVKY</b>: ${txt}`;
       xx_dum= t.dum_text;
+      txt= t.fak ? t.fak : '... nastav ji na kartě a stiskni ?';
+      x_fak= `<b>FAKTURY</b>: ${txt}`;
+      xx_fak= t.fak_text;
   }}
   // účastníci akce
   label [40,356,1000,3] { tag:'F', title:'<hr>' }
@@ -274,9 +282,11 @@ form _ucty [,,640,*] {
   label x_dum [40,417,347,18] {tag:'F', style:'font-size:10pt;color:black' ,
       title:'... nastav objednávku na kartě AKCE a stiskni ?'}
   button [397,416,,] {tag:'F', title:'přepiš objednávku'
-    func onclick() { 
-      if (php.select('id_faktura','join_platba',`id_platba=${fio.id_platba}`))
-        alert('tato platba je spárována s fakturou, nelze takto měnit')
+    func onclick() { var nazev:text
+      nazev= php.select('nazev','join_platba JOIN faktura USING (id_faktura)',
+          `id_platba=${fio.id_platba}`);
+      if (nazev)
+        alert(`tato platba je spárována s fakturou ${nazev}, nelze provést změnu`)
       else 
         js.call_root_func('akce2_curr',&this,'onclick_')
     }
@@ -284,12 +294,22 @@ form _ucty [,,640,*] {
       php.ds2_corr_platba(id_platba,'order',1,c);
       refresh();
   }}
-//  button [431,412,,] {tag:'F', title:'... dar', func onclick() {
-//    php.ds2_corr_platba(id_platba,'dar',1);
-//    refresh();
-//  }}
   label xx_dum [531,417,550,18] {tag:'F', style:'font-size:10pt;color:black' }
-  label [40,431,1000,3] { tag:'F', title:'<hr>' }
+  // faktury DS
+  label [40,432,1000,3] { tag:'F', title:'<hr>' }
+  label x_fak [40,442,347,18] {tag:'F', style:'font-size:10pt;color:black' ,
+      title:'... nastav fakturu na kartě FAKTURY a stiskni ?'}
+  button [397,441,,] {tag:'F', title:'přepiš fakturu'
+    func onclick() { 
+      js.call_root_func('akce2_curr',&this,'onclick_')
+    }
+    func onclick_(c:object) {
+      echo(debug(c,'dum'));
+      php.ds2_corr_platba(id_platba,'faktura',1,c);
+      refresh();
+  }}
+  label xx_fak [531,442,550,18] {tag:'F', style:'font-size:10pt;color:black' }
+  label [40,457,1000,3] { tag:'F', title:'<hr>' }
 }
 
 table platba {
@@ -318,6 +338,39 @@ table platba {
   text   provedl
   text   upresneni
   text   komentar
+}
+table join_platba { key_id:'id_join_platba' 
+  number id_join_platba
+  number id_platba
+  number id_faktura
+  text spec
+}
+table faktura { key_id:'id_faktura'
+  number id_faktura
+  text deleted // nic nebo datum
+  text nazev
+  number rok
+  number num
+  number typ
+  number vs
+  number ss
+  number id_order
+  number id_pobyt
+  text duvod_zmeny
+  text vzorec
+  number zaloha
+  number castka
+  number ubyt
+  number stra
+  number popl
+  number prog
+  number jine
+  date vystavena { sql_pipe:'sql_date1'}
+  text vyrizuje
+  text nadpis
+  text parm_json
+  text html
+  text soubor // bude ve složce docs/dum_setkani/faktury
 }
 // ----------------------------------------------------------------- škoda mazat
 panel Majitel [0,80,220,50] { title:'určení majitele účtu', type:'popup', css:'dialog'

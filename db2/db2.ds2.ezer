@@ -5,8 +5,11 @@
 #                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-func curr() {
-    return dum2 ? dum2.curr() : {};
+func curr() { var dum_curr:object
+//    dum_curr= dum2 ? dum2.curr() : {};
+    dum_curr= dum2.curr(); // {dum:{order:the_order}}
+    dum_curr.dum.faktura= fakt.curr();
+    return dum_curr;
 }
   proc the_formsave (f,b) {
     f.same
@@ -39,29 +42,29 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
   }
   menu m {type:'left', format:'f', active:*
     menu roky {title:'Kniha hostů 2024',type:'group'
-      item {title:'leden',        par:{rok:'2024',mes:1} }
+      item {title:'[fa-calendar] leden',        par:{rok:'2024',mes:1} }
       item {title:'... podrobně', par:{rok:'2024',mes:1,spolu:1} }
-      item {title:'únor',         par:{rok:'2024',mes:2} }
+      item {title:'[fa-calendar] únor',         par:{rok:'2024',mes:2} }
       item {title:'... podrobně', par:{rok:'2024',mes:2,spolu:1} }
-      item {title:'březen',       par:{rok:'2024',mes:3} }
+      item {title:'[fa-calendar] březen',       par:{rok:'2024',mes:3} }
       item {title:'... podrobně', par:{rok:'2024',mes:3,spolu:1} }
-      item {title:'duben',        par:{rok:'2024',mes:4} }
+      item {title:'[fa-calendar] duben',        par:{rok:'2024',mes:4} }
       item {title:'... podrobně', par:{rok:'2024',mes:4,spolu:1} }
-      item {title:'květen',       par:{rok:'2024',mes:5} }
+      item {title:'[fa-calendar] květen',       par:{rok:'2024',mes:5} }
       item {title:'... podrobně', par:{rok:'2024',mes:5,spolu:1} }
-      item {title:'červen',       par:{rok:'2024',mes:6} }
+      item {title:'[fa-calendar] červen',       par:{rok:'2024',mes:6} }
       item {title:'... podrobně', par:{rok:'2024',mes:6,spolu:1} }
-      item {title:'červenec',     par:{rok:'2024',mes:7} }
+      item {title:'[fa-calendar] červenec',     par:{rok:'2024',mes:7} }
       item {title:'... podrobně', par:{rok:'2024',mes:7,spolu:1} }
-      item {title:'srpen',        par:{rok:'2024',mes:8} }
+      item {title:'[fa-calendar] srpen',        par:{rok:'2024',mes:8} }
       item {title:'... podrobně', par:{rok:'2024',mes:8,spolu:1} }
-      item {title:'září',         par:{rok:'2024',mes:9} }
+      item {title:'[fa-calendar] září',         par:{rok:'2024',mes:9} }
       item {title:'... podrobně', par:{rok:'2024',mes:9,spolu:1} }
-      item {title:'říjen',        par:{rok:'2024',mes:10} }
+      item {title:'[fa-calendar] říjen',        par:{rok:'2024',mes:10} }
       item {title:'... podrobně', par:{rok:'2024',mes:10,spolu:1} }
-      item {title:'listopad',     par:{rok:'2024',mes:11} }
+      item {title:'[fa-calendar] listopad',     par:{rok:'2024',mes:11} }
       item {title:'... podrobně', par:{rok:'2024',mes:11,spolu:1} }
-      item {title:'prosinec',     par:{rok:'2024',mes:12} }
+      item {title:'[fa-calendar] prosinec',     par:{rok:'2024',mes:12} }
       item {title:'... podrobně', par:{rok:'2024',mes:12,spolu:1} }
       item {title:'Celý rok -------------', par:{rok:'2024',mes:0} }
       item {title:'... podrobně',           par:{rok:'2024',mes:0,spolu:1} }
@@ -93,6 +96,7 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 # =========================================================================================> FAKTURY
 panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }
+  func curr() { return info.fak.idf; }
   menu m {type:'left', active:*, format:'f-'
     menu roky {title:'Kniha faktur',type:'group'
       item i {title:'[fa-eur] Letos vystavené faktury',  par:{rok:2024} }
