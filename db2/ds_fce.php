@@ -1118,7 +1118,7 @@ function dum_browse_orders($x) {
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_order($x) {
-  global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
+  global $answer_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
 //  debug($x,"dum_browse_order");
   $y= (object)array('ok'=>0);
   switch ($x->cmd) {
@@ -1594,18 +1594,19 @@ function dum_kniha_hostu($par,$export=0) {
   $AND_TEST= $par->obj ? " AND d.id_order=$par->obj" : '';
   // projdeme všechny objednávky
   $ro= pdo_qry("
-    SELECT d.id_order,id_akce,IF(NOT ISNULL(id_faktura) AND f.deleted='',id_faktura,0) AS _idf,
-      typ,IFNULL(g_kod,''),note,state,od,do
+    SELECT d.id_order,id_akce,
+      GROUP_CONCAT(IF(NOT ISNULL(id_faktura) AND f.deleted='',id_faktura,0)) AS _idf,
+      IFNULL(g_kod,''),note,state,od,do
     FROM objednavka AS d
-    LEFT JOIN faktura AS f ON f.id_order=d.id_order AND f.deleted=''
+    LEFT JOIN faktura AS f ON f.id_order=d.id_order AND f.deleted='' AND f.id_pobyt=0 
     LEFT JOIN join_akce USING (id_akce) 
     WHERE d.deleted=0 AND YEAR(od)=$rok $AND_MESIC $AND_TEST -- AND MONTH(od)<=MONTH(NOW()) 
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová
       -- AND id_order=2477 -- Bednář
-    -- GROUP BY d.id_order    
+    GROUP BY d.id_order    
     ORDER BY od
   ");
-  while ($ro && (list($idd,$ida,$idf,$typ,$kod,$note,$state,$od,$do)= pdo_fetch_array($ro))) {
+  while ($ro && (list($idd,$ida,$idf,$kod,$note,$state,$od,$do)= pdo_fetch_array($ro))) {
     $n++;
     $pobyty= 0;
     $row= [];
@@ -1633,7 +1634,7 @@ function dum_kniha_hostu($par,$export=0) {
       $pobyty= 1;
       $row_set('druh',"pobyt");
     }
-    dum_kniha_hostu_fakturace($idf,$row);
+    dum_kniha_hostu_fakturace($idd,$idf,$row);
     $isum= count($tab); 
     $sum= [];
     $tab[]= $row;
@@ -1693,8 +1694,9 @@ function dum_kniha_hostu($par,$export=0) {
             $row_set($fld,$fld=='ubyt' && $ne_ubyt && $up->celkem ? [$val,4] : $val);
           }
           $platba= dum_kniha_castka($up->celkem,$castka,$ne_ubyt);
-          $row_set('platba',$fakturace_akce ? 0 : $platba);
-          $row_set('rozdil',$fakturace_akce ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
+          $row_set('platba',$fakturace_akce && !$faktura ? 0 : $platba);
+          $row_set('rozdil',$fakturace_akce && !$faktura 
+              ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
           $row_set('nx',$nx>1 ? "{$nx}x" : ''); 
           $row_set('kdy',$datum);
           // pokud je chtěn rozklad, doplň jej
@@ -1751,26 +1753,27 @@ function dum_kniha_hostu($par,$export=0) {
   $res->t2= round(getmicrotime() - $time_start,4);
   return $res;
 }
-function dum_kniha_hostu_fakturace($idf,&$row) {
+// idfs jsou faktury vydané na pobyt 
+function dum_kniha_hostu_fakturace($idd,$idfs,&$row) {
   global $clmn_i;
-  $rk= pdo_qry("
-    SELECT IF(typ in (1,2),zaloha,f.castka) AS cena,ubyt,stra,popl,jine,
-      p.castka AS platba,p.castka-IF(typ in (1,2),zaloha,f.castka) AS rozdil,
-      datum AS kdy,f.nazev AS fakt
-    FROM faktura AS f  
-	LEFT JOIN join_platba AS pf USING (id_faktura) 
-	LEFT JOIN platba AS p USING (id_platba) 
-	WHERE deleted='' AND id_faktura=$idf AND f.id_pobyt=0
-	ORDER BY f.num DESC,f.id_faktura
-  ");
-  if ($rk) {
-    $f= pdo_fetch_assoc($rk);
-    foreach ($f as $fld=>$val) {
-      if ($fld=='platba') $val= dum_kniha_castka($f['cena'],$val);
-      $i= $clmn_i[$fld];
-      $row[$i]= $val;
-    }
+  // faktury
+  $fakt= select("/* order $idd */ GROUP_CONCAT(nazev SEPARATOR ', ')",
+      'faktura',"id_faktura IN ($idfs)");
+  $row[$clmn_i['fakt']]= $fakt;
+  // vyúčtování
+  list($fv['cena'],$fv['ubyt'],$fv['stra'],$fv['popl'],$fv['jine'])= select(
+      'SUM(castka),SUM(ubyt),SUM(stra),SUM(popl),SUM(jine)','faktura',
+      "id_faktura IN ($idfs) AND typ NOT IN (1,2)");
+  foreach ($fv as $fld=>$val) {
+    $row[$clmn_i[$fld]]= $val;
   }
+  // platby
+  list($platby,$posledni)= select('IFNULL(SUM(castka),0),MAX(datum)',
+      "platba JOIN join_platba USING (id_platba)","id_faktura IN ($idfs)");
+  $val= dum_kniha_castka($fv['cena'],$platby);
+  $row[$clmn_i['platba']]= $val;
+  $row[$clmn_i['kdy']]= $posledni;
+  $row[$clmn_i['rozdil']]= $platby - $fv['cena'];
 }
 // obarvení částky
 function dum_kniha_castka($castka,$platba,$ne_ubyt=0) {
