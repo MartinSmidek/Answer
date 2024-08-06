@@ -346,15 +346,26 @@ panel cen {type:'right', title:'Ceny'
       show id [,,0,] { data:ds_cena.id_cena }
       show rok [,,0,] { data:ds_cena.rok }
       show [,,240,] {title:'položka ceníku',  data:ds_cena.polozka }
-      show [,,100,] {title:'druh',  data:ds_cena.druh format:'s+'}
-      show [,,60,] {title:'typ',  data:ds_cena.typ format:'s+'}
-      show [,,50,] {title:'od vč.',  data:ds_cena.od, format:'r' }
-      show [,,50,] {title:'do nevč.',  data:ds_cena.do, format:'r' }
+      show druh [,,100,] {title:'druh',  data:ds_cena.druh format:'s+'}
+      show typ [,,60,] {title:'typ',  data:ds_cena.typ format:'s+'}
+      show od [,,50,] {title:'od vč.',  data:ds_cena.od, format:'r' }
+      show do [,,50,] {title:'do nevč.',  data:ds_cena.do, format:'r' }
       show [,,80,] {title:'cena s DPH',  data:ds_cena.cena, format:'r' }
       show [,,80,] {title:'dotovaná',  data:ds_cena.dotovana, format:'r' }
-      show [,,40,] {title:'DPH',  data:ds_cena.dph, format:'r' }
-      proc onsubmit (id) {
+      show dph [,,40,] {title:'DPH',  data:ds_cena.dph, format:'r' }
+      func onsubmit (id) {
         oprava.modal(300,100)
+      }
+      # ------------------------==> . kontextové_menu
+      menu ctx { type:'context' //, join:frame
+        item { title:'úprava ceníkové položky', 
+          func onclick () { oprava.modal(300,100) } }
+        item { title:'nová ceníková položka', 
+          func onclick () { 
+            ceny.browse_seek(conc('id_cena=',ds_cena.insert_record({rok:rok,polozka:'?',
+                druh:druh,typ:typ,od:od,do:do,dph:dph})));
+            oprava.modal(300,100) 
+        } }
       }
     }
   }

@@ -699,6 +699,7 @@ function dum_objednavka_save($id_order,$changed) {
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
   foreach($changed as $fld=>$val) {
+    $val= pdo_real_escape_string($val);
     if (in_array($fld,['od','do'])) {
       $ymd= sql_date1($val,1);
       $set_akce.= $del_akce.($fld=='od' ? 'datum_od' : 'datum_do')."='$ymd'";
@@ -706,7 +707,10 @@ function dum_objednavka_save($id_order,$changed) {
       $val= strtotime($ymd);
       $fld= $fld=='od' ? 'fromday' : 'untilday';
     }
-    $val= pdo_real_escape_string($val);
+    if (in_array($fld,['nazev'])) {
+      $set_akce.= "$del_akce nazev='$val'";
+      $del_akce= ',';
+    }
     $set.= "$del$fld='$val'";
     $del= ',';
   }
@@ -1640,6 +1644,7 @@ function dum_kniha_hostu($par,$export=0) {
     $tab[]= $row;
     $rows_spolu= [];
     if (1) { // ($pobyty || $par->spolu) {
+      // vyloučíme funkce znamenající neúčast - mají v číselníku ikona=1
       $idp_old= 0;
       $rp= pdo_qry(" 
         SELECT p.id_pobyt,p.funkce,IFNULL(f.nazev,'')
@@ -1648,7 +1653,8 @@ function dum_kniha_hostu($par,$export=0) {
         LEFT JOIN faktura AS f ON f.id_pobyt=p.id_pobyt AND f.deleted=''
         LEFT JOIN spolu AS s ON s.id_pobyt=p.id_pobyt
         LEFT JOIN osoba AS o USING (id_osoba)
-        WHERE id_akce=$ida 
+        JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
+        WHERE id_akce=$ida AND c.ikona=0 -- 1 pokud nebyl na akci
         --  AND p.id_pobyt=64680
         GROUP BY id_pobyt
         ORDER BY prijmeni
@@ -2103,18 +2109,38 @@ function ds2_vek($narozeni,$fromday) {
   }
   return $vek;
 }
-# -------------------------------------------------------------------------------------- ucast kopie
+# ----------------------------------------------------------------------------- ucast presun_do_akce
+# přesune pobyt s účastníky do dané akce
+#  make=0 žádost o souhlas do msg, chybovou hlášku do err
+#  make=1 provede kopii do akce [Zpět]
+function ucast_presun_do_akce($idp,$ida_goal,$make=0) { 
+  $ret= (object)['msg'=>'','err'=>''];
+  // příprava dotazu na souhlas s provedením 
+  if (!$make) { 
+    $pobyt= ucast_popis($idp);
+    $nazev_goal= select1("CONCAT(nazev,' ',YEAR(datum_od))",'akce',"id_duakce=$ida_goal");
+    if ($nazev_goal)
+      $ret->msg= "Mám přesunout '$pobyt' na akci '$nazev_goal' ? ";
+    else 
+      $ret->err= "POZOR to není ID akce!";
+  }
+  // proveď přesun
+  elseif ($make) { 
+    query_track("UPDATE pobyt SET id_akce=$ida_goal WHERE id_pobyt=$idp");
+  }
+  return $ret;
+}
+# ------------------------------------------------------------------------------ ucast kopie_do_akce
 # zkopíruje účastníky jednoho pobytu do akce [Zpět]
 #  make=0 žádost o souhlas do msg, chybovou hlášku do err
 #  make=1 provede kopii do akce [Zpět]
-function ucast_kopie($idp,$ida_goal,$make=0) { 
+function ucast_kopie_do_akce($idp,$ida_goal,$make=0) { 
   $ret= (object)['msg'=>'','err'=>''];
   $idr= select('i0_rodina','pobyt',"id_pobyt=$idp");
   $nazev_goal= select1("CONCAT(nazev,' ',YEAR(datum_od))",'akce',"id_duakce=$ida_goal");
   // příprava dotazu na souhlas s provedením 
   if (!$make) { 
     $pobyt= ucast_popis($idp);
-    $konflikt= implode(',',$konflikt);
     $ret->msg= "Mám zkopírovat '$pobyt' na akci '$nazev_goal' ? ";
   }
   // proveď přesun
@@ -2181,7 +2207,7 @@ function ucast_presun($idp,$idp_goal,$make=0) {
   return $ret;
 }
 # ------------------------------------------------------------------------------- ucast presun_cleny
-# vysune označené členy z daného pobytu a vytvoří pro ně nový pobyt
+# vysune označené členy z daného pobytu a vytvoří pro ně nový pobyt nebo jen přesune jinam
 #  kam='' vrátí varianty do kam, případně chybovou hlášku do err
 #  kam='jiny' provede přesun do pobytu idps
 #  kam='novy' vytvoří nový pobyt a přesune
@@ -2197,8 +2223,10 @@ function ucast_presun_cleny($idp,$idos,$idps,$kam='0') {
           "o.id_osoba IN ($idos) AND NOT(ISNULL(s.id_osoba))");
       $ret->ask= "Do kterého pobytu mám přesunout označené členy: $cleni?";
       $ret->buts= "do nově vytvořeného:novy";
-      $pobyt= dum_pobyt_nazev($idps,'rodina');
-      if ($jiny) $ret->buts.= ",přidat k $pobyt:jiny";
+      if ($jiny) {
+        $pobyt= dum_pobyt_nazev($idps,'rodina');
+        $ret->buts.= ",přidat k $pobyt:jiny";
+      }
       $ret->buts.= ",nic nepřesouvat:nikam";
       break;
     case 'novy': // požadavek - přesunout $idos/$idp do nově vytvořeného pobytu 

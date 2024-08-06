@@ -996,12 +996,24 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
             reload(goal);
           }
       } }
+      item { title:'přesunout na jinou akci'
+        func onclick () { var ret:object /* {msg,err} */, ida:number /* ID cílové akce */
+          ida= prompt2("Napiš ID akce, kam budeme přesouvat");
+          if (ida) {
+            ret= php.ucast_presun_do_akce(the_pobyt,ida,0); // připraví dotaz nebo protest
+            if (ret.err) alert(ret.err);
+            elseif (confirm(ret.msg)) {
+              php.ucast_presun_do_akce(the_pobyt,ida,1); // provede prepsani pobyt.id_akce
+              reload(0);
+            }
+          }
+      } }
       item cpy { title:"zkopírovat do akce [Zpět]", format:'d'
         func onclick () { var ret:object /* {msg,err} */
-          ret= php.ucast_kopie(the_pobyt,back.ida,0); // připraví dotaz nebo protest
+          ret= php.ucast_kopie_do_akce(the_pobyt,back.ida,0); // připraví dotaz nebo protest
           if (ret.err) alert(ret.err);
           elseif (confirm(ret.msg)) {
-            php.ucast_kopie(the_pobyt,back.ida,1); // provede vložení
+            php.ucast_kopie_do_akce(the_pobyt,back.ida,1); // provede vložení
           }
       } }
     }
