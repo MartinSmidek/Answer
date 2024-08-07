@@ -1882,6 +1882,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
       }
       $align= $style= '';
       $xls_fmt= '';
+      $val_html= $val;
       switch ($clmn_if[$i]) {
         case 'd': 
           // jen SQL datum jako datum - jinak text
@@ -1901,12 +1902,13 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
           $align= " align='right'";
           $style= $val<0 ? " style='color:red'" : '';
           $xls_fmt= '::kc right';
+          $val_html= number_format($val,0,'.','&nbsp;');
           break;
         case 't': 
           $xls_fmt= '::left';
           break;
       }
-      $html.= "<td$align$cls$style>$val</td>";
+      $html.= "<td$align$cls$style>$val_html</td>";
       if ($excel) { // obarvení záhlaví sloupců
         $A= Excel5_n2col($c++);
         $xls.= "\n|$A$r $val$xls_fmt$xls_clr";
