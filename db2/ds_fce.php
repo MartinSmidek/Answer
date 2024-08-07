@@ -1901,6 +1901,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
           $align= " align='right'";
           $style= $val<0 ? " style='color:red'" : '';
           $xls_fmt= '::kc right';
+          $val= number_format($val,0,'.','&nbsp;');
           break;
         case 't': 
           $xls_fmt= '::left';
