@@ -11982,7 +11982,7 @@ function sta2_struktura($org,$par,$title,$export=false) {
     }
   }
   // doplnění informací o rodinách
-  $rod= sta2_rodiny($org,0,$mez_k);
+  $rod= sta2_rodiny($org,$od_roku,$mez_k);
   // doplnění informací o pečounech
   $pecs= sta2_pecouni_simple($org);
 //                                         debug($rod,"rodiny");
@@ -12159,7 +12159,7 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
   // ms => r=rodin, d=dětí na akci, D=dětí mladších 18 v rodině,
   //       va=věk muže, na=počet mužů s věkem, vb=věk ženy, nb=.., vm=délka manželství, nm=..
 //  $rok= 2016; // *****************************************
-  $HAVING= $rok ? "HAVING _rok=$rok" : '';
+  $HAVING= $rok ? "HAVING _rok>=$rok" : '';
   $rx= pdo_qry("
     SELECT id_akce, YEAR(datum_od) AS _rok,
       COUNT(id_osoba) AS _clenu, COUNT(id_spolu) AS _spolu,
@@ -12192,15 +12192,15 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
     $ms[$r]['k']+= $x->_sebou_k;
     $ms[$r]['K']+= $x->kocarek;
     $ms[$r]['D']+= $x->_deti;
-    if ( $x->_vek_a ) {
+    if ( $x->_vek_a && $x->_vek_a<100 ) {
       $ms[$r]['va']+= $x->_vek_a;
       $ms[$r]['na']++;
     }
-    if ( $x->_vek_b ) {
+    if ( $x->_vek_b && $x->_vek_b<100 ) {
       $ms[$r]['vb']+= $x->_vek_b;
       $ms[$r]['nb']++;
     }
-    if ( $x->_vek_m ) {
+    if ( $x->_vek_m && $x->_vek_m!=0 ) {
       $ms[$r]['vm']+= $x->_vek_m;
       $ms[$r]['nm']++;
     }
