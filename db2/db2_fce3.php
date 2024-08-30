@@ -2188,8 +2188,9 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 #                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
 function akce2_vzorec($id_pobyt) {  //trace();
   // případné přepnutí na ceník verze 2017
-  list($id_akce,$cenik_verze)= select(
-    "id_akce,ma_cenik_verze","pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
+  list($id_akce,$cenik_verze,$ma_cenik,$ma_cenu)= select(
+    "id_akce,ma_cenik_verze,ma_cenik,ma_cenu",
+    "pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
 //  if ( $cenik_verze==1 ) return akce2_vzorec_2017($id_pobyt,$id_akce,2017);
   $ok= true;
   $ret= (object)array(
@@ -2199,6 +2200,10 @@ function akce2_vzorec($id_pobyt) {  //trace();
           'vzorec'=>(object)array(),
           'slevy'=>(object)array('kc'=>0)
       ));
+  if (!$ma_cenik && !$ma_cenu) {
+    $ret->navrh= "akce nemá ani ceník ani jednotnou cenu (karta AKCE)";
+    goto end; // další výpočet nemá smysl
+  }
   // parametry pobytu
   $x= (object)array();
   $ubytovani= 0;
