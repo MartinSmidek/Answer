@@ -95,7 +95,7 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 }
 # =========================================================================================> FAKTURY
 panel fakt {type:'right', title:"Faktury"
-  func onfocus() { m.roky.i.click(); }
+  func onstart() { m.roky.i.click(); }
   func curr() { return info.fak.idf; }
   menu m {type:'left', active:*, format:'f-'
     menu roky {title:'Kniha faktur',type:'group'

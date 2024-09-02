@@ -12,10 +12,29 @@ function db2_kontrola_spolu($par) { trace();
 //  $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
   $n= 0;
   $opravit= $par->opravit ? true : false;
+
+  // ----------------------------------------------==> .. pobyty bez členů
+  // pobyty s funkce=99 pro akce MS ponecháváme
   $msg= '';
   $ok= '';
-
+  $res= pdo_qry("SELECT id_akce,id_pobyt,nazev,YEAR(datum_od) AS _rok
+          FROM pobyt LEFT JOIN spolu USING (id_pobyt) JOIN akce ON id_akce=id_duakce
+          WHERE ISNULL(id_spolu) AND (funkce!=99 OR druh NOT IN (1,2,3,18))
+          -- AND YEAR(datum_od)=2024
+          ORDER BY id_akce DESC");
+  while ( $res && ($x= pdo_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $deleted= pdo_qry("DELETE FROM pobyt WHERE id_pobyt={$x->id_pobyt}",1);
+      $ok= $deleted ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>pobyt ($x->id_pobyt) v {$x->nazev} {$x->_rok} je bez účastníků $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'> tabulka <b>pobyt</b>: prázdné pobyty"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   // ----------------------------------------------==> .. nulové klíče ve SPOLU
+  $msg= '';
+  $ok= '';
   $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
   $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,
             CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
@@ -42,6 +61,7 @@ function db2_kontrola_spolu($par) { trace();
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   # -----------------------------------------==> .. spolu vede na smazanou osobu
   $msg= '';
+  $ok= '';
   $rr= pdo_qry("
     SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,
       CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev
@@ -63,6 +83,7 @@ function db2_kontrola_spolu($par) { trace();
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   // ----------------------------------------------==> .. násobné SPOLU
   $msg= '';
+  $ok= '';
   $qry=  "SELECT GROUP_CONCAT(id_spolu) AS _ss,id_pobyt,s.id_osoba,count(*) AS _pocet_,
             CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
           FROM spolu AS s
