@@ -217,10 +217,11 @@ function parm($id_akce) {
   // parametry přihlášky a ověření možnosti přihlášení
   // pro akce ve fázi přihlašování se obsah web_online bere jako konstanta 
   switch ($id_akce) {
-    case 1553: // Jarní obnova 2024
+//    case 1553: // Jarní obnova 2024
+    case 1551: // Podzimní obnova 2024
       $web_online= <<<__JSON
           { "p_enable":1,"p_rodina":1,"p_rod_adresa":1,"p_obcanky":1,"p_obnova":1,"p_jednotlivec":0,
-            "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1 }
+            "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1,"p_pozde":0}
 __JSON;
       $ok= 1;
       if (!ip_ok()) { // jen GAN a JZE smí testovat
@@ -237,7 +238,7 @@ __JSON;
   // dekódování web_online
   $akce= json_decode($web_online);
   
-  $akce->p_pozde= 1; // pak se dá do Answeru jako volba nebo jako termín
+//  $akce->p_pozde= 1; // pak se dá do Answeru jako volba nebo jako termín
   
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
@@ -601,7 +602,7 @@ function do_vyplneni_dat() {
         }
       }
     }
-    if ($akce->p_souhlas && !$vars->chk_souhlas) {
+    if (($akce->p_souhlas??0) && !$vars->chk_souhlas) {
       $neuplne[]= "potvrďte prosím svůj souhlas";
       $mis_souhlas= "class=missing";
     }
@@ -691,7 +692,7 @@ function do_vyplneni_dat() {
     }
   }
   // -------------------------------------------- pokud je vyžadován souhlas
-  $souhlas= $akce->p_souhlas
+  $souhlas= ($akce->p_souhlas??0)
     ? "<input type='checkbox' name='chk_souhlas' value=''  "
       . ($vars->chk_souhlas ? 'checked' : '')
       . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
@@ -780,10 +781,10 @@ function do_rozlouceni() {
         : " a zapisuji vás mezi účastníky."
           . " Vaši přihlášku zpracuji do tří dnů.<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> "
           . "s doplňujícími informacemi.</p>");
-    // text po termínu 
-    $text= ".</p>"
-        . "<p>V tuto chvílí vás pro velký zájem o obnovu zařazujeme mezi náhradníky. 
-          Pokud bude místo, ozveme se nejpozději týden před akcí a účast vám potvrdíme.</p>";
+//    // text po termínu 
+//    $text= ".</p>"
+//        . "<p>V tuto chvílí vás pro velký zájem o obnovu zařazujeme mezi náhradníky. 
+//          Pokud bude místo, ozveme se nejpozději týden před akcí a účast vám potvrdíme.</p>";
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
     $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
     $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"

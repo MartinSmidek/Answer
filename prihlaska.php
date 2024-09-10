@@ -132,6 +132,8 @@ function start() { // ----------------------------------------------------------
     $_SESSION[$AKCE]->server= $ezer_server;
     $_SESSION[$AKCE]->test= $TEST;
     $_SESSION[$AKCE]->mail= $MAIL;
+    // default hodnoty
+    $_SESSION[$AKCE]->p_rod_adresa= 0;
   }
 //  $trace.= debugx($_SESSION[$AKCE],'$_SESSION[akce] - start');
   $vars= (object)$_SESSION[$AKCE];
@@ -185,6 +187,9 @@ function read_akce() { // ------------------------------------------------------
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
   $akce= json_decode($web_online,false); // JSON objects will be returned as objects
+  foreach (['p_rod_adresa','p_souhlas','p_pro_LK','p_obcanky','p_upozorneni'] as $_par) {
+    if (!isset($akce->$_par)) $akce->$_par= 0;
+  }
 //            debug($akce,"web_online");
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
