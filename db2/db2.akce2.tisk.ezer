@@ -404,9 +404,9 @@ menu m {type:'left', //active:*
         info.fill('',x.html);
     }}
     item {title:'MROP - návrh skupinek'                                                     
-                                        ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
-                                        ,tit:'příjmení:15,jméno:12,funkce:5,věk:5,počet dětí:5,stát:4,obec:25,psč:7,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,církev:25,vzdělání:25,zaměstnání:50,zájmy:50,historie:20'
-                                        ,fld:'prijmeni,jmeno,funkce,_vek,_n_deti,prislusnost,obec,psc,poznamka,note,pracovni,cirkev,vzdelani,zamest,zajmy,_historie'}}
+                                        ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'funkce=0',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
+                                        ,tit:'příjmení:15,jméno:12,věk:5,počet dětí:5,stát:4,obec:25,psč:7,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,církev:25,vzdělání:25,zaměstnání:50,zájmy:50,historie:20'
+                                        ,fld:'prijmeni,jmeno,_vek,_n_deti,prislusnost,obec,psc,poznamka,note,pracovni,cirkev,vzdelani,zamest,zajmy,_historie'}}
     item {title:'EROP - účastníci se vším'                                                     
                                         ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
                                         ,tit:'příjmení:15,jméno:12,funkce:5,skupina:4,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,historie:20'
