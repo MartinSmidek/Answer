@@ -5723,6 +5723,8 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
   // číselníky
+  $cirkev= map_cis('ms_akce_cirkev','zkratka');  $cirkev[0]= '';
+  $vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $vzdelani[0]= '';
   $funkce= map_cis('ms_akce_funkce','zkratka');  $funkce[0]= '';
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
@@ -5773,7 +5775,8 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         JOIN osoba ON osoba.id_osoba=spolu.id_osoba
         WHERE spolu.pecovane=o.id_osoba AND id_akce=$akce) AS _chuva,
       (SELECT CONCAT(prijmeni,' ',jmeno) FROM osoba
-        WHERE s.pecovane=osoba.id_osoba) AS _chovany
+        WHERE s.pecovane=osoba.id_osoba) AS _chovany,
+        cirkev,vzdelani,zamest,zajmy
     FROM pobyt AS p
       JOIN spolu AS s USING(id_pobyt)
       JOIN osoba AS o ON o.id_osoba=s.id_osoba AND o.deleted=''
@@ -5831,6 +5834,21 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];
+        break;
+      case 'cirkev':                                                  // osoba: církev
+        $clmn[$n][$f]= $cirkev[$x->$f];
+        break;
+      case 'vzdelani':                                                // osoba: vzdělání
+        $clmn[$n][$f]= $vzdelani[$x->$f];
+        break;
+      case '_n_deti':                                                 // osoba: počet dětí
+        $ido= $x->id_osoba;
+        list($n_deti,$je_idr)= select('COUNT(*),IFNULL(rodic.id_rodina,-1)',
+            'tvori AS rodic
+              JOIN rodina AS r ON r.id_rodina=rodic.id_rodina
+              JOIN tvori AS dite ON dite.id_rodina=r.id_rodina',
+            "rodic.role IN ('a','b') AND dite.role='d' AND rodic.id_osoba=$ido");
+        $clmn[$n][$f]= $je_idr==-1 ? '?' : $n_deti;
         break;
       case 'dite_kat':                                                // osoba: kategorie dítěte
         $clmn[$n][$f]= in_array($x->s_role,array(2,3,4)) 
