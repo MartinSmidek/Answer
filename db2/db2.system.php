@@ -177,12 +177,13 @@ tvori:
   # -----------------------------------------==> .. tvori vede na smazanou osobu/rodinu
   $msg= '';
   $rr= pdo_qry("
-    SELECT id_tvori,id_osoba,id_rodina,r.nazev,CONCAT(jmeno,' ',prijmeni),o.deleted,r.deleted
+    SELECT id_tvori,id_osoba,id_rodina,r.nazev,CONCAT(jmeno,' ',prijmeni),o.deleted,r.deleted,
+      IF(role NOT IN ('a','b','d','p'),1,0)
     FROM tvori JOIN osoba AS o USING (id_osoba) JOIN rodina AS r USING (id_rodina)
     WHERE o.deleted!='' OR r.deleted!=''
     ORDER BY id_rodina
   ");
-  while ( $rr && (list($idt,$ido,$idr,$nazev,$jm,$od,$rd)= pdo_fetch_row($rr) ) ) {
+  while ( $rr && (list($idt,$ido,$idr,$nazev,$jm,$od,$rd,$norole)= pdo_fetch_row($rr) ) ) {
     $ok= '';
     $sod= $od ? "smazaný" : '';
     $srd= $rd ? "smazané" : '';
@@ -194,6 +195,21 @@ tvori:
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: vazby mezi smazanými záznamy"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. tvori s nekorektní rolí
+  $msg= '';
+  $rr= pdo_qry("
+    SELECT id_tvori,id_osoba,id_rodina,r.nazev,CONCAT(jmeno,' ',prijmeni),role
+    FROM tvori JOIN osoba AS o USING (id_osoba) JOIN rodina AS r USING (id_rodina)
+    WHERE role NOT IN ('a','b','d','p')
+    ORDER BY id_rodina
+  ");
+  while ( $rr && (list($idt,$ido,$idr,$nazev,$jm,$role)= pdo_fetch_row($rr) ) ) {
+    $ok= '';
+    $idr= tisk2_ukaz_rodinu($idr);
+    $msg.= "<dd>v $srd rodině $idr:$nazev je $sod člen $jm/$ido s nekorektní rolí</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: kontrola rodinných rolí $role"
+    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
   # -----------------------------------------==> .. násobné členství v rodině
   $msg= '';
   $qry=  "SELECT GROUP_CONCAT(id_tvori) AS _ts,count(*) AS _pocet_,GROUP_CONCAT(DISTINCT role) AS _role_,
