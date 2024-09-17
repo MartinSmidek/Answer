@@ -1,6 +1,25 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ======================================================================================== mapy.cz */
 # --------------------------------------------------------------------------------------- geo remove
+// zapíše osobě geolokaci z mapy.cz (kopie GPS)
+// 50.6176686N, 15.6191003E
+function geo_manual($ido,$gps) { 
+  $msg= "";
+  $m= null;
+  $ok= preg_match("/([0-9\.]+)N,\s*([0-9\.]+)E/",$gps,$m);
+  if ($ok) {
+    if (select('id_osoba','osoba_geo',"id_osoba=$ido")) {
+      query("UPDATE osoba_geo SET lat='$m[1]',lng='$m[2]',stav=1 ");
+      $msg= "GPS upraveno";
+    }
+    else {
+      query("INSERT INTO osoba_geo (id_osoba,lat,lng,stav) VALUES ($ido,'$m[1]','$m[2]',1)");
+      $msg= "GPS vloženo";
+    }
+  }
+  return $ok ? $msg : 'nepochopená forma GPS';
+}
+# --------------------------------------------------------------------------------------- geo remove
 // zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
 function geo_remove($ido) { 
   $ok= query("DELETE FROM osoba_geo WHERE id_osoba=$ido");
@@ -60,11 +79,11 @@ function geo_fill ($y) { debug($y,'geo_fill');
         $url= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/"
             . "MapServer/exts/GeocodeSOE/findAddressCandidates?SingleLine={$lineadr}&magicKey="
             . "&outSR=&maxLocations=&outFields=&searchExtent=&f=html";
-        $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
+//        $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
         $y->note= "{$geo->error} OSOBA $idox 
           <a href='{$geo->url}' target='url'>VDP ČÚZK</a>
           <a href='$url' target='url'>AGS ČÚZK</a> 
-          <a href='$mapycz' target='url'>mapy.</a> 
+          <!-- a href='$mapycz' target='url'>mapy.</a --> 
           {$geo->address}
         ";
       }
