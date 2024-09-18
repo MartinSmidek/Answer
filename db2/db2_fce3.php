@@ -5289,7 +5289,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
 # ---------------------------------------------------------------------------- akce2 starsi_mrop_pdf
 # generování skupinky MROP - pro starší
 # pokud je zadáno id_pobyt jedná se o VPS a navrátí se je grp jeho skupinky (personifikace mailu)
-function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
+function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0,$tj='MROP') { trace();
   global $ezer_path_docs;
   $res= (object)array('html'=>'','err'=>'');
   if ($id_pobyt_vps) {
@@ -5328,7 +5328,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
     WHERE p.id_akce=$akce AND $cond AND p.funkce IN (0,1,2)
     ORDER BY skupina,p.funkce DESC,jmeno");
   while ( $rg && ($x= pdo_fetch_object($rg)) ) {
-    if ($id_pobyt_vps) {
+    if ($id_pobyt_vps && $tj=='EROP') {
       $nik_missing= $x->pracovni ? '' : " ... <b>KONTAKT?</b>";
       $nik= '';
       if (!$nik_missing) {
@@ -5388,22 +5388,24 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       $chata= $o->budova ? "$o->budova $o->pokoj" : ($o->pokoj ?: '');
       $fill= '&nbsp;&nbsp;';
       $stat= $o->stat=='CZ' ? '' : ", $o->stat";
-      $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
-      $nik= '';
-      $jazyk= '';
-      if (!$nik_missing) {
-        $m= null;
-        if (preg_match('~Jméno:\s*(.+)(?:\nSymbol:\s*(.+)|)(?:\nJazyk:\s*(.+)|)~u',$o->pracovni,$m)) {
-          $nik= "<i>$m[1]</i> ";
-          if ($m[3]) {
-            $jazyk.= preg_match('~ang~iu',$m[3]) ? 'A' : '';
-            $jazyk.= preg_match('~něm~iu',$m[3]) ? 'N' : '';
-            if (!$jazyk) $res->err.= "POZOR - $o->jmeno $o->prijmeni zná divný jazyk<br>";
-            else $jazyk= ", $jazyk";
+      if ($tj=='EROP') {
+        $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
+        $nik= '';
+        $jazyk= '';
+        if (!$nik_missing) {
+          $m= null;
+          if (preg_match('~Jméno:\s*(.+)(?:\nSymbol:\s*(.+)|)(?:\nJazyk:\s*(.+)|)~u',$o->pracovni,$m)) {
+            $nik= "<i>$m[1]</i> ";
+            if ($m[3]) {
+              $jazyk.= preg_match('~ang~iu',$m[3]) ? 'A' : '';
+              $jazyk.= preg_match('~něm~iu',$m[3]) ? 'N' : '';
+              if (!$jazyk) $res->err.= "POZOR - $o->jmeno $o->prijmeni zná divný jazyk<br>";
+              else $jazyk= ", $jazyk";
+            }
           }
-        }
-        else {
-          $res->err.= "POZOR - $o->jmeno $o->prijmeni má chybně zapsané jméno a symbol<br>";
+          else {
+            $res->err.= "POZOR - $o->jmeno $o->prijmeni má chybně zapsané jméno a symbol<br>";
+          }
         }
       }
       $jmeno= $o->funkce 
