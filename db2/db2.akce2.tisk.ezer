@@ -393,13 +393,27 @@ menu m {type:'left', //active:*
                                         ,ord:"skupina,funkce DESC,prijmeni,jmeno,email"
                                         ,tit:'jméno:25, skupina:8, mail:40'
                                         ,fld:'pr_jm,skupina,email'}}
-    item {title:'skupiny - pro starší'
+    item {title:'MROP - návrh skupinek'                                                     
+                                        ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'funkce=0',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
+                                        ,tit:'příjmení:15,jméno:12,věk:5,počet dětí:5,stát:4,obec:25,psč:7,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,církev:25,vzdělání:25,zaměstnání:50,zájmy:50,historie:20'
+                                        ,fld:'prijmeni,jmeno,_vek,_n_deti,prislusnost,obec,psc,poznamka,note,pracovni,cirkev,vzdelani,zamest,zajmy,_historie'}}
+    item {title:'MROP skupiny - pro starší'
       func onclick(i:ezer) { var x: object
         the_item= i; clear(); 
         the_vypis= i.title;
         info.fill(the_vypis,' ');
         info.msg= '';
-        x= php.akce2_starsi_mrop_pdf(the_akce);
+        x= php.akce2_starsi_mrop_pdf(the_akce,0,'MROP');
+        if (x.err) alert(x.err);
+        info.fill('',x.html);
+    }}
+    item {title:'EROP skupiny - pro starší'
+      func onclick(i:ezer) { var x: object
+        the_item= i; clear(); 
+        the_vypis= i.title;
+        info.fill(the_vypis,' ');
+        info.msg= '';
+        x= php.akce2_starsi_mrop_pdf(the_akce,0,'EROP');
         if (x.err) alert(x.err);
         info.fill('',x.html);
     }}

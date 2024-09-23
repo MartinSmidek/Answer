@@ -594,7 +594,7 @@ form _cmd [,,623,30] {
       sp1.key_osoba= ido; sp1.key_osoba.change();
       ret= php.ucast2_pridej_osobu(os1.key(),os1.access,the_duakce,pob.key(),rod.key(),os1.role);
       the_pobyt= ret.pobyt;
-      php.check_access('osoba',ido,the_org);
+      //php.check_access('osoba',ido,the_org); -- jen zobrazení a fce je v ds_fce
       _reload(1,ido)
     }
     elseif (mode=='novy_clen') {

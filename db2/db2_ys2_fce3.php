@@ -1,6 +1,25 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ======================================================================================== mapy.cz */
 # --------------------------------------------------------------------------------------- geo remove
+// zapíše osobě geolokaci z mapy.cz (kopie GPS)
+// 50.6176686N, 15.6191003E
+function geo_manual($ido,$gps) { 
+  $msg= "";
+  $m= null;
+  $ok= preg_match("/([0-9\.]+)N,\s*([0-9\.]+)E/",$gps,$m);
+  if ($ok) {
+    if (select('id_osoba','osoba_geo',"id_osoba=$ido")) {
+      query("UPDATE osoba_geo SET lat='$m[1]',lng='$m[2]',stav=1 ");
+      $msg= "GPS upraveno";
+    }
+    else {
+      query("INSERT INTO osoba_geo (id_osoba,lat,lng,stav) VALUES ($ido,'$m[1]','$m[2]',1)");
+      $msg= "GPS vloženo";
+    }
+  }
+  return $ok ? $msg : 'nepochopená forma GPS';
+}
+# --------------------------------------------------------------------------------------- geo remove
 // zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
 function geo_remove($ido) { 
   $ok= query("DELETE FROM osoba_geo WHERE id_osoba=$ido");
@@ -60,11 +79,11 @@ function geo_fill ($y) { debug($y,'geo_fill');
         $url= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/"
             . "MapServer/exts/GeocodeSOE/findAddressCandidates?SingleLine={$lineadr}&magicKey="
             . "&outSR=&maxLocations=&outFields=&searchExtent=&f=html";
-        $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
+//        $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
         $y->note= "{$geo->error} OSOBA $idox 
           <a href='{$geo->url}' target='url'>VDP ČÚZK</a>
           <a href='$url' target='url'>AGS ČÚZK</a> 
-          <a href='$mapycz' target='url'>mapy.</a> 
+          <!-- a href='$mapycz' target='url'>mapy.</a --> 
           {$geo->address}
         ";
       }
@@ -3603,7 +3622,7 @@ function prihl_open($ida,$hotove=1) { trace();
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS
 function dot_roky () { trace();
-  $y= (object)array('roky'=>'2022,2021,2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
+  $y= (object)array('roky'=>'2023,2022,2021,2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
   return $y;
 }
 # -------------------------------------------------------------------------------------- dot prehled
@@ -4872,12 +4891,39 @@ function dot_import ($rok) { trace();
       }
     }
   }
-  elseif ($rok==2022 || $rok==2023) {
-    // export do json v roce 2022 již nepřenáší textové hodnoty, pokud se očekávají čísla
+  elseif ($rok>=2022) {
+    // export do json od roku 2022 již nepřenáší textové hodnoty, pokud se očekávají čísla
     // například již nelze "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0"
     // proto je download před CSV
     $LIMIT= 0;
-    $def_g= array(
+    $def_g= $rok>=2024 ? array(
+      "A,x,id?",
+      "B,r,sex?Muž*0;Žena*1",
+      "C,i,vek?",
+      "D,r,deti?1;2;3;žádné*0;více*4",
+      "E,i,manzel?",
+      "F,r,novic?Ano*1;Ne*0",
+      "H,c,od_jine,od_jine_text?Přátelé*od_pratele;Příbuzní*od_pribuzni;Jezdil/a jsem jako pečovatel/ka*od_pecoun;Inzerce*od_inzerce;Chlapské akce*od_chlapi;Akce YMCA Setkání*od_ymca",
+      "I,c,proc_jine,proc_jine_text?"
+        . "chci zlepšovat naše manželství*proc_zlepsit;byli jsme v krizi*proc_krize;"
+        . "jezdíme opakovaně*proc_opak",
+      "J,i,prednasky?",
+      "K,i,skupinky?",
+      "L,i,duchovno?",
+      "M,r,ubytovani?1;2;3;4;5;Bez ubytování*0",
+      "N,r,strava?1;2;3;4;5;Bez stravy*0",
+      "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0",
+      "P,i,motto?",
+      "Q,i,maturita?",
+      "R,i,hudba?",
+      "S,t,libilo?",
+      "T,t,vadilo?",
+      "U,t,vzkaz?",
+      "V,c,tema_jine,tema_jine_text?Výchova menších dětí*tema_male;Výchova dospívajících*tema_dosp;Vztahy  v rodině - matka a děti*tema_matka;Vztahy v rodině - otec a děti*tema_otec;Mezigenerační vztahy - širší rodina*tema_mezigen;Duchovní život*tema_duchovni",
+      "W,r,prinos?1 - Ano, velmi významně*1;2 - Ano, částečně*2;3 - Nevím, to se uvidí*3;4 - Ne, nevidím změnu*4;5 - Ne, spíše naopak*5",
+      "X,t,prinos_text?"
+    )
+    : array(
       "A,x,id?",
       "B,r,sex?Muž*0;Žena*1",
       "C,i,vek?",
@@ -4906,11 +4952,19 @@ function dot_import ($rok) { trace();
     );
     # přečtení seznamu skupin z tabulky
     # https://docs.google.com/spreadsheets/d/1dP_p6A8sHKPEStiaqJaeAhGV3kjUYqmjQrvBpvRahUA/edit#gid=1894516411
+    # https://docs.google.com/spreadsheets/d/19OmRzKg00WcheVeyBFFXU_zuogLW0UwhqC5oswOnrVU/edit?usp=sharing
     $goo= "https://docs.google.com/spreadsheets/d";
     $key= $rok==2022 ? "13GuKhM6vwo-zfN97UWazdoDdzKpqGXNmQls7sYTzo6c" : (
-          $rok==2023 ? "17E5dotr5EOhlLgOM7dyjTVV8h22OcGwHAYpCuhEUtWs" : '');
+          $rok==2023 ? "17E5dotr5EOhlLgOM7dyjTVV8h22OcGwHAYpCuhEUtWs" : (
+          $rok==2024 ? "19OmRzKg00WcheVeyBFFXU_zuogLW0UwhqC5oswOnrVU" : ''));
     $url= "$goo/$key/export?format=csv";
     $f= @fopen($url, "r");
+    $why= 'ok';
+    if (!$f) {
+     $why_e= error_get_last();
+     $why= $why_e['message'];
+    }
+    display("DOTAZNIK:$url --- $why");
     if ( !$f ) { $y->err= "odkaz $url nelze otevřít"; goto end; }
     $line= fgets($f, 1000); // hlavička
     $cols= fgetcsv($f); 
@@ -4948,9 +5002,10 @@ function dot_import ($rok) { trace();
         $d_i= $def_g[$i]; // definice i-té otázky
         $v= $row[$i];     // odpověď na i-tou otázku
         list($desc,$itms)= explode('?',$d_i);
-        list(,$typ,$fld,$fld_text)= explode(',',$desc);
+        list($clmn,$typ,$fld,$fld_text)= explode(',',$desc);
         $itms= explode(';',$itms);
-//                                                          debug($itms,"itms $typ,$fld");
+                                                          debug($itms,"clmn $clmn itms $typ,$fld");
+        if ($rok==2024 && in_array($clmn,['G','Y','Z'])) continue;
         switch ($typ) {
           case 'x': $id= $line+1; break;
           case 'i':
@@ -5007,8 +5062,10 @@ function dot_import ($rok) { trace();
             "\xf0\x9f\x91\x8d"=>"&#x1F44D;",
             '*'=>'*'));
         if ($value['vek']==48 && $value['sex']==1 && $value['deti']==3 ) debug($value,"$set");
-        query("INSERT INTO dotaz SET $set");
+//        query("INSERT INTO dotaz SET $set");
+        display("INSERT INTO dotaz SET $set"); // DEBUG
       }
+      break; // DEBUG
     }
   }
   // předchozí roky - bez elektronického vyplňování

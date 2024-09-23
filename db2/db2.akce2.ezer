@@ -1087,7 +1087,14 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       track.back_osoba_rodina(key_osoba.get,cconc(eq(host.get,'E'),id_kmen.get,kmen.get)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
     item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
-    item { title:'-ukázat data', skill:'m', 
+    item { title:'-aktualizovat GPS z mapy.cz', skill:'m', 
+      func onclick() { var gps:text, msg:text
+        gps= prompt2("souřadnice GPS z mapy.cz");
+        msg= php.geo_manual(key_osoba,gps);
+        alert(msg);
+      }
+    }
+    item { title:'ukázat data', skill:'m', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
       func onclick_() {}
     }
