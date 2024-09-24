@@ -464,7 +464,7 @@ form _obj {
       clear(); uf= udaje.fld;
       if (fakt_vyjimka) { // ds_vzorec má výjimečný formát: ubyt|strav|popl
         faktura= php.dum_faktura({typ:4,strucna:1,show:1,save:1,vystavena:fakt_vystavena,
-            ubyt:vyj_ubyt,stra:vyj_strav,popl:vyj_popl,prog:0,
+            ubyt:vyj_ubyt,stra:vyj_strav,prog:vyj_prog,popl:vyj_popl,
             adresa:udaje.adresa,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
             num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
@@ -493,7 +493,10 @@ form _obj {
   }
   // parametry výjimečného vyúčtování
   field vyj_idf
-  func vyj_soucet() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl + vyj_prog; }
+  func vyj_soucet() { 
+    vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl + vyj_prog + vyj_zaloha; 
+    if (vyj_zaloha) fakt_zaloha= vyj_zaloha; 
+  }
   check fakt_vyjimka [485,top_fakt+39,127,] { tag:'fakt', title:'výjimečně:', format:'t' 
     func onchange() { 
       if (this) {
@@ -510,6 +513,8 @@ form _obj {
   field vyj_popl   [702,top_fakt+40,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
     func onchange() {vyj_soucet() }}
   field vyj_prog   [772,top_fakt+40,50,] { tag:'vyj', title:'^program', format:'rn' 
+    func onchange() {vyj_soucet() }}
+  field vyj_zaloha [842,top_fakt+40,50,] { tag:'vyj', title:'^zálohou', format:'rn' 
     func onchange() {vyj_soucet() }}
 # ---------------------------------------------------------------==> pokoje
   form _pokoje [,,750,40] { style:'border:1px solid grey'

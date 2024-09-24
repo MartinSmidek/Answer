@@ -601,6 +601,18 @@ function dum_objednavka_akce_make($id_order) {
   return $ida;
 }
 # ----------------------------------------------------------------------------------- dum objednavka
+# vrátí nové číslo faktury, snaží se o zaplěnní případných mezer po smazání
+function dum_faktura_cislo($rok,$typ_cond) {
+  $num= 0;
+//  pdo_query("SELECT MAX(num) FROM faktura AS f1
+//    WHERE deleted!='' AND $typ_cond AND NOT EXISTS (
+//      SELECT 1 FROM faktura AS f2 WHERE f2.num=f1.num AND f2.deleted='' AND $typ_cond
+//    )");
+  if (!$num)
+    $num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$rok AND $typ_cond");
+  return $num;
+}
+# ----------------------------------------------------------------------------------- dum objednavka
 # objednávka pobytu
 function dum_objednavka($id_order) { 
   global $answer_db, $setkani_db;
@@ -625,8 +637,10 @@ function dum_objednavka($id_order) {
   $f->od= date('j.n.Y',$f->od);
   $f->do= date('j.n.Y',$f->do);
   // již vystavená zálohová faktura na objednávku nebo návrh čísla faktury
-  $f->zal_num= $f->dan_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (1,2)");
-  $f->fakt_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (3,4)");
+  $f->zal_num= $f->dan_num= dum_faktura_cislo($f->rok,"typ IN (1,2)"); 
+  $f->fakt_num= dum_faktura_cislo($f->rok,"typ IN (3,4)"); 
+//  $f->zal_num= $f->dan_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (1,2)");
+//  $f->fakt_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (3,4)");
   //$f->id_akce= select('id_duakce','akce',"id_order=$id_order");
   $f->nazev= $f->d_nazev ?: ($f->a_typ==3 ? $f->a_nazev : $f->note);
 //  $z[$uid]->nazev= $d_nazev ?: ($typ==3 ? $a_nazev : $note);
@@ -904,7 +918,9 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
       $cena['cena'][$zaco]= $kc * $pocet;
-      $cena['cena_dph'][$zaco]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
+      $dph_c= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
+      $dph+= $dph_c;
+      $cena['cena_dph'][$zaco]= $dph_c;
       $cena['rozpis'][$zaco]= $pocet;
       $cena['polozka'][$zaco]= (object)['polozka'=>$d->polozka,'cena'=>$kc,'dph'=>$d->dph];
       $cena['druh2'][$druh]['cena']+= $kc * $pocet;
@@ -918,13 +934,14 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
       $cena['cena'][$zaco_d]= $kc * $pocet;
-      $cena['cena_dph'][$zaco_d]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
+      $dph_s= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
+      $dph+= $dph_s;
+      $cena['cena_dph'][$zaco_d]= $dph_s;
       $cena['rozpis'][$zaco_d]= $pocet;
       $cena['polozka'][$zaco_d]= (object)['polozka'=>"$d->polozka ... dotovaná cena",'cena'=>$kc,'dph'=>$d->dph];
       $cena['druh2'][$druh]['cena']+= $kc * $pocet;
     }
     if ($z) { // zadarmo
-      $dph= 0;
       $pocet= $z;
       $zaco_z= "$zaco/z";
       $cena['naklad']+= $d->cena * $pocet;
