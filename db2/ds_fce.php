@@ -37,7 +37,7 @@ $dum_faktura_fld= [
   'odberatel' => [',,,112,40,83,10',"
       <b>Odběratel</b>  &nbsp;  {ic_dic}"],
   'ramecek' => [',,,112,47,83,35,LRTB',""],
-  'platce' => [',,4.5,120,52,75,24',"{adresa}"],
+  'platce' => [',,4.5,116,50,80,26',"{adresa}"],
   'platbaL' => [',,,13,92,40,30',"
       Peněžní ústav
       <br><b>Číslo účtu</b>
@@ -136,10 +136,10 @@ function dum_faktura_save($parm,$idf=0) {
   $htm= pdo_real_escape_string($parm->html); 
   // 
   $ok= query("INSERT INTO faktura (nazev,rok,num,typ,strucna,vs,ss,id_order,id_pobyt,"
-      . "zaloha,castka,ubyt,stra,popl,prog,jine,"
+      . "ubyt_zal,stra_zal,castka,ubyt,stra,popl,prog,jine,"
       . "vzorec,nadpis,vyrizuje,vystavena,parm_json,html,soubor) VALUES "
       . "('$p->nazev',$p->rok,$p->num,'$p->typ','$p->strucna','$p->vs','$p->ss','$order','$pobyt',"
-      . "'$p->zaloha','$p->celkem','$p->ubyt','$p->stra','$p->popl','$p->prog','$p->jine',"
+      . "'$p->ubyt_zal','$p->stra_zal','$p->celkem','$p->ubyt','$p->stra','$p->popl','$p->prog','$p->jine',"
       . "'$p->ds_vzorec','$nadpis','$p->vyrizuje','$p->vystavena','$jso',\"$htm\",'$p->soubor')");
   if (!$ok) { 
     $msg= POZOR." nepovedlo se vytvoření faktury - kontaktuj Martina<hr>NEPLATÍ, že: "; 
@@ -177,7 +177,9 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $save= $par->save ?? 0;
   $typ= $par->typ;
   $adresa= $par->adresa;
-  $zaloha= $par->zaloha ?? 0;
+  $ubyt_zal= $par->ubyt_zal ?? 0;
+  $stra_zal= $par->stra_zal ?? 0;
+  $zaloha= $ubyt_zal+$stra_zal;
   $ic= $par->ic ?? '';
   $dic= $par->dic ?? '';
   $oddo= $par->oddo;
@@ -255,7 +257,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   // ------------------------------------------------------------------------------- redakce tabulky
   $polozky= [];
   $rozpis_dph= []; 
-  if ($vyjimecna) { // podrobně - položky ceníku
+  if (0 && $vyjimecna) { // podrobně - položky ceníku
     $strucna= 1;
     // ds_vzorec má výjimečný formát: ubyt|stra|popl|řádek popisu
     $ubyt= $par->ubyt;
@@ -284,6 +286,8 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     }
     $celkem= $ubyt + $stra + $popl + $prog + $jine;
     $koef= $zaloha ? ($celkem-$zaloha)/$celkem : 1;
+    $koef= $zaloha ? $zaloha/$celkem : 1;
+    $koef_dph= $zaloha ? (1-$zaloha/$celkem) : 1;
 //    display("$celkem $zaloha $koef");
     $ds2_cena= dum_cenik($rok);
     // ubytování
@@ -311,43 +315,61 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       ['strava',$sazba_strav.'%',dum_kc($dph_strav),dum_kc($stra),$stra],
       ['poplatky obci',$sazba_popl.'%',dum_kc($dph_popl),dum_kc($popl),$popl]
     ];
-    if ($prog) $polozky[]= ['poplatky obci',$sazba_prog.'%',dum_kc($dph_prog),dum_kc($prog),$prog];
-    if ($jine) $polozky[]= ['jiné služby',$sazba_jine.'%',dum_kc($dph_jine),dum_kc($jine),$prog];
+    if ($prog) $polozky[]= ['program',$sazba_prog.'%',dum_kc($dph_prog),dum_kc($prog),$prog];
+    if ($jine) $polozky[]= ['jiné služby',$sazba_jine.'%',dum_kc($dph_jine),dum_kc($jine),$jine];
   }
   else {
-    // pro celkovou fakturu případně odečteme již provedené fakturace jednotlivých pobytů 
-    $ds_vzorec= $par->ds_vzorec;
-    if (!$par->id_pobyt) {
-      $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
-          . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
-      while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
-        if ($p_vzorec=='') {
-          $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
-            fakturu za celou objednávku neumím vystavit";
-          goto end;
-        }
-        $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
-        display("$p_nazev: dum_vzorec_minus ( $ds_vzorec , $p_vzorec ) = $ds_vzorec");      /*DEBUG*/
+    if ($vyjimecna) {
+      $celkem= 0;
+//      foreach (['ubyt','stra','popl','prog','jine'] as $i) {
+//        $cena['abbr'][$i]= $par->$i;
+//        $celkem+= $par->$i;
+//      }
+      $cena= ['celkem'=>0,'druh'=>[],'abbr'=>[],'cena'=>[],'cena_dph'=>[],'dph'=>[],'rozpis'=>[],
+          'polozka'=>[]]; 
+      foreach (['ubytovani'=>['ubytování',12],'strava'=>['strava',12],
+                'poplatek_obci'=>['poplatek obci',0]] as $i=>$ii) {
+        $i4= substr($i,0,4);
+        $cena['druh2'][$i]['cena']= $cena['abbr'][$i4]= $par->$i4;
+        $cena['druh2'][$i]['druh']= $ii[0];
+        $cena['druh2'][$i]['sazba']= $ii[1];
+        $celkem+= $par->$i4;
       }
     }
-    // redakce položek ceny pro zobrazení ve sloupcích
-    $cena= dum_vzorec_cena($ds_vzorec,$rok);
-    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
-    $celkem= $cena['celkem'];
-    $koef= $zaloha ? $zaloha/$celkem : 1;
-    $koef_dph= $zaloha ? (1-$zaloha/$celkem) : 1;
-    $par->ubyt= $cena['abbr']['ubyt'] * $koef;
-    $par->stra= $cena['abbr']['stra'] * $koef;
-    $par->popl= $cena['abbr']['popl'] * $koef;
-    $par->prog= $cena['abbr']['prog'] * $koef;
-    $par->jine= $cena['abbr']['jine'] * $koef;
+    else {
+      // pro celkovou fakturu případně odečteme již provedené fakturace jednotlivých pobytů 
+      $ds_vzorec= $par->ds_vzorec;
+      if (!$par->id_pobyt) {
+        $fr= pdo_query("SELECT vzorec,nazev,strucna FROM faktura "
+            . "WHERE id_pobyt!=0 AND id_order=$order AND deleted=''");
+        while ($fr && (list($p_vzorec,$p_nazev)= pdo_fetch_array($fr))) {
+          if ($p_vzorec=='') {
+            $err= "POZOR: rodinná faktura $p_nazev nemá definovaný vzorec, 
+              fakturu za celou objednávku neumím vystavit";
+            goto end;
+          }
+          $ds_vzorec= dum_vzorec_minus($ds_vzorec,$p_vzorec);
+          display("$p_nazev: dum_vzorec_minus ( $ds_vzorec , $p_vzorec ) = $ds_vzorec");      /*DEBUG*/
+        }
+      }
+      // redakce položek ceny pro zobrazení ve sloupcích
+      $cena= dum_vzorec_cena($ds_vzorec,$rok);
+      debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
+      $celkem= $cena['celkem'];
+    }
+    
+    $par->ubyt= $cena['abbr']['ubyt']; // - $ubyt_zal;
+    $par->stra= $cena['abbr']['stra']; // - $stra_zal;
+    $par->popl= $cena['abbr']['popl'];
+    $par->prog= $cena['abbr']['prog'];
+    $par->jine= $cena['abbr']['jine'];
     if ($strucna==0) { // podrobně - položky ceníku
       ksort($cena['rozpis']);
       foreach ($cena['rozpis'] as $zaco=>$pocet) {
   //      display("$zaco:$pocet");
         $kc_1= $cena['polozka'][$zaco]->cena;
         $kc= $cena['cena'][$zaco];
-        $kc_dph= $typ==2 ? $kc*$koef : $kc*$koef_dph;
+//        $kc_dph= $typ==2 ? $kc*$koef : $kc*$koef_dph;
         $sazba= $cena['polozka'][$zaco]->dph;
         $polozky[]= [
           $cena['polozka'][$zaco]->polozka,
@@ -358,22 +380,23 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
           dum_kc($kc),
           $kc // 7: celková cena vč. DPH
         ];
-        $rozpis_dph[$sazba]+= $kc_dph / ((100 + $sazba) / 100);
+        $rozpis_dph[$sazba]+= $kc / ((100 + $sazba) / 100);
       }
     }
     elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky - jiné
-      foreach ($cena['druh2'] as $cc) {
+      foreach ($cena['druh2'] as $c=>$cc) {
         $kc= $cc['cena'];
-        $kc_dph= $typ==2 ? $kc*$koef : $kc*$koef_dph;
+        if ($c=='ubytovani') $kc= $kc - $ubyt_zal;
+        if ($c=='strava') $kc= $kc - $stra_zal;
         $sazba= $cc['sazba'];
         $polozky[]= [
           $cc['druh'],
           $sazba.'%',
-          dum_kc($cc['dph']),
+          dum_kc($kc - $kc / ((100 + $sazba) / 100)),
           dum_kc($kc),
           $kc 
         ];
-        $rozpis_dph[$sazba]+= $kc_dph / ((100 + $sazba) / 100);
+        $rozpis_dph[$sazba]+= $kc / ((100 + $sazba) / 100);
       }
     }
   }
@@ -667,7 +690,8 @@ function dum_objednavka($id_order) {
   $x->faktura= (object)['zal_idf'=>0,'dan_idf'=>0,'fakt_idf'=>0,'vyj_idf'=>0];
   $rf= pdo_qry("
     SELECT IFNULL(id_faktura,0) AS idf,typ,strucna,nadpis,id_pobyt,
-      rok,num,f.vs,f.ss,duvod_zmeny,vzorec,zaloha,f.castka,vystavena,p.datum AS zaplacena, vyrizuje 
+      rok,num,f.vs,f.ss,duvod_zmeny,vzorec,zaloha,f.castka,vystavena,p.datum AS zaplacena, vyrizuje,
+      ubyt,ubyt_zal,stra,stra_zal,popl,prog,jine
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
       LEFT JOIN platba AS p USING (id_platba) 
@@ -681,7 +705,10 @@ function dum_objednavka($id_order) {
         $x->faktura->vyj_idf= $f->idf;
         $x->faktura->fakt_vyjimka= 1;
         $kcs= explode('|',$f->vzorec);
-        list($x->faktura->vyj_ubyt,$x->faktura->vyj_strav,$x->faktura->vyj_popl)= $kcs;
+        $kcs= [$f->ubyt,$f->ubyt_zal,$f->stra,$f->stra_zal,$f->popl,$f->prog,$f->jine];
+        list($x->faktura->vyj_ubyt,$x->faktura->vyj_ubyt_zal,$x->faktura->vyj_stra,
+             $x->faktura->vyj_stra_zal,$x->faktura->vyj_popl,$x->faktura->vyj_prog,
+             $x->faktura->vyj_jine)= $kcs;
         $x->faktura->vyj_celkem= array_sum($kcs);
       }
       foreach ($f as $fld=>$val) { 

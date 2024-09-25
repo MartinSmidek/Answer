@@ -358,10 +358,12 @@ table faktura { key_id:'id_faktura'
   number id_pobyt
   text duvod_zmeny
   text vzorec
-  number zaloha
+//  number zaloha
   number castka
   number ubyt
+  number ubyt_zal
   number stra
+  number stra_zal
   number popl
   number prog
   number jine
