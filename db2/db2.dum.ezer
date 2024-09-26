@@ -217,7 +217,7 @@ form _vyuctovani [,,623,400] {
       faktura= php.dum_faktura({typ:3,show:1,save:1,strucna:strucna,vystavena:fdate('Y-m-d'),
           adresa:adresa,ds_vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,nadpis:nadpis,
-          num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.pobyt,vyrizuje:vyrizuje});
+          num:uf.fakt_num,ubyt_zal:0,stra_zal:0,vs:uf.fakt_num,ss:udaje_pobyt.pobyt,vyrizuje:vyrizuje});
       if (faktura.err) { alert(faktura.err); return }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
@@ -289,8 +289,9 @@ form _obj {
       fakt_num= udaje.fld.fakt_num;
       fakt_vs= udaje.fld.fakt_num;
       fakt_ss= id_order;
-      fakt_zaloha= zal_zaloha;
-      fakt_castka= udaje.ucet.celkem2 - fakt_zaloha; // po odečtení rodinných podfaktur a zálohy
+      fakt_zal_ubyt= zal_ubyt;
+      fakt_zal_stra= zal_stra;
+      fakt_castka= udaje.ucet.celkem2 - zal_ubyt - zal_stra; // po odečtení rodinných podfaktur a zálohy
       fakt_nadpis= `Za pobyt v Domě setkání ve dnech ${udaje.fld.oddo} Vám fakturujeme:`;
       form.enable(1,'fakt|closed'); 
       plan.enable(1,'.*'); 
@@ -390,10 +391,13 @@ form _obj {
   field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS', format:'r'  }
   field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS', format:'r'  }
   field zal_castka [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
-  field zal_zaloha [354,top_zal,50,] { tag:'zal', title:'^záloha', format:'r'  
-    func onchange() { fakt_zaloha= zal_zaloha; }
+  field zal_ubyt [354,top_zal,50,] { tag:'zal', title:'^záloha ubyt.', format:'r'  
+    func onchange() { fakt_zal_ubyt= this; }
   }
-  field zal_vyrizuje [422,top_zal,110,] { tag:'zal', title:'^kdo vyřizuje' }
+  field zal_stra [424,top_zal,50,] { tag:'zal', title:'^záloha stravy', format:'r'  
+    func onchange() { fakt_zal_stra= this; }
+  }
+  field zal_vyrizuje [492,top_zal,40,] { tag:'zal', title:'^kdo vyřizuje' }
   field zal_zaplacena [670,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
       title:'^datum úhrady', format:'r'  }
   
@@ -401,14 +405,14 @@ form _obj {
   button [544,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
-      if (!zal_zaloha) {
+      if (!(zal_ubyt+zal_stra)) {
         alert('Je zapotřebí stanovit výši zálohy'); return;
       }
       faktura= php.dum_faktura({typ:1,strucna:1,show:1,save:1,vystavena:zal_vystavena,
           adresa:udaje.adresa,ds_vzorec:udaje.vzorec_zal,
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,
           id_order:uf.id_order,
-          num:zal_num,zaloha:zal_zaloha,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
+          num:zal_num,ubyt_zal:zal_ubyt,stra_zal:zal_stra,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
       if (faktura.err) { alert(faktura.err); return }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
@@ -452,11 +456,12 @@ form _obj {
   field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS', format:'r'  }
   field fakt_castka [284,top_fakt,50,] { tag:'fakt,-vyj', title:'^částka', format:'r' }
   field vyj_celkem [284,top_fakt,50,] { tag:'vyj', title:'^částka', format:'ron' }
-  field fakt_zaloha [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'ro'  }
-  field fakt_vyrizuje [422,top_fakt,55,] { tag:'fakt', title:'^kdo vyřizuje' }
-  check fakt_strucna [485,top_fakt+-2,121,] { tag:'fakt', title:'stručná' }
+  field fakt_zal_ubyt [354,top_fakt,50,] { tag:'fakt', title:'^záloha ubyt.', format:'ro'  }
+  field fakt_zal_stra [424,top_fakt,50,] { tag:'fakt', title:'^záloha stravy', format:'ro'  }
+  field fakt_vyrizuje [492,top_fakt,40,] { tag:'fakt', title:'^kdo vyřizuje' }
+  check fakt_strucna [763,top_fakt+-9,121,] { tag:'fakt', title:'stručná' }
   field fakt_zaplacena [670,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
-  field fakt_nadpis  [10,top_fakt+40,450,] { tag:'fakt', title:'^řádek popisující účtovanou částku' }
+  field fakt_nadpis  [10,top_fakt+70,450,] { tag:'fakt', title:'^řádek popisující účtovanou částku' }
   
   // konečná faktura
   button [546,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
@@ -464,10 +469,10 @@ form _obj {
       clear(); uf= udaje.fld;
       if (fakt_vyjimka) { // ds_vzorec má výjimečný formát: ubyt|strav|popl
         faktura= php.dum_faktura({typ:4,strucna:1,show:1,save:1,vystavena:fakt_vystavena,
-            ubyt:vyj_ubyt,stra:vyj_strav,prog:vyj_prog,popl:vyj_popl,
+            ubyt:vyj_ubyt,ubyt_zal:vyj_ubyt_zal,stra:vyj_stra,stra_zal:vyj_stra_zal,prog:vyj_prog,popl:vyj_popl,
             adresa:udaje.adresa,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
-            num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+            num:fakt_num,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
         if (faktura.err) { alert(faktura.err); return }
       }
       else {
@@ -475,10 +480,14 @@ form _obj {
           alert(`Fakturu není možné vystavit, protože hosté ${udaje.ucet.neubytovani} nejsou ubytováni`); 
           return;
         }
+        if ((fakt_zal_ubyt+fakt_zal_stra)>0 && !fakt_strucna) {
+          alert(`Fakturu se zálohou je možné vystavit pouze jako stručnou.`); 
+          return;
+        }
         faktura= php.dum_faktura({typ:3,strucna:fakt_strucna,show:1,save:1,vystavena:fakt_vystavena,
             adresa:udaje.adresa,ds_vzorec:udaje.vzorec_fak,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
-            num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+            num:fakt_num,ubyt_zal:fakt_zal_ubyt,stra_zal:fakt_zal_stra,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
         if (faktura.err) { alert(faktura.err); return }
       }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
@@ -494,10 +503,11 @@ form _obj {
   // parametry výjimečného vyúčtování
   field vyj_idf
   func vyj_soucet() { 
-    vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl + vyj_prog + vyj_zaloha; 
-    if (vyj_zaloha) fakt_zaloha= vyj_zaloha; 
+    vyj_celkem= vyj_ubyt + vyj_stra + vyj_popl + vyj_prog + vyj_ubyt_zal + vyj_stra_zal; 
+    if (vyj_ubyt_zal) fakt_zal_ubyt= vyj_ubyt_zal; 
+    if (vyj_stra_zal) fakt_zal_stra= vyj_stra_zal; 
   }
-  check fakt_vyjimka [485,top_fakt+39,127,] { tag:'fakt', title:'výjimečně:', format:'t' 
+  check fakt_vyjimka [762,top_fakt+9,127,] { tag:'fakt', title:'výjimečná', format:'t' 
     func onchange() { 
       if (this) {
         form.display(1,'vyj'); form.display(0,'-vyj'); fakt_strucna= 1; form.enable(vyj_idf==0,'vyj'); 
@@ -506,15 +516,17 @@ form _obj {
         form.display(0,'vyj'); form.display(1,'-vyj'); fakt_strucna= 0;
       }
   }}
-  field vyj_ubyt   [562,top_fakt+40,50,] { tag:'vyj', title:'^ubytováni', format:'rn' 
+  field vyj_ubyt_zal [354,top_fakt+40,50,] { tag:'vyj', title:'^záloha ubyt.', format:'rn' 
     func onchange() {vyj_soucet() }}
-  field vyj_strav  [632,top_fakt+40,50,] { tag:'vyj', title:'^stravu', format:'rn' 
+  field vyj_stra_zal [424,top_fakt+40,50,] { tag:'vyj', title:'^záloha stravy', format:'rn' 
     func onchange() {vyj_soucet() }}
-  field vyj_popl   [702,top_fakt+40,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
+  field vyj_ubyt   [491,top_fakt+40,50,] { tag:'vyj', title:'^ubytováni', format:'rn' 
     func onchange() {vyj_soucet() }}
-  field vyj_prog   [772,top_fakt+40,50,] { tag:'vyj', title:'^program', format:'rn' 
+  field vyj_stra   [561,top_fakt+40,50,] { tag:'vyj', title:'^stravu', format:'rn' 
     func onchange() {vyj_soucet() }}
-  field vyj_zaloha [842,top_fakt+40,50,] { tag:'vyj', title:'^zálohou', format:'rn' 
+  field vyj_popl   [631,top_fakt+40,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
+    func onchange() {vyj_soucet() }}
+  field vyj_prog   [701,top_fakt+40,50,] { tag:'vyj', title:'^program', format:'rn' 
     func onchange() {vyj_soucet() }}
 # ---------------------------------------------------------------==> pokoje
   form _pokoje [,,750,40] { style:'border:1px solid grey'

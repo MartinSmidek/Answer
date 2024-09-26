@@ -132,7 +132,7 @@ panel fakt {type:'right', title:"Faktury"
       show id_order [,,30,] { data:f.id_order, format:'qs' }
       show vs [,,40,] { title:'VS', data:f.vs, format:'rqs' }
       show ss [,,40,] { title:'SS', data:f.ss, format:'rqs' }
-      show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
+      show zaloha [,,60,] { title:'záloha', expr:"f.ubyt_zal+f.stra_zal", format:'r' }
       show castka [,,60,] { title:'částka', data:f.castka, format:'r' }
       show ubyt { data:f.ubyt } 
       show stra { data:f.stra } 
@@ -187,13 +187,13 @@ panel fakt {type:'right', title:"Faktury"
           alert(`Daňový doklad k zaplacené zálohové faktuře ${fak.nazev} již byl vystaven`);
           return;
         }
-        zal= php.select_object('vzorec,rok,num,zaloha,vyrizuje','faktura',`id_faktura=${fak.idf}`);
+        zal= php.select_object('vzorec,rok,num,ubyt_zal,stra_zal,vyrizuje','faktura',`id_faktura=${fak.idf}`);
         adresa= replace(form.adresa,chr(10),'<br>');
         nadpis= `Daňový doklad k přijaté platbě za zálohovou fakturu ${fak.nazev}`;
         faktura= php.dum_faktura({typ:2,strucna:1,show:1,save:1,vystavena:fak.zaplacena,
             adresa:adresa,ds_vzorec:zal.vzorec,nadpis:nadpis,
             ic:ic,dic:dic,rok:zal.rok,id_order:fak.id_order,
-            num:zal.num,zaloha:zal.zaloha,vs:fak.vs,ss:fak.ss,vyrizuje:zal.vyrizuje});
+            num:zal.num,ubyt_zal:zal.ubyt_zal,stra_zal:zal.stra_zal,vs:fak.vs,ss:fak.ss,vyrizuje:zal.vyrizuje});
         if (faktura.err) { alert(faktura.err); return }
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'ulozeno',title:'[fa-save] Vystavit daňový doklad'});
@@ -475,10 +475,12 @@ table faktura { key_id:'id_faktura'
   number id_pobyt
   text duvod_zmeny
   text vzorec
-  number zaloha
+//  number zaloha
   number castka
   number ubyt
+  number ubyt_zal
   number stra
+  number stra_zal
   number popl
   number prog
   number jine
