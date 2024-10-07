@@ -612,6 +612,17 @@ __HTML;
 }
 /** ====================================================================================> OBJEDNÁVKY **/
 # ------------------------------------------------------------------------- dum objednavka_akce_make
+# vytvoř objednávku k akci
+function dum_objednavka_make($ida) { 
+  list($od,$do,$nazev)= select('UNIX_TIMESTAMP(datum_od),UNIX_TIMESTAMP(datum_do),nazev',
+      "akce","id_duakce=$ida");
+  $nazev= pdo_real_escape_string(uw($nazev));
+  $YS= uw('YMCA Setkání');
+  $ido= query_track("INSERT INTO tx_gnalberice_order (id_akce,fromday,untilday,note,state,name) 
+    VALUES ($ida,$od,$do,'$nazev',3,'$YS')",'setkani');
+  return $ido;
+}
+# ------------------------------------------------------------------------- dum objednavka_akce_make
 # vytvoř akci k objednávce
 function dum_objednavka_akce_make($id_order) { 
   global $setkani_db;

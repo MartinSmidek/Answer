@@ -839,9 +839,10 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
         "(kde='",tab1,"' AND klic=",klic1,") OR (kde='",tab2,"' AND klic=",klic2,")"),"kdy DESC");
     back.lst.raise('onrowclick')
   }
-  proc back_osoba_rodina(ido,kmen) { var idr:number
-    idr.set(split(kmen,'/',-1)); // poslední
-    idr; back_double('osoba',ido,'rodina',idr) | back_show('osoba',ido)
+  func back_osoba_rodina(ido,kmen) { var idr:number
+    idr= kmen=='-' ? 0 : split(kmen,'/',-1); // poslední
+    if (idr) back_double('osoba',ido,'rodina',idr);
+    else back_show('osoba',ido);
   }
   # ------------------------------------------------------------- _back
   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
