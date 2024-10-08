@@ -11,6 +11,22 @@ function TEST() {
   $zmen= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$od')>0");
   return "v $table bylo za $dnu dnu $zmen zmen";
 }
+# ----------------------------------------------------------------------------------------- kod 2 ss
+# převede g_akce.g_kod na ciselnik_akce
+function kod2ss() {
+  $n= 0;
+  $ro= pdo_qry("
+    SELECT id_duakce,g_kod
+    FROM akce
+    LEFT JOIN join_akce ON id_akce=id_duakce
+    WHERE ciselnik_akce=0 AND NOT ISNULL(g_kod)
+  ");
+  while ($ro && (list($ida,$kod)= pdo_fetch_array($ro))) {
+    $n++;
+    query("UPDATE akce SET ciselnik_akce=$kod WHERE id_duakce=$ida");
+  }
+  return "zapsáno $n údajů pro SS ";
+}
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $dum_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';
@@ -779,12 +795,18 @@ function dum_objednavka_save($id_order,$changed) {
 # vrátí tisknutelný název objednávky
 function dum_objednavka_nazev($ido,$format='') {
   $rd= pdo_qry("
-    SELECT state,IFNULL(g_kod,''),IFNULL(a.nazev,''),d.nazev,TRIM(CONCAT(jmeno,' ',prijmeni)) AS jm,jmeno,org
-    FROM objednavka AS d
-    LEFT JOIN join_akce USING (id_akce)
+    SELECT state,ciselnik_akce,IFNULL(a.nazev,''),d.nazev,TRIM(CONCAT(jmeno,' ',prijmeni)) AS jm,jmeno,org
+    FROM objednavka AS d 
     LEFT JOIN akce AS a ON id_akce=id_duakce
     WHERE d.id_order=$ido
   ");
+//g  $rd= pdo_qry("
+//g    SELECT state,IFNULL(g_kod,''),IFNULL(a.nazev,''),d.nazev,TRIM(CONCAT(jmeno,' ',prijmeni)) AS jm,jmeno,org
+//g    FROM objednavka AS d 
+//g    LEFT JOIN join_akce USING (id_akce)
+//g    LEFT JOIN akce AS a ON id_akce=id_duakce
+//g    WHERE d.id_order=$ido
+//g  ");
   if ($rd) list($state,$kod,$akce,$d_nazev,$jm,$org)= pdo_fetch_array($rd);
   $naz= $state==3 ? "$akce ($kod)" : ( $d_nazev ?: ($org ? $org : $jm));
   return $format=='' ? "$ido - $naz" : ($format=='kniha' ? $naz : $ido);
@@ -1655,10 +1677,11 @@ function dum_kniha_hostu($par,$export=0) {
   $ro= pdo_qry("
     SELECT d.id_order,id_akce,
       GROUP_CONCAT(IF(NOT ISNULL(id_faktura) AND f.deleted='',id_faktura,0)) AS _idf,
-      IFNULL(g_kod,''),note,state,od,do
+      ciselnik_akce, -- //g IFNULL(g_kod,''),
+      note,state,od,do
     FROM objednavka AS d
     LEFT JOIN faktura AS f ON f.id_order=d.id_order AND f.deleted='' AND f.id_pobyt=0 
-    LEFT JOIN join_akce USING (id_akce) 
+    -- //g LEFT JOIN join_akce USING (id_akce) 
     WHERE d.deleted=0 AND YEAR(od)=$rok $AND_MESIC $AND_TEST -- AND MONTH(od)<=MONTH(NOW()) 
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová
       -- AND id_order=2477 -- Bednář
@@ -2360,9 +2383,12 @@ function ucast2_pridat_clena_rodine($ido,$idr) {
 # a vrácení nalezené platby k id_platba
 function ds2_fio_filtr_akce($id_pobyt) {
   $days_plus= 10; $days_minus= 30;
-  list($kod,$ida,$od,$do)= select('g_kod,id_akce,datum_od,datum_do',
-      "pobyt JOIN akce ON id_akce=id_duakce LEFT JOIN join_akce USING (id_akce)",
+  list($kod,$ida,$od,$do)= select('ciselnik_akce,id_akce,datum_od,datum_do',
+      "pobyt JOIN akce ON id_akce=id_duakce",
       "id_pobyt=$id_pobyt");
+//g  list($kod,$ida,$od,$do)= select('g_kod,id_akce,datum_od,datum_do',
+//g      "pobyt JOIN akce ON id_akce=id_duakce LEFT JOIN join_akce USING (id_akce)",
+//g      "id_pobyt=$id_pobyt");
   // zjistíme všechny pobyty této akce
   $idps= select1('GROUP_CONCAT(id_pobyt)','pobyt',"id_akce=$ida");
   $idos= select('GROUP_CONCAT(id_osoba)','spolu JOIN pobyt USING (id_pobyt)',"id_pobyt='$id_pobyt'");
@@ -2391,8 +2417,10 @@ function ds2_show_curr($c) {
   $a_jmeno= $e_jmeno= $a_akce= $d_jmeno= '';
   // akce
   if (($ida= $c->lst->akce)) {
-    list($a_akce,$kod)= select("CONCAT(nazev,' ',YEAR(datum_od)),IFNULL(g_kod,'')",
-        'akce LEFT JOIN join_akce ON id_akce=id_duakce',"id_duakce=$ida");
+    list($a_akce,$kod)= select("CONCAT(nazev,' ',YEAR(datum_od)),ciselnik_akce",
+        'akce',"id_duakce=$ida");
+//g    list($a_akce,$kod)= select("CONCAT(nazev,' ',YEAR(datum_od)),IFNULL(g_kod,'')",
+//g        'akce LEFT JOIN join_akce ON id_akce=id_duakce',"id_duakce=$ida");
     $ucast.= "akce <span title='ID akce=$ida'>$ida/$kod</span>";
   }
   if (($ido= $c->ucast->osoba)) {
@@ -2598,8 +2626,9 @@ function ds2_fio($cmd) {
       $rp= pdo_qry("
         SELECT id_platba,id_osoba,id_pobyt,id_oso
         FROM platba AS p
-        JOIN join_akce AS ja ON ja.g_kod=IF(p.ss2,p.ss2,p.ss) AND YEAR(p.datum)=g_rok
-        JOIN akce AS a ON ja.id_akce=id_duakce
+        -- //g JOIN join_akce AS ja ON ja.g_kod=IF(p.ss2,p.ss2,p.ss) AND YEAR(p.datum)=g_rok
+        -- //g JOIN akce AS a ON ja.id_akce=id_duakce
+        JOIN akce AS a ON ciselnik_akce=IF(p.ss2,p.ss2,p.ss) AND YEAR(p.datum)=YEAR(datum_od)
         JOIN pobyt AS po ON po.id_akce=id_duakce
         JOIN spolu AS s USING (id_pobyt) -- ON s.id_pobyt=po.id_pobyt
         JOIN osoba AS o USING (id_osoba) -- ON o.id_osoba=s.id_osoba

@@ -239,12 +239,12 @@ table akce { key_id:'id_duakce'
   number typ
 }
 
-table join_akce { // spojení číselníku akcí s MS
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
-  number akce      { help:"staré číslo akce podle MS.EXE" }
-}
+//a table join_akce { // spojení číselníku akcí s MS
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+//a  number akce      { help:"staré číslo akce podle MS.EXE" }
+//a }
 
 # kopie číselníků akcí z intranetu YS
 table uakce { key_id:'id_uakce'
@@ -274,17 +274,17 @@ table ms_akce { key_id:'id_akce'  // Sey
   text misto
 }
 
-table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
-  number id_gakce
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   g_nazev   { help:"název akce z číselníku akcí" }
-  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
-  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
-  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
-  text   g_typ     { help:"typ akce z číselníku akcí" }
-  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
-}
+//a table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+//a  number id_gakce
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   g_nazev   { help:"název akce z číselníku akcí" }
+//a  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+//a  text   g_typ     { help:"typ akce z číselníku akcí" }
+//a  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+//a }
 
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },

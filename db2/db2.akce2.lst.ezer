@@ -681,9 +681,9 @@ form _page [,,275,360] {
       miss= '';
       for (fld of form.tagged(tg)) {
         echo(`fld:${fld.title}=${fld.get()}`);
-        if (!fld.get()) miss= `${miss} + ${fld.title}`;
+        if (!fld.get()) miss= `'${miss}' + ${fld.title}`;
       }
-      if (miss) warning(`položka '${miss}' je povinná`);
+      if (miss) warning(`položka ${miss} je povinná`);
       return miss;
     }
   }
@@ -1365,21 +1365,21 @@ form _info [,,*,50] {
   # --------------------------------------------------------------------------------==> . seznam SEY
   # přechod na účastníky je omezen datovými právy
   view da2: table akce
-  view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
-  view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
+//a  view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
+//a  view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
   browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
       css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
       optimize:°{fetch:'all'}
     show id_akce  {data:da2.id_duakce}
-    show          {data:ja2.id_akce}
+//a    show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}
     show ma_archiv // [,,10,] 
     show ma_cenik {data:da2.ma_cenik}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
-    show id_gakce {data:ga2.id_gakce}
+//a    show id_gakce {data:ga2.id_gakce}
     show id_hlavni {data:da2.id_hlavni}
     show id_soubeh {data:sa2.id_duakce}
     show archiv {data:da2.archiv}
@@ -1395,12 +1395,16 @@ form _info [,,*,50] {
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
 //  show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
     show barva { expr:"IF(da2.zruseno,3,IF(da2.id_hlavni,2,IF(sa2.id_duakce,1,0)))" }
-    show kod   [,,36,] {title:'kód účetní', expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)"
+    show kod   [,,36,] {title:'kód účetní', data:da2.ciselnik_akce
       css_cell:'ma_archiv,0:,1:oranzovy', format:'rsq*' }
+//a    show kod   [,,36,] {title:'kód účetní', expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)"
+//a      css_cell:'ma_archiv,0:,1:oranzovy', format:'rsq*' }
     show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'
       css_cell:'web_p,0:,1:zluty' }
-    show nazev [,,104,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
+    show nazev [,,104,] {title:'název', data:da2.nazev, format:'tsq*',
       css_cell:"curr,1:curr_akce"}
+//a    show nazev [,,104,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
+//a      css_cell:"curr,1:curr_akce"}
     show ucast [,,30,] {title:'úč.', format:'rtsq=', help:'počet skupin účastníků',
       expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce!=99))"
       css_cell:'web_o,0:,1:cerveny' }

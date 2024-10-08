@@ -3008,10 +3008,12 @@ function tut_ma_archiv ($table,$idkey,$keys,$root) {
   $values= array();
   foreach ($keys as $key) {
     list($kod,$rok)= select(
-        'IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce),YEAR(datum_od)',
-        "akce AS da2 LEFT JOIN join_akce AS ja2 ON ja2.id_akce=da2.id_duakce 
-	LEFT JOIN g_akce AS ga2 USING(g_rok,g_kod) ",
-        "$idkey=$key");
+//g        'IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce),YEAR(datum_od)',
+        'da2.ciselnik_akce,YEAR(datum_od)',
+        "akce AS da2 "
+//g        . "LEFT JOIN join_akce AS ja2 ON ja2.id_akce=da2.id_duakce "
+//g        . "LEFT JOIN g_akce AS ga2 USING(g_rok,g_kod) "
+        ,"$idkey=$key");
     $y= tut_dir_find ($root,$rok,$kod);
     $values[]= $y->ok ? 1 : 0;
   }
@@ -5670,7 +5672,8 @@ function ds_ceny_group() { //debug($par);
 function ds_objednavka($ida) {
   global $answer_db;
   $order= 0;
-  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida",$answer_db);
+//g  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida",$answer_db);
+  list($rok,$kod)= select('YEAR(datum_od),ciselnik_akce','akce',"id_duakce=$ida",$answer_db);
   if ( $kod ) {
     $order= select('uid','tx_gnalberice_order',
         "akce=$kod AND YEAR(FROM_UNIXTIME(fromday))=$rok",'setkani');

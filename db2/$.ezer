@@ -7,11 +7,12 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     the_curr= akce2.curr();
     if (ds2) {
       x= ds2.curr();
-      echo(debug(x,'x'));
+//      echo(debug(x,'x'));
       the_curr.dum= x.dum;
     }
     return the_curr;
   } 
+  func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
   tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp;yf' }
@@ -44,13 +45,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         ],
         tables: {
           akce:  "id_duakce>*,deleted,zruseno,spec,nazev,datum_od",
-          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,id_order>objednavka,hnizdo,funkce,web_changes,web_zmena",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,id_order>ds_order,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
-          platba:"id_platba>*,id_oso>osoba,id_pob>pobyt,id_ord>objednavka,castka,datum,nazev",
+          platba:"id_platba>*,id_oso>osoba,id_pob>pobyt,id_ord>ds_order,castka,datum,nazev",
           join_platba:"id_join_platba>*,id_platba>platba,id_faktura>faktura,spec",
-          faktura:"id_faktura>*,id_order>objednavka,id_pobyt>pobyt,rok,num,typ,castka",
-          objednavka:"id_order>*,id_akce>akce,kod_akce,od,do,jmeno,prijmeni,note",
+          faktura:"id_faktura>*,id_order>ds_order,id_pobyt>pobyt,rok,num,typ,castka",
+          ds_order:"id_order>*,id_akce>akce,kod_akce,od,do,nazev,jmeno,prijmeni,note",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
           osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
@@ -80,6 +81,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
           item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
           item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
+          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
           item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
@@ -326,7 +328,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         paper.callback= _callback;
         paper.display(1,'back');
         paper.akce= _callback.title;
-        paper.ref= _parm.ref; 
+//        paper.ref= _parm.ref; 
       }
       else {
         paper.display(0,'back');
@@ -334,19 +336,20 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       paper.full= _parm.html;
       panel.modal(40,10);    
     }
-    use paper: form [0,0,100,100] { 
+    use paper: form { 
       var parm:object, callback:object
-      label full [0,0,662,936]
+      label full [0,0,*,*] { style:"overflow-x:hidden;overflow-y:auto" } // 0,0,662,936
       button akce [20,10,,] {tag:'back', style:'z-index:2' 
         func onclick() { var block:ezer
           block= callback.block;
           block.call(callback.func,parm);
+          panel.hide(0); 
       }}
       button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
         func onclick() { panel.hide(0); }
       }
-      label ref [20,35,150,] {tag:'back', 
-        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+//      label ref [20,35,150,] {tag:'back', 
+//        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
     }
   }
 }
@@ -376,12 +379,12 @@ table akce { key_id:'id_duakce'
   number typ
   number statistika
 }
-table join_akce { // spojení číselníku akcí s MS
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
-  number akce      { help:"staré číslo akce podle MS.EXE" }
-}
+//a table join_akce { // spojení číselníku akcí s MS
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+//a  number akce      { help:"staré číslo akce podle MS.EXE" }
+//a }
 # kopie číselníků akcí z intranetu YS
 table uakce { key_id:'id_uakce'
   number id_uakce
@@ -408,17 +411,17 @@ table ms_akce { key_id:'id_akce'  // Sey
   date datum_do
   text misto
 }
-table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
-  number id_gakce
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   g_nazev   { help:"název akce z číselníku akcí" }
-  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
-  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
-  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
-  text   g_typ     { help:"typ akce z číselníku akcí" }
-  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
-}
+//a table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+//a  number id_gakce
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   g_nazev   { help:"název akce z číselníku akcí" }
+//a  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+//a  text   g_typ     { help:"typ akce z číselníku akcí" }
+//a  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+//a }
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
   number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'

@@ -1268,76 +1268,76 @@ function akce2_hnizda_options($hnizda_seznam,$x=0) {
   return $text;
 }
 # ======================================================================================> . intranet
-# -------------------------------------------------------------------------------- akce2 roku_update
-# přečtení listu $rok (>2010) z tabulky ciselnik_akci a zapsání dat do tabulky
-# načítají se jen řádky ve kterých typ='a'
-# funguje pro "nové tabulky google" - od dubna 2015
-function akce2_roku_update($rok) {  trace();
-//  global $json;
-//  $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // neplatné  
-  $key=   "16nu8StIpIPD9uY-cskQOAXCnVY6hL9OTaTBdpPoUrnA";         // ciselnik_akci
-  $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
-  $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
-  // https://docs.google.com/spreadsheets/d/1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc/gviz/tq?tqx=out:json&sheet=
-  $ciselnik= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
-  $x= file_get_contents($ciselnik);
-                                        display("$ciselnik=$x");
-  $xi= strpos($x,$prefix);
-  $xl= strlen($prefix);
-//                                         display("xi=$xi,$xl");
-  $x= substr(substr($x,$xi+$xl),0,-2);
-//                                         display($x);
-  $tab= json_decode($x)->table;
-//                                         debug($tab,$sheet);
-  // projdeme získaná data
-  $n= 0;
-  if ( $tab ) {
-    // zrušení daného roku v GAKCE
-    $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
-    $res= pdo_qry($qry);
-    // výběr a-záznamů a zápis do G_AKCE
-    $values= ''; $del= '';
-    foreach ($tab->rows as $crow) {
-      $row= $crow->c;
-      $kat= $row[0]->v;
-      if ( strpos(' a',$kat) ) {
-//                                                         debug($row,$row[2]->v);
-        $n++;
-        $kod= isset($row[1]->f) ? $row[1]->f : $row[1]->v;
-        $id= 1000*$rok+$kod;
-        $nazev= pdo_real_escape_string($row[2]->v);
-//                                                        display("$kod:$nazev");
-        // data akce - jen je-li syntax ok
-        $od= $do= '';
-        $x= isset($row[3]->f) ? $row[3]->f : $row[3]->v;
-        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
-          $od= sql_date($x,1);
-        $x= isset($row[4]->f) ? $row[4]->f : $row[4]->v;
-        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
-          $do= sql_date($x,1);
-        // kontrola roku
-        if ( !(($od && substr($od,0,4)==$rok) || ($do && substr($do,0,4)==$rok)) ) {
-                                                    display("od=$od do=$do rok=$rok");
-          fce_warning("akce '$nazev' není z daného roku "
-              . "NEBO obnovovaný rok není na intranetu jako první sešit");
-          $n= 0;
-          goto end;
-        }
-        $uc=  isset($row[5]->f) ? $row[5]->f : $row[5]->v;
-        $typ= isset($row[6]->f) ? $row[6]->f : $row[6]->v;
-        $kap= isset($row[7]->f) ? $row[7]->f : $row[7]->v;
-        $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
-        $del= ',';
-      }
-    }
-    $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap,g_kat)
-           VALUES $values";
-    $res= pdo_qry($qry);
-  }
-  // konec
-end:
-  return $n;
-}
+//g# -------------------------------------------------------------------------------- akce2 roku_update
+//g# přečtení listu $rok (>2010) z tabulky ciselnik_akci a zapsání dat do tabulky
+//g# načítají se jen řádky ve kterých typ='a'
+//g# funguje pro "nové tabulky google" - od dubna 2015
+//gfunction akce2_roku_update($rok) {  trace();
+//g//  global $json;
+//g//  $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // neplatné  
+//g  $key=   "16nu8StIpIPD9uY-cskQOAXCnVY6hL9OTaTBdpPoUrnA";         // ciselnik_akci
+//g  $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
+//g  $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
+//g  // https://docs.google.com/spreadsheets/d/1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc/gviz/tq?tqx=out:json&sheet=
+//g  $ciselnik= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
+//g  $x= file_get_contents($ciselnik);
+//g                                        display("$ciselnik=$x");
+//g  $xi= strpos($x,$prefix);
+//g  $xl= strlen($prefix);
+//g//                                         display("xi=$xi,$xl");
+//g  $x= substr(substr($x,$xi+$xl),0,-2);
+//g//                                         display($x);
+//g  $tab= json_decode($x)->table;
+//g//                                         debug($tab,$sheet);
+//g  // projdeme získaná data
+//g  $n= 0;
+//g  if ( $tab ) {
+//g    // zrušení daného roku v GAKCE
+//g    $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
+//g    $res= pdo_qry($qry);
+//g    // výběr a-záznamů a zápis do G_AKCE
+//g    $values= ''; $del= '';
+//g    foreach ($tab->rows as $crow) {
+//g      $row= $crow->c;
+//g      $kat= $row[0]->v;
+//g      if ( strpos(' a',$kat) ) {
+//g//                                                         debug($row,$row[2]->v);
+//g        $n++;
+//g        $kod= isset($row[1]->f) ? $row[1]->f : $row[1]->v;
+//g        $id= 1000*$rok+$kod;
+//g        $nazev= pdo_real_escape_string($row[2]->v);
+//g//                                                        display("$kod:$nazev");
+//g        // data akce - jen je-li syntax ok
+//g        $od= $do= '';
+//g        $x= isset($row[3]->f) ? $row[3]->f : $row[3]->v;
+//g        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+//g          $od= sql_date($x,1);
+//g        $x= isset($row[4]->f) ? $row[4]->f : $row[4]->v;
+//g        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+//g          $do= sql_date($x,1);
+//g        // kontrola roku
+//g        if ( !(($od && substr($od,0,4)==$rok) || ($do && substr($do,0,4)==$rok)) ) {
+//g                                                    display("od=$od do=$do rok=$rok");
+//g          fce_warning("akce '$nazev' není z daného roku "
+//g              . "NEBO obnovovaný rok není na intranetu jako první sešit");
+//g          $n= 0;
+//g          goto end;
+//g        }
+//g        $uc=  isset($row[5]->f) ? $row[5]->f : $row[5]->v;
+//g        $typ= isset($row[6]->f) ? $row[6]->f : $row[6]->v;
+//g        $kap= isset($row[7]->f) ? $row[7]->f : $row[7]->v;
+//g        $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
+//g        $del= ',';
+//g      }
+//g    }
+//g    $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap,g_kat)
+//g           VALUES $values";
+//g    $res= pdo_qry($qry);
+//g  }
+//g  // konec
+//g end:
+//g  return $n;
+//g}
 # ==================================================================================> . mrop firming
 # ------------------------------------------------------------------------------- akce2 confirm_mrop
 # zjištění, zda lze účastníků akce zapsat běžný rok jako datum iniciace
@@ -9578,8 +9578,10 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace(
   // nová hlavička
   $Z= Excel5_n2col(count($tab->flds)-1);
   list($a_org,$a_misto,$a_druh,$a_od,$a_do,$a_kod)= 
-      select("access,misto,IFNULL(zkratka,''),datum_od,datum_do,IFNULL(g_kod,'')",
-        "akce LEFT JOIN join_akce ON id_akce=id_duakce LEFT JOIN _cis ON _cis.druh='ms_akce_typ' AND data=akce.druh",
+      select("access,misto,IFNULL(zkratka,''),datum_od,datum_do,ciselnik_akce", //a IFNULL(g_kod,'')
+        "akce "
+//a          . "LEFT JOIN join_akce ON id_akce=id_duakce "
+          . "LEFT JOIN _cis ON _cis.druh='ms_akce_typ' AND data=akce.druh",
         "id_duakce=$akce");
   $a_co= ($a_org==1?'YMCA Setkání, ':($a_org==2?'YMCA Familia, ':'')).$a_druh;
   $a_oddo= datum_oddo($a_od,$a_do);
@@ -12332,7 +12334,8 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     $druh_r= $org==2 ? '200,230'          : '412';                      // MS
     $druh_j= $org==2 ? '300,301,310,410'  : '302';                      // muži, ženy
     $druh= $druh_r . ( $druh_j ? ",$druh_j" : '');
-    $ss=     $org==2 ? "ciselnik_akce"    : "g_kod";
+//g    $ss=     $org==2 ? "ciselnik_akce"    : "g_kod";
+    $ss=     "ciselnik_akce";
     $test= "1";
 //     $test= "id_akce=694";
 //     $test= "id_akce IN (694,738)";
@@ -16395,7 +16398,9 @@ function db2_copy_test_db($db) {  trace();
 //     "_user,_skill,"
     "*_touch,*_todo,*_track,*mail,"
   . "_help,_cis,ezer_doc2,"
-  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
+  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,"
+//a  . "g_akce,join_akce,"
+  . "prihlaska,"
   . "dar,uhrada,"
   . "dopis,mailist,"
   . "pdenik,person,pokladna,"
