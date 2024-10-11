@@ -445,7 +445,8 @@ form _lst [,,370,*] {
 //    show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
     show access { data:o.access }
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
     show ulice {expr:"IF(o.adresa,o.ulice,of.ulice)"}
     show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
