@@ -445,7 +445,8 @@ form _lst [,,370,*] {
 //    show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
     show access { data:o.access }
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
     show ulice {expr:"IF(o.adresa,o.ulice,of.ulice)"}
     show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
@@ -656,8 +657,8 @@ form _page {
     idr.set(_idr); ido.set(_ido);
     page_load;
     [ track.display;
-      { ido; track.back_show('osoba',ido)
-      | idr; track.back_show('rodina',idr)
+      { ido; track.back_show('osoba',ido.get)
+      | idr; track.back_show('rodina',idr.get)
       }
     ]
   }
@@ -823,7 +824,8 @@ form _page {
     show rodiny
     show org
     show jmeno [,,110,] {title:'jména'
-      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show vek   [,,30,] {title:'věk', format:'r' }
     show role  [,,10,] {title:'role'}
     proc onrowclick() {
@@ -957,7 +959,8 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
     show id_o { data:do.id_osoba }
     show access { data:da.access }
     show [,,13,] { data:da.ukon, title:'způsob', format:'q*s'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show castka [,,70,] { data:da.castka, title:'částka', format:'rq*s' }
     show [,,80,] { data:da.dat_od, title:'přijetí', format:'rq*s' }
     show [,,80,] { data:da.dat_do, title:'potvrzení', format:'rq*s' }
@@ -1047,7 +1050,8 @@ form _prispevky [,,375,min_h+-180] {css:'ae_frame shift_down'
     show id_o { data:do.id_osoba }
     show access { data:da.access }
     show [,,13,] { data:da.ukon, title:'způsob', format:'q*s'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show castka [,,40,] { data:da.castka, title:'výše', format:'rq*s' }
     show [,,70,] { data:da.dat_od, title:'přijetí', format:'rq*s' }
     show [,,70,] { data:da.dat_do, title:'potvrzení', format:'rq*s' }
@@ -1138,7 +1142,8 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
     show id_o { data:do.id_osoba }
     show access { data:da.access }
     show ukon [,,10,] { data:da.ukon, title:'způsob', format:'q*s'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+//      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show [,,65,] { data:da.dat_od, title:'vznik', format:'rq*s' }
     show [,,65,] { data:da.dat_do, title:'zánik', format:'rq*s' }
     proc onrowclick() { form.load(id_d.get); idd.set(id_d.get); form_state('n|s','u|z'); }
@@ -1239,7 +1244,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     show fce { data:p.funkce }
     show org { data:a.access }
     show rok  [,, 30,] { title:'rok', format:'q*s-', help:"rok konání akce"
-      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds' }
     show akce [,,128,] { title:'název', format:'tq*s', help:"název akce" }
     show _vek [,, 20,] { title:'věk', help:"stáří v době konání akce" }
     show _fce [,, 30,] { title:'fce', help:"funkce na akci"
