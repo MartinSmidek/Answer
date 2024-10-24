@@ -25,6 +25,7 @@ function kod2ss() {
     $n++;
     query("UPDATE akce SET ciselnik_akce=$kod WHERE id_duakce=$ida");
   }
+  display("zapsáno $n údajů pro SS ");
   return "zapsáno $n údajů pro SS ";
 }
 /** =======================================================================================> FAKTURY **/
@@ -628,7 +629,7 @@ __HTML;
 }
 /** ====================================================================================> OBJEDNÁVKY **/
 # ------------------------------------------------------------------------- dum objednavka_akce_make
-# vytvoř objednávku k akci
+# vytvoř objednávku k akci 
 function dum_objednavka_make($ida) { 
   list($od,$do,$nazev)= select('UNIX_TIMESTAMP(datum_od),UNIX_TIMESTAMP(datum_do),nazev',
       "akce","id_duakce=$ida");
@@ -637,6 +638,36 @@ function dum_objednavka_make($ida) {
   $ido= query_track("INSERT INTO tx_gnalberice_order (id_akce,fromday,untilday,note,state,name) 
     VALUES ($ida,$od,$do,'$nazev',3,'$YS')",'setkani');
   return $ido;
+}
+# -------------------------------------------------------------------------- dum objednavka_akce_upd
+# uprav objednávku k akci IDA - pokud je 
+function dum_objednavka_upd($ida,$upd) { 
+  debug($upd,'dum_objednavka_upd');                                               /*DEBUG*/
+  $set= $del= '';
+  if (isset($upd->ds_order)) {    
+    $ido= dum_objednavka_akce($ida);
+    if (!$ido && $upd->ds_order) {
+      // vytvoř k akci objednávku
+      dum_objednavka_make($ida);
+    }
+    if ($ido && !$upd->ds_order) {
+      // zruš objednávku k akci 
+      query("UPDATE ds_order SET id_akce=0, deleted=1 WHERE id_order=$ido");
+    }
+  }
+  if (isset($upd->datum_od)) {
+    $dt= sql_date1($upd->datum_od,1);
+    $set.= "$del fromday=UNIX_TIMESTAMP('$dt')";
+    $del= ',';
+  }
+  if (isset($upd->datum_do)) {
+    $dt= sql_date1($upd->datum_do,1);
+    $set.= "$del untilday=UNIX_TIMESTAMP('$dt')";
+    $del= ',';
+  }
+  if ($set) {
+    query("UPDATE tx_gnalberice_order SET $set WHERE id_akce=$ida",'setkani');
+  }
 }
 # ------------------------------------------------------------------------- dum objednavka_akce_make
 # vytvoř akci k objednávce
@@ -753,7 +784,7 @@ function dum_objednavka($id_order) {
 # vrátí ID objednávky spojené s akcí nebo 0
 function dum_objednavka_akce($id_akce) { 
   global $setkani_db;
-  return select1('IFNULL(uid,0)',"$setkani_db.tx_gnalberice_order","id_akce=$id_akce");
+  return select1('IFNULL(uid,0)',"$setkani_db.tx_gnalberice_order","deleted=0 AND id_akce=$id_akce");
 }
 # ---------------------------------------------------------------------------- dum objednavka_delete
 # vrátí ID objednávky spojené s akcí nebo 0

@@ -380,6 +380,10 @@ table akce { key_id:'id_duakce'
   text web_url
   text web_wordpress
 }
+table ds_order { // sql view on tx_gnalberice_order
+  number id_order
+  number id_akce
+}
 table prihlaska { key_id:'id_prihlaska'
   number id_prihlaska
   number id_akce

@@ -3195,7 +3195,7 @@ function ucast2_chain_rod($idro) { trace();
   // míra podobnosti rodin
   $nx0= count($x);
   $idr= 0;
-  $orgs= $ro->access;
+  $orgs= (int)$ro->access;
   foreach ($x as $i=>$xi) {
     $xi->asi.= $xi->svatba   ? 'S' : '';
     $xi->asi.= $xi->bydliste ? 'B' : '';
@@ -3203,7 +3203,7 @@ function ucast2_chain_rod($idro) { trace();
     $xi->asi.= $xi->narozeni ? 'N' : '';
     $xi->asi.= $xi->kontakty ? 'K' : '';
     if ( !strlen($xi->asi) || $xi->asi=='C' ) { unset($x[$i]); continue; }
-    $orgs|= $xi->org;
+    $orgs|= (int)$xi->org;
     $idr= $i;
   }
 //                                                 debug($x,"podobné rodiny");
@@ -3357,13 +3357,13 @@ function ucast2_chain_oso($idoo,$idr=0) {
   // míra podobnosti osob
   $nx0= count($x);
   $i0= 0;
-  $orgs= $ro->access;
+  $orgs= (int)$ro->access;
   foreach ($x as $i=>$xi) {
     $xi->asi.= $xi->bydliste ? 'b' : '';
     $xi->asi.= $xi->narozeni ? 'n' : '';
     $xi->asi.= $xi->kontakty ? 'k' : '';
     if ( !strlen($xi->asi) || $xi->asi=='b' ) { unset($x[$i]); continue; }
-    $orgs|= $xi->org;
+    $orgs|= (int)$xi->org;
     $i0= $i;
   }
 //                                                 debug($x,"podobné osoby");
@@ -3624,7 +3624,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       LEFT JOIN osoba_geo AS g USING(id_osoba)
       WHERE deleted='' AND id_osoba IN (0$osoby)");
     while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-      $o->access_web= $o->access | ($o->web_zmena=='0000-00-00' ? 0 : 16);
+      $o->access_web= (int)$o->access | ($o->web_zmena=='0000-00-00' ? 0 : 16);
       $osoba[$o->id_osoba]= $o;
     }
     # seznam rodin osob
@@ -3776,8 +3776,8 @@ function ucast2_browse_ask($x,$tisk=false) {
             if ( !isset($s->_barva) )
               $s->_barva= isset($s->id_tvori) && $s->id_tvori ? 1 : 2; // barva: 1=člen rodiny, 2=nečlen
             # barva nerodinného pobytu
-            $p_access|= $o->access;
-            $p_access_web|= $o->access_web;
+            $p_access|= (int)$o->access;
+            $p_access_web|= (int)$o->access_web;
             if (!$p->xstat && $o->stat!='CZ') $p->xstat= $o->prislusnost;
           }
           else {
@@ -3911,10 +3911,10 @@ function ucast2_browse_ask($x,$tisk=false) {
       $z->r_access= intval($z->r_access);
       # ... oprava obarvení
       if ( $p_access )
-        $z->r_access|= $p_access;
+        $z->r_access|= (int)$p_access;
       $z->r_access_web= !$idr ? 0
-          : $rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
-      $z->p_access_web= $p_access_web | $z->r_access_web;
+          : (int)$rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
+      $z->p_access_web= (int)$p_access_web | (int)$z->r_access_web;
       # členové
       $z->r_cleni= $cleni;
       # pobyt II
@@ -13150,11 +13150,11 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
   // opravy v originálu
   $access_orig= select("access","osoba","id_osoba=$id_orig");
   $access_copy= select("access","osoba","id_osoba=$id_copy");
-  $access= $access_orig | $access_copy;
+  $access= (int)$access_orig | (int)$access_copy;
   query("UPDATE osoba SET access=$access WHERE id_osoba=$id_orig");
   // zápis o ztotožnění osob do _track jako op=d (duplicita)
   $user= $USER->abbr;
-  $info= "access:$access_orig;tvori:$tvori;spolu:$spolu;dar:$dar;platba:$platba;mail:$mail";
+  $info= "access:$access_orig|$access_copy;tvori:$tvori;spolu:$spolu;dar:$dar;platba:$platba;mail:$mail";
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
          VALUES ('$now','$user','osoba',$id_orig,'osoba','d','$info',$id_copy)");    // d=duplicita
   // zápis o smazání kopie do _track jako op=x (eXtract)
@@ -13209,7 +13209,7 @@ function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   // opravy v originálu
   $access_orig= select("access","osoba","id_osoba=$id_orig");
   $access_copy= select("access","osoba","id_osoba=$id_copy");
-  $access= $access_orig | $access_copy;
+  $access= (int)$access_orig | (int)$access_copy;
   query("UPDATE osoba SET access=$access WHERE id_osoba=$id_orig");
   // zápis o ztotožnění osob do _track jako op=d (duplicita)
   $info= "access:$access_orig;xtvori:$tvori;spolu:$spolu;dar:$dar;platba:$platba;mail:$mail";
@@ -13248,7 +13248,7 @@ function elim2_rodina($id_orig,$id_copy) {
     // opravy v originálu
     $access_orig= select("access","rodina","id_rodina=$id_orig");
     $access_copy= select("access","rodina","id_rodina=$id_copy");
-    $access= $access_orig | $access_copy;
+    $access= (int)$access_orig | (int)$access_copy;
     query("UPDATE rodina SET access=$access WHERE id_rodina=$id_orig");
     // zápis o ztotožnění rodin do _track jako op=d (duplicita)
     $info= "access:$access_orig;pobyt:$pobyt;tvori:$tvori;dar:$dar;platba:$platba";
@@ -16443,6 +16443,10 @@ function db2_copy_test_db($db) {  trace();
         $msg.= "<br>INIT setkani4_test.$tab";
       }
     }
+    // poznámka k VIEW
+    $msg.= "<h3>Zůstávají zachovány definice VIEW z databáze ezer_setkani4_test do ezer_db2_test</h3>
+      <br>VIEW ds_order
+      <br>VIEW objednávka";
   }
   // end
   ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
