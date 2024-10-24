@@ -28,6 +28,17 @@ function kod2ss() {
   display("zapsáno $n údajů pro SS ");
   return "zapsáno $n údajů pro SS ";
 }
+# ----------------------------------------------------------------------------------- state 2 access
+# převede state na access
+function state2access() {
+  $n= 0;
+  $n= query("UPDATE akce AS a
+    JOIN ds_order AS d ON id_akce=id_duakce
+    SET access=1,misto='Albeřice',a.nazev=d.note
+    WHERE YEAR(datum_od)>2024 AND state IN (3,5) AND access!=1");
+  display("opraveno $n údajů access pro Akce YMCA ");
+  return "opraveno $n údajů access pro Akce YMCA";
+}
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $dum_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';
@@ -1744,9 +1755,10 @@ function dum_kniha_hostu($par,$export=0) {
     SELECT d.id_order,id_akce,
       GROUP_CONCAT(IF(NOT ISNULL(id_faktura) AND f.deleted='',id_faktura,0)) AS _idf,
       ciselnik_akce, -- //g IFNULL(g_kod,''),
-      note,state,od,do
+      d.note,state,od,do
     FROM objednavka AS d
     LEFT JOIN faktura AS f ON f.id_order=d.id_order AND f.deleted='' AND f.id_pobyt=0 
+    LEFT JOIN akce AS a ON id_akce=id_duakce
     -- //g LEFT JOIN join_akce USING (id_akce) 
     WHERE d.deleted=0 AND YEAR(od)=$rok $AND_MESIC $AND_TEST -- AND MONTH(od)<=MONTH(NOW()) 
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová

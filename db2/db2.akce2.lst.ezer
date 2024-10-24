@@ -220,7 +220,7 @@ menu m {type:'left', format:'f+'
         the_omezeni.set(i.par.omez);
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
-  menu g {title:'Výběr akce zadaného roku',type:'group',                                 skill:'y;f;s;crz'
+  menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;crz'
 //g    item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
 //g      par:{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
@@ -244,7 +244,7 @@ menu m {type:'left', format:'f+'
       }
     }
   }
-  menu {title:'Výběr ze všech roků',type:'group',                                        skill:'y;f;c;s'
+  menu {title:'Statistika - různé výběry',type:'group',                                        skill:'y;f;c;s'
 //    item sey {title:'[fa-search] ze seznamu všech akcí',    par:{it:'s',cond:'da2.druh!=64 '} }
 //    item  {title:'[fa-search-plus]... opravdové akce',      par:{it:'s',cond:'da2.spec=0 AND da2.druh!=64 ' } }
 //    item  {title:'[fa-search-minus] ... jen různé seznamy', par:{it:'s',cond:'da2.spec=1 AND da2.druh!=64 '} }
