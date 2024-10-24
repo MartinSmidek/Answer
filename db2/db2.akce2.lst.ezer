@@ -461,7 +461,7 @@ form _page [,,275,360] {
   radio ds_order [247,89,205,19] { tag:'cor,!', title:'objednávka Domu setkání'
     case [0,0,130,] { title:'akce v Domě setkání', value:'1'  }
     case [124,0,85,] { title:'akce jinde', value:'0' }
-    func onchange() { if (this==1) { misto= 'Albeřice'; misto.change() }}
+    func onchange() { misto= this==1 ? 'Albeřice' : ''; misto.change() }
   } 
   field datum_od [18,133,83,] { tag:'cor,!', title:'^začátek *', type:'date', data:akce.datum_od }
   field datum_do [118,133,83,] { tag:'cor,!', title:'^ukončení', type:'date', data:akce.datum_do 
@@ -665,7 +665,6 @@ form _page [,,275,360] {
           if (datum_od.changed()) upd.datum_od= datum_od;
           if (datum_do.changed()) upd.datum_do= datum_do;
           php.dum_objednavka_upd(ida,upd)
-          // reakce na dodatečnou změnu na objednávku DS ... kontrola data
         }
         form.save(); form.load(); info.sey.browse_seek()
       }
@@ -687,7 +686,7 @@ form _page [,,275,360] {
         // založ akci
         if (ds_order) {
           // doplňky pro Dům setkání: vytvoř záznam v tx_gnalberice_order 
-          access= my_org|org_ds; access.change();
+          access= my_org; access.change(); // je to akce organizace 
           ida= form.insert(); //form.load();
           php.dum_objednavka_make(ida)
         }
@@ -1256,6 +1255,7 @@ form _page [,,275,360] {
 form _info [,,*,50] {
   # ------------------------------------------------------------------------==> . seznam Dum setkání
   browse dum [0,36,200,500] { tag:'d', rows:28, qry_rows:0, buf_rows:120, key_id:'id_order', 
+      css_rows:"zruseno,0:,1:skrtnuty" // akce je: 1=zrušená
       optimize:{ask:'dum_browse_orders'}
     show id_order [,,40,] { title:'objednávka', format:'rq=' }
     show id_akce  [,,40,] { title:'akce', format:'rq=' 
@@ -1268,6 +1268,7 @@ form _info [,,*,50] {
     show osob [,,50,] { title:'osob', format:'r' }
     show od [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
+    show zruseno
     func Load(idd) {
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
           '','','','','1',the_duakce);

@@ -787,13 +787,46 @@ function dum_objednavka_akce($id_akce) {
   return select1('IFNULL(uid,0)',"$setkani_db.tx_gnalberice_order","deleted=0 AND id_akce=$id_akce");
 }
 # ---------------------------------------------------------------------------- dum objednavka_delete
-# vrátí ID objednávky spojené s akcí nebo 0
-function dum_objednavka_delete($id_order) { 
+# smaže objednávku 
+function dum_objednavka_delete($ido) { 
   global $setkani_db;
-  query("DELETE FROM $setkani_db.tx_gnalberice_order WHERE uid=$id_order");
+  $ida= select('id_akce','ds_order',"id_order=$ido");
+  if ($ida) query("DELETE FROM akce WHERE id_duakce=$ida"); 
+  query("DELETE FROM $setkani_db.tx_gnalberice_order WHERE uid=$ido"); 
+}
+# ----------------------------------------------------------------------- dum objednavka_safe_delete
+# zjištění, zda je možné smazat objednávku 
+function dum_objednavka_safe_delete($ido) { 
+  $ret= (object)['safe'=>1,msg=>"Mám opravdu smazat objednávku č.$ido?"];
+  // má účastníky?
+  if (select('COUNT(*)','faktura',"id_order=$ido")) {
+    $ret->safe= 0;
+    $ret->msg= "Objednávku nelze smazat, protože má vystavenou fakturu.";
+  }
+  else {
+    list($ida,$state)= select('id_akce,state','ds_order',"id_order=$ido");
+    if ($state!=1) {
+      $ret->safe= 0;
+      $ret->msg= "Mazat lze jen objednávky ve stavu 'zájem o pobyt'.";
+    }
+    elseif ($ida) { 
+      $org= select('access','akce',"id_duakce=$ida");
+      if ($org==org_ds) {
+        if (select('COUNT(*)','pobyt',"id_akce=$ida")) {
+          $ret->safe= 0;
+          $ret->msg= "Objednávku nelze smazat, protože má evidované hosty.";
+        }
+      }
+      else {
+        $ret->safe= 0;
+        $ret->msg= "Objednávku nelze smazat, protože je zapsána mezi akcemi.";
+      }
+    }
+  }
+  return $ret;
 }
 # ------------------------------------------------------------------------------ dum objednavka_save
-# objednávka pobytu
+# uložení objednávky pobytu
 function dum_objednavka_save($id_order,$changed) { 
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
@@ -1182,7 +1215,7 @@ function dum_browse_orders($x) {
     $rp= pdo_qry("
       SELECT uid,d.id_akce,a.access,name,d.note,SUM(IF(IFNULL(id_osoba,0),1,0)),
         d.nazev,IFNULL(a.nazev,''),IFNULL(a.typ,0),
-        DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday))
+        DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday)),IFNULL(zruseno,0)
       FROM $setkani_db.tx_gnalberice_order AS d
         LEFT JOIN $answer_db.akce AS a ON id_duakce=id_akce 
         LEFT JOIN pobyt AS p ON p.id_akce=id_duakce
@@ -1193,7 +1226,8 @@ function dum_browse_orders($x) {
       ORDER BY fromday,uid
     ");
     while ($rp && (list(
-        $uid,$ida,$access,$name,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do)= pdo_fetch_array($rp))) {
+        $uid,$ida,$access,$name,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do,$zruseno)
+          = pdo_fetch_array($rp))) {
       $z[$uid]->id_order= $uid;
       $z[$uid]->id_akce= $ida;
       $z[$uid]->curr= $ida==$curr ? 1 : 0;
@@ -1203,6 +1237,7 @@ function dum_browse_orders($x) {
       $z[$uid]->osob= $osob;
       $z[$uid]->od= sql_date1($od);
       $z[$uid]->do= sql_date1($do);
+      $z[$uid]->zruseno= $zruseno;
     }
     # předání pro browse
     $y->from= 0;

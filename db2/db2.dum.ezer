@@ -233,7 +233,7 @@ form _vyuctovani [,,623,400] {
 # ======================================================================================> OBJEDNÁVKA
 panel Objednavka [,,760,510] { type:'popup' title:"Objednávka pobytu v Domě setkání"
   func Delete(id_order) { 
-    php.dum_objednavka_delete(id_order);
+    php.dum_objednavka_delete(id_order); // tvrdé smazání bez dotazu
   }
   func Show(ida) { 
     panel.title= `Objednávka a vyúčtování pobytu v Domě setkání`;
@@ -382,6 +382,18 @@ form _obj {
   field address [left_oso+0,135,210,] { tag:'adr', title:'^ulice' }
   field zip   [left_oso+  0,175, 50,] { tag:'adr', title:'^psč' }
   field city  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
+  
+  button [left_oso+223,161,,] { title:'[fa-times fa-red] Smazat<br>objednávku?'
+    func onclick() { var ret:object
+    ret= php.dum_objednavka_safe_delete(the_order);
+    if (ret.safe) {
+      if (confirm(ret.msg)) {
+        php.dum_objednavka_delete(the_order);
+        alert("Objednávka byla smazána, obnov si přehled objednávek.")
+      }
+    }
+    else alert(ret.msg);
+  }}
 
   // parametry zálohy 
   field zal_idf
