@@ -380,6 +380,10 @@ table akce { key_id:'id_duakce'
   text web_url
   text web_wordpress
 }
+table ds_order { // sql view on tx_gnalberice_order
+  number id_order
+  number id_akce
+}
 table prihlaska { key_id:'id_prihlaska'
   number id_prihlaska
   number id_akce
@@ -661,24 +665,24 @@ table webform { key_id:'id_webform'
   text historie
 }
 map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
-table join_akce { // spojení číselníku akcí s MS
-  number id_akce   { help:"klíč akce v tabulce akce" }
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
-  number akce      { help:"staré číslo akce podle MS.EXE" }
-}
-table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
-  number id_gakce
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   g_nazev   { help:"název akce z číselníku akcí" }
-  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
-  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
-  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
-  text   g_typ     { help:"typ akce z číselníku akcí" }
-  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
-}
+//a table join_akce { // spojení číselníku akcí s MS
+//a  number id_akce   { help:"klíč akce v tabulce akce" }
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+//a  number akce      { help:"staré číslo akce podle MS.EXE" }
+//a }
+//a table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+//a  number id_gakce
+//a  number g_rok     { help:"rok akce podle číselníku akcí" }
+//a  number g_kod     { help:"kód akce podle číselníku akcí" }
+//a  text   g_nazev   { help:"název akce z číselníku akcí" }
+//a  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+//a  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+//a  text   g_typ     { help:"typ akce z číselníku akcí" }
+//a  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+//a }
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
   number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'

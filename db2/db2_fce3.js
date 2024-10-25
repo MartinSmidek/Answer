@@ -229,6 +229,15 @@ function highcharts_simple() {
   });
 }
 // =========================================================================================> funkce
+// -------------------------------------------------------------------------------------- in selects
+// zjistí, zda hodnota je obsažena v nabídce Selects
+function in_selects(select,value) {
+  let ok= 0;
+  for (let key in select.Items) {
+    if (select.Items[key]==value) { ok= 1; break; }
+  }
+  return ok;
+}
 // --------------------------------------------------------------------------------------- set style
 // odstraní styl předaného elementu
 function removeClass(elem,css) {
