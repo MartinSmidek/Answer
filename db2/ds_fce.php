@@ -713,7 +713,7 @@ function dum_objednavka($id_order) {
   $rf= pdo_qry("
       SELECT state,fromday AS od,untilday AS do,d.note,rooms1,adults,kids_10_15,kids_3_9,kids_3,board,
         d.nazev AS d_nazev,IFNULL(a.nazev,'') AS a_nazev,a.typ AS a_typ,
-        org,ic,name,firstname,dic,email,telephone,address,zip,city,
+        access,org,ic,name,firstname,dic,email,telephone,address,zip,city,
         DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday)) AS noci,id_akce,akce 
         -- ,f.num,f.typ,f.vs,f.ss,f.zaloha,f.castka,f.vystavena,p.datum AS zaplacena,f.vyrizuje
       FROM $setkani_db.tx_gnalberice_order AS d
@@ -839,6 +839,7 @@ function dum_objednavka_safe_delete($ido) {
 # ------------------------------------------------------------------------------ dum objednavka_save
 # uložení objednávky pobytu
 function dum_objednavka_save($id_order,$changed) { 
+  debug($changed,"dum_objednavka_save($id_order,...)");                                   /*DEBUG*/
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
   foreach($changed as $fld=>$val) {
@@ -853,6 +854,11 @@ function dum_objednavka_save($id_order,$changed) {
     if (in_array($fld,['nazev'])) {
       $set_akce.= "$del_akce nazev='$val'";
       $del_akce= ',';
+    }
+    if (in_array($fld,['access'])) {
+      $set_akce.= "$del_akce access=$val";
+      $del_akce= ',';
+      continue;
     }
     $set.= "$del$fld='$val'";
     $del= ',';
