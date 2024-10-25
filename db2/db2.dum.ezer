@@ -321,6 +321,7 @@ form _obj {
     };
   }
   // položky 
+  field access
   field the_order [0,15,50,] { tag:'obj', title:'^objednávka', format:'rd' }
   field nazev [60,15,268,] { tag:'obj', title:'^editovatelné upřesnění názvu ' }
   button [342,15,,] { title:'[fa-copy] Udělej kopii' 
@@ -341,10 +342,15 @@ form _obj {
   button [320,175,,] { tag:'obj', title:'[fa-save] Uložit změny' 
     func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
+        // pokud již jsou hosté
         alert('pokud nastala změna v datu příjezdu či odjezdu je zapotřebí pobyt "osamostatnit"');
         return;
       }
+      // kontrola konzistence mezi state=akce_YMCA a access=1
       saved= {};
+      if (state.key()==3 && access!=1) saved.access= 1;
+      if (state.key()!=3 && access!=64) saved.access= 64;
+      // uložení ostatních položek
       rooms= js.dum_rooms_get(plan,'q');
       if (plan.rooms1!=rooms) saved.rooms1= rooms;
       copy_by_name(form,saved,'obj|adr',1); // vyber změněné 
