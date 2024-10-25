@@ -35,7 +35,10 @@ func onfirstfocus() {
   page.cen_copy.selects("neměnit:0");
   zalozka= 'inf';
   // zobrazení vazby na objednávky DS
-  if (!has_skill('y')) page.ds_order.set_css('hidden','');
+  if (!has_skill('y')) {
+    page.ds_order.set_css('hidden','');
+    info.sey.isds.set_attrib('expr'," 0 ");
+  }
   page.DocInit();
   echo('onfirstfocus the_source=',the_source);
   // zobrazení seznamu akcí
@@ -252,7 +255,7 @@ menu m {type:'left', format:'f+'
     item sey {title:'[fa-search] ze seznamu všech akcí',    par:{it:'s',cond:'da2.access!=64 '} }
     item  {title:'[fa-search-plus]... opravdové akce',      par:{it:'s',cond:'da2.spec=0 AND da2.access!=64 ' } }
     item  {title:'[fa-search-minus] ... jen různé seznamy', par:{it:'s',cond:'da2.spec=1 AND da2.access!=64 '} }
-    item  {title:'[fa-search-minus] ... jen pobyty Domu setkání', par:{it:'s',cond:'da2.access=64 '} }
+    item  {title:'[fa-search-minus] ... jen pobyty Domu setkání', par:{it:'s',cond:'da2.access=64 '} skill:'y'}
   }
   func onclick (i:ezer) {
     menu_item= i;
@@ -337,7 +340,9 @@ form _page [,,275,360] {
   }
   func akce_zpet() { 
     akce_lock('off'); 
-    form.load(page.a_akce); zmena_web= 0; 
+    form.plain();
+    form.load(page.a_akce); 
+    zmena_web= 0; 
   }
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
@@ -669,8 +674,9 @@ form _page [,,275,360] {
         form.save(); form.load(); info.sey.browse_seek()
       }
       else { // přidání nové akce
-        // kontrola resp. přepnutí roku
-        if (missing('!')) return;
+        // kontrola pouze pro YS
+        if (has_skill('y') && missing('!')) return;
+        // přepnutí roku 
         pridat_rok= 0; jiny_rok= 0;
         rok= fdate("Y",datum_od);
         if (rok!=info.rok) {
@@ -1415,7 +1421,7 @@ form _info [,,*,50] {
     show web_p { data:da2.web_prihlasky }
     show web_o { expr:"da2.web_obsazeno OR IF(da2.web_maximum,da2.web_maximum<=SUM((SELECT 1 FROM pobyt WHERE id_pobyt=pa2.id_pobyt AND funkce!=99)),0)" }
     show web_m { expr:"IF(da2.mrop OR da2.firm,1,0)" }
-    show isds { expr:"IF(ISNULL(ds2.id_akce),0,IF(ds2.id_akce>0,1,0))" }
+    show isds { expr:"IF(ISNULL(ds2.id_akce),0,IF(ds2.id_akce>0,1,0))" } // pro #y je expr=" 0 "
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }

@@ -2594,7 +2594,7 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
   }
 }
 # ------------------------------------------------------------------------------------------ ds2 fio
-# zjištění věku v době zahájení akce
+# spolupráce s FIO bankou
 function ds2_fio($cmd) {
   global $api_fio_ds, $api_fio_ys;
   $y= (object)['html'=>'','err'=>''];
