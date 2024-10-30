@@ -2792,8 +2792,8 @@ function ds2_fio($cmd) {
           $nd++;
         }
       }
-      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, 
-          $nv podle VS a jména, $nf podle faktury";
+      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, "
+          . "$nv podle VS a jména, $nf podle faktury";
       break; // přiřazení plateb
   }
 end:  

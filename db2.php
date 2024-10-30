@@ -65,20 +65,17 @@
         foreach (['load-ys'=>'LOAD YS','join-ys'=>'AKCE YS',
                   'load-ds'=>'LOAD DS','join-ds'=>'AKCE DS'] as $fce=>$note) {
           $y= ds2_fio((object)['fce'=>$fce,'od'=>'*','do'=>'*']);
-          $html.= "<br>\n$note: $y->html"; 
+          $html.= "\n$note: $y->html"; 
         }
         break;
       }
     } 
     catch (Throwable $e) { 
-      echo "<br>po catch";
       $html.= "<hr>\nERROR: ".$e->getMessage(); 
     }
-    $last_run= "BATCH {$_GET['batch']} started ".date('j.n.Y H:i:s')."$html";
-    echo "<br>$last_run";
+    $last_run= "BATCH {$_GET['batch']} started ".date('j.n.Y H:i:s').$html;
     $_SESSION[$ezer_root]['last_batch']= $last_run;
-    echo "<br>save into $abs_root/last_batch.txt";
-    file_put_contents("$abs_root/last_batch.txt",$last_run);
+    file_put_contents("$abs_root/last_batch.html",uw(str_replace("\n","<br>",$last_run)));
     exit();
   }  
 
