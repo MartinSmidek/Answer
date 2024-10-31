@@ -9961,8 +9961,10 @@ function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json,$hnizdo) {  trace(
   foreach ( $tab->clmn as $xa ) {
     $idp= $xa['^id_pobyt'];
     $x= (object)$xa;
+    $_diety= $x->strava_cel_bm!=0  || $x->strava_pol_bm!=0 
+          || $x->strava_cel_bl!=0  || $x->strava_pol_bl!=0;
     // výpočet strav včetně přetokového souboru na iregularity a diety
-    if ( $x->_vyjimky || $x->_diety ) {
+    if ( $x->_vyjimky || $_diety ) {
       $par->souhrn= 1;
 //      $ret= akce2_strava_pary($akce,$par,'','',0,$idp);
 //                                                 debug($ret,"akce2_strava_pary");
