@@ -1222,17 +1222,22 @@ function dum_cat_typ() {
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_orders($x) {
   global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
-//  debug($x,"dum_browse_orders");
+  debug($x,"dum_browse_orders");
   $y= (object)array('ok'=>0);
-  $curr= $x->sql; // předání pracovní akce
+  $curr= $x->sql; // předání pracovní objednávky
+  $seek= '0';
+  $seek_id= 0;
   switch ($x->cmd) {
+  case 'browse_seek':  # -----------------------------------==> . browse_seek
+    $seek= "IFNULL($x->seek,0)";
   case 'browse_load':  # -----------------------------------==> . browse_load
     $z= [];
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
       SELECT uid,d.id_akce,a.access,name,d.note,SUM(IF(IFNULL(id_osoba,0),1,0)),
         d.nazev,IFNULL(a.nazev,''),IFNULL(a.typ,0),
-        DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday)),IFNULL(zruseno,0)
+        DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday)),IFNULL(zruseno,0),
+        $seek AS _seek
       FROM $setkani_db.tx_gnalberice_order AS d
         LEFT JOIN $answer_db.akce AS a ON id_duakce=id_akce 
         LEFT JOIN pobyt AS p ON p.id_akce=id_duakce
@@ -1243,7 +1248,7 @@ function dum_browse_orders($x) {
       ORDER BY fromday,uid
     ");
     while ($rp && (list(
-        $uid,$ida,$access,$name,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do,$zruseno)
+        $uid,$ida,$access,$name,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do,$zruseno,$found)
           = pdo_fetch_array($rp))) {
       $z[$uid]->id_order= $uid;
       $z[$uid]->id_akce= $ida;
@@ -1255,6 +1260,7 @@ function dum_browse_orders($x) {
       $z[$uid]->od= sql_date1($od);
       $z[$uid]->do= sql_date1($do);
       $z[$uid]->zruseno= $zruseno;
+      if ($found) $seek_id= $uid;
     }
     # předání pro browse
     $y->from= 0;
@@ -1263,9 +1269,10 @@ function dum_browse_orders($x) {
     $y->count= count($z);
     $y->quiet= $x->quiet;
     $y->key_id= 'id_order';
+    if ($x->subcmd=='refresh') $y->oldkey= $x->oldkey;
     $y->ok= 1;
-//    $y->seek= 2278;
-//    debug($y,"dum_browse_orders>  ");
+    if ($seek) $y->seek= $seek_id;
+    debug($y,"dum_browse_orders>  ");
     $y->values= $z;
     array_unshift($y->values,null);
   }
@@ -2792,8 +2799,8 @@ function ds2_fio($cmd) {
           $nd++;
         }
       }
-      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, 
-          $nv podle VS a jména, $nf podle faktury";
+      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, "
+          . "$nv podle VS a jména, $nf podle faktury";
       break; // přiřazení plateb
   }
 end:  
