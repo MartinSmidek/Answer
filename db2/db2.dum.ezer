@@ -244,6 +244,8 @@ panel Objednavka [,,760,510] { type:'popup' title:"Objednávka pobytu v Domě se
     obj.plain();
     panel.modal();
   }
+  // zaregistruje funkci pro refresh po změně objednávky
+  func RegRefresh(blok:ezer,fce:text) { obj.refresh_reg(blok,fce)} 
   use obj: form _obj
 }
 
@@ -255,8 +257,12 @@ form _obj {
       udaje: object,        // počítaná v obj.load_objednavka
       faktura: object,      // parametry pro fakturu
       doklad: object,       // parametry daňového dokladu
-      objs_count: number
+      objs_count: number,
+      blok_fce= [0,'']      // slouží k volání blok_fce[0].call(blok_fce[1])
   // funkce
+  func refresh_reg(blok:ezer,fce:text) { blok_fce= [blok,fce]; }
+  func refresh() { js.call_block_method(blok_fce[0],blok_fce[1]); }
+//  button [200,175,,] { title:'au?' func onclick() { refresh(); }}
   func load_objednavka(id_order) { var x:object
     form.key(id_order); // kvůli copy_by_name - viz jeho popis
     form.init(); plan.Init('plan'); stav.Init('stav');
@@ -358,6 +364,7 @@ form _obj {
 //      echo(debug(saved));
       if (array_length(saved)>0) {
         php.dum_objednavka_save(the_order,saved);
+        refresh();
         load_objednavka(the_order);
       }
       else warning("nebyla provedena žádná změna")
@@ -395,7 +402,8 @@ form _obj {
     if (ret.safe) {
       if (confirm(ret.msg)) {
         php.dum_objednavka_delete(the_order);
-        alert("Objednávka byla smazána, obnov si přehled objednávek.")
+        refresh();
+        alert("Objednávka byla smazána.")
       }
     }
     else alert(ret.msg);
@@ -408,19 +416,19 @@ form _obj {
   field zal_num [111,top_zal,40,] { tag:'zal', title:'^číslo faktury', format:'r'  }
   field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS', format:'r'  }
   field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS', format:'r'  }
-  field zal_castka [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
-  field zal_ubyt [354,top_zal,50,] { tag:'zal', title:'^záloha ubyt.', format:'r'  
+  field zal_castka [280,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
+  field zal_ubyt [347,top_zal,50,] { tag:'zal', title:'^záloha ubyt.', format:'r'  
     func onchange() { fakt_zal_ubyt= this; }
   }
-  field zal_stra [424,top_zal,50,] { tag:'zal', title:'^záloha stravy', format:'r'  
+  field zal_stra [415,top_zal,50,] { tag:'zal', title:'^záloha stravy', format:'r'  
     func onchange() { fakt_zal_stra= this; }
   }
-  field zal_vyrizuje [492,top_zal,40,] { tag:'zal', title:'^kdo vyřizuje' }
-  field zal_zaplacena [670,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
+  field zal_vyrizuje [481,top_zal,40,] { tag:'zal', title:'^kdo vyřizuje' }
+  field zal_zaplacena [673,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
       title:'^datum úhrady', format:'r'  }
   
   // zálohová faktura
-  button [544,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
+  button [541,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
       if (!(zal_ubyt+zal_stra)) {
@@ -472,17 +480,17 @@ form _obj {
   field fakt_num [111,top_fakt,40,] { tag:'fakt', title:'^číslo faktury', format:'r' }
   field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS', format:'r'  }
   field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS', format:'r'  }
-  field fakt_castka [284,top_fakt,50,] { tag:'fakt,-vyj', title:'^částka', format:'r' }
+  field fakt_castka [280,top_fakt,50,] { tag:'fakt,-vyj', title:'^částka', format:'r' }
   field vyj_celkem [284,top_fakt,50,] { tag:'vyj', title:'^částka', format:'ron' }
-  field fakt_zal_ubyt [354,top_fakt,50,] { tag:'fakt', title:'^záloha ubyt.', format:'ro'  }
-  field fakt_zal_stra [424,top_fakt,50,] { tag:'fakt', title:'^záloha stravy', format:'ro'  }
-  field fakt_vyrizuje [492,top_fakt,40,] { tag:'fakt', title:'^kdo vyřizuje' }
-  check fakt_strucna [763,top_fakt+-9,121,] { tag:'fakt', title:'stručná' }
-  field fakt_zaplacena [670,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
+  field fakt_zal_ubyt [347,top_fakt,50,] { tag:'fakt', title:'^záloha ubyt.', format:'ro'  }
+  field fakt_zal_stra [415,top_fakt,50,] { tag:'fakt', title:'^záloha stravy', format:'ro'  }
+  field fakt_vyrizuje [481,top_fakt,40,] { tag:'fakt', title:'^kdo vyřizuje' }
+  check fakt_strucna [543,top_fakt+-20,59,] { tag:'fakt', title:'stručná' }
+  field fakt_zaplacena [673,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
   field fakt_nadpis  [10,top_fakt+70,450,] { tag:'fakt', title:'^řádek popisující účtovanou částku' }
   
   // konečná faktura
-  button [546,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
+  button [543,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
       if (fakt_vyjimka) { // ds_vzorec má výjimečný formát: ubyt|strav|popl
@@ -525,7 +533,7 @@ form _obj {
     if (vyj_ubyt_zal) fakt_zal_ubyt= vyj_ubyt_zal; 
     if (vyj_stra_zal) fakt_zal_stra= vyj_stra_zal; 
   }
-  check fakt_vyjimka [762,top_fakt+9,127,] { tag:'fakt', title:'výjimečná', format:'t' 
+  check fakt_vyjimka [600,top_fakt+-20,70,] { tag:'fakt', title:'výjimečná', format:'t' 
     func onchange() { 
       if (this) {
         form.display(1,'vyj'); form.display(0,'-vyj'); fakt_strucna= 1; form.enable(vyj_idf==0,'vyj'); 

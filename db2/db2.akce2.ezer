@@ -1500,6 +1500,7 @@ group dum { include:'onload,db2/db2.dum'
   panel Objednavka { type:'popup' 
     func Show(id_akce) {} // umožní zvolit správnou objednávku
     func Delete(id_order) {} // nastaví deleted=1 u objednávky
+    func RegRefresh(blok,fce) {} // zaregistruje funkci pro refresh po změně objednávky
   }
   form _objednávka {}
   form _vyuctovani {
