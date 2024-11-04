@@ -1,6 +1,7 @@
 <?php # Systém An(w)er/YMCA Setkání/YMCA Familia, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
 
   // časová značka při spuštění
+  date_default_timezone_set("Europe/Prague");
   file_put_contents("last_access.txt",date('Y-m-d H:i:s'));
 
   # inicializace systémů Ans(w)er
@@ -23,6 +24,63 @@
   $test= '-TEST';
   $app_name=  "Ansver$test";
   $ezer_root= $app= $app_root=  'dbt';
+  
+  // nastav jako default PDO=2
+  if ( !isset($_GET['pdo']))
+    $_GET['pdo']= 2;
+  
+  if ( isset($_GET['batch']) && $_GET['batch'] ) {
+    // ochrana volání
+    $secret= "WEBPOUZEAUTORIZOVANEVOLANIKEYWEB";
+    if ( count($_POST) && !isset($_POST['post']) ) {
+      $x= array2object($_POST);
+      // ochrana heslem
+      if ( $_POST['secret']!==$secret ) { echo "?"; exit; }
+      $y= $x;
+      server($x);
+      header('Content-type: application/json; charset=UTF-8');
+      $yjson= json_encode($y);
+      echo $yjson;
+      exit;
+    }
+    elseif ( !isset($_GET['secret']) || $_GET['secret']!=$secret ) {
+      // ochrana heslem
+      echo "?";
+      exit;
+    }
+    // ok - batch
+    session_start();
+    $_SESSION[$ezer_root]['ezer_server']= $ezer_server;
+    $_SESSION[$ezer_root]['ezer']= $ezer_version;
+    $_SESSION[$ezer_root]['abs_root']= $abs_root; //s[$ezer_server];
+    $_SESSION[$ezer_root]['rel_root']= $rel_root; //s[$ezer_server];
+    $_SESSION[$ezer_root]['pdo']= $_GET['pdo'];
+    $_POST['root']= $ezer_root;
+    require_once("$app_root.inc.php");
+    $html= '';
+    try {
+      error_reporting(0);
+      switch ($_GET['batch']) {
+      case 'fio-get':
+        foreach (['load-ys'=>'LOAD YS','join-ys'=>'AKCE YS',
+                  'load-ds'=>'LOAD DS','join-ds'=>'AKCE DS'] as $fce=>$note) {
+          $y= ds2_fio((object)['fce'=>$fce,'od'=>'*','do'=>'*']);
+          $html.= "<br>\n$note: $y->html"; 
+        }
+        break;
+      }
+    } 
+    catch (Throwable $e) { 
+      echo "<br>po catch";
+      $html.= "<hr>\nERROR: ".$e->getMessage(); 
+    }
+    $last_run= "BATCH {$_GET['batch']} started ".date('j.n.Y H:i:s')."$html";
+    echo "<br>$last_run";
+    $_SESSION[$ezer_root]['last_batch']= $last_run;
+    echo "<br>save into $abs_root/last_batch.txt";
+    file_put_contents("$abs_root/last_batch.txt",$last_run);
+    exit();
+  }  
 
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
@@ -30,9 +88,6 @@
   $jirka_flag= strpos($abs_root,'jirka-') ? " Jirka " : '';
 
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
-  
-  // nastav jako default PDO=2
-  $_GET['pdo']= 2;
   
   // nastav &touch=0 pro Windows
   if (strtoupper(substr(PHP_OS,0,3))==='WIN') 
