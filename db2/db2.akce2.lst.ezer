@@ -14,7 +14,7 @@ var zalozka: text,              // inf | cor | cen
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 func re_selects_rok(rok) { var sels:text
-  sels= php.select("GROUP_CONCAT(DISTINCT YEAR(datum_od) ORDER BY datum_od DESC)","akce","datum_od!=''");
+  sels= php.akce_roky();
   info.rok.selects(sels);
   info.rok= rok;
 }
@@ -31,6 +31,7 @@ func onfirstfocus() {
 //g  info.rok.selects(javascript(
 //g    `var x='';for(let i=${fdate('Y')+1};i>=1990;i--){x+=i+',';};x+='0'`));
   re_selects_rok(the_rok);
+  info.rok.change();
 //g  info.rok= the_rok;
   page.cen_copy.selects("neměnit:0");
   zalozka= 'inf';
@@ -93,7 +94,10 @@ func dum_objednavka(cmd,id) { var row:number
   clear();
   switch (cmd) { 
     case 'show': // id_akce
-      if (id==the_duakce) dum.Objednavka.Show(the_duakce);
+      if (id==the_duakce) {
+        dum.Objednavka.RegRefresh(info.dum,'Refresh');
+        dum.Objednavka.Show(the_duakce);
+      }
       else alert('pro zobrazení objednávky musí být pobyt nastaven jako pracovní');
       break;
     case 'del': // id_order
@@ -113,7 +117,7 @@ func dum_objednavka(cmd,id) { var row:number
       }
       break;
   }
-}                          
+}
 # nastaví akci jako pracovní
 func akce_work(id_akce) {
   if (!id_akce) 
@@ -300,7 +304,7 @@ func akce_roku(rok) {
       info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${the_duakce}`));
   }
   elseif (the_source=='dum') {
-    info.dum.Load(0);
+    info.dum.Load(info.sey.browse_count() && info.sey.isds ? ds_order : 0);
   }
 }
 //g proc akce_roku(rok) {
@@ -455,6 +459,19 @@ form _page [,,275,360] {
   field id_hlavni { data:akce.id_hlavni }
 //  field web_online { data:akce.web_online }
   // ------------------------------------- základní údaje o akci
+  button opakuj [319,49,,] {tag:'cor', title:'Opakuj akci v roce ....', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+    func onclick() { var ret:object, ida:number
+      ida= form.key();
+      ret= php.akce_clone(ida,info.rok+1,0);
+      if (ret.warn) { alert(ret.warn); return }
+      if (confirm(ret.msg)) {
+        ret= php.akce_clone(ida,info.rok+1,1);
+        alert(ret.msg);
+        if (!js.in_selects(&info.rok,info.rok+1)) {
+          re_selects_rok(info.rok);
+        }
+      }
+  }}
   field nazev [17,49,218,] { tag:'cor,!', title:'^název akce *', data:akce.nazev }
   field [250,49,50,] { tag:'cor', title:'^pro max.účastníků', data:akce.web_maximum, format:':e' }
   field misto [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
@@ -759,6 +776,7 @@ form _page [,,275,360] {
         }
         else {
           msg= php.akce2_delete(form.key(),ret);        // jinak zcela smažeme
+          re_selects_rok(the_rok);
           alert(msg);
         }
         lst_refresh();
@@ -1275,7 +1293,11 @@ form _info [,,*,50] {
     show od [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     show zruseno
-    func Load(idd) {
+    func Refresh() { 
+      this.browse_seek(`id_duakce=${the_duakce}`,`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`);
+    }
+    func Load(idd) { var curr:number
+      curr= this.browse_count() ? id_order : 0;
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
           '','','','','1',the_duakce);
       if (idd) this.Show(idd);
@@ -1489,7 +1511,8 @@ form _info [,,*,50] {
   # --------------------------------------------------------------------------------------==> . akce
   select rok [4,5,52,] { tag:'r', format:'t', 
     func onchanged() { 
-      the_rok= this; akce_roku(the_rok) 
+      the_rok= this; akce_roku(the_rok);
+      page.opakuj= `Opakuj akci v roce ${rok+1}`;
   }}
 //g  # je voláno s kontextem správného the_source
 //g  proc nazev_akce(id_akce) {

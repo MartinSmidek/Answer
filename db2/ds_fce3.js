@@ -1,4 +1,4 @@
-/* global Ezer */
+/* global Ezer,Block */
 
 // uživatelské funkce aplikace DS
 // --------------------------------------------------------------------------------------------- cmp
@@ -11,6 +11,13 @@ function cmp(a,b) {
 // _this je blok obsahující funkci this_fce
 function set_elem_backround(elem,style) {
   jQuery(elem.DOM_Input).css(style);
+}
+// ---------------------------------------------------------------------------------- call_root_func
+// zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
+// _this je blok obsahující funkci this_fce
+function call_block_method(block,method) {
+  if (block instanceof Block)
+    block._call('',method);
 }
 // ---------------------------------------------------------------------------------- call_root_func
 // zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
