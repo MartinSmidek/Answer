@@ -1014,16 +1014,24 @@ function akce2_delete_confirm($id_akce) {  trace();
   $ret->ucastnici= $ucastnici
     ? "Tato akce má již zapsáno $ucastnici účastníků$p. Mám akci označit jako zrušenou?"
     : '';
+  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+  if ($idd) $ret->zrusit.= "<br>Současně bude zrušena i objednávka č.$idd v Domě setkání.";
 end:
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce2 delete
 # zrušení akce
 function akce2_delete($id_akce,$ret,$jen_zrušit=0) {  trace();
+  $msg2= '.';
+  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+  if ($idd) {
+    query("UPDATE ds_order SET deleted=1,id_akce=0 WHERE id_akce=$id_akce");
+    $msg2= ", objednávka č.$idd byla zrušena.";
+  }
   $nazev= select("nazev",'akce',"id_duakce=$id_akce");
   if ($jen_zrušit) {
     query("UPDATE akce SET zruseno=1 WHERE id_duakce=$id_akce");
-    $msg= "Akce '$nazev' byla zrušena.";
+    $msg= "Akce '$nazev' byla zrušena$msg2";
     goto end;
   }
   if ( $ret->ucastnici ) {
@@ -1036,8 +1044,9 @@ function akce2_delete($id_akce,$ret,$jen_zrušit=0) {  trace();
   $rs= query("DELETE FROM akce WHERE id_duakce=$id_akce");
   $a= pdo_affected_rows($rs);
   $msg= $a
-    ? "Akce '$nazev' byla smazána" . ( $p+$s ? ", včetně $p účastí $s účastníků" : '.')
+    ? "Akce '$nazev' byla smazána" . ( $p+$s ? ", včetně $p účastí $s účastníků" : '')
     : "CHYBA: akce '$nazev' nebyla smazána";
+  $msg.= $msg2;
 end:
   return $msg;
 }

@@ -231,7 +231,56 @@ end:
   return $geo;
 }
 /** ==========================================================================================> AKCE */
-# ----------------------------------------------------------------------------------- akce_ucastnici
+# ---------------------------------------------------------------------------------------- akce roky
+# vrátí seznam roků všech akcí a objednávek
+function akce_roky() {
+  $obj= sql_query("
+    SELECT GROUP_CONCAT(DISTINCT rok ORDER BY rok DESC) AS roky FROM (
+        SELECT DISTINCT YEAR(datum_od) AS rok FROM akce
+        WHERE datum_od IS NOT NULL AND YEAR(datum_od)>0
+      UNION
+        SELECT DISTINCT YEAR(FROM_UNIXTIME(fromday)) AS rok FROM ds_order
+        WHERE deleted=0 AND fromday IS NOT NULL AND fromday>0
+    ) AS roky_subquery");
+  return $obj->roky;
+}
+# --------------------------------------------------------------------------------------- akce clone
+# save=0 zjistí zda akce s tímto naázvem již neexistuje
+# save=1 vytvoří kopii akce v daném roce
+function akce_clone($ida,$rok,$save=0) {
+  $ret= (object)['warn'=>'','msg'=>''];
+  $old= select_object('*','akce',"id_duakce=$ida");
+  if (!$save) {
+    $uz1= select('COUNT(*)','akce',
+        "YEAR(datum_od)=$rok AND nazev='{$old->nazev}' AND access={$old->access}");
+    $uz2= $old->ciselnik_akce ? select('COUNT(*)','akce',
+        "YEAR(datum_od)=$rok AND ciselnik_akce='{$old->ciselnik_akce}' AND access={$old->access}") : 0;
+    if ($uz1) 
+      $ret->warn= "POZOR: v roce $rok již akce s názvem '{$old->nazev}' založena je.";
+    elseif ($uz2) 
+      $ret->warn= "POZOR: v roce $rok již akce s účetním kódem '{$old->ciselnik_akce}' založena je.";
+    else $ret->msg= "Mám založit akci s názvem '{$old->nazev}' v roce $rok?";
+  }
+  else { // založ akci
+    $od= $rok.substr($old->datum_od,4);
+    $do= $rok.substr($old->datum_do,4);
+    $same= "access,id_hlavni,ma_cenik,ma_cenik_verze,ma_cenu,cena,spec,mrop,firm,nazev,misto,"
+        . "druh,statistika,poradatel,tym,strava_oddo,ciselnik_akce";
+    query("INSERT INTO akce (datum_od,datum_do,$same) "
+        . "SELECT '$od','$do',$same FROM akce WHERE id_duakce=$ida ");
+    $id_new= pdo_insert_id();
+    $ret->msg= "Byla vytvořena kopie akce '{$old->nazev}' v roce $rok";
+    // pokud byla v Domě setkání vytvoř i objednávku
+    $isds= select('COUNT(*)','ds_order',"id_akce=$ida");
+    if ($isds) {
+       dum_objednavka_make($id_new);
+       $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
+    }
+    $ret->msg.= ". <hr><b>Nezapomeň upravit datum, vyměnil jsem jen rok.</b>";
+  }
+  return $ret;
+}
+# ----------------------------------------------------------------------------------- akce prihlaska
 # vrátí URL přihlášky pro ostrou nebo testovací databázi
 function akce_prihlaska($id_akce,$cmd,$par='') {
   global $answer_db;
@@ -245,7 +294,7 @@ function akce_prihlaska($id_akce,$cmd,$par='') {
   }
   return $res;
 }
-# ----------------------------------------------------------------------------------- akce_ucastnici
+# ----------------------------------------------------------------------------------- akce ucastnici
 # import
 function akce_ucastnici($akce,$cmd,$par=null) {
   $ret= (object)array('html'=>'');
