@@ -302,6 +302,7 @@ function akce2_mapa($akce,$filtr='') {  trace();
 #   info.pecouni= [ {ids, hnizdo, prijmeni, jmeno}, ... ]
 function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace(); 
   global $setkani_db;
+  $nf= function($n) { return number_format($n, 0, '.', '&nbsp;'); };
   $html= '';
   $access= $uid= 0; // org_ds (64) znamená čístě jen pobyt na Domu setkání
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0,'title'=>array());
@@ -770,9 +771,9 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
       foreach ($stavy as $j=>$stav) {
         foreach ($zpusoby as $i=>$zpusob) {
           if ( isset($uhrady[$i][$j]) && $uhrady[$i][$j] )
-            $tab.= "<tr><td>$stav $zpusob</td><td align='right'>{$uhrady[$i][$j]}</td></tr>";
+            $tab.= "<tr><td>$stav $zpusob</td><td align='right'>".$nf($uhrady[$i][$j])."</td></tr>";
           if ( isset($uhrady_d[$i][$j]) && $uhrady_d[$i][$j] )
-            $tab.= "<tr><td>$stav za děti $zpusob</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
+            $tab.= "<tr><td>$stav za děti $zpusob</td><td align='right'>".$nf($uhrady_d[$i][$j])."</td></tr>";
         }
       }
       display("vrátit=$vratit_celkem, vráceno=$vraceno");
@@ -789,18 +790,18 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         $sgn2= $bilance_slev>0 ? '+' : '';
         $sgn3= $uhrady_odhlasenych>0 ? '+' : '';
         $av= $aviz ? "<td $st> a $_aviz platby</td>" : '<td></td>';
-        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
-          <td>dary</td><td align='right'>$dary_celkem</td></tr>";
-        $tab.= "<tr><td>požadováno</td><td align='right'><b>$uhradit_celkem</b></td><td></td>
-          <td>slevy</td><td align='right'>$dotace_celkem</td></tr>";
-        $tab.= "<tr><td>rozdíl</td><td align='right' $st>$sgn1$bilance</td><td></td>
-          <td>bilance</td><td align='right' $st><b>$sgn2$bilance_slev</b></td></tr>";
+        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>".$nf($uhrady_celkem)."</b></td>$av
+          <td>dary</td><td align='right'>".$nf($dary_celkem)."</td></tr>";
+        $tab.= "<tr><td>požadováno</td><td align='right'><b>".$nf($uhradit_celkem)."</b></td><td></td>
+          <td>slevy</td><td align='right'>".$nf($dotace_celkem)."</td></tr>";
+        $tab.= "<tr><td>rozdíl</td><td align='right' $st>$sgn1".$nf($bilance)."</td><td></td>
+          <td>bilance</td><td align='right' $st><b>$sgn2".$nf($bilance_slev)."</b></td></tr>";
         if ($uhrady_odhlasenych) 
-          $tab.= "<tr><td>(v tom odhlášení atp.</td><td align='right'>$sgn3$uhrady_odhlasenych</td>
+          $tab.= "<tr><td>(v tom odhlášení atp.</td><td align='right'>$sgn3".$nf($uhrady_odhlasenych)."</td>
             <td>)</td><td></td><td></td></tr>";
       }
       else {
-        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
+        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>".$nf($uhrady_celkem)."</b></td>$av</tr>";
       }
       if ($soubeh)
         $help.= "<br><br>Pro akce s tzv. souběhem to bude chtít výsledek konzultovat s Carlosem :-)";
