@@ -20,6 +20,11 @@ func re_selects_rok(rok) { var sels:text
 }
 func onfirstfocus() {
   echo('------------- lst onfirstfocus begin');
+  // zobrazení vazby na objednávky DS
+  if (!has_skill('y')) {
+    page.ds_order.set_css('hidden','');
+    info.sey.isds.set_attrib('expr'," 0 ");
+  }
   akce_onstart(); // zavolá akce_work
   // detekce rozměrů
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
@@ -35,11 +40,6 @@ func onfirstfocus() {
 //g  info.rok= the_rok;
   page.cen_copy.selects("neměnit:0");
   zalozka= 'inf';
-  // zobrazení vazby na objednávky DS
-  if (!has_skill('y')) {
-    page.ds_order.set_css('hidden','');
-    info.sey.isds.set_attrib('expr'," 0 ");
-  }
   page.DocInit();
   echo('onfirstfocus the_source=',the_source);
   // zobrazení seznamu akcí
