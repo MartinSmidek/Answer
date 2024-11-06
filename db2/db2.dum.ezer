@@ -88,7 +88,7 @@ form _vyuctovani [,,623,400] {
     }
     func Load(idp) { 
       udaje_pobyt= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
-      echo(debug(udaje_pobyt,'udaje_pobyt'));
+//      echo(debug(udaje_pobyt,'udaje_pobyt'));
       vzorec_pob= udaje_pobyt.vzorec;
       copy_by_name(udaje_pobyt.abbr,form);
       celkem= udaje_pobyt.celkem;

@@ -39,6 +39,11 @@ function state2access() {
   display("opraveno $n údajů access pro Akce YMCA ");
   return "opraveno $n údajů access pro Akce YMCA";
 }
+# ----------------------------------------------------------------------------------- state 2 access
+# vloží muže z brány
+# 
+function brana() {
+}
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $dum_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';
@@ -1289,7 +1294,7 @@ function dum_browse_orders($x) {
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_order($x) {
-  global $answer_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
+  global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
 //  debug($x,"dum_browse_order");
   $y= (object)array('ok'=>0);
   switch ($x->cmd) {
@@ -1329,7 +1334,7 @@ function dum_browse_order($x) {
         JOIN pobyt AS p ON p.id_pobyt=s.id_pobyt
         JOIN akce AS a ON id_akce=id_duakce 
         JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
-        JOIN setkani4_test.tx_gnalberice_order AS d ON d.id_akce=id_duakce
+        JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=id_duakce
         LEFT JOIN (
           SELECT id_pob,SUM(castka) AS zaplaceno,COUNT(*) AS nx,
             GROUP_CONCAT(CONCAT(castka,' (',DATE_FORMAT(datum,'%e.%c'),')') SEPARATOR ' + ') AS platby 
