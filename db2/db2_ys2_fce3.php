@@ -5701,10 +5701,10 @@ function rodcis($nar,$sex) {
 # ------------------------------------------------------------------------------------ ds ceny_group
 # vygeneruje menu.group pro 7 let 
 function ds_ceny_group() { //debug($par);
-  global $ezer_version;
+  global $ezer_version,$setkani_db;
   // zjištění nejnovějšího ceníku
   ezer_connect('setkani');
-  $nejnovejsi= select('MAX(rok)','setkani4.ds_cena');
+  $nejnovejsi= select('MAX(rok)',"$setkani_db.ds_cena");
   // doplnění leftmenu.group: "item {title:yyyy, par:{rok:yyyy}}" pro yyyy= letos,loni,...
   $itms= array();
   for ($i= 0; $i<7; $i++) {

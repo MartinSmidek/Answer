@@ -354,8 +354,8 @@ form _obj {
       }
       // kontrola konzistence mezi state=akce_YMCA a access=1
       saved= {};
-      if (state.key()==3 && access!=1) saved.access= 1;
-      if (state.key()!=3 && access!=64) saved.access= 64;
+      if (eq(state.key(),3,5) && access!=1) saved.access= 1;
+      if (!eq(state.key(),3,5) && access!=64) saved.access= 64;
       // uložení ostatních položek
       rooms= js.dum_rooms_get(plan,'q');
       if (plan.rooms1!=rooms) saved.rooms1= rooms;
