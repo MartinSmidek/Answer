@@ -39,6 +39,11 @@ function state2access() {
   display("opraveno $n údajů access pro Akce YMCA ");
   return "opraveno $n údajů access pro Akce YMCA";
 }
+# ----------------------------------------------------------------------------------- state 2 access
+# vloží muže z brány
+# 
+function brana() {
+}
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $dum_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';

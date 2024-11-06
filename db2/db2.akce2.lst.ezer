@@ -20,6 +20,11 @@ func re_selects_rok(rok) { var sels:text
 }
 func onfirstfocus() {
   echo('------------- lst onfirstfocus begin');
+  // zobrazení vazby na objednávky DS
+  if (!has_skill('y')) {
+    page.ds_order.set_css('hidden','');
+    info.sey.isds.set_attrib('expr'," 0 ");
+  }
   akce_onstart(); // zavolá akce_work
   // detekce rozměrů
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
@@ -35,11 +40,6 @@ func onfirstfocus() {
 //g  info.rok= the_rok;
   page.cen_copy.selects("neměnit:0");
   zalozka= 'inf';
-  // zobrazení vazby na objednávky DS
-  if (!has_skill('y')) {
-    page.ds_order.set_css('hidden','');
-    info.sey.isds.set_attrib('expr'," 0 ");
-  }
   page.DocInit();
   echo('onfirstfocus the_source=',the_source);
   // zobrazení seznamu akcí
@@ -89,6 +89,34 @@ use page: form _page [512,40,,]
 # use fil:  form file._fil [512,72,,]  { tag:'file', format:'n' }
 
 # ----------------------------------------------------------------------------==> globální procedury
+# zobrazí akci jako pracovní -- voláno i z php.tisk2_ukaz_akci
+func akce_show(id_akce) { var a:object
+  panel.focus();
+  the_duakce= id_akce;
+  a= php.akce2_id2a(id_akce); 
+  echo(debug(a,id_akce));
+  if (a.rok!=info.rok) re_selects_rok(a.rok);
+  if (a.org==org_ds && has_skill('yd2')) {
+    the_order= a.id_order;
+    the_source= 'dum';
+    m.d.o.click(0,1);
+    info.display(2,'d|r'); 
+    page.ord.onclick(); page.display(0,'x'); page.ord.display(1); 
+    info.dum.Refresh();
+    js.removeClass(&info.dum,'curr_akce');
+    js.browseShow_addClass(&info.dum.objednal,info.dum.browse_active(),'curr_akce');
+  }
+  elseif (has_skill('y') && has_skill('f')) {
+    m.g.all.click();
+  }
+  elseif (has_skill('y') || has_skill('f')) {
+    m.g.sey.click();
+  }
+  else {
+    m.c.a.click();
+  }
+  akce_work(id_akce);
+}
 # zobrazí vyúčtování objednávky Domu setkání nebo její smazání či obnovení
 func dum_objednavka(cmd,id) { var row:number
   clear();
@@ -232,7 +260,7 @@ menu m {type:'left', format:'f+'
 //g      par:{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
       par:{it:'s|r',s:'sey',o:'org',a:'rok'}}
-    item {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
+    item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
       par:{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
   menu d {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'

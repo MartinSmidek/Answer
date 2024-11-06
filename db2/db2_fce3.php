@@ -7665,6 +7665,14 @@ function akce2_text_prehled($akce,$title) { trace();
 # obsluha různých forem výpisů karet AKCE
 # --------------------------------------------------------------------------------- tisk2 ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
+function tisk2_ukaz_akci($ida,$barva='',$title='',$text='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  $title= $title ? "title='$title'" : '';
+  $text= $text ?: $ida;
+  return "<b><a $style $title href='ezer://akce2.lst.akce_show/$ida'>$text</a></b>";
+}
+# --------------------------------------------------------------------------------- tisk2 ukaz_osobu
+# zobrazí odkaz na osobu v evidenci
 function tisk2_ukaz_osobu($ido,$barva='',$title='',$text='') {
   $style= $barva ? "style='color:$barva'" : '';
   $title= $title ? "title='$title'" : '';

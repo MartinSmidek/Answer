@@ -234,13 +234,18 @@ end:
 # ---------------------------------------------------------------------------------------- akce roky
 # vrátí seznam roků všech akcí a objednávek
 function akce_roky() {
+//  ';
+  $res= pdo_query("SHOW TABLES LIKE 'ds_order'");
+  $UNION= $res->num_rows
+    ? "UNION
+        SELECT DISTINCT YEAR(FROM_UNIXTIME(fromday)) AS rok FROM ds_order
+        WHERE deleted=0 AND fromday IS NOT NULL AND fromday>0"
+    : '';
   $obj= sql_query("
     SELECT GROUP_CONCAT(DISTINCT rok ORDER BY rok DESC) AS roky FROM (
         SELECT DISTINCT YEAR(datum_od) AS rok FROM akce
         WHERE datum_od IS NOT NULL AND YEAR(datum_od)>0
-      UNION
-        SELECT DISTINCT YEAR(FROM_UNIXTIME(fromday)) AS rok FROM ds_order
-        WHERE deleted=0 AND fromday IS NOT NULL AND fromday>0
+      $UNION
     ) AS roky_subquery");
   return $obj->roky;
 }
