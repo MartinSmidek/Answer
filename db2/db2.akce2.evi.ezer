@@ -167,6 +167,7 @@ menu m {type:'left', format:'f-'
       echo('--- menu_item virgin=',virgin.get);
       lst.brow_mapa_clear;
       i.par.lst;
+      lst.prijmeni_jmeno.display(eq(i.par.lst,'o')); // řazení na žádost podle příjmení+jméno 
       cnd.set(i.par.cnd);
       panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
       page.oso.set_mode(0,'E');
@@ -313,6 +314,10 @@ form _lst [,,370,*] {
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
   label tit [16,8,137,14] { format:'r', css:'frame_label_big' }
+  label prijmeni_jmeno [17,10,,] { title:'<i class="fa fa-chevron-circle-up"></i>' 
+    func onclick() {
+      bo.browse_load(cnd,'prijmeni,jmeno',bo_having)    
+  }}
   # ==============================================> H - HISTORIE ZMĚN OSOB
   var track_past=''
   var bh_cnd=1, bh_filtr=1
