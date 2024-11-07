@@ -2474,6 +2474,29 @@ function ucast2_pridat_clena_rodine($ido,$idr) {
 }
 /** =======================================================================================> BANKY **/
 #
+# -------------------------------------------------------------------------------- fio platba_pobytu
+# 
+function fio_platba_pobytu($id_platba,$to_save=0) {
+  $ret= (object)['ida'=>0,'warn'=>''];
+  list($idp,$castka,$datum)= select('id_pob,castka,datum','platba',"id_platba=$id_platba");
+  list($ret->ida,$ma_cenik)= select('id_akce,ma_cenik',
+      'pobyt JOIN akce ON id_akce=id_duakce',"id_pobyt=$idp");
+  if ($ma_cenik==2) {
+    $ret->ida= 0;
+  }
+  elseif ($to_save) {
+    if (select('COUNT(*)','uhrada',"id_pobyt=$idp AND u_castka=$castka AND u_datum='$datum' ")) {
+      $ret->warn= "tato platba je již u pobytu zapsána";
+    }
+    else {
+      $n= select1('IFNULL(MAX(u_poradi),-1)','uhrada',"id_pobyt=$idp");
+      $n++;
+      query("INSERT INTO uhrada (id_pobyt,u_castka,u_datum,u_zpusob,u_stav,u_poradi) 
+          VALUE ($idp,$castka,'$datum',2,2,$n)");
+    }
+  }
+  return $ret;
+}
 # ------------------------------------------------------------------------------- ds2 fio_filtr_akce
 # vytvoření filtru pro výběr plateb podle SS, SS2
 # a vrácení nalezené platby k id_platba
@@ -2590,7 +2613,7 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
         query_track("UPDATE platba SET stav=stav+1 WHERE id_platba=$id_platba");
       break;
     case 'akce':
-      query_track("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=7
+      query_track("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=6
         WHERE id_platba=$id_platba");
       break;
     case 'evi':

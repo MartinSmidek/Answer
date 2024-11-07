@@ -97,9 +97,14 @@ func ucast_pobyt(_idp)  {
   panel.focus(); u.b.raise('onrowclick',_idp);
 }
 # ukázání pobytu s případným přepnutím akce
-proc ucast_pobyt_akce(_idp,_ida)  {
-  [ eq(_ida,the_duakce_local.get) | akce_load(_ida) ];
-  ucast_pobyt(_idp)
+func ucast_pobyt_akce(_idp,_ida)  {
+  if (_ida!=the_duakce_local) akce_load(_ida);
+  ucast_pobyt(_idp);
+}
+func ucast_pobyt_akce_platba(_idp,_ida)  {
+  if (_ida!=the_duakce_local) akce_load(_ida);
+  page.plt.onclick();
+  ucast_pobyt(_idp);
 }
 # zobrazení osob - nastavených účastníků
 func osoby_show() {                             // obnova údajů o osobách

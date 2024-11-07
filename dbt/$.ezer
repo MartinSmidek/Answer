@@ -3,6 +3,8 @@
 
 menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 #if test_version<3
+  // přepne na kartu Účastníci, bude volána pomocí js.call_root_func z library modulů
+  func show_pobyt(_idp,_ida) { akce2.ucast.ucast_pobyt_akce_platba(_idp,_ida) }
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
@@ -37,6 +39,9 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     func curr() {} 
     panel track { type:'popup'
       proc back_show(kde,klic) {}
+    }
+    panel ucast { type:'plain'
+      func ucast_pobyt_akce_platba(_idp,_ida) {}
     }
   }
 #endif
