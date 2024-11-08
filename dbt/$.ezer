@@ -40,6 +40,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     panel track { type:'popup'
       proc back_show(kde,klic) {}
     }
+    panel lst { type:'right' }
     panel ucast { type:'plain'
       func ucast_pobyt_akce_platba(_idp,_ida) {}
     }
