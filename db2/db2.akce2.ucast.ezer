@@ -102,7 +102,8 @@ func ucast_pobyt_akce(_idp,_ida)  {
   ucast_pobyt(_idp);
 }
 func ucast_pobyt_akce_platba(_idp,_ida)  {
-  if (_ida!=the_duakce_local) akce_load(_ida);
+//  if (_ida!=the_duakce_local) 
+    akce_load(_ida);
   page.plt.onclick();
   ucast_pobyt(_idp);
 }
