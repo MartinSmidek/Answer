@@ -84,6 +84,7 @@ form _ucty [,,640,*] {
   }
   func filter() { var _and: text
     _and= cconc(
+      jen_ss, ` AND ((p.ss=${jen_ss} AND p.ss2=0) OR p.ss2=${jen_ss})`,
       jen_letosni,' AND YEAR(datum)=YEAR(NOW())',
       jen_prijmy, ' AND p.castka>0',
       skryt_navrzene,  ' AND stav NOT IN (6,8,10)',
@@ -96,6 +97,7 @@ form _ucty [,,640,*] {
     <span class='zluty'>&nbsp; asi dar &nbsp;</span>&nbsp;&nbsp;
     <span class='oranzovy'>&nbsp; je to dar &nbsp;</span>"
   }
+  var   jen_ss=0          // nenulové => pro hledání SS i v SS2
   check jen_letosni [660,0,83,] { tag:'FD,cond', title:' jen letošní', value:'1', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
@@ -149,9 +151,10 @@ form _ucty [,,640,*] {
         platba_za= `${_ido} ${_osoba[0]} (${nar})`;
       }
       if (id_pobyt) {
-        _akce= php.select('nazev,id_akce','pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
+        _akce= php.select('nazev,id_akce,YEAR(datum_od)',
+            'pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
         _pobyt= php.tisk2_ukaz_pobyt_akce(id_pobyt,_akce[1]);
-        platba_za= `${platba_za}, ${_pobyt} ${_akce[0]}`;
+        platba_za= `${platba_za}, ${_pobyt} ${_akce[0]}, ${_akce[2]}`;
       }
       if (id_order) {
         _idx= php.ds2_ukaz_objednavku(id_order);
@@ -199,26 +202,45 @@ form _ucty [,,640,*] {
     php.query_track(`UPDATE platba SET ss2='${ss2}' WHERE id_platba=${fio.id_platba}`);
     back_odhad(id_platba);
   }}
-  button find_kod [814,top1,,] {title:'hledat SS', func onclick() { var ss2:text
-    ss2= prompt2('zadej hodnotu pro hledání v SS, SS2','');
-    if (ss2) {
-      fio.browse_load(`(ss=${ss2} OR ss2=${ss2}) AND YEAR(datum)=YEAR(NOW())`);
-      form.enable(0,'cond');
-    }
-    else {
-      form.enable(1,'cond');
-      refresh();
-    }
+  button find_kod [814,top1,,] {title:'hledat SS+SS2', func onclick() { var ss2:text
+    ss2= prompt2('zadej hodnotu pro hledání v SS i v SS2','');
+    jen_ss= ss2;
+    refresh();
+//    if (ss2) {
+//      fio.browse_load(`(p.ss=${ss2} OR p.ss2=${ss2}) AND YEAR(datum)=YEAR(NOW())`);
+//      form.enable(0,'cond');
+//    }
+//    else {
+//      form.enable(1,'cond');
+//      refresh();
+//    }
   }}
+//  button find_kod [814,top1,,] {title:'normální hledání', func onclick() { 
+//  }
   field id_platba [10,top1+35,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
   field id_osoba { data:platba.id_oso }
   field id_pobyt { data:platba.id_pob }
   field id_order { data:platba.id_ord }
   field protiucet [170,top1+35,150,] { title:'^číslo účtu', data:platba.protiucet, format:'r' }
-  button [338,top1+35,,] {title:'potvrď navržený odhad', func onclick() { var c:object
-    php.ds2_corr_platba(id_platba,'auto',1);
-    refresh();
-  }}
+  button [338,top1+35,,] {title:'potvrď navržený odhad'
+    func onclick() { var a:object
+      // je to asi platba za pobyt?
+      if (fio.stav==6) {
+        // pokud je to akce YS, která nemá nastaveno "ceny DS" tak platbu zapiš a přepni na stránku
+        a= php.fio_platba_pobytu(id_platba,0);
+        if (a.ida && confirm(`Mám zapsat platbu k nalezenému pobytu?`)) {
+          a= php.fio_platba_pobytu(id_platba,1);
+          if (a.warn) 
+            alert(a.warn)
+          else
+            js.call_root_func_par('show_pobyt',array(id_pobyt,a.ida),&this,'onclick_');
+        }
+      }
+      php.ds2_corr_platba(id_platba,'auto',1);
+      refresh();
+    }
+    func onclick_() {}
+  }
   button [479,top1+35,,] {title:'vrať jej', func onclick() { 
     if (confirm(`Pozor: budou zapomenuta všechny nalezené vazby na pobyt, osobu a objednávku 
         a budou nahrazeny původním odhadem systému. Pokračovat?`))
