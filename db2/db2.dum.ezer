@@ -363,7 +363,7 @@ form _obj {
         // pokud bylo zaškrtnuto all 
         saved.rooms1= '*';
       }
-      else {
+      elseif (plan.rooms1!='*') {
         // jinak budeme srovnávat změny pokojů
         rooms= js.dum_rooms_get(plan,'q');
         if (plan.rooms1!=rooms) saved.rooms1= rooms; 
