@@ -9,6 +9,7 @@
   #   $add_pars   = doplnění $EZER->options
 
   $kernel= "ezer3.2"; 
+  $ezer_version= '3.2'; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -107,6 +108,5 @@
   );
 
   // je to aplikace se startem v kořenu
-  echo("1 $kernel");
   require_once("$kernel/ezer_main.php");
 
