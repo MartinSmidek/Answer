@@ -273,7 +273,10 @@ form _obj {
     copy_by_name(udaje.fld,plan,'',1); 
     copy_by_name(udaje.cena.rozpis,plan,'',1); 
     // označení objednaných pokojů
-    js.rooms_check(plan.rooms1,plan,'q');
+    if (plan.rooms1=='*')
+      plan.all= 1;
+    else 
+      js.rooms_check(plan.rooms1,plan,'q');
     helps();
     // vyúčtování celé objednávky
     vyuzito= 'Využito ... ' + (udaje.ucet.neubytovani 
@@ -356,9 +359,16 @@ form _obj {
       saved= {};
       if (eq(state.key(),3,5) && access!=1) saved.access= 1;
       if (!eq(state.key(),3,5) && access!=64) saved.access= 64;
-      // uložení ostatních položek
-      rooms= js.dum_rooms_get(plan,'q');
-      if (plan.rooms1!=rooms) saved.rooms1= rooms;
+      if (plan.rooms1.changed() && plan.rooms1=='*') {
+        // pokud bylo zaškrtnuto all 
+        saved.rooms1= '*';
+      }
+      else {
+        // jinak budeme srovnávat změny pokojů
+        rooms= js.dum_rooms_get(plan,'q');
+        if (plan.rooms1!=rooms) saved.rooms1= rooms; 
+      }
+      // uložení změněných položek
       copy_by_name(form,saved,'obj|adr',1); // vyber změněné 
       copy_by_name(plan,saved,'obj',1); // vyber změněné 
 //      echo(debug(saved));
@@ -560,8 +570,10 @@ form _obj {
     func Init(ps) {
       form.init();
       switch (ps) {
-        case 'plan': form.display(0,'no'); form.enable(1,'obj|r'); break;
-        case 'stav': form.display(1,'no'); form.set_css('notouch','','r|obj|comp|no'); break;
+        case 'plan': 
+          form.display(0,'no'); form.display(1,'yes'); form.enable(1,'obj|r'); break;
+        case 'stav': 
+          form.display(1,'no'); form.display(0,'yes'); form.set_css('notouch','','r|obj|comp|no'); break;
       }
     }
     // osoby
@@ -580,6 +592,14 @@ form _obj {
     // pokoje
     const PL=340, QT=6
     field rooms1
+    // celý dům tzn. rooms1=*
+    check   all [300, QT,14,] {tag:'yes', title:'*',  format:'c', css:'CheckT', help:'všechny pokoje' 
+      func onchange() {
+        rooms1= this==1 ? '*' : '';
+        rooms1.change() 
+      }
+    }
+    // konkrétní pokoje
     check   q1  [PL+  0, QT,14,] {tag:'r', title:'1',  format:'c', css:'CheckT' }
     check   q2  [PL+ 20, QT,14,] {tag:'r', title:'2',  format:'c', css:'CheckT' }
     check   q11 [PL+ 40, QT,14,] {tag:'r', title:'11', format:'c', css:'CheckT' }
