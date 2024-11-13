@@ -651,8 +651,9 @@ function dum_objednavka_make($ida) {
       "akce","id_duakce=$ida");
   $nazev= pdo_real_escape_string(uw($nazev));
   $YS= uw('YMCA Setkání');
-  $ido= query_track("INSERT INTO tx_gnalberice_order (id_akce,fromday,untilday,note,state,name) 
-    VALUES ($ida,$od,$do,'$nazev',3,'$YS')",'setkani');
+  $ido= query_track("
+    INSERT INTO tx_gnalberice_order (id_akce,fromday,untilday,note,state,name,rooms1,board) 
+    VALUES ($ida,$od,$do,'$nazev',3,'$YS')",'setkani','*',1);
   return $ido;
 }
 # -------------------------------------------------------------------------- dum objednavka_akce_upd
