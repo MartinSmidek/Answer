@@ -654,9 +654,10 @@ function dum_objednavka_make($ida,$idd=0) {
       "akce","id_duakce=$ida");
   $board= 1;
   $ad= 1; $k15= $k9= $k3= 0;
+  $state= 3;
   if ($idd) {
-    list($board,$ad,$k15,$k9,$k3)= select(
-        'board,adults,kids_10_15,kids_3_9,kids_3',
+    list($state,$board,$ad,$k15,$k9,$k3)= select(
+        'state,board,adults,kids_10_15,kids_3_9,kids_3',
         "tx_gnalberice_order","uid=$idd",'setkani');
   }
   $nazev= pdo_real_escape_string(uw($nazev));
@@ -664,7 +665,7 @@ function dum_objednavka_make($ida,$idd=0) {
   $ido= query_track("
     INSERT INTO tx_gnalberice_order (
       id_akce,fromday,untilday,note,state,name,rooms1,board,adults,kids_10_15,kids_3_9,kids_3) 
-    VALUES ($ida,$od,$do,'$nazev',3,'$YS','*',$board,$ad,$k15,$k9,$k3)",'setkani');
+    VALUES ($ida,$od,$do,'$nazev',$state,'$YS','*',$board,$ad,$k15,$k9,$k3)",'setkani');
   return $ido;
 }
 # -------------------------------------------------------------------------- dum objednavka_akce_upd
