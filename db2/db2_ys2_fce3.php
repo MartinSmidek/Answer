@@ -276,9 +276,9 @@ function akce_clone($ida,$rok,$save=0) {
     $id_new= pdo_insert_id();
     $ret->msg= "Byla vytvořena kopie akce '{$old->nazev}' v roce $rok";
     // pokud byla v Domě setkání vytvoř i objednávku
-    $isds= select('COUNT(*)','ds_order',"id_akce=$ida");
-    if ($isds) {
-       dum_objednavka_make($id_new);
+    $idd= select('id_order','ds_order',"id_akce=$ida");
+    if ($idd) {
+       dum_objednavka_make($id_new,$idd);
        $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
     }
     $ret->msg.= ". <hr><b>Nezapomeň upravit datum, vyměnil jsem jen rok.</b>";

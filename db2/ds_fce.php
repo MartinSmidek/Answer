@@ -646,14 +646,26 @@ __HTML;
 /** ====================================================================================> OBJEDNÁVKY **/
 # ------------------------------------------------------------------------- dum objednavka_akce_make
 # vytvoř objednávku k akci 
-function dum_objednavka_make($ida) { 
-  list($od,$do,$nazev)= select('UNIX_TIMESTAMP(datum_od),UNIX_TIMESTAMP(datum_do),nazev',
+# pokud je zadána existující objednávka, převezmi z ní údaje o lidech a stravě
+# pokud není pak dej jednoho dospělého s plnou penzí
+function dum_objednavka_make($ida,$idd=0) { 
+  list($od,$do,$nazev)= select(
+      'UNIX_TIMESTAMP(datum_od),UNIX_TIMESTAMP(datum_do),nazev',
       "akce","id_duakce=$ida");
+  $board= 1;
+  $ad= 1; $k15= $k9= $k3= 0;
+  $state= 3;
+  if ($idd) {
+    list($state,$board,$ad,$k15,$k9,$k3)= select(
+        'state,board,adults,kids_10_15,kids_3_9,kids_3',
+        "tx_gnalberice_order","uid=$idd",'setkani');
+  }
   $nazev= pdo_real_escape_string(uw($nazev));
-  $YS= uw('YMCA Setkání');
+  $YS= uw('YMCA Setkání'); 
   $ido= query_track("
-    INSERT INTO tx_gnalberice_order (id_akce,fromday,untilday,note,state,name,rooms1,board) 
-    VALUES ($ida,$od,$do,'$nazev',3,'$YS')",'setkani','*',1);
+    INSERT INTO tx_gnalberice_order (
+      id_akce,fromday,untilday,note,state,name,rooms1,board,adults,kids_10_15,kids_3_9,kids_3) 
+    VALUES ($ida,$od,$do,'$nazev',$state,'$YS','*',$board,$ad,$k15,$k9,$k3)",'setkani');
   return $ido;
 }
 # -------------------------------------------------------------------------- dum objednavka_akce_upd
@@ -848,6 +860,8 @@ function dum_objednavka_save($id_order,$changed) {
   debug($changed,"dum_objednavka_save($id_order,...)");                                   /*DEBUG*/
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
+  // pokud ve změnách all=1 tak nastavíme rooms1='*' a budeme ignorovat změny v pokojích
+  $all= isset($changed->rooms1) && $changed->rooms1=='*' ? 1 : 0;
   foreach($changed as $fld=>$val) {
     $val= pdo_real_escape_string($val);
     if (in_array($fld,['od','do'])) {
@@ -866,8 +880,11 @@ function dum_objednavka_save($id_order,$changed) {
       $del_akce= ',';
       continue;
     }
-    $set.= "$del$fld='$val'";
-    $del= ',';
+    // pokud bylo nastaveno all ignorujeme jednotlivé pokoje
+    if (!$all || $all && substr($fld,0,1)!='q') {
+      $set.= "$del$fld='$val'";
+      $del= ',';
+    }
   }
   query_track("UPDATE ds_order SET $set WHERE id_order=$id_order");
   if ($set_akce) {

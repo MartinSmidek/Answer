@@ -65,8 +65,8 @@ function form_set(form,fields) {
 };
 Ezer.fce.form_set= form_set; 
 // ----------------------------------------------------------------------------------- dum rooms_get
-//ff: ds.rooms_check (rooms,form,prefix)
-//      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
+//ff: ds.dum_rooms_get (form,prefix)
+//      vrátí seznam zaškrtnutých pokojů
 //s: ds
 function dum_rooms_get(form,prefix) {
   // přečti pokoje s hodnotou 1
