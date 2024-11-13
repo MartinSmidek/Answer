@@ -28,6 +28,28 @@ function kod2ss() {
   display("zapsáno $n údajů pro SS ");
   return "zapsáno $n údajů pro SS ";
 }
+# ----------------------------------------------------------------------------------------- kod 2 ss
+# opraví kopie akcí
+function future() {
+  foreach ([503,504,507,508,510,512,514,515,524,525,526,528] as $kod) {
+    display($kod);
+    list($ida,$state,$board,$ad,$k15,$k9,$k3)= select(
+        'id_akce,state,board,adults,kids_10_15,kids_3_9,kids_3',
+        "ds_order JOIN akce ON id_akce=id_duakce","YEAR(datum_od)=2024 AND ciselnik_akce=$kod");
+    if (!$ida) continue;
+    display("-- $ida");
+    $ro= pdo_qry("
+      SELECT YEAR(datum_od),id_order 
+      FROM ds_order JOIN akce ON id_akce=id_duakce
+      WHERE YEAR(datum_od)>2024 AND ciselnik_akce=$kod
+    ");
+    while ($ro && (list($rok,$idd)= pdo_fetch_array($ro))) {
+      $upd= "UPDATE ds_order SET board=$board,adults=$ad,kids_10_15=$k15,kids_3_9=$k9,kids_3=$k3 WHERE id_order=$idd";
+      $n= query($upd);
+      display("-- -- [$n] $rok $idd $upd");
+    }    
+  }
+}
 # ----------------------------------------------------------------------------------- state 2 access
 # převede state na access
 function state2access() {
