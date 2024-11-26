@@ -124,11 +124,11 @@ menu m {type:'left', format:'f-'
   }
   menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
     item {title:'[fa-file-text-o] letošní přehled po závěrce'
-          par:°{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
+          par:{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'[fa-upload] statistický list YMCA v ČR'
-          par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
+          par:{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
   }
@@ -1134,9 +1134,9 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   label jmeno [96,3,160,] { css:'frame_label_up'}
   label ido   [264,3,50,] { format:'r' }
   label idd   [264,18,50,] { format:'r' }
-  proc dary(_ido,_jmeno) {
-    form.init; ido.set(_ido); jmeno.set(_jmeno);
-    b.browse_load(conc("da.deleted='' AND ukon IN ('b','c','k','H') AND id_osoba=",_ido))
+  func dary(_ido,_jmeno) {
+    form.init(); ido= _ido; jmeno= _jmeno;
+    b.browse_load(`da.deleted='' AND ukon IN ('b','c','k','H','v') AND id_osoba=${_ido}`);
   }
   proc refresh() { dary(id_o.get,jmeno.get) }
   # seznam darů
@@ -1151,7 +1151,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show [,,65,] { data:da.dat_od, title:'vznik', format:'rq*s' }
     show [,,65,] { data:da.dat_do, title:'zánik', format:'rq*s' }
-    proc onrowclick() { form.load(id_d.get); idd.set(id_d.get); form_state('n|s','u|z'); }
+    func onrowclick() { form.load(id_d); idd= id_d; form_state('n|s','u|z'); }
   }
   # formulář pro úpravu členství
   # skryté položky
@@ -1161,7 +1161,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   field del  { data:da.deleted }
   # viditelné položky
   const Lc=180
-  select typ   [Lc,27,65,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
+  select typ   [Lc,27,90,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
     title:'^typ členství'
     func onchanged() {
       switch(typ.key()){
@@ -1170,37 +1170,35 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
         case '2': alert("účastníci nejsou evidováni jako členové YMCA"); break;
         case '3': ukon= 'k'; break;
         case '4': ukon= 'H'; break;
+        case '5': ukon= 'v'; break;
       }
       ukon.change(1) 
     }
-//    proc onchanged() {
-//      eq(typ.key,2); alert("účastníci nejsou evidováni jako členové YMCA")
-//    | ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
   }
-  field datum  [Lc,62,85,] {type:'date', data:da.dat_od, help:'datum přijetí',
+  field datum  [Lc,62,90,] {type:'date', data:da.dat_od, help:'datum přijetí',
     format:'RUr', title:'^člen ode dne' }
-  field konec  [Lc,97,85,] {type:'date', data:da.dat_do, help:'datum zrušení',
-    format:'RUr', title:'^členství ukončeno dne' }
+  field konec  [Lc,97,90,] {type:'date', data:da.dat_do, help:'datum zrušení',
+    format:'RUr', title:'^platí do dne' }
   field pozn   [Lc,132,134,] {data:da.note, help:'poznámka', title:'^poznámka'}
 
   # ==> . tlačítka a obslužné procedury
-  proc form_init() {
-    b.browse_init; typ.plain; form.init; form_state('n','u|z|s'); }
-  proc form_state(on,off) {
+  func form_init() {
+    b.browse_init(); typ.plain(); form.init(); form_state('n','u|z|s'); }
+  func form_state(on,off) {
     form.enable(1,on); form.enable(0,off); }
-  proc onchanged () {
+  func onchanged () {
     form_state('u|z','n|s') }
-  proc onload () { 
-    typ.key(cconc(eq(ukon.get,'b'),0,eq(ukon.get,'c'),1,eq(ukon.get,'H'),4,3)); 
-    typ.plain }
+  func onload () { 
+    typ.key(ukon=='b' ? 0 : (ukon=='c' ? 1 : (ukon=='H' ? 4 : (ukon=='v' ? 5 : 3)))); 
+    typ.plain() }
   label cmd [Lc,158,132,50] { css:'ae_parm' }
   # -------------------------- Nový
   button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar',
-    proc onclick() {
-      form.init; form_state('u|z','n|s');
-      id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
-      access.set(my_access.get); access.change(1);
-      typ.key(0); typ.change; datum.set(now); datum.change(1);
+    func onclick() {
+      form.init(); form_state('u|z','n|s');
+      id_o= ido; id_o.change(1); del= ''; del.change(1);
+      access= my_access; access.change(1);
+      typ.key(0); typ.change(); datum= now(); datum.change(1);
   }}
   # -------------------------- Uložit
   button [cmd.l+64,cmd.t+5,,] {tag:'u', title:'[fa-save] Uložit',  help:'Uložit změněná data',
@@ -1219,17 +1217,18 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   }}
   # -------------------------- Zpět
   button [cmd.l+6,cmd.t+27,,] {tag:'z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
-    proc onclick() {
-      b.browse_count; form.load(b.id_d.get); form_state('n|s','u|z')
-    | form.init; form_state('n','u|z|s')
+    func onclick() {
+      if (b.browse_count()) { form.load(b.id_d); form_state('n|s','u|z') }
+      else { form.init(); form_state('n','u|z|s') }
   }}
   # -------------------------- Vymazat
   button [cmd.l+58,cmd.t+27,,] {tag:'s', title:'[fa-times fa-red] Vymazat',
     help:'Zcela zrušit (ne ukončit) členství',
-    proc onclick() {
-      confirm("opravdu zrušit (ne ukončit) členství ",jmeno.get,"?");
-      del.set(conc('D ',sys('user','abbr'),' ',now)); del.change; form.save;
-      refresh
+    func onclick() {
+      if (confirm(`opravdu zrušit (ne ukončit) členství ${jmeno}?`)) {
+        del= conc('D ',sys('user','abbr'),' ',now()); del.change(); form.save();
+        refresh()
+      }
   }}
 }
 # --------------------------------------------------------------------------------------==> AKTIVITY
