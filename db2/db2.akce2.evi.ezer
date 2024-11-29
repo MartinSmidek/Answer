@@ -99,6 +99,8 @@ menu m {type:'left', format:'f-'
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-male fa-red]iniciovaní'  par:°{lst:'o',tit:'iniciovaní muži, co ',
                                                 cnd:"o.iniciace>0"}, skill:'mrop;yaa:c;faa:c'}
+    item   {title:'[fa-male fa-green]brána dospělosti'  par:{lst:'o',tit:'muži za branou, co ',
+                                                cnd:"o.brana>0"}, skill:'mrop;yaa:c;faa:c'}
     item w {title:'[fa-beer fa-red]s webovými právy'   par:°{lst:'o',tit:'práva pro úpravu webů',
                                                 cnd:"o.web_level!=''"},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
