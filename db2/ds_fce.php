@@ -62,9 +62,125 @@ function state2access() {
   return "opraveno $n údajů access pro Akce YMCA";
 }
 # ----------------------------------------------------------------------------------- state 2 access
+function brana2() {
+  $n= $na= 0;
+  $fr= pdo_query("SELECT id_osoba,brana FROM osoba WHERE brana>0");
+  while ($fr && (list($ido,$brana)= pdo_fetch_array($fr))) {
+    $n++;
+    $fa= pdo_query("
+        SELECT COUNT(*) 
+          FROM akce AS a
+          JOIN pobyt AS p ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o USING(id_osoba)
+          WHERE a.spec=0 AND a.zruseno=0 AND YEAR(a.datum_od)>=$brana 
+            -- AND a.access^2
+            AND s.id_osoba=$ido 
+      ");
+    list($count)= pdo_fetch_array($fa);
+    if ($count>0) $na++;
+  }  
+  $msg= "Celkem $n mužů prošlo branou, z toho se po bráně celkem $na zúčastnilo nějaké naší akce";
+  display($msg);
+  return $msg;
+}
 # vloží muže z brány
-# 
 function brana() {
+  $url= "doc/brana.csv";
+  $n= $n1= $n2= $n3= $n4= 0;
+  $fp= fopen($url,'r');
+  if (!$fp) display("$url unknown");
+  while ($fp && !feof($fp) && ($line= fgets($fp,4096))) {
+    $n++;
+    if ($n==1) continue;
+//    if ($n>3) break;
+    $d= str_getcsv($line,';');
+    $idr= $d[0]?:0; $ido= $d[1]?:0; $rok= $d[9];
+    $prijmeni= trim($d[2]); $jmeno= substr($d[3],0,3)=='---' ? null : trim($d[3]); 
+    $psc= substr($d[4],0,3)=='---' ? null : trim($d[4]); $obec= trim($d[5]); $ulice= trim($d[6]); 
+    $tel= substr($d[7],0,3)=='---' ? null : trim($d[7]); 
+    $mail= substr($d[8],0,3)=='---' ? null : trim($d[8]);
+//                                                                                debug($d); /*DBG*/
+    // kontroly
+    $o= $r= null;
+    $refo= '----';
+    if ($ido) {
+      $refo= tisk2_ukaz_osobu($ido); 
+      $o= select('*','osoba',"id_osoba=$ido");
+      if (trim($o->prijmeni)!=$prijmeni) {
+        display("$n: P $refo $o->prijmeni/$prijmeni");
+      }
+      if ($o->jmeno && $jmeno && trim($o->jmeno)!=$jmeno) {
+        display("$n: J $refo $o->jmeno/$jmeno");
+      }
+      if ($o->email && $mail && strtolower($o->email)!=strtolower($mail)) {
+        display("$n: M $refo $o->email/$mail");
+      }
+      if ($o->telefon && $tel && str_replace(' ','',$o->telefon)!=str_replace(' ','',$tel)) {
+        display("$n: T $o->telefon/$tel");
+      }
+    }
+    if ($ido && $idr) {
+      $ref= tisk2_ukaz_osobu($ido); 
+      $r= select_object('nazev,ulice,psc,obec','rodina',"id_rodina=$idr");
+      $t= select('id_tvori','tvori',"id_osoba=$ido AND id_rodina=$idr");
+      if (!$t)
+        display("$n: R $ref chyba určení $idr jako rodiny osoby $ido");
+    }
+    if ($ido && !$idr) {
+      $ref= tisk2_ukaz_osobu($ido); 
+      $r= select_object('nazev,ulice,psc,obec','rodina',"id_rodina=$idr");
+      $t= select('id_rodina','tvori',"id_osoba=$ido");
+      if ($t)
+        display("$n: X $ref může mít $t jako rodinu");
+    }
+    if (!$ido && $idr) {
+      $ref= tisk2_ukaz_rodinu($idr); 
+      $r= select_object('nazev,ulice,psc,obec','rodina',"id_rodina=$idr");
+      display("$n: R $ref --- je '$r->nazev,$r->psc,$r->ulice' pravděpodobné pro $prijmeni $jmeno,$psc,$ulice?");
+    }
+    if ($psc && ($ido || $idr)) {
+      $adresa= "$ulice, $psc $obec";
+      $db_adresa= $ido && $o->adresa ? "$o->ulice, $o->psc $o->obec" : (
+          $idr ? "$r->ulice, $r->psc $r->obec" : "");
+      $db_psc= $ido && $o->adresa ? $o->psc : ($idr ? $r->psc : "");
+      if ($db_psc != str_replace(' ','',$psc)) 
+        display("$n: A $refo $db_adresa / $adresa");
+    }
+    // zápis do databáze s acces|=2
+    if (!$idr && !$ido) {
+      $n1++;
+      $ido= query_track("
+        INSERT INTO osoba (access,prijmeni,jmeno,adresa,psc,ulice,obec,kontakt,telefon,email,brana) 
+        VALUES (2,'$prijmeni','$jmeno',1,'$psc','$ulice','$obec',1,'$tel','$mail',$rok)");      
+    }
+    elseif ($idr && !$ido) {
+      $n2++;
+      $ido= query_track("
+        INSERT INTO osoba (access,prijmeni,jmeno,adresa,psc,ulice,obec,kontakt,telefon,email,brana) 
+        VALUES (2,'$prijmeni','$jmeno',1,'$psc','$ulice','$obec',1,'$tel','$mail',$rok)");      
+      query_track("
+        INSERT INTO tvori (id_osoba,id_rodina,role) 
+        VALUES ($ido,$idr,'d')");      
+    }
+    else { // známe ido a možná idr
+      $n3++;
+      if ($idr) {
+        $t= select('id_tvori','tvori',"id_osoba=$ido AND id_rodina=$idr");
+        if (!$t) {
+          query_track("INSERT INTO tvori (id_osoba,id_rodina,role) VALUES ($ido,$idr,'d')");      
+          $n4++;
+        }
+      }      
+      $set= "brana=$rok";
+      if ($o->access^2==0) $set.= ",access=".($o->access|2);
+      query_track("UPDATE osoba SET $set WHERE id_osoba=$ido");      
+    }
+  }
+  $msg= "Do databáze přidáno $n1 zcela nových osob, dále $n2 u kterých známe rodinu. 
+      <br>Upraveno bylo $n3 osob, z nich bylo $n4 přidáno do jejich rodin";
+  display($msg);
+  return $msg;
 }
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
