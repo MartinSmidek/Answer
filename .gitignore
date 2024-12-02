@@ -42,3 +42,6 @@
 /dbt/code/
 /ms2/code3.2/
 /fakt.*
+/css
+/less/*.css
+/less/*.map
