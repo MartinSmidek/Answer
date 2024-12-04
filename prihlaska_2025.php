@@ -11,7 +11,7 @@ session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 if (!isset($_SESSION['akce'])) {
   if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) 
     die("Online přihlašování není k dispozici."); 
-  $AKCE= "T_{$_GET['akce']}"; // ID akce pro SESSION
+  $AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
   $_SESSION['akce']= $AKCE;
   $_SESSION[$AKCE]= (object)[
     'id_akce'=>$_GET['akce'],
@@ -42,7 +42,7 @@ $akce_default= [ // pro DC Střelice
   'p_registrace'  =>  0, // povolit registraci s novým mailem
   'p_souhlas'     =>  0, // vyžadovat souhlas (GDPR) 
   'p_ukladat'     =>  0, // povolit průběžné ukládání přihlášky + znovunačtení při přihlášení
-  'p_kontrola'    =>  1, // vynutit kontrolu dat před uložením
+  'p_kontrola'    =>  0, // vynutit kontrolu dat před uložením
   'p_oprava'      =>  0, // povolit načtení a opravu již uložené přihlášky
 // jen pro obnovy MS
   'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
@@ -120,6 +120,24 @@ else {
   page();
 }
 # -------------------------------------------------------------------------------------- nové funkce
+function hlaska($text) { // --------------------------------------------- hláška
+  global $DOM;
+  $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
+  $DOM->alertbox_text= $text;
+  $DOM->alertbox_butts= "
+    <button onclick=\"jQuery('.popup').hide();jQuery('#popup_mask').hide();\">OK</button>";
+} // popup s OK
+function dotaz($dotaz,$ano,$ne) { // -------------- dotaz s funkcemi pro ano a ne
+  global $DOM;
+  $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
+  $DOM->alertbox_text= $dotaz;
+  $cmd_ano= $ano ? "php2('$ano');" : "jQuery('.popup').hide();jQuery('#popup_mask').hide();";
+  $cmd_ne= $ne ? "php2('$ne');" : "jQuery('.popup').hide();jQuery('#popup_mask').hide();";
+  $DOM->alertbox_butts= "
+    <button onclick=\"$cmd_ano\">ANO</button> &nbsp;
+    <button onclick=\"$cmd_ne\">NE</button>
+    ";
+} // popup s ANO / NE
 function dump_vars() { // ----------------------------------------------- dump vars
   global $vars;
   $dump= debugx($vars);
@@ -137,6 +155,33 @@ function array2object(array $array) {
   }
   return $object;
 }
+function read_elems($elems) { // -------------------------------------------------------- read elems
+  global $vars;  
+  foreach ($elems as $id=>$val) {
+    $m= null;
+    if (preg_match("/(.)_([\-\d]+)_(.*)/",$id,$m)) { // t_idt_name
+      $t= $m[1]; $idt= $m[2]; $fld= $m[3];
+      switch ($t) {
+        case 'o': $tab= $vars->cleni[$idt]; break;
+        case 'r': $tab= $vars->rodina[$idt]; break;
+        case 'p': $tab= $vars->pobyt; break;
+        default: continue 2;
+      }
+      if (is_array($tab->$fld)) {
+        if ($val!=$tab->$fld[0]) {
+          $tab->$fld[1]= $val;
+          $vars->kontrola= 0;
+        }
+        else {
+          unset($tab->$fld[1]);
+        }
+      }
+      elseif ($tab->$fld!=$val) {
+        $tab->$fld= [$tab->$fld,$val];
+      }
+    }
+  }
+} // převod do $vars
 // ============================================================================== reakce na tlačítka
 // každá z následujících funkcí je reakcí na kliknutí na nějaké tlačítko
 // a dostává parametry specifikované u tlačítka. 
@@ -146,13 +191,16 @@ function start() { trace();
 # zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní
   global $DOM, $TEXT, $TEST, $MAIL;
   $DOM= (object)[
+    // počáteční stav
+    'usermail'=>'show', 'email'=>'enable', 'pin'=>'hide', 
+    'zadost_o_pin'=>'show', 'kontrola_pinu'=>'hide',
+    'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
+    'pin'=>'hide', 'kontrola_pinu'=>'hide', 'form'=>'hide',
+    // testování
     'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST ? ', bez zápisu' : ''),
     'mailbox'=>'hide', 
-    'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
-    'pin'=>'hide', 'kontrola_pinu'=>'hide',
-    'rozepsana'=>'hide',
-    'form'=>'hide',
     'errorbox'=>'hide',
+    'alertbox'=>'hide',
   ];
 }
 // ------------------------------------------------------------------------------------ zadost o pin
@@ -211,9 +259,9 @@ function kontrola_pinu($email,$pin) {
     $open= log_find_saved($email); // uložená přihláška a nejsou přihlášení
     if ($open) { // -------- nalezena rozepsaná přihláška
       $DOM->user= "<i class='fa fa-user'></i> $jmena<br>$email";
-      $DOM->usermail= 'hide';
-      $DOM->rozepsana= 'show';
-      $DOM->rozepsana_nad= "Chcete pokračovat ve vyplňování přihlášky uložené $open?";
+      $vars->ido= $ido;
+      $vars->idr= $idr;
+      dotaz("Chcete pokračovat ve vyplňování přihlášky uložené $open?",'rozepsana','prihlaska');
     } // nalezena rozepsaná přihláška
     elseif ($pocet==1) { // -------------------------------- známý a jednoznačný mail
       $DOM->user= "<i class='fa fa-user'></i> $jmena<br>$email";
@@ -240,14 +288,6 @@ function kontrola_pinu($email,$pin) {
     } // nejednoznačný mail      
   }
 } // overit pin
-// ----------------------------------------------------------------------------------- rozepsaná ano
-function rozepsana_ano() { 
-# připrav formulář přihlášení osob
-} // rozepsaná ano
-// ------------------------------------------------------------------------------------ rozepsaná ne
-function rozepsana_ne() { 
-# připrav prázdný formulář přihlášení osob
-} // rozepsaná ne
 // ----------------------------------------------------------------------------------------- kontrola
 function kontrola($all) { 
 # zkontroluje formát dat
@@ -263,8 +303,7 @@ function ulozit() {
 function prihlaska() { 
 # připrav prázdný formulář přihlášení osob
 # doplň DOM o položky osob
-  global $DOM, $AKCE, $TEXT, $vars, $akce;
-  $vars= (object)$_SESSION[$AKCE];
+  global $DOM, $AKCE, $vars, $akce;
   // načti data
   kompletuj_pobyt($vars->idr,$vars->ido);
   // nastavení formuláře
@@ -277,10 +316,30 @@ function prihlaska() {
       'exit'=>0,      // 1 => první stisk 
   ];
   $form= form();
-//  display(htmlentities($form));
+  // zzměny zobrazení
+  $DOM->usermail= 'hide';
   $DOM->form= ['show',$form];
 } // prihlaska
-// ===================================================================== poskládej prvky formuláře
+// --------------------------------------------------------------------------------------- přihlásit
+function prihlasit($elems) { 
+# zapíše přihlášku do Answeru
+  global $vars;
+  debug($elems,'prihlasit');
+  read_elems($elems);
+  $spolu= 0;
+  foreach (array_keys($vars->cleni) as $id) {
+    $spolu+= get('c','spolu',$id);
+  }
+  if (!$spolu) {
+    hlaska('Přihlaste prosím na akci aspoň jednu osobu');
+  }
+} // uložit
+// ------------------------------------------------------------------------------- zahodit rozepsané
+function zahodit() { 
+# zrušit rozepsanou přihlášku
+  dotaz("Mám smazat rozepsanou přihlášku bez uložení?",'start','');
+} // zahodit
+// ======================================================================= poskládej prvky formuláře
 function form() { trace();
   global $vars, $cleni, $akce;
   $msg= '';
@@ -354,7 +413,7 @@ function form() { trace();
     }
     $clenove.= $deti;
     $clenove.= "<br><button name='cmd_dalsi_dite'>
-      <i class='fa fa-green fa-plus'></i>chci přidat další dítě</button>";
+      <i class='fa fa-green fa-plus'></i> chci přidat další dítě</button>";
     $clenove.= "</div>";
   }
   if ($vars->form->pecouni) { // ------------------------------------------------- zobrazení pečounů
@@ -362,7 +421,7 @@ function form() { trace();
     // form->pecouni: 1=jen tlačítko 2=jen existující 3=prázdná pole
     if ($vars->form->pecouni==1 ) {
       $clenove.= "<br><button name='cmd_dalsi_pecoun'>
-        <i class='fa fa-green fa-plus'></i>chci přihlásit osobního pečovatele</button>";
+        <i class='fa fa-green fa-plus'></i> chci přihlásit osobního pečovatele</button>";
     }
     if ($vars->form->pecouni==2) {
       $clenove.= "<div id='pecouni' class='cleni'>";
@@ -383,7 +442,7 @@ function form() { trace();
             . "</div>";
       }
       $clenove.= "<br><button name='cmd_dalsi_pecoun'>
-        <i class='fa fa-green fa-plus'></i>chci přihlásit dalšího osobního pečovatele</button>";
+        <i class='fa fa-green fa-plus'></i> chci přihlásit dalšího osobního pečovatele</button>";
       $clenove.= "</div>";
     }
   }
@@ -441,9 +500,9 @@ function form() { trace();
       ? "<button name='cmd_exit'><i class='$red_x'></i> smazat rozepsanou přihlášku bez uložení</button>
          <button name='cmd_exit_no'> ... pokračovat v úpravách</button>"
       : "$kontrola
-        <button id='poslat' onclick='php();' $enable_send><i class='fa $enable_green fa-send-o'></i>
+        <button id='prihlasit' onclick='php(\"*\");' $enable_send><i class='fa $enable_green fa-send-o'></i>
            $odeslat</button>
-         <button id='neposilat' onclick='php();'><i class='$red_x'></i> neposílat</button>";
+         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
   $form= <<<__EOF
     $ulozit
     <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
@@ -477,7 +536,7 @@ function page() {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci YMCA Setkání</title>
     <link rel="shortcut icon" href="/db2/img/$icon" />
-    <link rel="stylesheet" href="/less/akce$_test.css?verze=2" type="text/css" media="screen" charset='utf-8'>
+    <link rel="stylesheet" href="/less/akce$_test.css?verze=3" type="text/css" media="screen" charset='utf-8'>
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="prihlaska_2025.js" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
@@ -485,7 +544,7 @@ function page() {
     <script>
     </script>
   </head>
-  <body id='start' onload="php()" $if_trace>
+  <body onload="php2('start')" $if_trace>
     <div class="wrapper">
       <header>
         <div class="header">
@@ -509,13 +568,14 @@ function page() {
           <button $hide id='kontrola_pinu' onclick="php('email,pin');">ověřit PIN</button>
           <p id='usermail_pod'>$TEXT->usermail_pod1</p>
         </div>
-        <!-- použít rozepsanou přihlášku? ------------------------------------------------------ -->
-        <div $hide id='rozepsana' title='rozepsana' class='box'>
-          <p id='rozepsana_nad'></p>
-          <p><button id='rozepsana_ano' onclick="php();">Chci pokračovat v jejím vyplňování</button>
-            <button id='rozepsana_ne' onclick="php();">Ne, chci vše vyplnit znovu</button></p>
-        </div>
-        <div $hide id='form' title='form' class='box'>
+        <!-- formulář -------------------------------------------------------------------------- -->
+        <div $hide id='form' title='form' class='box'></div>
+        <div class='prosba'>$akce->ohlasit_chybu</div>
+        <!-- popup ----------------------------------------------------------------------------- -->
+        <div id='popup_mask'></div>
+        <div $hide id='alertbox' class='popup' title='Upozornění'>
+          <p id='alertbox_text'></p>
+          <p id='alertbox_butts'></p>
         </div>
       </main>
       <footer>
@@ -619,7 +679,7 @@ function read_akce() { // ------------------------------------------------------
   $akce->id_akce= $id_akce;
   $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
       . " Abychom jí mohli opravit, napište prosím "
-      . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška LK 2024'>autorovi</a> "
+      . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška 2025'>autorovi</a> "
       . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
       . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. ";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
@@ -705,7 +765,7 @@ function polozky() { // --------------------------------------------------------
   );
   $o_fld= array_merge(
     [ // položky tabulky OSOBA
-      'spolu'     =>[ 0,'&nbsp;&nbsp;jede<br />na akci','check_spolu','abdp'],
+      'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
       'jmeno'     =>[ 7,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
       'rodne'     =>[10,'rozená','','ab'],
@@ -979,14 +1039,15 @@ function elem_input($table,$id,$flds) { // -------------------------------------
   $html= '';
   $desc= $table=='r' ? $r_fld             : ($table=='o' ? $o_fld             : $p_fld);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='o' ? $cleni[$id]  : $vars->pobyt);
-  $prfx= $table=='r' ? 'r_'               : ($table=='o' ? "{$id}_"           : 'p_');
+  $prfx= "{$id}_";
+//  $prfx= $table=='r' ? ''                 : ($table=='o' ? "{$id}_"           : '');
   if (!isset($pair->_show_)) $pair->_show_= 1;
   foreach ($flds as $fld) {
     if (!isset($desc[$fld])) {
 //      $html.= $fld;
       continue;
     }
-    $name= "$prfx$fld";
+    $name= "{$table}_$prfx$fld";
     list($len,$title,$typ)= $desc[$fld];
     if ($typ=='x') continue;
     // rozpoznání povinnosti položky
@@ -1007,7 +1068,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
       break;
     case 'select':
     case 'sub_select':
-      $html.= "<label class='upper'>$title<select$todo name='$name'>";
+      $html.= "<label class='upper'>$title<select$todo id='$name'>";
       if (isset($options[$fld][''])) {
         $selected= !$v ? 'selected' : '';
         $html.= "<option disabled='disabled' $selected>{$options[$fld]['']}</option>";

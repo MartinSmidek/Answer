@@ -12,18 +12,33 @@ var myself_url= "http://answer-test.bean:8080/prihlaska_2025.php";
 function start() {
 }
 // ===========================================================================================> AJAX
-// --------------------------------------------------------------------------------------------- php
+// ---------------------------------------------------------------- php se jménem funkce v button.id
+// pro název PHP funkce vzatý z button.id
 function php(pars) {
-  let np= pars ? pars.split(/,/) : [], 
-      fce= event.type=='load' ? 'start' : event.target.id,
+  let button= event.target;
+  // zabráníme dvojkliku
+  button.disabled= true; setTimeout(() => { button.disabled = false;}, 2000 );
+  php2(button.id+(pars?',':'')+(pars||''));
+}
+// ---------------------------------------------------------------------------- php se jménem funkce
+// název PHP funkce je v prvním parametru 
+function php2(name_pars) {
+  let np= name_pars.split(/,/), 
+      fce= np[0],
       x= {cmd:fce};
-  for (let i= 0; i<np.length; i++) {
+  for (let i= 1; i<np.length; i++) {
     if (np[i]=='*') {
       x[np[i]]= {};
       jQuery('input, textarea').each(function() {
         let id= $(this).attr('id');
         if (id) { 
-          x[np[i]][id]= jQuery(this).val();
+          if (jQuery(this).attr('type') === 'checkbox') {
+              // Pro checkbox vrátíme 0 nebo 1 podle stavu
+              x[np[i]][id]= jQuery(this).is(':checked') ? 1 : 0;
+          } else {
+              // Pro ostatní inputy a textarea vrátíme jejich hodnotu
+              x[np[i]][id]= jQuery(this).val();
+          }
         }
       });
     }
@@ -32,21 +47,11 @@ function php(pars) {
   }
   jQuery('#errorbox').hide().html('');
   jQuery('#mailbox').hide().html('');
-  ask(x,after_php);
-}
-// --------------------------------------------------------------------------------------------- php
-function php2(name_pars) {
-  let np= name_pars.split(/,/), 
-      fce= np[0],
-      x= {cmd:fce};
-  for (let i= 1; i<np.length; i++) {
-    x[np[i]]= jQuery(`#${np[i]}`).val();
-  }
-  jQuery('#errorbox').hide().html('');
-  jQuery('#mailbox').hide().html('');
+  jQuery('.popup').hide(); jQuery('#popup_mask').hide()
   ask(x,after_php);
 }
 // --------------------------------------------------------------------------------------- after php
+// reakce na návratovou hodnotu PHP funkce
 function after_php(DOM) {
   for (const id in DOM) {
     let elem= jQuery(`#${id}`),

@@ -187,11 +187,33 @@ html body div.wrapper footer div.footer {
   padding: 15px;
   color: #f4f5f7;
 }
+html body div.popup {
+  z-index: 2001;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 20px;
+  border-left: 20px solid red;
+  background: #ffeeaa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+html body #popup_mask {
+  display: none;
+  z-index: 2000;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(51, 51, 51, 0.2);
+}
 html body #mailbox {
-  border-left: 10px solid grey;
+  border-left: 20px solid grey;
 }
 html body #errorbox {
-  border-left: 10px solid red;
+  border-left: 20px solid red;
 }
 html body section.trace {
   margin-top: 10px;

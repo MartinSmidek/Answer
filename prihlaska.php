@@ -31,8 +31,8 @@ header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
-$DBT= $_SESSION['dbt']['user_id']?? 0; // během přihlášení do dbt.php bude testovací červená varianta
-$DB2= $_SESSION['db2']['user_id']?? 0; // indikátor aktuálního přihlášení do db2 (kvůli testování)
+$DBT= 1; // $_SESSION['dbt']['user_id']?? 0; // během přihlášení do dbt.php bude testovací červená varianta
+$DB2= 0; // $_SESSION['db2']['user_id']?? 0; // indikátor aktuálního přihlášení do db2 (kvůli testování)
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 1; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
 //$LOAD= 1; // 1 je povoleno natažení dat ze starší přihlášky ... akce->p_ukladat
@@ -1239,7 +1239,7 @@ __EOF;
             <img src="/img/husy_ymca.png" alt=""></a>
           <div class="user">$user</div>
         </div>
-        <div class="intro">Přihláška na akci <b>$akce->nazev$rok</b></div>
+        <div class="intro">[loňská] Přihláška na akci <b>$akce->nazev$rok</b></div>
       </header>
       <main>
         $mailbox
