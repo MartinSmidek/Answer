@@ -187,6 +187,12 @@ html body div.wrapper footer div.footer {
   padding: 15px;
   color: #f4f5f7;
 }
+html body #mailbox {
+  border-left: 10px solid grey;
+}
+html body #errorbox {
+  border-left: 10px solid red;
+}
 html body section.trace {
   margin-top: 10px;
   border-top: 3px dashed red;
@@ -217,5 +223,9 @@ html body section.trace table.dbg_array {
 html body section.trace table.dbg_object {
   background-color: #ffffaa;
   font: 12px Arial;
+}
+table.xdebug-error th {
+  font-size: 10pt;
+  background: white;
 }
 /*# sourceMappingURL=akce.css.map */

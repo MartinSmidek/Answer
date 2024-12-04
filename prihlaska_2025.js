@@ -18,7 +18,17 @@ function php(pars) {
       fce= event.type=='load' ? 'start' : event.target.id,
       x= {cmd:fce};
   for (let i= 0; i<np.length; i++) {
-    x[np[i]]= jQuery(`#${np[i]}`).val();
+    if (np[i]=='*') {
+      x[np[i]]= {};
+      jQuery('input, textarea').each(function() {
+        let id= $(this).attr('id');
+        if (id) { 
+          x[np[i]][id]= jQuery(this).val();
+        }
+      });
+    }
+    else
+      x[np[i]]= jQuery(`#${np[i]}`).val();
   }
   jQuery('#errorbox').hide().html('');
   jQuery('#mailbox').hide().html('');
