@@ -18,32 +18,45 @@ function php(pars) {
   let button= event.target;
   // zabráníme dvojkliku
   button.disabled= true; setTimeout(() => { button.disabled = false;}, 2000 );
-  php2(button.id+(pars?',':'')+(pars||''));
+  php0(button.id+(pars?',':'')+(pars||''));
 }
 // ---------------------------------------------------------------------------- php se jménem funkce
 // název PHP funkce je v prvním parametru 
 function php2(name_pars) {
+  let button= event.target;
+  // zabráníme dvojkliku
+  button.disabled= true; setTimeout(() => { button.disabled = false;}, 2000 );
+  php0(name_pars);
+}
+// --------------------------------------------------------------------------------- tělo php a php2
+// název PHP funkce je v prvním parametru, další mohou být
+// =val => předá se hodnota
+//  * => předá se pole [id:val,...] pro všechny input a textarea
+// id => předá se id.val
+function php0(name_pars) {
   let np= name_pars.split(/,/), 
-      fce= np[0],
-      x= {cmd:fce};
-  for (let i= 1; i<np.length; i++) {
-    if (np[i]=='*') {
-      x[np[i]]= {};
+      x= {cmd:np.shift(),args:[]};
+  for (let i= 0; i<np.length; i++) {
+    if (np[i][0]=='=') {
+      x.args[i]= np[i].substring(1);
+    }
+    else if (np[i]=='*') {
+      x.args[i]= {};
       jQuery('input, textarea').each(function() {
         let id= $(this).attr('id');
         if (id) { 
           if (jQuery(this).attr('type') === 'checkbox') {
               // Pro checkbox vrátíme 0 nebo 1 podle stavu
-              x[np[i]][id]= jQuery(this).is(':checked') ? 1 : 0;
+              x.args[i][id]= jQuery(this).is(':checked') ? 1 : 0;
           } else {
               // Pro ostatní inputy a textarea vrátíme jejich hodnotu
-              x[np[i]][id]= jQuery(this).val();
+              x.args[i][id]= jQuery(this).val();
           }
         }
       });
     }
     else
-      x[np[i]]= jQuery(`#${np[i]}`).val();
+      x.args[i]= jQuery(`#${np[i]}`).val();
   }
   jQuery('#errorbox').hide().html('');
   jQuery('#mailbox').hide().html('');
