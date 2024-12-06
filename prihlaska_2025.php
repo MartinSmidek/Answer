@@ -12,9 +12,6 @@ error_reporting(E_ALL);
 ini_set('display_errors', 'On');
 
 // detekce varianty: normální nebo testovací 
-// a indikátor přihlášení do Answeru - jen tak lze využít $MAIL==0 a $TEST>0
-//   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
-//   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
 $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
 $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
@@ -27,16 +24,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'j-novotny@centrum.cz';
 //$TEST_mail= '';
 
-
-if (!isset($_SESSION['akce'])) {
-  if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) 
-    die("Online přihlašování není k dispozici."); 
-  else
-    initialize($_GET['akce']);
-}
-$AKCE= "A_{$_SESSION['akce']}";
-$vars= $_SESSION[$AKCE]??(object)[];
-//$DOM= $vars->DOM;
+$errors= [];
 
 // ========================================================================== parametrizace aplikace
 // texty a nastavení položky jsou popsány ve funkci položky - jsou pozměněny podle načtené akce
@@ -56,6 +44,10 @@ $TEXT= (object)[
       <br>přihlaste se prosím pomocí jiného svého mailu (nebo mailem manžela/ky).',
   'osoby_nad1' => 
       'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.',
+  'rozlouceni1' => 
+      'Přejeme Vám hezký den.',
+  'rozlouceni2' => 
+      'Přejeme Vám příjemný pobyt.',
 ];
 $akce_default= [ // pro DC Střelice
   'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
@@ -82,7 +74,25 @@ $akce_default= [ // pro DC Střelice
 // ========================================================================================== .MAIN.
 // rozlišení na volání z příkazové řádky - úvodní s prázdným SESSION nebo po ctrl-r
 // a na volání přes AJAX z klientské části
-$errors= [];
+
+// pro první volání nebo ctrl-r nastav akci
+// hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
+//   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
+//   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
+if (!count($_POST)) {
+  if (!isset($_GET['akce']) ) 
+    die("Online přihlašování není k dispozici."); 
+  else {
+    $TEST= $_GET['test']??0 ? ($_ANSWER?(0+$_GET['test']):0) : 0;
+    $MAIL= $_GET['mail']??1 ? 1 : ($_ANSWER?0:1);
+    initialize($_GET['akce']); // přenese TEST i MAIL
+  }
+}
+$AKCE= "A_{$_SESSION['akce']}";
+$vars= $_SESSION[$AKCE]??(object)[];
+$TEST= $vars->TEST;
+$MAIL= $vars->MAIL;
+
 connect_db();           // napojení na databázi a na Ezer 
 read_akce();            // načtení údajů o akci z Answeru 
 
@@ -94,7 +104,7 @@ $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
   'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
   'pin'=>'hide', 'kontrola_pinu'=>'hide', 'form'=>'hide',
   // testování
-  'info'=> $MAIL??1 ? 'hide' : 'simulace mailů'.($TEST??0 ? ', bez zápisu' : ''),
+  'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST>1 ? ', bez zápisu' : ''),
   'mailbox'=>'hide', 
   'errorbox'=>'hide',
   'alertbox'=>'hide',
@@ -118,7 +128,7 @@ if ( count($_POST) ) {
   if ( function_exists($fce)) {
     $vars= $_SESSION[$AKCE];
     call_user_func_array($fce,$args); // modifikuje $DOM
-    if ($vars->id_akce)
+    if ($vars->id_akce??0)
       $_SESSION[$AKCE]= $vars;
   }
   else {
@@ -156,13 +166,14 @@ function start() {
 // -------------------------------------------------------------------- obnova počátečního nastavení
 function initialize($id_akce) { 
 # zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní a zapomene všechny hodnoty
-  global $DOM, $DOM_default, $vars;
+  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL;
   do_session_restart();
   if ($id_akce) {
     $_SESSION['akce']= $id_akce;
     $AKCE= "A_$id_akce"; // ID akce pro SESSION
     $_SESSION[$AKCE]= (object)[
       'id_akce'=>$id_akce,
+      'TEST'=>$TEST, 'MAIL'=>$MAIL,
       'ido'=>0, 'idr'=>0, 'pin'=>'',  // ověřený klient
       'form'=>(object)[],
   //    'DOM'=>$DOM_default,
@@ -190,13 +201,13 @@ function initialize($id_akce) {
 function zadost_o_pin($email) { trace();
 # pro korektní id.email pošle mail s PINem a zobrazí cmd.kontrola_pinu
 # pro nekorektní id.email zobrazí chybu a opakuje
-  global $DOM, $TEST, $TEXT, $vars;
+  global $DOM, $TEST, $TEXT, $vars, $akce;
   $chyby= '';
   $ok= check_mail($email,$chyby);
   if ($ok) {
     // zašleme PIN 
     $pin= rand(1000,9999);
-    $msg= simple_mail('$val->garant_mail', $email, "PIN ($pin) pro prihlášení na akci",
+    $msg= simple_mail($akce->garant_mail, $email, "PIN ($pin) pro prihlášení na akci",
         "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
     if ( $msg!='ok' ) {
       $chyby.= "Litujeme, mail s PINem se nepovedlo odeslat, přihlas se prosím na akci jiným způsobem."
@@ -266,6 +277,7 @@ function kontrola_pinu($email,$pin) {
         } 
         log_write('id_pobyt',$idp);
         $DOM->usermail= "hide";
+        $DOM->rozlouceni_text= $TEXT->rozlouceni2;
         hlaska("Na tuto akci jste již $od_kdy přihlášeni$kym","prazdna");
       }
       else {
@@ -417,8 +429,9 @@ function zahodit() {
 // --------------------------------------------------------------------------------- prázdná stránka
 function prazdna() { 
 # jen template stránky
-//  global $DOM;
+  global $DOM;
   initialize(0);
+  $DOM->rozlouceni= 'show';
 } // prazdna
 
 // ================================================================================= prvky formuláře
@@ -664,6 +677,7 @@ function read_elems($elems) { // -----------------------------------------------
 function page() {
   global $_TEST, $TEST, $TEST_mail, $TEXT, $akce;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
+  $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
   $hide= "style='display:none'";
   echo <<<__EOD
@@ -711,6 +725,10 @@ function page() {
         <!-- formulář -------------------------------------------------------------------------- -->
         <div $hide id='form' title='form' class='box'></div>
         <div class='prosba'>$akce->ohlasit_chybu</div>
+        <!-- rozloučení ------------------------------------------------------------------------ -->
+        <div $hide id='rozlouceni' title='form' class='box'>
+          <p id='rozlouceni_text'>$TEXT->rozlouceni1</p>
+        </div>
         <!-- popup ----------------------------------------------------------------------------- -->
         <div id='popup_mask'></div>
         <div $hide id='alertbox' class='popup' title='Upozornění'>
@@ -790,7 +808,7 @@ function read_akce() { // ------------------------------------------------------
 //  foreach (['p_rod_adresa','p_souhlas','p_pro_LK','p_obcanky','p_upozorneni'] as $_par) {
 //    if (!isset($akce->$_par)) $akce->$_par= 0;
 //  }
-//            debug($akce,"web_online");
+//  debug($akce,"web_online");
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
@@ -814,11 +832,11 @@ function read_akce() { // ------------------------------------------------------
       <br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
   // doplnění konstant
   $akce->id_akce= $id_akce;
-  $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
+  $akce->ohlasit_chybu= "<p>Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
       . " Abychom jí mohli opravit, napište prosím "
       . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška 2025'>autorovi</a> "
       . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
-      . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. ";
+      . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. </p>";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
@@ -853,7 +871,7 @@ end:
 //  global $trace;
 //  $trace.= debugx($akce,'hodnoty web_online');
   if ($msg) {
-    hlaska($msg,"");
+    die($msg);
   }
 } // doplnění infromací o akci
 function polozky() { // -------------------------------------------------------------------- polozky
@@ -1934,7 +1952,8 @@ function zvyraznit($msg,$ok=0) { // --------------------------------------------
 function simple_mail($replyto,$address,$subject,$body,$cc='') { // --------------------- simple mail
 # odeslání mailu
 # $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
-  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $MAIL, $TEST, $DOM;
+# $_TEST zabrání posílání na garanta přes replyTo 
+  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $MAIL, $TEST, $_TEST, $DOM;
 //  global $trace;
   $msg= '';
   if ($TEST>1 || !$MAIL) {
@@ -1961,7 +1980,9 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
       goto end;
     }
     $mail->From= $mail->Username;
-    $mail->addReplyTo($replyto);
+    if (!$_TEST) {
+      $mail->addReplyTo($replyto);
+    }
     if ($cc) {
       $mail->AddCC($cc);
     }
@@ -1984,13 +2005,15 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
 //      }
 //      debug($pars,"nastavení PHPMAILER");
 //    }
-    $ok= $mail->Send();
+    $ok= false; 
+    if (empty($mail->ErrorInfo)) {
+      $ok= $mail->Send();
+    }
     if ( $ok  ) {
       $msg= "ok";
     }
     else {
       $msg= "CHYBA při odesílání mailu došlo k chybě: $mail->ErrorInfo";
-      goto end;
     }
   }
 end:
