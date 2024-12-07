@@ -7,10 +7,6 @@
 
  */
 
-var myself_url= "http://answer-test.bean:8080/prihlaska_2025.php";
-
-function start() {
-}
 // ===========================================================================================> AJAX
 // ---------------------------------------------------------------- php se jménem funkce v button.id
 // pro název PHP funkce vzatý z button.id

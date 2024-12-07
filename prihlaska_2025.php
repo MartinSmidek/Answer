@@ -238,8 +238,9 @@ function kontrola_pinu($email,$pin) {
   if ($pin!=$vars->pin) { // chyba pinu
     $DOM->usermail_pod= zvyraznit("<p>Do mailu jsme poslali odlišný PIN, podívejte se prosím pozorně</p>");
   }
-  else { // pin je ok
+  else { // pin je ok - založíme záznam v tabulce prihlaska
     $vars->email= $email; // pro korespondenci
+    log_open($email);  // email je ověřený 
     // zjistíme, zda jej máme v databázi
     $regexp= "REGEXP '(^|[;,\\\\s]+)$email($|[;,\\\\s]+)'";
     list($pocet,$ido,$idr,$jmena,$rodiny,$kontakty)= select_2(
@@ -391,7 +392,7 @@ function prihlasit($elems) {
       $ems= preg_split('/[,;]/',get('o','email',$id));
       foreach ($ems as $email) {
         $email= trim($email);
-        if (!in_array($email,$emails)) 
+        if ($email && !in_array($email,$emails)) 
           $emails[]= $email;
       }
     }
@@ -414,6 +415,7 @@ function prihlasit($elems) {
 db_end:
     if (count($errors)) {
       log_append_stav('ko');
+      log_error(implode('|',$errors));
       $DOM->form= ['show',
           "Při zpracování přihlášky došlo bohužel k chybě. 
            <br>Přihlaste se prosím posláním mailu organizátorům akce
@@ -675,7 +677,7 @@ function read_elems($elems) { // -----------------------------------------------
 
 // =============================================================================== zobrazení stránky
 function page() {
-  global $_TEST, $TEST, $TEST_mail, $TEXT, $akce;
+  global $_TEST, $TEST, $TEST_mail, $TEXT, $akce, $rel_root;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
@@ -696,6 +698,7 @@ function page() {
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <script>
+      var myself_url= "$rel_root/prihlaska_2025.php";
     </script>
   </head>
   <body onload="php2('start')" $if_trace>
