@@ -290,8 +290,8 @@ function akce_clone($ida,$rok,$save=0) {
 function akce_prihlaska($id_akce,$cmd,$par='') {
   global $answer_db;
   $prihlaska= 
-      $answer_db=='ezer_db2'      ? 'prihlaska.php' : (
-      $answer_db=='ezer_db2_test' ? 'prihlaska.php'   : '???');
+      $answer_db=='ezer_db2'      ? 'prihlaska_2025.php' : (
+      $answer_db=='ezer_db2_test' ? 'prihlaska_2025.php'   : '???');
   $goal= "$prihlaska?akce=$id_akce$par";
   $url= "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['HTTP_HOST']}/$goal";
   switch ($cmd) {
