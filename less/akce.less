@@ -6,6 +6,7 @@
 @cleni_b: #f0ecdb;
 @dary_b:  #ffffff;
 @page_b:  #ffffff;
+@popup_b: #ffeeaa;
 //
 @width:   800px;
 @foot_h:   50px;
@@ -130,7 +131,20 @@ html {
         }
       }
     }
+    // ----------------------------------------------------------------------------- popup
+    div.popup { 
+      z-index:2001; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);    
+      text-align: center; padding: 20px; border-left: 20px solid red;
+      background: @popup_b; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #popup_mask {
+      display: none;
+      z-index:2000; position: absolute; left: 0; top: 0; width: 100%; height: 100%; 
+      background-color: rgba(51, 51, 51, 0.2); 
+    }
     // ----------------------------------------------------------------------------- trasování
+    #mailbox { border-left: 20px solid grey; }
+    #errorbox { border-left: 20px solid red; }
     section.trace {
       margin-top: 10px; border-top:3px dashed red;
       background-color: @form_b;
@@ -146,3 +160,5 @@ html {
     }
   }
 }
+
+table.xdebug-error th { font-size: 10pt; background:white }
