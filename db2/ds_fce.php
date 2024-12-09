@@ -11,6 +11,29 @@ function TEST() {
   $zmen= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$od')>0");
   return "v $table bylo za $dnu dnu $zmen zmen";
 }
+# ----------------------------------------------------------------------------------------- clenstvo
+# doplní typ členství Y všem činným před $od
+function clenstvo($doit=0,$od='2017-03-04') {
+  $n= 0;
+  $ro= pdo_qry("
+    SELECT id_osoba,prijmeni,jmeno,dat_od,dat_od>'$od' AS neni
+    FROM dar JOIN osoba USING (id_osoba)
+    WHERE ukon='c' AND dat_od!='0000-00-00' AND dat_do='0000-00-00' 
+      AND dar.deleted='' AND osoba.deleted=''
+    ORDER BY prijmeni,jmeno
+  ");
+  while ($ro && (list($ido,$prijmeni,$jmeno,$d1,$neni)= pdo_fetch_array($ro))) {
+    $n++;
+    $x= $neni ? " ==> není činný v YMCA v ČR" : '';
+    display("$n: od $d1 ... $prijmeni $jmeno $x");
+    if ($doit && !$neni) {
+      query("INSERT INTO dar (access,id_osoba,ukon,dat_od,note) 
+        VALUES (1,$ido,'Y','$d1','VPS1 uznáno')");
+    }
+//    break;
+  }    
+}
+/*
 # ----------------------------------------------------------------------------------------- good bad
 # opraví kopie akcí - ponechá good a z bad přenese pokoje 
 function good_bad($doit,$good=2994,$bad=2962) {
@@ -32,7 +55,6 @@ function good_bad($doit,$good=2994,$bad=2962) {
 //    break;
   }    
 }
-/*
 # ----------------------------------------------------------------------------------------- kod 2 ss
 # převede g_akce.g_kod na ciselnik_akce
 function kod2ss() {
