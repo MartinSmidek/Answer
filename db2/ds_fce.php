@@ -11,6 +11,28 @@ function TEST() {
   $zmen= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$od')>0");
   return "v $table bylo za $dnu dnu $zmen zmen";
 }
+# ----------------------------------------------------------------------------------------- good bad
+# opraví kopie akcí - ponechá good a z bad přenese pokoje 
+function good_bad($doit,$good=2994,$bad=2962) {
+  $ro= pdo_qry("
+    SELECT id_pobyt,i0_rodina,funkce
+    FROM pobyt 
+    WHERE id_akce=$good AND funkce NOT IN (14)
+  ");
+  while ($ro && (list($idp,$idr,$funkce)= pdo_fetch_array($ro))) {
+    list($idp0,$pokoj)= select('id_pobyt,pokoj','pobyt',"id_akce=$bad AND i0_rodina=$idr");
+    $chng= '';
+    if ($doit && $idp0) {
+      $x= query("UPDATE pobyt SET pokoj='$pokoj' WHERE id_pobyt=$idp");
+      $chng.= $x ? ' pokoj přenesen' : '';
+      $x= query("DELETE FROM pobyt WHERE id_pobyt=$idp0");
+      $chng.= $x ? ' deleted' : '';
+    }
+    display("$idp $funkce ($idp0) ... $pokoj");
+//    break;
+  }    
+}
+/*
 # ----------------------------------------------------------------------------------------- kod 2 ss
 # převede g_akce.g_kod na ciselnik_akce
 function kod2ss() {
@@ -61,7 +83,7 @@ function state2access() {
   display("opraveno $n údajů access pro Akce YMCA ");
   return "opraveno $n údajů access pro Akce YMCA";
 }
-# ----------------------------------------------------------------------------------- state 2 access
+# ------------------------------------------------------------------------------------------ brana 2
 function brana2() {
   $n= $na= 0;
   $fr= pdo_query("SELECT id_osoba,brana FROM osoba WHERE brana>0");
@@ -100,7 +122,7 @@ function brana() {
     $psc= substr($d[4],0,3)=='---' ? null : trim($d[4]); $obec= trim($d[5]); $ulice= trim($d[6]); 
     $tel= substr($d[7],0,3)=='---' ? null : trim($d[7]); 
     $mail= substr($d[8],0,3)=='---' ? null : trim($d[8]);
-//                                                                                debug($d); /*DBG*/
+//                                                                                debug($d); //DBG
     // kontroly
     $o= $r= null;
     $refo= '----';
@@ -182,6 +204,7 @@ function brana() {
   display($msg);
   return $msg;
 }
+*/
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $dum_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';

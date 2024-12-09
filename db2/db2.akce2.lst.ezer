@@ -431,7 +431,7 @@ form _page [,,275,360] {
         info.sey.browse_focus();
         break;
       case 'pri':
-        if (id_akce==1552) p_show();
+        p_show();
         break;
       case 'cen': 
         hnizdo.display(hnizda);
