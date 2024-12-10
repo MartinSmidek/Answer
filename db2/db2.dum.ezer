@@ -44,7 +44,8 @@ form _vyuctovani [,,623,400] {
     fak= php.select1("IFNULL(nazev,'')",'faktura',`id_pobyt=${idp} AND deleted='' `);
     vystavena= `<b>${fak}</b>`;
     hos.browse_load(`id_pobyt=${idp}`);
-    pob.Load(idp);
+    hos.Load(idp);
+//    pob.Load(idp);
   }
   func refresh(idp,ids) {
     switch (mode) {
@@ -186,6 +187,15 @@ form _vyuctovani [,,623,400] {
       ds_vzorec.enable(!zamek_spolu);
       zamek_ikona= replace_fa(zamek_spolu ? '[fa-lock fa-red]' : '[fa-unlock]');
       js.set_elem_backround(&form.ds_vzorec,{background: zamek_spolu ? '#ff7777' : '#ffffff'});
+    }
+    func Load(idp) { var x:object
+      udaje_pobyt= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
+//      echo(debug(udaje_pobyt,'udaje_pobyt'));
+      vzorec_pob= udaje_pobyt.vzorec;
+      copy_by_name(udaje_pobyt.abbr,form);
+      celkem= udaje_pobyt.celkem;
+      x= php.dum_pobyt_platby(idp);
+      form.platby= `${x.zaplaceno} = ${x.platby}`;
     }
   }
   check strucna[240,308, 60,] { tag:'h', title:'stručná', format:'t' }
