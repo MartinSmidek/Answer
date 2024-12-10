@@ -92,6 +92,8 @@ $AKCE= "A_{$_SESSION['akce']}";
 $vars= $_SESSION[$AKCE]??(object)[];
 $TEST= $vars->TEST;
 $MAIL= $vars->MAIL;
+$TEST= 1;
+$MAIL= 0;
 
 connect_db();           // napojení na databázi a na Ezer 
 read_akce();            // načtení údajů o akci z Answeru 

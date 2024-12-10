@@ -7,7 +7,7 @@
 
 # ======================================================================================> VYÚČTOVÁNÍ
 form _vyuctovani [,,623,400] {
-  const left_hos=200
+  const left_hos=200, left_hos2= left_hos+590, left_hos3= left_hos2+100
   var mode='', // obj|pob   ... '' znamená neiniciovaný modul
     akce:object, id_akce:number, akce_od:text, akce_do:text, 
     udaje_pobyt: object,
@@ -135,28 +135,34 @@ form _vyuctovani [,,623,400] {
     curr_spolu= hos.ids;
     refresh(curr_pobyt,curr_spolu);
   } 
-  label [left_hos+565,58,100,] {tag:'h', title:'UPRAVIT'}
-  select ds_pokoj [left_hos+565,81,40,] {tag:'h', help:'pokoj pro nastavenou osobu'
+  label [left_hos2,58,100,] {tag:'h', title:'UPRAVIT'}
+  select ds_pokoj [left_hos2,81,40,] {tag:'h', title:'-pokoj', help:'pokoj pro nastavenou osobu'
     func onchanged() { Update(this._id,this,0); php.dum_refresh_pokoj(id_pobyt); }}
-  label [left_hos+607,86,50,] {tag:'h', title:'pokoj' }
-  check kazdy [left_hos+565,101,100,] {tag:'h', title:'-"- každému', format:'t', help:'pokoj pro každou osobu'
+  check kazdy [left_hos2,101,100,] {tag:'h', title:'-"- každému', format:'t', help:'pokoj pro každou osobu'
     func onchange() { if (this) Update('ds_pokoj',ds_pokoj,1); php.dum_refresh_pokoj(id_pobyt); }}
-  check ds_pristylka [left_hos+565,121,100,] {tag:'h', title:'přistýlka', help:'přidaná přistýlka'
+  check ds_pristylka [left_hos2,121,100,] {tag:'h', title:'přistýlka', help:'přidaná přistýlka'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  check ds_dotace [left_hos+565,154,100,] {tag:'h', title:'dotace', help:'bude započtena snížená cena'
+  check ds_dotace [left_hos2,154,100,] {tag:'h', title:'dotace', help:'bude započtena snížená cena'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  check ds_postylka [left_hos+565,174,100,] {tag:'h', title:'postýlka', help:'poplatek za půjčení'
+  check ds_postylka [left_hos2,174,100,] {tag:'h', title:'postýlka', help:'poplatek za půjčení'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  check ds_zvire [left_hos+565,194,100,] {tag:'h', title:'zvíře', help:'poplatek za noc zvířete'
+  check ds_zvire [left_hos2,194,100,] {tag:'h', title:'zvíře', help:'poplatek za noc zvířete'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  check ds_zdarma [left_hos+565,214,100,] {tag:'h', title:'zdarma', help:'lektor za akci nic neplatí'
+  check ds_zdarma [left_hos2,214,100,] {tag:'h', title:'zdarma', help:'lektor za akci nic neplatí'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  field ds_od [left_hos+565,244,85,] {tag:'h', type:'date', format:'r', title:'- příjezd', 
+  field ds_od [left_hos2,244,85,] {tag:'h', type:'date', format:'r', title:'- příjezd', 
       help:'odlišné datum příjezdu'
     func onchanged() { var v:text v= date2sql(this); if (Ok(this._id,v)) Update(this._id,v,0) }}
-  field ds_do [left_hos+565,269,85,] {tag:'h', type:'date', format:'r', title:'- odjezd', 
+  field ds_do [left_hos2,269,85,] {tag:'h', type:'date', format:'r', title:'- odjezd', 
       help:'odlišné datum odjezdu'
     func onchanged() { var v:text v= date2sql(this); if (Ok(this._id,v)) Update(this._id,v,0) }}
+  // slevy
+  label [left_hos3,58,100,] {tag:'h', title:'SLEVY'}
+  field ds_sleva [left_hos3,81,20,] {tag:'h', title:'-  % sleva', format:'r', help:'sleva pro nastavenou osobu'
+    func onchanged() { Update(this._id,this,0); }}
+//  check kazdy_sl [left_hos2,101,100,] {tag:'h', title:'-"- každému', format:'t', help:'sleva pro každou osobu'
+//    func onchange() { if (this) Update('ds_pokoj',ds_pokoj,1); php.dum_refresh_pokoj(id_pobyt); }}
+
   // seznam členů pobytu
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
@@ -180,10 +186,12 @@ form _vyuctovani [,,623,400] {
     show str  [,,40,] { title:'str.', format:'r' }
     show popl [,,40,] { title:'popl.', format:'r' }
     show prog [,,40,] { title:'prog.', format:'r' }
+    show ds_sleva [,,20,] { title:'%slev', format:'r' }
     show zamek_spolu // fixovaný vzorec použitý místo spočítaného
     func onrowclick() {
       copy_by_name(&hos,form);
       kazdy= 0;
+//      kazdy_sl= 0;
       ds_vzorec.enable(!zamek_spolu);
       zamek_ikona= replace_fa(zamek_spolu ? '[fa-lock fa-red]' : '[fa-unlock]');
       js.set_elem_backround(&form.ds_vzorec,{background: zamek_spolu ? '#ff7777' : '#ffffff'});

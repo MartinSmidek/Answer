@@ -1701,7 +1701,7 @@ function dum_browse_pobyt($x) {
       SELECT id_pobyt,IFNULL(id_spolu,0),d.uid,c.ikona,IF(ds_od='0000-00-00',datum_od,ds_od),
         IF(ds_do='0000-00-00',datum_do,ds_do),
         YEAR(datum_od) AS rok,d.state,d.board,prijmeni,jmeno,narozeni,
-        TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_zdarma,ds_dotace,
+        TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_zdarma,ds_dotace,ds_sleva,
         ds_pristylka,ds_postylka,ds_zvire,ulice,psc,obec
       FROM osoba AS o 
         JOIN spolu AS s USING (id_osoba) 
@@ -1715,7 +1715,7 @@ function dum_browse_pobyt($x) {
     ");
     while ($rp && (list(
           $idp,$ids,$idd,$nebyl,$od,$do,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,
-          $vzorec,$zdarma,$dotace,$pristylka,$postylka,$zvire,$ulice,$psc,$obec
+          $vzorec,$zdarma,$dotace,$sleva,$pristylka,$postylka,$zvire,$ulice,$psc,$obec
         )= pdo_fetch_array($rp))) {
       $rok_ceniku= $rok;
       // od nejstaršího vezmeme adresu a další údaje
@@ -1752,7 +1752,7 @@ function dum_browse_pobyt($x) {
         
         $vzorec= $vzorec ?: dum_osoba_vzorec((object)
           ['vek'=>$vek,'pokoj'=>$pokoj,'state'=>$state,'board'=>$board,'noci'=>$noci,
-           'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$postylka,
+           'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_sleva'=>$sleva,'ds_postylka'=>$postylka,
            'ds_pristylka'=>$pristylka,'ds_zvire'=>$zvire],
           $rok);
         $vzorec_pobyt.= ",$vzorec";
@@ -1770,6 +1770,7 @@ function dum_browse_pobyt($x) {
           $z[$ids]['str']=  $cena['druh']['strava']??0;
           $z[$ids]['popl']= $cena['druh']['poplatek_obci']??0;
           $z[$ids]['prog']= $cena['druh']['program']??0;
+          $z[$ids]['ds_sleva']= $cena['druh']['sleva']??0;
         }
       } // nebyl==0
       // doplníme pobyt
@@ -1843,7 +1844,7 @@ end:
   }
   else { // browse
 //    debug($y->values,">dum_browse_pobyt");
-//    debug($y,">dum_browse_pobyt");
+    debug($y,">dum_browse_pobyt");
     $y->suma= $suma;
     return $y;  
   }
