@@ -2308,6 +2308,22 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
   return $res;
 }
 # ===========================================================================================> RUZNE
+# --------------------------------------------------------------------------------- dum pobyt_platby
+# vrátí platby za pobyt jako částku a textový rozklad
+function dum_pobyt_platby($idp) {
+  $ret= (object)['zaplaceno'=>0,'platby'=>'nezaplaceno'];
+  $po= pdo_qry("
+      SELECT COUNT(*) AS pocet,SUM(castka) AS zaplaceno,COUNT(*) AS nx,
+        GROUP_CONCAT(CONCAT(castka,' (',DATE_FORMAT(datum,'%e.%c'),')') SEPARATOR ' + ') AS platby 
+      FROM platba
+      WHERE id_pob=$idp");
+  if ($po) {
+    $p= pdo_fetch_object($po);
+    if ($p->pocet>0)
+      $ret= (object)['zaplaceno'=>$p->zaplaceno,'platby'=>$p->platby];
+  }
+  return $ret;
+}
 # --------------------------------------------------------------------------------- dum spolu_adresa
 # vrátí osobní resp. rodinnou adresu
 function dum_spolu_adresa($ids) {
