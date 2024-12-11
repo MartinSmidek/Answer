@@ -18,6 +18,8 @@ func onfirstfocus() {
   it= mo.part(mn.th);
 //  it= mo.part('202405.2501'); // 4 dohody
   it.click(1);
+  alert("Menu <b>Objednávky</b> od roku 2025 již nebude. 
+         <br>Používejte prosím menu <b>Databáze/AKCE</b> a <b>Databáze/Účastníci</b>"); 
 } // vytvoření menu pobytů
 func onfocus() { var mn: object, it: ezer
   mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406,202407,202408,202409,202410,202411,202412');
