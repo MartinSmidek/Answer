@@ -109,10 +109,10 @@ menu m {type:'left', format:'f-'
   menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
     item {title:'[fa-file-text] přehled před závěrkou'
           par:{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
-                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
-    item {title:'[fa-retweet] recyklace pečounů (LK byl letos)', par:°{op:'zmeny',rok:0} }
-    item {title:'[fa-retweet] recyklace pečounů (LK byl loni)',  par:°{op:'zmeny',rok:1} }
+                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,činný ČR od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_cinny_cr_od,_prisp,_dary'}}
+    item {title:'[fa-retweet] recyklace pečounů (LK byl letos)', par:{op:'zmeny',rok:0} }
+    item {title:'[fa-retweet] recyklace pečounů (LK byl loni)',  par:{op:'zmeny',rok:1} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
@@ -127,8 +127,8 @@ menu m {type:'left', format:'f-'
   menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
     item {title:'[fa-file-text-o] letošní přehled po závěrce'
           par:{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
-                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,činný ČR od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_cinny_cr_od,_prisp,_dary'}}
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
@@ -162,41 +162,78 @@ menu m {type:'left', format:'f-'
     item ich {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop'},skill:'#cad'
               help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
   }
-  proc onclick (i) { menu_click (i,0,0) }
-  proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
-    menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
-    { // podmenu s browse
-      echo('--- menu_item virgin=',virgin.get);
-      lst.brow_mapa_clear;
-      i.par.lst;
+  func onclick (i:ezer) { menu_click (i,0,0) }
+  func menu_click(i:ezer,_ido,_idr) { var ret:object, cnd:text
+    menu_item= i; menu_par= i.par; menu_title= i.title;
+    if (i.par.lst) { // podmenu s browse
+      echo('--- menu_item virgin=',virgin);
+      lst.brow_mapa_clear();
       lst.prijmeni_jmeno.display(eq(i.par.lst,'o')); // řazení na žádost podle příjmení+jméno 
-      cnd.set(i.par.cnd);
+      cnd= i.par.cnd;
       panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
       page.oso.set_mode(0,'E');
-      [ eq(i.par.tit,'MAILIST'); page.mapa.onclick ];
-      [ i.par.tip; page.oso.chain.display(1);
-        ret.set(ask('evid2_elim_tips',i.par.tip));
+      if (i.par.tit=='MAILIST') page.mapa.onclick();
+      if (i.par.tip) { 
+        page.oso.chain.display(1);
+        ret= php.evid2_elim_tips(i.par.tip);
         lst.bo.tips.set_attrib('expr',ret.tip);
-        cnd.set(ret.ids);
-      ];
-      lst.tit.set(i.par.tit); lst._reload(i.par.lst,cnd,_ido,_idr)
-    | // podmenu pro členství - bez browse
-      not(i.par.lst);
-      panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
-      info.fill(replace_fa(menu_title.get),' '); info.msg.set('');
-      menu_title.set(replace_fa(menu_title.get,1));
-      ret.set(ask('evid2_ymca_sprava',my_org.get,i.par,menu_title.get));
-      { ret.err; alert(ret.err)
-      | info.fill('',ret.html);
+        cnd= ret.ids;
+      };
+      lst.tit= i.par.tit; lst._reload(i.par.lst,cnd,_ido,_idr);
+    }
+    else { // podmenu pro členství - bez browse
+      panel.display(1,'i'); panel.display(0,'e'); info.export= i.par.exp;
+      info.fill(replace_fa(menu_title),' '); info.msg= '';
+      menu_title= replace_fa(menu_title,1);
+      ret= php.evid2_ymca_sprava(my_org,i.par,menu_title);
+      if (ret.err) 
+        alert(ret.err)
+      else {
+        info.fill('',ret.html);
         // pokračování podmenu pro recyklaci pečounů
-        [ eq(i.par.op,'zmeny');
+        if (i.par.op=='zmeny') {
           confirm("Provést navržené změny?");
-          ret.set(ask('evid2_recyklace_pecounu',my_org.get,i.par,the_title.get,1));
+          ret= php.evid2_recyklace_pecounu(my_org,i.par,the_title,1);
           alert("Hotovo");
-        ]
+        }
       }
     }
   }
+//  proc onclick (i) { menu_click (i,0,0) }
+//  proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
+//    menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
+//    { // podmenu s browse
+//      echo('--- menu_item virgin=',virgin.get);
+//      lst.brow_mapa_clear;
+//      i.par.lst;
+//      lst.prijmeni_jmeno.display(eq(i.par.lst,'o')); // řazení na žádost podle příjmení+jméno 
+//      cnd.set(i.par.cnd);
+//      panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
+//      page.oso.set_mode(0,'E');
+//      [ eq(i.par.tit,'MAILIST'); page.mapa.onclick ];
+//      [ i.par.tip; page.oso.chain.display(1);
+//        ret.set(ask('evid2_elim_tips',i.par.tip));
+//        lst.bo.tips.set_attrib('expr',ret.tip);
+//        cnd.set(ret.ids);
+//      ];
+//      lst.tit.set(i.par.tit); lst._reload(i.par.lst,cnd,_ido,_idr)
+//    | // podmenu pro členství - bez browse
+//      not(i.par.lst);
+//      panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
+//      info.fill(replace_fa(menu_title.get),' '); info.msg.set('');
+//      menu_title.set(replace_fa(menu_title.get,1));
+//      ret.set(ask('evid2_ymca_sprava',my_org.get,i.par,menu_title.get));
+//      { ret.err; alert(ret.err)
+//      | info.fill('',ret.html);
+//        // pokračování podmenu pro recyklaci pečounů
+//        [ eq(i.par.op,'zmeny');
+//          confirm("Provést navržené změny?");
+//          ret.set(ask('evid2_recyklace_pecounu',my_org.get,i.par,the_title.get,1));
+//          alert("Hotovo");
+//        ]
+//      }
+//    }
+//  }
 }
 # proc reaccess() { #== > reaccess - změna
 #   menu_item.get;
@@ -1138,7 +1175,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   label idd   [264,18,50,] { format:'r' }
   func dary(_ido,_jmeno) {
     form.init(); ido= _ido; jmeno= _jmeno;
-    b.browse_load(`da.deleted='' AND ukon IN ('b','c','k','H','v') AND id_osoba=${_ido}`);
+    b.browse_load(`da.deleted='' AND ukon IN ('b','c','k','H','Y') AND id_osoba=${_ido}`);
   }
   proc refresh() { dary(id_o.get,jmeno.get) }
   # seznam darů
@@ -1172,7 +1209,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
         case '2': alert("účastníci nejsou evidováni jako členové YMCA"); break;
         case '3': ukon= 'k'; break;
         case '4': ukon= 'H'; break;
-        case '5': ukon= 'v'; break;
+        case '5': ukon= 'Y'; break;
       }
       ukon.change(1) 
     }
@@ -1191,7 +1228,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   func onchanged () {
     form_state('u|z','n|s') }
   func onload () { 
-    typ.key(ukon=='b' ? 0 : (ukon=='c' ? 1 : (ukon=='H' ? 4 : (ukon=='v' ? 5 : 3)))); 
+    typ.key(ukon=='b' ? 0 : (ukon=='c' ? 1 : (ukon=='H' ? 4 : (ukon=='Y' ? 5 : 3)))); 
     typ.plain() }
   label cmd [Lc,158,132,50] { css:'ae_parm' }
   # -------------------------- Nový
