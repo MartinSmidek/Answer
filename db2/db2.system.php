@@ -239,12 +239,13 @@ tvori:
   $msg= '';
   $qry=  "SELECT SUM(IF(role='a',1,0)) AS _otcu, GROUP_CONCAT(IF(role='a',id_tvori,'')) AS _otci,
             SUM(IF(role='b',1,0)) AS _matek, GROUP_CONCAT(IF(role='b',id_tvori,'')) AS _matky,
+            SUM(IF(role='d',1,0)) AS _deti,
             id_rodina, nazev
           FROM tvori
           LEFT JOIN rodina AS r USING (id_rodina)
           LEFT JOIN osoba AS o USING (id_osoba)
           WHERE r.deleted='' AND o.deleted=''
-          GROUP BY id_rodina HAVING _otcu>1 OR _matek>1
+          GROUP BY id_rodina HAVING _otcu>1 OR _matek>1 OR (_otcu=0 AND _matek=0)
           ORDER BY id_rodina ";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
@@ -256,6 +257,8 @@ tvori:
       $msg.= "<dd>{$x->_otcu} muži v roli 'a' v rodině $idr:{$x->nazev} ($otci)</dd>";
     if ( $x->_matek>1 )
       $msg.= "<dd>{$x->_matek} ženy v roli 'b' v rodině $idr:{$x->nazev} ($matky)</dd>";
+    if ( !$x->_matek && !$x->_otcu )
+      $msg.= "<dd>{$x->_deti} dětí v roli 'd' bez rodičů v rodině $idr:{$x->nazev} </dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nestandardní počet otců='a', matek='b' v rodině"
     .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
