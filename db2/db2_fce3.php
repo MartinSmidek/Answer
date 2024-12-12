@@ -5952,7 +5952,7 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   return tisk2_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------ akce2 sestava_pobyt
-# generování sestavy pro účastníky $akce se stejným pobytem
+# generování sestavy pro účastníky $akce se stejným pobytem - jen Dům 
 #   $fld = seznam položek s prefixem (platba se nikde nepoužívá)
 #   $cnd = podmínka
 function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($par,'akce2_sestava_pobyt');
@@ -5989,13 +5989,13 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
   $clmn= array();
   $expr= array();       // pro výrazy
   // data akce
-  $qry=  "SELECT
+  $qry=  "SELECT id_pobyt,
             r.nazev as nazev,p.pouze as pouze,p.poznamka,
             -- p.datplatby,p.zpusobplat,
             COUNT(o.id_osoba) AS _pocet,
             SUM(IF(t.role IN ('a','b'),1,0)) AS _pocetA,
-            GROUP_CONCAT(o.prijmeni ORDER BY t.role DESC) as _prijmeni,
-            GROUP_CONCAT(o.jmeno    ORDER BY t.role DESC) as _jmena,
+            GROUP_CONCAT(DISTINCT o.prijmeni ORDER BY t.role DESC) as _prijmeni,
+            GROUP_CONCAT(IF(o.jmeno='','?',o.jmeno)    ORDER BY t.role DESC) as _jmena,
             GROUP_CONCAT(o.email    ORDER BY t.role DESC SEPARATOR ';') as _emaily,
             GROUP_CONCAT(o.telefon  ORDER BY t.role DESC SEPARATOR ';') as _telefony,
             ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
@@ -6018,7 +6018,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
           -- LEFT JOIN rodina AS r USING(id_rodina)
           LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND $cnd AND p.funkce NOT IN (9,10,13,14,15)
@@ -6026,18 +6026,24 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
           ORDER BY $ord";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
-    $x->prijmeni= $x->pouze==0 ? $x->nazev : $x->_prijmeni;
+    $x->prijmeni= $x->nazev ?: $x->_prijmeni;
     $x->jmena=    $x->_jmena;
     $x->_pocet=   $x->_pocet;
     // podle číselníku
     $x->ubytovani= $c_ubytovani[$x->ubytovani];
     $x->prednasi= $c_prednasi[$x->prednasi];
 //    $x->zpusobplat= $c_platba[$x->zpusobplat];
+    // ceny DS
+    $cena= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$x->id_pobyt"]);
+    $abbr= $cena->abbr;
     // další
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
       switch ($f) {
+      case 'ubyt': case 'stra': case 'popl': case 'prog': 
+                        $clmn[$n][$f]= $abbr[$f]; break;
+      case 'celkem':    $clmn[$n][$f]= $cena->$f; break;
       case '_pocetD':   $clmn[$n][$f]= $x->_pocet - $x->_pocetA; break;
       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
       // fonty: ISOCTEUR, Tekton Pro

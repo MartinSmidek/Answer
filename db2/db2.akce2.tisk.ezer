@@ -434,6 +434,10 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'P',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
+    item {title:'Všichni, s cenami'
+                                        ,par:{typ:'P',exp:'Excel2',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:12,obec:25,počet:5,CELKEM:7,ubytování:5,stravování:5,poplatek:5,program:5'
+                                        ,fld:'prijmeni,jmena,obec,_pocet,celkem,ubyt,stra,popl,prog'}}
     item {title:'Všichni, pokoje, počty, ...'
                                         ,par:{typ:'P',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:30,pokoj:10,dospěli:7,děti:5,poznámka k akci:50,trvalá poznámka:50'
