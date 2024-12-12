@@ -1245,7 +1245,7 @@ function dum_osoba_vzorec($s,$rok) { // debug($s,"> dum osoba_vzorec(,$rok)");
 # dum_vzorec_cena: vzorec -> cena - pokud je v objednávce sleva, uplatní se  
 # kde vzorec = část (',' část)* 
 #     část = položka ':' počet v plné sazbě [ ':' počet v dotované sazbě [ ':' počet zdarma ]]
-function dum_vzorec_cena($vzorec,$rok_ceniku,$idd) { trace();
+function dum_vzorec_cena($vzorec,$rok_ceniku,$idd) { //trace();
   $ds2_cena= dum_cenik($rok_ceniku);
   if (!$idd) {
     display("idd=$idd");
