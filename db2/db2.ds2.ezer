@@ -7,7 +7,8 @@
 
 func curr() { var dum_curr:object
 //    dum_curr= dum2 ? dum2.curr() : {};
-    dum_curr= dum2.curr(); // {dum:{order:the_order}}
+//    dum_curr= dum2.curr(); // {dum:{order:the_order}}
+    dum_curr= {};
     dum_curr.dum.faktura= fakt.curr();
     return dum_curr;
 }
@@ -17,11 +18,29 @@ func curr() { var dum_curr:object
   | f.insert; f.load;
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
+# -------------------------------------------------------------------------------------==> formuláře
+form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto' 
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,] { title:'' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    msg= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(y) {
+    if (y) note= conc(note,y)
+  }
+}
 
-# ======================================================================================> OBJEDNÁVKY
-panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
-  func curr() { return {dum:{order:0}}; }
-} 
+# =========================================================================> OBJEDNÁVKY do roku 2024
+//panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
+//  func curr() { return {dum:{order:0}}; }
+//} 
 # ===========================================================================================> KNIHY
 panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 //  func onfocus() { m.roky.i.click(); }
@@ -410,24 +429,6 @@ panel nov {type:'right', title:'([fa-question] ... aktualizace)'
   }
 }
 // <editor-fold defaultstate="collapsed" desc="# ==================================================================== form _right +++ tables, maps ">
-# -------------------------------------------------------------------------------------==> formuláře
-form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto' 
-  label head [0,0,*,50]  { title:'' }
-  label msg  [0,35,*,20] { title:'' }
-  label note [0,55,*,] { title:'' }
-  func header(i:ezer) { var i_owner:ezer
-    clear(); i_owner= i.owner();
-    msg= ''; note= '';
-    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
-  }
-  func fill(x,y) {
-    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
-    if (y) note= y
-  }
-  func append(y) {
-    if (y) note= conc(note,y)
-  }
-}
 # ---------------------------------------------------------------------------------------==> tabulky
 table platba {
   number id_platba
@@ -697,20 +698,6 @@ table pobyt { key_id:'id_pobyt'
   number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
   text   duvod_text	// vlastní text zdůvodňující cenu
 }
-//table pobyt_wp { db:'ezer_db2', key_id:'id_pobyt_wp'
-//  number id_pobyt_wp
-//  number entry_id
-//  number id_akce
-//  number id_pobyt
-//  number stav
-//  text   zmeny
-//}
-//table wp_3_wpforms_entry_fields { db:'wordpress', key_id:'id'
-//  number id
-//  number entry_id
-//  number field_id
-//  text   value
-//}
 table spolu { key_id:'id_spolu'
   number id_spolu
   number id_pobyt
