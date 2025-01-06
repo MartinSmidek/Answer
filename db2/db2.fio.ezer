@@ -257,9 +257,7 @@ form _ucty [,,640,*] {
     func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
     func onclick_(c:object) { var t:object, txt:text
       clear();
-//      echo(debug(c));
       t= php.ds2_show_curr(c);
-//      echo(debug(t));
       txt= t.ucast ? t.ucast : '... nastav pobyt na kartě a stiskni ?';
       x_akce= `<b>ÚČASTNÍCI</b> ${txt}`;
       xx_akce= t.ucast_text;

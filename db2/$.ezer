@@ -7,8 +7,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     the_curr= akce2.curr();
     if (ds2) {
       x= ds2.curr();
-//      echo(debug(x,'x'));
-      the_curr.dum= x.dum;
+      the_curr.dum.faktura= x.dum.faktura;
     }
     return the_curr;
   } 

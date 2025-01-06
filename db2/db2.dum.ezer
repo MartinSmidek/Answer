@@ -175,6 +175,7 @@ form _vyuctovani [,,623,400] {
     show ds_pristylka [,,20,] { title:'přistýlka', format:'c' }
     show ds_postylka [,,20,] { title:'postýlka', format:'c' }
     show ds_zvire [,,20,] { title:'zvíře', format:'c' }
+    show ds_sleva 
     show cena [,,50,] { title:'cena = ', format:'r' }
     show ubyt [,,40,] { title:'ubyt.', format:'r' }
     show str  [,,40,] { title:'str.', format:'r' }
@@ -204,6 +205,17 @@ form _vyuctovani [,,623,400] {
   field stra   [550, 310, 50,] {tag:'h', title:'^stravování' format:'dr' }
   field popl   [610, 310, 50,] {tag:'h', title:'^poplatek' format:'dr' }
   field prog   [670, 310, 50,] {tag:'h', title:'^program' format:'dr' }
+  field ds_sleva  [730, 310, 50,] {tag:'h', title:'^± sleva %' format:'r', 
+      help:'sleva jako kladné číslo, přirážka jako záporné'
+    func onchanged() { 
+      if (hos.zamek_spolu) { 
+        alert('nelze měnit zamknutou cenu'); 
+      }
+      else {
+        php.query_track(`UPDATE pobyt SET sleva="${ds_sleva}" WHERE id_pobyt=${id_pobyt}`);
+        refresh(0,hos.ids); // mode=pob
+    } }
+  }
   
   // rodinná faktura
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
@@ -358,7 +370,7 @@ form _obj {
   edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
 
   select board [4,175,117,] {tag:'obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
-  field sleva [200,175,30,] {tag:'obj', title:'-  % sleva', format:'r' }
+//  field sleva [200,175,30,] {tag:'obj', title:'-  % sleva', format:'r' }
   button [320,175,,] { tag:'obj', title:'[fa-save] Uložit změny' 
     func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
@@ -693,7 +705,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number ic
   text   dic
   number ucast        // 1 => účastní se pobytu
-  number sleva        { help:'%|případná sleva v procentech' }
+  number sleva        { help:'%|případná sleva v procentech (za celou objednávku)' }
   number skoleni      // 1 => školení, neplatí se rekreační poplatek
 //  text   ds_vzorec
 }

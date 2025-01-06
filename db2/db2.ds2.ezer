@@ -7,7 +7,8 @@
 
 func curr() { var dum_curr:object
 //    dum_curr= dum2 ? dum2.curr() : {};
-    dum_curr= dum2.curr(); // {dum:{order:the_order}}
+//    dum_curr= dum2.curr(); // {dum:{order:the_order}}
+    dum_curr= {};
     dum_curr.dum.faktura= fakt.curr();
     return dum_curr;
 }
@@ -17,11 +18,29 @@ func curr() { var dum_curr:object
   | f.insert; f.load;
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
+# -------------------------------------------------------------------------------------==> formuláře
+form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto' 
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,] { title:'' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    msg= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(y) {
+    if (y) note= conc(note,y)
+  }
+}
 
-# ======================================================================================> OBJEDNÁVKY
-panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
-  func curr() { return {dum:{order:0}}; }
-} 
+# =========================================================================> OBJEDNÁVKY do roku 2024
+//panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
+//  func curr() { return {dum:{order:0}}; }
+//} 
 # ===========================================================================================> KNIHY
 panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 //  func onfocus() { m.roky.i.click(); }
@@ -41,7 +60,35 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
     info.append(y.html);
   }
   menu m {type:'left', format:'f', active:*
-    menu roky {title:'Kniha hostů 2024',type:'group'
+    menu roky {title:'Kniha hostů 2025',type:'group'
+      item {title:'[fa-calendar] leden',        par:{rok:'2025',mes:1} }
+      item {title:'... podrobně', par:{rok:'2025',mes:1,spolu:1} }
+      item {title:'[fa-calendar] únor',         par:{rok:'2025',mes:2} }
+      item {title:'... podrobně', par:{rok:'2025',mes:2,spolu:1} }
+      item {title:'[fa-calendar] březen',       par:{rok:'2025',mes:3} }
+      item {title:'... podrobně', par:{rok:'2025',mes:3,spolu:1} }
+      item {title:'[fa-calendar] duben',        par:{rok:'2025',mes:4} }
+      item {title:'... podrobně', par:{rok:'2025',mes:4,spolu:1} }
+      item {title:'[fa-calendar] květen',       par:{rok:'2025',mes:5} }
+      item {title:'... podrobně', par:{rok:'2025',mes:5,spolu:1} }
+      item {title:'[fa-calendar] červen',       par:{rok:'2025',mes:6} }
+      item {title:'... podrobně', par:{rok:'2025',mes:6,spolu:1} }
+      item {title:'[fa-calendar] červenec',     par:{rok:'2025',mes:7} }
+      item {title:'... podrobně', par:{rok:'2025',mes:7,spolu:1} }
+      item {title:'[fa-calendar] srpen',        par:{rok:'2025',mes:8} }
+      item {title:'... podrobně', par:{rok:'2025',mes:8,spolu:1} }
+      item {title:'[fa-calendar] září',         par:{rok:'2025',mes:9} }
+      item {title:'... podrobně', par:{rok:'2025',mes:9,spolu:1} }
+      item {title:'[fa-calendar] říjen',        par:{rok:'2025',mes:10} }
+      item {title:'... podrobně', par:{rok:'2025',mes:10,spolu:1} }
+      item {title:'[fa-calendar] listopad',     par:{rok:'2025',mes:11} }
+      item {title:'... podrobně', par:{rok:'2025',mes:11,spolu:1} }
+      item {title:'[fa-calendar] prosinec',     par:{rok:'2025',mes:12} }
+      item {title:'... podrobně', par:{rok:'2025',mes:12,spolu:1} }
+      item {title:'Celý rok -------------', par:{rok:'2025',mes:0} }
+      item {title:'... podrobně',           par:{rok:'2025',mes:0,spolu:1} }
+    }
+    menu {title:'Kniha hostů 2024',type:'group'
       item {title:'[fa-calendar] leden',        par:{rok:'2024',mes:1} }
       item {title:'... podrobně', par:{rok:'2024',mes:1,spolu:1} }
       item {title:'[fa-calendar] únor',         par:{rok:'2024',mes:2} }
@@ -69,17 +116,17 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
       item {title:'Celý rok -------------', par:{rok:'2024',mes:0} }
       item {title:'... podrobně',           par:{rok:'2024',mes:0,spolu:1} }
     }
-    menu {title:'... testy ...',type:'group',skill:'m'
-      item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
-      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2442,spolu:1} }
-      item {title:'... a do Excelu',  par:{rok:'2024',mes:2,obj:2442,spolu:1,export:1} }
-      item {title:'únor - obj.2404',  par:{rok:'2024',mes:2,obj:2404} }
-      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
-      item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
-      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
-      item {title:'květen - obj.2502',par:{rok:'2024',mes:5,obj:2502} }
-      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2502,spolu:1} }
-    }
+//    menu {title:'... testy ...',type:'group',skill:'m'
+//      item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
+//      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2442,spolu:1} }
+//      item {title:'... a do Excelu',  par:{rok:'2024',mes:2,obj:2442,spolu:1,export:1} }
+//      item {title:'únor - obj.2404',  par:{rok:'2024',mes:2,obj:2404} }
+//      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
+//      item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
+//      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
+//      item {title:'květen - obj.2502',par:{rok:'2024',mes:5,obj:2502} }
+//      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2502,spolu:1} }
+//    }
     func onclick (i:ezer) { 
       last_item= i;
       kniha_show(i,0);
@@ -410,24 +457,6 @@ panel nov {type:'right', title:'([fa-question] ... aktualizace)'
   }
 }
 // <editor-fold defaultstate="collapsed" desc="# ==================================================================== form _right +++ tables, maps ">
-# -------------------------------------------------------------------------------------==> formuláře
-form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto' 
-  label head [0,0,*,50]  { title:'' }
-  label msg  [0,35,*,20] { title:'' }
-  label note [0,55,*,] { title:'' }
-  func header(i:ezer) { var i_owner:ezer
-    clear(); i_owner= i.owner();
-    msg= ''; note= '';
-    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
-  }
-  func fill(x,y) {
-    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
-    if (y) note= y
-  }
-  func append(y) {
-    if (y) note= conc(note,y)
-  }
-}
 # ---------------------------------------------------------------------------------------==> tabulky
 table platba {
   number id_platba
@@ -697,20 +726,6 @@ table pobyt { key_id:'id_pobyt'
   number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
   text   duvod_text	// vlastní text zdůvodňující cenu
 }
-//table pobyt_wp { db:'ezer_db2', key_id:'id_pobyt_wp'
-//  number id_pobyt_wp
-//  number entry_id
-//  number id_akce
-//  number id_pobyt
-//  number stav
-//  text   zmeny
-//}
-//table wp_3_wpforms_entry_fields { db:'wordpress', key_id:'id'
-//  number id
-//  number entry_id
-//  number field_id
-//  text   value
-//}
 table spolu { key_id:'id_spolu'
   number id_spolu
   number id_pobyt

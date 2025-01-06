@@ -122,7 +122,6 @@ func curr() { var _curr:object
   _curr.evi= evi.curr();
   _curr.dum= {order:the_source=='dum' ? the_order : 0};
   return _curr;
-//  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
 } 
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
 func akce_choose(id_akce) { var a:object, ok:number
