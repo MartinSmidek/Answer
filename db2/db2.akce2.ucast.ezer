@@ -101,6 +101,12 @@ func ucast_pobyt_akce(_idp,_ida)  {
   if (_ida!=the_duakce_local) akce_load(_ida);
   ucast_pobyt(_idp);
 }
+# ukázání přihlášky s případným přepnutím akce
+func ucast_prihlaska(_idw,_ida,_idp)  {
+  if (_ida!=the_duakce_local) akce_load(_ida);
+  if (_idp) ucast_pobyt(_idp);
+  Prihlaska.Show(_idw);
+}
 func ucast_pobyt_akce_platba(_idp,_ida)  {
 //  if (_ida!=the_duakce_local) 
     akce_load(_ida);

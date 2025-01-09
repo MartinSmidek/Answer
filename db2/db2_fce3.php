@@ -7707,6 +7707,14 @@ function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='',$title='',$text='') {
   $text= $text ?: $idp;
   return "<b><a $style $title href='ezer://akce2.ucast.ucast_pobyt_akce/$idp/$ida'>$text</a></b>";
 }
+# ----------------------------------------------------------------------------- tisk2 ukaz_prihlasku
+# zobrazí odkaz na řádek s pobytem s případným přepnutím akce
+function tisk2_ukaz_prihlasku($idw,$ida,$idp,$barva='',$title='',$text='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  $title= $title ? "title='$title'" : '';
+  $text= $text ?: $idp;
+  return "<b><a $style $title href='ezer://akce2.ucast.ucast_prihlaska/$idw/$ida/$idp'>$text</a></b>";
+}
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození 
 # pokud je předáno $now(jako timestamp) bere se věk k tomu
@@ -15171,7 +15179,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     global $ezer_root;
     if ( $fname ) {
       foreach ( explode(',',$fname) as $fnamesb ) {
-        list($fname,$bytes)= explode(':',$fnamesb);
+        list($fname)= explode(':',$fnamesb);
         $fname= trim($fname);
         $has_dir= strrpos($fname,'/');
         $fpath= $has_dir ? $fname : "docs/$ezer_root/$fname";
@@ -15188,10 +15196,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $d= pdo_fetch_object($res);
   // napojení na mailer
   $html= '';
-//   $klub= "klub@proglas.cz";
   $martin= "martin@smidek.eu";
-//   $jarda= "cerny.vavrovice@seznam.cz";
-//   $jarda= $martin;
   // poslání mailů
   $mail= mail2_new_PHPMailer();
   if ( !$mail ) { 

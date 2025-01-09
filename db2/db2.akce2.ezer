@@ -769,6 +769,18 @@ map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'porad
 map map_stat:         table _cis {where:"druh='stat'",              order:'poradi', key_id:'data'}
 map map_smtp_srv:     table _cis {where:"druh='smtp_srv'",          order:'poradi', key_id:'data'}
 
+# =======================================================================================> Přihláška
+# přihláška na akci
+panel Prihlaska [,,400,500] { title:'Data přihlášky', type:'popup', css:'dialog'
+  var virgin=1
+  func Show(idw) {
+    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup(0,0,0,1);
+    frm.txt= php.sys_db_rec_show('prihlaska','id_prihlaska',idw);
+  }
+  use frm: form [0,0,400,500] { 
+    label txt [0,0,400,500] { style:"overflow:auto" }
+  }
+}
 # ==========================================================================================> PROCES
 panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu' 
   var parent:object,  // vstup - parent je panel, ve kterém je obsažena procedura se 

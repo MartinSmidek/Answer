@@ -62,6 +62,9 @@ html body div.wrapper main {
   height: calc(100% - 120px - 50px);
   overflow: auto;
 }
+html body div.wrapper main .chng {
+  outline: 2px solid red;
+}
 html body div.wrapper main br {
   clear: both;
 }
