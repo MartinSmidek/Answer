@@ -316,7 +316,7 @@ function kontrola($all) {
 function ulozit_stav($elems) { 
 # uloží stav přihlášky do tabulky prihlaska
   read_elems($elems);
-  log_write_vars(); // na žádost 
+  log_write_changes(); // na žádost 
 //  prihlaska();
 } // uložit stav
 // -------------------------------------------------------------------------------------- přihlas se
@@ -1666,6 +1666,44 @@ function log_write_vars() { // -------------------------------------------------
   elseif ($TRACE)
       display("LOG_WRITE_VARS fail - no sesssion");
 } // zapíše $vars před zobrazením formuláře 
+function log_write_changes() { // ------------------------------------------------ log write_changes
+  global $AKCE, $vars, $changes, $TRACE;
+  if (($idw= ($_SESSION[$AKCE]->id_prihlaska??0))) {
+    $changes= (object)[];
+    foreach ((array)$vars as $name=>$val0) {
+      if (in_array($name,['cleni','rodina'])) {
+        if (!is_array($val0)) continue;
+        foreach ($val0 as $id=>$val1) {
+          if (!is_object($val1)) continue;
+          foreach ($val1 as $fld=>$val2) {
+            if (is_array($val2) && count($val2)==2) {
+              if (!isset($changes->$name)) $changes->$name= [];
+              if (!isset($changes->$name[$id])) $changes->$name[$id]= (object)[];
+              ($changes->$name[$id])->$fld= $val2[1];
+            }
+          }
+        }
+      }
+      if (in_array($name,['pobyt'])) {
+        if (!is_object($val0)) continue;
+        $id= $val0->id_pobyt;
+        foreach ($val0 as $fld=>$val2) {
+          if (is_array($val2) && count($val2)==2) {
+            if (!isset($changes->$name)) $changes->$name= (object)[];
+            if (!isset($changes->$name->$id)) $changes->$name->$id= (object)[];
+            ($changes->$name->$id)->$fld= $val2[1];
+          }
+        }
+      }
+    }
+    $val= json_encode_2($changes);
+    $res= pdo_query_2("UPDATE prihlaska SET save=NOW(),vars_json='$val' WHERE id_prihlaska=$idw",1);
+    if ($res===false && $TRACE)
+      display("LOG_WRITE_VARS fail");
+  }
+  elseif ($TRACE)
+      display("LOG_WRITE_VARS fail - no sesssion");
+} // zapíše změněné $vars před zobrazením formuláře 
 function log_find_saved($email) { // ------------------------------------------------ log find_saved
   global $akce, $vars;
   // zkusíme najít poslední verzi přihlášky - je ve fázi (c)
