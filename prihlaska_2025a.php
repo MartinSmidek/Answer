@@ -7,6 +7,7 @@
 
  */
 $MYSELF= 'prihlaska_2025a';
+$VERZE= '2025.1'; // verze přihlášek: rok.release
 
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 error_reporting(E_ALL);
@@ -94,6 +95,8 @@ $AKCE= "A_{$_SESSION['akce']}";
 $vars= $_SESSION[$AKCE]??(object)[];
 $TEST= $vars->TEST;
 $MAIL= $vars->MAIL;
+
+$MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
 
 connect_db();           // napojení na databázi a na Ezer 
 read_akce();            // načtení údajů o akci z Answeru 
@@ -252,16 +255,19 @@ function kontrola_pinu($email,$pin) {
         "o.deleted='' AND (role IN ('a','b') OR ISNULL(role))"
         . "AND (kontakt=1 AND email $regexp OR kontakt=0 AND emaily $regexp)");
     display("$pocet,$ido,$idr,$jmena,$rodiny,$kontakty");
-//    // zjistíme, zda to může být rozpracovaná přihláška
-//    $open= log_find_saved($email); // uložená přihláška a nejsou přihlášení
-//    if ($open) { // -------- nalezena rozepsaná přihláška
-//      $DOM->user= "<i class='fa fa-user'></i> $jmena<br>$email";
-//      $vars->ido= $ido;
-//      $vars->idr= $idr;
-//      dotaz("Chcete pokračovat ve vyplňování přihlášky uložené $open?",'rozepsana','prihlaska');
-//    } // nalezena rozepsaná přihláška
-    if ($pocet==1) { // -------------------------------- známý a jednoznačný mail
-      $DOM->user= "<i class='fa fa-user'></i> $jmena<br>$email";
+    
+    // zjistíme, zda to může být rozpracovaná přihláška
+    $open= log_find_saved($email); // uložená přihláška a nejsou přihlášení
+    if ($open) { // -------- nalezena rozepsaná přihláška
+      $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$email"];
+      $vars->klient= $jmena;
+      $vars->ido= $ido;
+      $vars->idr= $idr;
+      dotaz("Chcete pokračovat ve vyplňování přihlášky uložené $open?",'rozepsana','prihlaska');
+    } // nalezena rozepsaná přihláška
+    
+    elseif ($pocet==1) { // -------------------------------- známý a jednoznačný mail
+      $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$email"];
       $vars->klient= $jmena;
       $vars->ido= $ido;
       $vars->idr= $idr;
@@ -306,6 +312,11 @@ function kontrola_pinu($email,$pin) {
     } // nejednoznačný mail      
   }
 } // overit pin
+// --------------------------------------------------------------------------------------- rozepsaná
+function rozepsana() { 
+# načte údaje a jejich změny
+  prihlaska(true);
+} // rozepsaná
 // ---------------------------------------------------------------------------------------- kontrola
 function kontrola($all) { 
 # zkontroluje formát dat
@@ -320,7 +331,7 @@ function ulozit_stav($elems) {
 //  prihlaska();
 } // uložit stav
 // -------------------------------------------------------------------------------------- přihlas se
-function prihlaska() { 
+function prihlaska($rozepsana=false) { 
 # připrav prázdný formulář přihlášení osob
 # doplň DOM o položky osob
   global $DOM, $vars, $akce;
@@ -335,13 +346,18 @@ function prihlaska() {
       'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
       'exit'=>0,      // 1 => první stisk 
   ];
+  // pokud navazuje na rozepsanou
+  if ($rozepsana) {
+//    $vars->pobyt->pracovni[1]= 'byla zmena';
+    log_load_changes();
+  }
   $form= form();
-  // zzměny zobrazení
+  // změny zobrazení
   $DOM->usermail= 'hide';
   $DOM->form= ['show',$form];
 } // prihlaska
 // --------------------------------------------------------------------------------------- přihlásit
-function prihlasit($elems) { 
+function prihlasit($elems=[]) { 
 # zapíše přihlášku do Answeru
   global $DOM, $vars, $akce, $errors;
   debug($elems,'prihlasit');
@@ -381,7 +397,7 @@ function prihlasit($elems) {
       if (count($errors)) goto db_end;
     }
     db_close_pobyt();
-    log_write_vars(); // po zápisu do pobytu
+    log_write_changes(); // po zápisu do pobytu
     // ------------------------------ uzavři formulář závěrečnou zprávou a mailem
     $ucastnici= ''; $del= ''; 
     $emails= [$vars->email]; 
@@ -416,6 +432,7 @@ function prihlasit($elems) {
         "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.
          <br>Těšíme se na setkání na akci
          <br>$akce->garant_jmeno"];
+    log_close();
 db_end:
     if (count($errors)) {
       log_append_stav('ko');
@@ -426,7 +443,7 @@ db_end:
            <br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"];
     }
   }
-} // uložit
+} // prihlasit
 // ------------------------------------------------------------------------------- zahodit rozepsané
 function zahodit() { 
 # zrušit rozepsanou přihlášku
@@ -1122,9 +1139,22 @@ function elem_input($table,$id,$flds) { // -------------------------------------
     $name= "{$table}_$prfx$fld";
     list($len,$title,$typ)= $desc[$fld];
     if ($typ=='x') continue;
-    // rozpoznání povinnosti položky
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
+    // rozpoznání hodnoty příp. změny položky
+    $v_chng= false;
+    if (is_array($pair->$fld)) {
+      if (isset($pair->$fld[1])) {
+        $v= $pair->$fld[1];
+        $v_chng= true;
+      }
+      else {
+        $v= $pair->$fld[0];
+      }
+    }
+    else {
+      $v= $pair->$fld;
+    }
     $todo= '';
+    // rozpoznání povinnosti položky
     if (substr($title,0,1)=='*') { //  && ($table!='o' || $pair->spolu)) {
       $title=  "<b style='color:red'>*</b>".substr($title,1);
       if ($vars->form->todo 
@@ -1166,7 +1196,8 @@ function elem_input($table,$id,$flds) { // -------------------------------------
       $v= $v?: 0;
     default:
       $x= $v ? "value='$v'" : ''; // "placeholder='$holder'";
-      $html.= "<label class='upper'>$title<input type='text' id='$name' size='$len' $x$todo $oninput></label>";
+      $c= $v_chng ? " class='chng' " : '';
+      $html.= "<label class='upper'>$title<input type='text' id='$name' size='$len' $x$c$todo $oninput></label>";
     }
   }
   return $html;
@@ -1616,14 +1647,14 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $AKCE, $akce;
+  global $AKCE, $VERZE, $akce;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
     $ida= $akce->id_akce;
     $abbr= $version= $platform= null;
     ezer_browser($abbr,$version,$platform);
-    $res= pdo_query_2("INSERT INTO prihlaska SET open=NOW(),IP='$ip',"
+    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE',open=NOW(),IP='$ip',"
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= $id= pdo_insert_id();
@@ -1655,17 +1686,6 @@ function log_append_stav($novy) { // -------------------------------------------
   elseif ($TRACE)
       display("LOG_APPEND_STAV fail for:$novy - no sesssion");
 }
-function log_write_vars() { // ------------------------------------------------------ log write_vars
-  global $AKCE, $vars, $TRACE;
-  if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
-    $val= json_encode_2($vars);
-    $res= pdo_query_2("UPDATE prihlaska SET vars_json='$val' WHERE id_prihlaska=$id",1);
-    if ($res===false && $TRACE)
-      display("LOG_WRITE_VARS fail");
-  }
-  elseif ($TRACE)
-      display("LOG_WRITE_VARS fail - no sesssion");
-} // zapíše $vars před zobrazením formuláře 
 function log_write_changes() { // ------------------------------------------------ log write_changes
   global $AKCE, $vars, $changes, $TRACE;
   if (($idw= ($_SESSION[$AKCE]->id_prihlaska??0))) {
@@ -1722,28 +1742,26 @@ function log_find_saved($email) { // -------------------------------------------
 end:
   return $found;
 } // načtení data uloženého stavu 
-function log_load_vars($email) { // -------------------------------------------------- log read_vars
-  global $akce, $o_fld, $vars;
-  // najdeme poslední verzi přihlášky - je ve fázi (c)
-  list($idx,$vars_json)= select_2('id_prihlaska,vars_json','prihlaska',
-      "id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
-    . "ORDER BY id_prihlaska DESC LIMIT 1");
-  if (!$idx) goto end;
-  $id_new= $vars->id_prihlaska;
-  $vars= json_decode($vars_json,false); // JSON objects will be returned as objects
-  $vars->cleni= (array)$vars->cleni;
-  $vars->rodina= (array)$vars->rodina;
-  $vars->history= 'x';
-  $vars->id_prihlaska=$id_new;
-  foreach ($vars->cleni as $clen) {
-    foreach ($o_fld as $f=>list(,,$typ,)) {
-      if (isset($clen->$f) && $typ=='sub_select' && is_object($clen->$f)) {
-        $clen->$f= (array)$clen->$f;
+function log_load_changes() { // -------------------------------------------------- log load_changes
+  global $vars;
+  // najdeme změněná data 
+  $idw= $vars->continue;
+  $vars_json= select_2('vars_json','prihlaska',"id_prihlaska=$idw");
+  if (!$vars_json) goto end;
+  $chngs= json_decode($vars_json,false); // JSON objects will be returned as objects
+  foreach ($chngs as $name=>$val0) {
+    foreach ($val0 as $id=>$val1) {
+      foreach ($val1 as $fld=>$val2) {
+        if ($name=='pobyt') {
+          $vars->$name->$fld[1]= $val2;
+        }
+        else {
+          $vars->$name[$id]->$fld[1]= $val2;
+        }
       }
     }
   }
-  log_append_stav("reload_$idx");
-//  die('end');
+  log_append_stav("reload_$idw");
 end:
 } // načtení uloženého stavu $vars
 function log_error($msg) { // ---------------------------------------------------- log error

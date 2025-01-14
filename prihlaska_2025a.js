@@ -22,7 +22,7 @@ function elem_changed(elem) {
         x.args[0][id]= jQuery(elem).val();
     }
   }
-  ask(x);
+  ask(x,after_php);
 }
 
 // ===========================================================================================> AJAX
