@@ -12,7 +12,8 @@ var the_duakce_local= 0,    // zobrazená akce - pokud se liší od the_duakce, 
     the_pobyt: number,
     zalozka: text,          // evid | plat | akce
     back: object,
-    zmeny: object           // objekt naplněný požadavkem zobrazení nedávných změn - obecně podle času
+    zmeny: object,          // objekt naplněný požadavkem zobrazení nedávných změn - obecně podle času
+    vsechny_zmeny= 0        // 0=jen online nepřijaté změny, 1=všechny v zadané minulosti
 //    web_zmeny: number       // 1 = sledovat změny vložené online přihláškou na tuto akci
 
 # -------------------------------------------------------------------------==> . inicializace panelu
@@ -917,22 +918,18 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         break;
       }
       // označ nedávno změněné hodnoty, chce-li se to
-      if (prijata==0) {
-        if (prijata==0) {
+      if (vsechny_zmeny || prijata==0) {
+        if (!vsechny_zmeny && prijata==0) {
           zmeny= php.akce2_zmeny(the_duakce,72);
         }
         js.set_css_changed(array(
             array(rod.get,'rodina',rod.key_rodina),
             array(pob.get,'pobyt',u.b.key_pobyt),
-//            array(os1.get,'osoba',os1.key_osoba),
-//            array(sp1.get,'spolu',sp1.key_spolu),
-//            array(os2.get,'osoba',os2.key_osoba),
-//            array(sp2.get,'spolu',sp2.key_spolu)
           ),
-          'zmeneny',
+          vsechny_zmeny ? 'zmeneny2' : 'zmeneny',
           zmeny.chngs);
       }
-      else {
+      elseif (!vsechny_zmeny) {
         js.set_css_changed(0,'zmeneny');
       }
     }
@@ -1400,19 +1397,19 @@ form _evidence [,,623,] { style:'height:fit-content'
 //    item { title:'-barvit údaje změněné online'
 //      func onclick () { web_zmeny= 1; 
 //    } }
-//    item { title:'ukončit barvení změn' 
-//      func onclick () { 
-//        web_zmeny= 0;
-//        js.set_css_changed(0,'zmeneny');
-////        js.web_changes(0,'zmeneny',''); 
-//    } }
-//    item { title:'-obarvit nové údaje'
-//      func onclick () { var ret:object
-//        hodin_zmeny= prompt2("zadej stáří obarvených změn v hodinách",72);
-//        ret= php.akce2_zmeny(the_duakce,hodin_zmeny);
-//        if (ret.errs) warning(ret.errs);
-//        zmeny= ret;
-//    } }
+    item { title:'-barvit všechny změněné údaje'
+      func onclick () { var ret:object
+        hodin_zmeny= prompt2("zadej stáří obarvených změn v hodinách",72);
+        zmeny= php.akce2_zmeny(the_duakce,hodin_zmeny);
+        vsechny_zmeny= 1;
+        u.b.browse_refresh(u.b.key_pobyt);
+    } }
+    item { title:'barvit jen nepřijaté web-změny' 
+      func onclick () { 
+        js.set_css_changed(0,'zmeneny2');
+        vsechny_zmeny= 0;
+        u.b.browse_refresh(u.b.key_pobyt);
+    } }
 //    item { title:'=m: opravit i0_rodina,pouze', skill:'m'
 //      proc onclick () {
 //        alert(ask('data2_transform_2014',
@@ -2165,28 +2162,14 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
       // označ nedávno změněné hodnoty, chce-li se to
       if (zmeny) {
         js.set_css_changed(array(
-//            array(rod.get,'rodina',rod.key_rodina),
-//            array(pob.get,'pobyt',u.b.key_pobyt),
             array(os1.get,'osoba',os1.key_osoba),
             array(sp1.get,'spolu',sp1.key_spolu),
             array(os2.get,'osoba',os2.key_osoba),
             array(sp2.get,'spolu',sp2.key_spolu)
           ),
-          'zmeneny',
+          vsechny_zmeny ? 'zmeneny2' : 'zmeneny',
           zmeny.chngs);
       }
-//      if (web_zmeny) {
-//        js.web_changes(array(
-//            array(rod.get,'rodina',rod.key_rodina),
-//            array(os1.get,'osoba',os1.key_osoba),
-//            array(sp1.get,'spolu',sp1.key_spolu),
-//            array(os2.get,'osoba',os2.key_osoba),
-//            array(sp2.get,'spolu',sp2.key_spolu),
-//            array(pob.get,'pobyt',u.b.key_pobyt)
-//          ),
-//          'zmeneny',
-//          php.akce2_zmeny_web(the_pobyt));
-//      }
     }
     # ------------------------==> . kontextové_menu
     menu detail { type:'context'

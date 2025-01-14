@@ -167,7 +167,11 @@ li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
               background-repeat:repeat-y,repeat-y;}
 
 /* barvení časových změn ve formulářích */
+.zmeneny2, .zmeneny2 input, .zmeneny2 textarea {
+  background-color:#ffd700 !important; }
 .zmeneny, .zmeneny input, .zmeneny textarea {
+  background-color:#ffaa00; }
+td.zmeneny {
   background-color:#ffaa00 !important; }
 span.zmeneny {
   position:absolute; color:black; z-index:2; font-size:8px; height:11px; padding:0 1px;
