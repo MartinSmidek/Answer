@@ -881,48 +881,51 @@ Ezer.fce.roku= function (dat,rok) {
 //  }
 //  return roku;
 //};
- */
+ 
 // --------------------------------------------------------------------------------- set css_changed
-function web_changes(cases,css,flds) {
-//   cases= [[form,table_id,key],...]    form se může opakovat pro různé table_id+key
-//   chngs= [[table_id,key,field],...]
-//   flds= {table -> { key -> [fld, ...]}}
-
-  // nejprve zrušíme předchozí obarvení
-  for (let elem of jQuery('.'+css)) {
-    jQuery(elem).removeClass(css);
-  }
-  // pokud byla změna, označ ji
-  if ( flds ) {
-    for (let ci= 0; ci<cases.length; ci++) {
-      let form= cases[ci][0].type=='var' ? cases[ci][0].value : cases[ci][0],
-          f_table= cases[ci][1],
-          f_key= cases[ci][2];
-      for (let table in flds) { // projdeme tabulky
-        if (table!=f_table) continue;
-        for (let key in flds[table]) {
-          if (key!=f_key) continue;
-          for (let fld of flds[table][key]) {
-            // projdeme elementy formuláře
-            for (let pi in form.part) {
-              let p= form.part[pi];
-              // a pro elementy
-              if ( p instanceof Elem && p.DOM_Block && p.data ) {
-                // pokud data=table.field a klíč
-                if ( p.data.id==fld && p.table && p.table.id==table ) {
-                  // přidáme css
-                  p.DOM_Block.addClass(css);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+//function web_changes(cases,css,flds) {
+////   cases= [[form,table_id,key],...]    form se může opakovat pro různé table_id+key
+////   chngs= [[table_id,key,field],...]
+////   flds= {table -> { key -> [fld, ...]}}
+//
+//  // nejprve zrušíme předchozí obarvení
+//  for (let elem of jQuery('.'+css)) {
+//    jQuery(elem).removeClass(css);
+//  }
+//  // pokud byla změna, označ ji
+//  if ( flds ) {
+//    for (let ci= 0; ci<cases.length; ci++) {
+//      let form= cases[ci][0].type=='var' ? cases[ci][0].value : cases[ci][0],
+//          f_table= cases[ci][1],
+//          f_key= cases[ci][2];
+//      for (let table in flds) { // projdeme tabulky
+//        if (table!=f_table) continue;
+//        for (let key in flds[table]) {
+//          if (key!=f_key) continue;
+//          for (let fld of flds[table][key]) {
+//            // projdeme elementy formuláře
+//            for (let pi in form.part) {
+//              let p= form.part[pi];
+//              // a pro elementy
+//              if ( p instanceof Elem && p.DOM_Block && p.data ) {
+//                // pokud data=table.field a klíč
+//                if ( p.data.id==fld && p.table && p.table.id==table ) {
+//                  // přidáme css
+//                  p.DOM_Block.addClass(css);
+//                }
+//              }
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//}
+*/
 // --------------------------------------------------------------------------------- set css_changed
 //ff: ys.set_css_changed (cases,css[,chngs])
+// pokud je cases=null
+//   odstraní všechna css
 // pokud je definováno chngs
 //   odstraní css v daných formulářích a poté je obnoví u změněných dat podle pole
 //   cases= [[form,table_id,key],...]    form se může opakovat pro různé table_id+key
@@ -930,16 +933,37 @@ function web_changes(cases,css,flds) {
 // pokud není definováno chngs
 //   cases= [form,...]  seznam formulářů, ve kterých má být odstraněné css
 //s: ys
-Ezer.obj.set_css_changed= null;
+//Ezer.obj.set_css_changed= null;
+Ezer.obj.set_css_changed_title= null; // 
 var set_css_changed= 
 Ezer.fce.set_css_changed= function (cases,css,chngs) {
   // vymazání starých poznámek
-  if ( Ezer.obj.set_css_changed ) {
-     Ezer.obj.set_css_changed.forEach(function(note){note.remove();});
-//    Ezer.obj.set_css_changed.empty();
-    Ezer.obj.set_css_changed= null;
+  if (!cases) {
+    // zrušíme obarvení
+    jQuery('.'+css).not('td').removeClass(css);
+    Ezer.obj.set_css_changed_title= null;
+    return;
   }
-  Ezer.obj.set_css_changed= [];
+//  if ( Ezer.obj.set_css_changed ) {
+//     Ezer.obj.set_css_changed.forEach(function(note){note.remove();});
+//    Ezer.obj.set_css_changed= null;
+//  }
+//  Ezer.obj.set_css_changed= [];
+  // vymazání starých title
+  let ts= [], ti= 0;
+  for (let ci= 0; ci<cases.length; ci++) {
+    if (!ts.includes(cases[ci][1]))
+      ts[ti++]= cases[ci][1];
+  }
+  if (!Ezer.obj.set_css_changed_title) 
+    Ezer.obj.set_css_changed_title= [];
+  for (let ti= 0; ti<ts.length; ti++) {
+    let t= ts[ti];
+    if ( Ezer.obj.set_css_changed_title?.[ti] ) {
+      Ezer.obj.set_css_changed_title[ti].forEach(function(block){block.attr('title','');});
+      Ezer.obj.set_css_changed_title[ti]= null;
+    }
+  }
   // vymazání css z pole formulářů
   var forms;
   if ( chngs ) {
@@ -953,7 +977,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
   }
   // zrušení css ve formuláři
   for (let fi= 0; fi<forms.length; fi++) {
-    let form= forms[fi].type=='var' ? forms[fi].value : forms[0];
+    let form= forms[fi].type=='var' ? forms[fi].value : forms[fi];
     for (let pi in form.part) {
       let p= form.part[pi];
       if ( p.data ) {
@@ -971,7 +995,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
           key= cases[ci][2];
       // aplikace css podle změn
       for (let di= 0; di<chngs.length; di++) {
-        var t= chngs[di][0],    // tabulka změněné vět
+        var t= chngs[di][0],    // tabulka změněné věty
             k= chngs[di][1];    // s klíčem
         // pokud je klíč shodný s aktivním
         if ( key==k ) {
@@ -987,11 +1011,17 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
               if ( p.data.id==f && p.table && p.table.id==table ) {
                 // přidáme css
                 p.DOM_Block.addClass(css);
-                Ezer.obj.set_css_changed.push(
-                  jQuery(`<span class="${css}" title="${d}">${w}</span>`)
-                    .css({left:p._l,top:p._t+(p._h||16)-1})
-                    .appendTo(p.owner.DOM_Block)
-                );
+                // změny do title
+                p.DOM_Block.attr('title',`${w} ${d}`); 
+                if (!Ezer.obj.set_css_changed_title?.[t]) 
+                  Ezer.obj.set_css_changed_title[t]= [];
+                Ezer.obj.set_css_changed_title[t].push(p.DOM_Block);
+                // změny do span
+//                Ezer.obj.set_css_changed.push(
+//                  jQuery(`<span class="${css}" title="${d}">${w}</span>`)
+//                    .css({left:p._l,top:p._t+(p._h||16)-1})
+//                    .appendTo(p.owner.DOM_Block)
+//                );
               }
             }
           }

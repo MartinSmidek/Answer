@@ -3540,12 +3540,15 @@ function ucast2_browse_ask($x,$tisk=false) {
         ? "LEFT JOIN platba AS u ON id_pob=id_pobyt"
         : "LEFT JOIN uhrada AS u USING (id_pobyt)";
     $qp= pdo_qry("
-      SELECT p.*,$uhrada1 AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
+      SELECT p.*,$uhrada1 AS uhrada,
+        IFNULL(id_prihlaska,0) AS id_prihlaska,IFNULL(prijata,-1) AS prijata $ms1
       FROM pobyt AS p
       $uhrada2
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       -- LEFT JOIN prihlaska AS pr USING (id_pobyt)
-      LEFT JOIN (SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
+      LEFT JOIN (
+        SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt,IF(verze>=2025,prijata,-2) AS prijata 
+        FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
       $ms2
       WHERE $cond_p $AND
       GROUP BY p.id_pobyt
@@ -3678,7 +3681,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',id_prihlaska,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
+           . "keys_rodina='',id_prihlaska,prijata,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
 //           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
@@ -3742,7 +3745,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $zz= array();
     foreach ($pobyt as $idp=>$p) {
       $p_access= 0;
-      $p_access_web= $p->web_zmena=='0000-00-00' ? 0 : 16;
+      $p_access_web= $p->web_zmena=='0000-00-00' || $p->prijata>=0 ? 0 : 16;
       $idr= $p->i0_rodina ?: 0;
       $p->access= 5;
       $z= (object)array();
