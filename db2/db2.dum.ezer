@@ -391,7 +391,7 @@ form _obj {
   select board [4,175,117,] { tag:'new,obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
 //  field sleva [200,175,30,] {tag:'obj', title:'-  % sleva', format:'r' }
   button [10,276,,] { tag:'new', title:'[fa-save] Vytvořit objednávku' 
-    func onclick() { var rooms:text, msg:text, udaje1:object, udaje2:object
+    func onclick() { var rooms:text, msg:text, udaje1:object, udaje2:object, dnu:number
       // kontrola údajů
       msg= '';
       plan_rooms= js.dum_rooms_get(plan,'q'); plan_rooms.change();
@@ -402,15 +402,23 @@ form _obj {
       if (plan.adults+plan.kids_10_15+plan.kids_3_9+plan.kids_3==0) 
         msg= `${msg}Nejsou žádní hosté<br>`;
       if (!name) 
-        msg= `${msg}Chybí alespoň příjmení objednatele<br>`;
+        msg= `${msg}Doplň alespoň příjmení objednatele<br>`;
       if (fdate('Y',od)!=rok)
         msg= `${msg}Začátek akce není v nastaveném roce<br>`;
+      dnu= (php.stamp_date(do,1)-php.stamp_date(od,1))/86400;
+      if (dnu<0)
+        msg= `${msg}Oprav konec pobytu, je před začátkem<br>`;
+      if (dnu>30)
+        msg= `${msg}Oprav konec pobytu, asi nemá být ${dnu} dnů dlouhý<br>`;
       if (msg) alert(msg);
       else {
         udaje1= {}; udaje2= {};
         copy_by_name(form,udaje1,0,1); // jen změněné
         copy_by_name(plan,udaje2,0,1); // jen změněné
-        msg= php.dum_objednavka_create(udaje1,udaje2);
+        the_order= php.dum_objednavka_create(udaje1,udaje2);
+        refresh();
+//        load_objednavka(the_order);
+        panel.hide(1);
       }
   }}
   button [320,175,,] { tag:'obj', title:'[fa-save] Uložit změny' 

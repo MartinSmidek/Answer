@@ -847,7 +847,6 @@ __HTML;
 function dum_objednavka_create($udaje1,$udaje2) { 
   $udaje= (object)array_merge((array)$udaje1,(array)$udaje2);
   debug($udaje,'dum_objednavka_create');
-  $msg= 'ok';
   // povinné údaje
   $frm= stamp_date($udaje->od,1);
   $unt= stamp_date($udaje->do,1);
@@ -861,10 +860,10 @@ function dum_objednavka_create($udaje1,$udaje2) {
       $vals.= ",'$val'";
     }
   }
-  query_track("INSERT INTO tx_gnalberice_order (state,fromday,untilday,board,rooms1$flds) "
+  $ido= query_track("INSERT INTO tx_gnalberice_order (state,fromday,untilday,board,rooms1$flds) "
       . "VALUES ($udaje->state,$frm,$unt,$udaje->board,'$udaje->plan_rooms'$vals)",
       'setkani');
-  return $msg;
+  return $ido;
 }
 # ------------------------------------------------------------------------- dum objednavka_akce_make
 # vytvoř objednávku k akci 

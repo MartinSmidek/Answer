@@ -122,6 +122,7 @@ func dum_objednavka(cmd,id) { var row:number
   clear();
   switch (cmd) { 
     case 'create':
+      dum.Objednavka.RegRefresh(info.dum,'Refresh');
       dum.Objednavka.Create(the_rok);
       break;
     case 'show': // id_akce
