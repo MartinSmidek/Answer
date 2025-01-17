@@ -840,6 +840,32 @@ __HTML;
       'parm'=>$par,'err'=>$err);
 }
 /** ====================================================================================> OBJEDNÁVKY **/
+# ----------------------------------------------------------------------- dum objednavka_akce_create
+# vytvoř objednávku k akci 
+# pokud je zadána existující objednávka, převezmi z ní údaje o lidech a stravě
+# pokud není pak dej jednoho dospělého s plnou penzí
+function dum_objednavka_create($udaje1,$udaje2) { 
+  $udaje= (object)array_merge((array)$udaje1,(array)$udaje2);
+  debug($udaje,'dum_objednavka_create');
+  $msg= 'ok';
+  // povinné údaje
+  $frm= stamp_date($udaje->od,1);
+  $unt= stamp_date($udaje->do,1);
+  // nepovinné
+  $flds= $vals= '';
+  foreach (explode(',',"nazev,org,ic,name,firstname,dic,email,telephone,address,zip,city,note,"
+      . "adults,kids_10_15,kids_3_9,kids_3") as $fld) {
+    if (isset($udaje->$fld)) {
+      $flds.= ",$fld";
+      $val= utf2win(pdo_real_escape_string($udaje->$fld),1);
+      $vals.= ",'$val'";
+    }
+  }
+  query_track("INSERT INTO tx_gnalberice_order (state,fromday,untilday,board,rooms1$flds) "
+      . "VALUES ($udaje->state,$frm,$unt,$udaje->board,'$udaje->plan_rooms'$vals)",
+      'setkani');
+  return $msg;
+}
 # ------------------------------------------------------------------------- dum objednavka_akce_make
 # vytvoř objednávku k akci 
 # pokud je zadána existující objednávka, převezmi z ní údaje o lidech a stravě
@@ -1113,7 +1139,7 @@ function dum_objednavka_nazev($ido,$format='') {
 }
 # ----------------------------------------------------------------------------- dum objednavka_nazev
 # vrátí informaci pro AKCE
-function dum_objednavka_info($ido,$ida,$html_akce) { trace();
+function dum_objednavka_info($ido,$ida,$html_akce,$show_create=1) { trace();
   global $setkani_db;
   $stav= map_cis('ds_stav','hodnota');
   $o= select_object('*',"$setkani_db.tx_gnalberice_order","uid=$ido");
@@ -1137,9 +1163,12 @@ function dum_objednavka_info($ido,$ida,$html_akce) { trace();
         . "Smazat objednávku</button>";
   }
   else {
+    $create= $show_create ? "<button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/create/0')\">
+            Vložit novou objednávku</button>" : '';
     $html.= "<br><button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/show/$ida')\">
-            Objednávka a vyúčtování pobytu</button> $conv
-            <br><br>$html_akce";
+            Objednávka a vyúčtování pobytu</button> &nbsp;&nbsp;&nbsp; 
+            $create
+            $conv<br><br>$html_akce";
   }
   return $html;
 }
@@ -1467,7 +1496,7 @@ function dum_browse_orders($x) {
     $z= [];
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT uid,d.id_akce,a.access,name,d.note,SUM(IF(IFNULL(id_osoba,0),1,0)),
+      SELECT uid,d.id_akce,a.access,name,firstname,d.note,SUM(IF(IFNULL(id_osoba,0),1,0)),
         d.nazev,IFNULL(a.nazev,''),IFNULL(a.typ,0),
         DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday)),IFNULL(zruseno,0),
         $seek AS _seek
@@ -1481,14 +1510,14 @@ function dum_browse_orders($x) {
       ORDER BY fromday,uid
     ");
     while ($rp && (list(
-        $uid,$ida,$access,$name,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do,$zruseno,$found)
+        $uid,$ida,$access,$name,$fname,$note,$osob,$d_nazev,$a_nazev,$typ,$od,$do,$zruseno,$found)
           = pdo_fetch_array($rp))) {
       $z[$uid]->id_order= $uid;
       $z[$uid]->id_akce= $ida;
       $z[$uid]->curr= $ida==$curr ? 1 : 0;
       $z[$uid]->access= $access;
       $z[$uid]->nazev= $d_nazev ?: ($typ==3 ? $a_nazev : $note);
-      $z[$uid]->objednal= $name;
+      $z[$uid]->objednal= trim("$fname $name");
       $z[$uid]->osob= $osob;
       $z[$uid]->od= sql_date1($od);
       $z[$uid]->do= sql_date1($do);
