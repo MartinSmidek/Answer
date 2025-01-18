@@ -1510,6 +1510,7 @@ group dum { include:'onload,db2/db2.dum'
     func Load(id_pobyt) {}
   }
   panel Objednavka { type:'popup' 
+    func Create(rok) {} // umožní vytvořit objednávku
     func Show(id_akce) {} // umožní zvolit správnou objednávku
     func Delete(id_order) {} // nastaví deleted=1 u objednávky
     func RegRefresh(blok,fce) {} // zaregistruje funkci pro refresh po změně objednávky

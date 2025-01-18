@@ -830,7 +830,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
   }
   // pokud je to pobyt na Domě setkání
   if ($uid || $id_order) {
-    $html= dum_objednavka_info($id_order ?: $uid,$id_akce,$html);
+    $html= dum_objednavka_info($id_order ?: $uid,$id_akce,$html,$id_order?1:0);
   }
   return $text ? $html : $info;
 }

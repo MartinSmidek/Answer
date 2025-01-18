@@ -35,6 +35,8 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'yf'
       }
     }
     menu {title:'Správa účtu: YMCA Setkání', type:'group', active:no
+      item {title:'[fa-question] YS+DS: JOIN akce - 2025',   
+        par:{fce:'join-ys', od:'2025-01-01', do:'2025-12-31'} }
       item {title:'[fa-question] YS+DS: JOIN akce - 2024',   
         par:{fce:'join-ys', od:'2024-01-01', do:'2024-12-31'} }
       item {title:'[fa-question] YS+DS: JOIN akce - 2023',   
@@ -47,6 +49,8 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'yf'
         par:{fce:'clear-ys', od:'2023-01-01', do:'2024-12-31', all:1, confirm:'vymazat všechna přiřazení YS '} }
     }
     menu {title:'Správa účtu: Dům setkání', type:'group', active:no
+      item {title:'[fa-question] DS: JOIN objednávky - 2025', 
+        par:{fce:'join-ds', od:'2025-01-01', do:'2025-12-31'} }
       item {title:'[fa-question] DS: JOIN objednávky - 2024', 
         par:{fce:'join-ds', od:'2024-01-01', do:'2024-12-31'} }
       item {title:'[fa-question] DS: JOIN objednávky - 2023', 

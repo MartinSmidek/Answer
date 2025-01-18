@@ -264,6 +264,24 @@ panel Objednavka [,,760,510] { type:'popup' title:"Objednávka pobytu v Domě se
     if (!obj.the_order) { alert(`Akce YMCA ještě není propojena s objednávkou`); return; }
     obj.load_objednavka(obj.the_order);
     obj.plain();
+    obj.display(0,'.*'); 
+    obj.display(1,'obj|adr|fakt|zal'); 
+    obj.plan.display(1,'comp');
+    obj.state.enable(1); 
+    panel.modal();
+  }
+  func Create(rok) { 
+    panel.title= `Vložení nové objednávky pobytu v Domě setkání -- NIKOLIV akce YMCA`;
+    obj.init(); obj.plan.init();
+    obj.plain(); obj.plan.plain();
+    obj.rok= rok;
+    obj.display(0,'.*'); obj.display(1,'new|adr');
+    obj.plan.display(0,'no|yes|comp');
+    obj.state.key(1); obj.state.enable(0); obj.state.change(); 
+    obj.board.key(1); obj.board.change(); 
+    obj.od= now(); obj.od.change(); obj.do= now(); obj.do.change(); 
+    obj.nazev.change(); obj.name.change(); obj.firstname.change(); 
+    obj.plan.adults.change(); 
     panel.modal();
   }
   // zaregistruje funkci pro refresh po změně objednávky
@@ -280,7 +298,8 @@ form _obj {
       faktura: object,      // parametry pro fakturu
       doklad: object,       // parametry daňového dokladu
       objs_count: number,
-      blok_fce= [0,'']      // slouží k volání blok_fce[0].call(blok_fce[1])
+      blok_fce= [0,''],     // slouží k volání blok_fce[0].call(blok_fce[1])
+      rok:number
   // funkce
   func refresh_reg(blok:ezer,fce:text) { blok_fce= [blok,fce]; }
   func refresh() { js.call_block_method(blok_fce[0],blok_fce[1]); }
@@ -353,24 +372,55 @@ form _obj {
   }
   // položky 
   field access
-  field the_order [0,15,50,] { tag:'obj', title:'^objednávka', format:'rd' }
-  field nazev [60,15,268,] { tag:'obj', title:'^editovatelné upřesnění názvu ' }
-  button [342,15,,] { title:'[fa-copy] Udělej kopii' 
+  field the_order [0,15,50,] { tag:'new,obj', title:'^objednávka', format:'rd' }
+  field nazev [60,15,268,] { tag:'obj,new', title:'^editovatelné upřesnění názvu ' }
+  button [342,15,,] { tag:'obj', title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
     obj= the_order;
     if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) return;
     alert(php.dum_objednavka_clone(obj));
   }}
-  select state [0,55,155,] {tag:'obj,closed', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
+  select state [0,55,155,] {tag:'new,obj,closed', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
   field id_akce [162,55,38,] {tag:'obj,closed', title:'^akce YMCA', format:'r' }
-  field od [214,55,85,] {tag:'obj,closed', title:'^příjezd', type:'date', format:'r' }
-  field do [304,55,85,] {tag:'obj,closed', title:'^odjezd', type:'date', format:'r' }
+  field od [214,55,85,] { tag:'new,obj,closed', title:'^příjezd', type:'date', format:'r' }
+  field do [304,55,85,] { tag:'new,obj,closed', title:'^odjezd', type:'date', format:'r' }
   field noci [396,55,30,] {tag:'obj', title:'^nocí', format:'rd' }
-  edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
+  edit note [0,95,424,55] { tag:'new,obj', title:'^poznámka k pobytu' }
 
-  select board [4,175,117,] {tag:'obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
+  select board [4,175,117,] { tag:'new,obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
 //  field sleva [200,175,30,] {tag:'obj', title:'-  % sleva', format:'r' }
+  button [10,276,,] { tag:'new', title:'[fa-save] Vytvořit objednávku' 
+    func onclick() { var rooms:text, msg:text, udaje1:object, udaje2:object, dnu:number
+      // kontrola údajů
+      msg= '';
+      plan_rooms= js.dum_rooms_get(plan,'q'); plan_rooms.change();
+      if (!nazev) 
+        msg= `${msg}Chybí název objednávky<br>`;
+      if (!plan_rooms) 
+        msg= `${msg}Nejsou objednány žádné pokoje<br>`;
+      if (plan.adults+plan.kids_10_15+plan.kids_3_9+plan.kids_3==0) 
+        msg= `${msg}Nejsou žádní hosté<br>`;
+      if (!name) 
+        msg= `${msg}Doplň alespoň příjmení objednatele<br>`;
+      if (fdate('Y',od)!=rok)
+        msg= `${msg}Začátek akce není v nastaveném roce<br>`;
+      dnu= (php.stamp_date(do,1)-php.stamp_date(od,1))/86400;
+      if (dnu<0)
+        msg= `${msg}Oprav konec pobytu, je před začátkem<br>`;
+      if (dnu>30)
+        msg= `${msg}Oprav konec pobytu, asi nemá být ${dnu} dnů dlouhý<br>`;
+      if (msg) alert(msg);
+      else {
+        udaje1= {}; udaje2= {};
+        copy_by_name(form,udaje1,0,1); // jen změněné
+        copy_by_name(plan,udaje2,0,1); // jen změněné
+        the_order= php.dum_objednavka_create(udaje1,udaje2);
+        refresh();
+//        load_objednavka(the_order);
+        panel.hide(1);
+      }
+  }}
   button [320,175,,] { tag:'obj', title:'[fa-save] Uložit změny' 
     func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
@@ -406,8 +456,9 @@ form _obj {
   // objednáno a využito
   label [10,206,100,10] { title:'Objednáno ...' }  
   use plan: form _pokoje [0,220,,]
+  field plan_rooms
           
-  label vyuzito [10,276,330,10] { title:'Využito ...' }  
+  label vyuzito [10,276,330,10] { tag:'obj', title:'Využito ...' }  
   button [340,267,,] { tag:'fakt', title:'Oprava ubytování' 
     func onclick() { 
       if (confirm(`Mám "ubytovat" neubytované z objednávky ${the_order} na pokoj 25?`)) {
@@ -415,7 +466,7 @@ form _obj {
         load_objednavka(the_order);
       }
   }}
-  use stav: form _pokoje [0,290,,]
+  use stav: form _pokoje [0,290,,] { tag:'obj' }
   
   // kontakt na objednatele
   field org   [left_oso+  0, 15,210,] { tag:'adr', title:'^název organizace (plátce faktury)' }
@@ -429,7 +480,7 @@ form _obj {
   field zip   [left_oso+  0,175, 50,] { tag:'adr', title:'^psč' }
   field city  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
   
-  button [left_oso+223,161,,] { title:'[fa-times fa-red] Smazat<br>objednávku?'
+  button [left_oso+223,161,,] { tag:'obj', title:'[fa-times fa-red] Smazat<br>objednávku?'
     func onclick() { var ret:object
     ret= php.dum_objednavka_safe_delete(the_order);
     if (ret.safe) {
