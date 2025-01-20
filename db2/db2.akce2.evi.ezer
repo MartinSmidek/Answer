@@ -482,7 +482,6 @@ form _lst [,,370,*] {
 //    show id_p { data:os.id_pobyt }
     show lat  { expr:"IFNULL(og.lat,0)" }
     show lng  { expr:"IFNULL(og.lng,0)" }
-    show tips [,,0,] { expr:'', format:'t' }
     show filtr { expr:"1" } // dynamicky definováno ve filtr_osob funkcí o_filtr.onchange
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
@@ -503,6 +502,7 @@ form _lst [,,370,*] {
     show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show iniciace [,,0,] { data:o.iniciace, title:'MROP',help:'rok iniciace', format:'tq%s' }
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
+    show tips [,,0,] { title:'dup?', expr:'', format:'trsq*' }
     // počítané položky
 //    var lat:number, lng:number
     proc onrowclick() { bo_show }
@@ -515,7 +515,8 @@ form _lst [,,370,*] {
       mail.width;     mail.width(0);    telefon.width(44)
     | telefon.width;  telefon.width(0); _id_o.width(44)
     | _id_o.width;   _id_o.width(0);    iniciace.width(44);   
-    | iniciace.width; iniciace.width(0); mail.width(44);
+    | iniciace.width; iniciace.width(0); tips.width(44);
+    | tips.width;     tips.width(0);    mail.width(44);
     }
     menu { type:'context'
       item { title:'export seznamu do Excelu',
