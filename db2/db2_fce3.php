@@ -10489,6 +10489,10 @@ function evid2_deti_access($idr,$access=3) {
 #   mail - lidi se stejným meilem
 function evid2_elim_tips($type) {
   $ret= (object)array('ids'=>0,'tip'=>"''");
+  if ($type=='mail') {
+    $ret= evid2_elim_mail_tips();
+    goto end;
+  }
   switch ($type) {
   case 'mrop': $qry= "
       SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
@@ -10552,6 +10556,41 @@ function evid2_elim_tips($type) {
   $ret->ids= $ids ? "o.id_osoba IN $ids )" : '0';
   $ret->tip= $tip ? "CASE id_osoba $tip ELSE 0 END" : 0;
 end:
+  return $ret;
+}
+# ---------------------------------------------------------------------------------- evid2 elim_tips
+# tipy na duplicitu mailů - vrací seznam
+#   mail - lidi se stejným mailem
+function evid2_elim_mail_tips() {
+  $ret= (object)array('ids'=>0,'tip'=>"''");
+  $m_os= [];
+  $zs= pdo_qry("SELECT id_osoba,email FROM osoba WHERE kontakt=1 AND email!='' AND deleted='' "
+//      . "AND prijmeni='Červeň'"
+      . "ORDER BY id_osoba ");
+  while ($zs && (list($ido,$mails)= pdo_fetch_row($zs))) {
+    foreach (preg_split('/\s*[,;]\s*/',trim($mails," \n\r\t;,#")) as $m) {
+      if (!isset($m_os[$m])) 
+        $m_os[$m]= [$ido];
+      else
+        $m_os[$m][]= $ido;
+    }
+  }
+  // projdeme duplicity
+  $n= 0;
+  $ids= ""; $del= "(";
+  $tip= "";
+  foreach ($m_os as $m=>$os) {
+    if (count($os)>1) {
+      $n++;
+      $ids.= $del.implode(',',$os); $del= ",";
+      foreach ($os as $tp) {
+        $tip.= " WHEN $tp THEN $n ";
+      }
+    }
+  }
+  display("CELKEM $n duplicit");
+  $ret->ids= $ids ? "o.id_osoba IN $ids )" : '0';
+  $ret->tip= $tip ? "CASE id_osoba $tip ELSE 0 END" : 0;
   return $ret;
 }
 # ------------------------------------------------------------------------------------- evid2 delete

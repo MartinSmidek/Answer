@@ -236,7 +236,7 @@ proc elim_cleni(idr) { var cleni:text
 }
 # --------------------------------------------------==> refresh
 proc elim_start() {
-  return(panel.modal(10,cconc(eq(sys('ezer','version'),'ezer3.1'),5,-40)))
+  return(panel.modal(10,5))
 }
 proc elim_refresh() { var os1:number, os2:number
   eq(mode.get,'osoba');
