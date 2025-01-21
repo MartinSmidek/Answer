@@ -20,7 +20,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'martin@smidek.eu';
 //$TEST_mail= 'martin.smidek@gmail.com';
 //$TEST_mail= 'marie@smidkova.eu';
-$TEST_mail= 'jakub@smidek.eu';
+//$TEST_mail= 'jakub@smidek.eu';
 //$TEST_mail= 'kancelar@setkani.org';
 //$TEST_mail= 'zahradnicek@fnusa.cz';
 //$TEST_mail= 'petr.janda@centrum.cz';
@@ -28,8 +28,11 @@ $TEST_mail= 'jakub@smidek.eu';
 //$TEST_mail= 'bucek@fem.cz';
 //$TEST_mail= 'hanasmidkova@seznam.cz';
 //$TEST_mail= 'j-novotny@centrum.cz';
-//$TEST_mail= 'jslachtova@seznam.cz';
-//$TEST_mail= 'sequens@seznam.cz';
+$TEST_mail= 'jslachtova@seznam.cz';
+//$TEST_mail= 'sequens@seznam.cz';              // oba osobní ale ten stejný
+//$TEST_mail= 'nemec_pavel@hotmail.com';        // oba jen rodinný
+//$TEST_mail= '';
+//$TEST_mail= '';
 //$TEST_mail= '';
 
 $errors= [];
@@ -260,25 +263,34 @@ function kontrola_pinu($email,$pin) {
   else { // pin je ok - založíme záznam v tabulce prihlaska
     $vars->email= $email; // pro korespondenci
     log_open($email);  // email je ověřený 
-    // zjistíme, zda jej máme v databázi
-    $regexp= "REGEXP '(^|[;,\\\\s]+)$email($|[;,\\\\s]+)'";
-    list($pocet,$idors,$jmena)= select_2(
-        "COUNT(id_osoba),GROUP_CONCAT(CONCAT(id_osoba,'/',IFNULL(id_rodina,0))),CONCAT(jmeno,' ',prijmeni)",
-        'osoba LEFT JOIN tvori USING (id_osoba)',
-        "deleted='' AND kontakt=1 AND email $regexp ORDER BY IFNULL(role,'')");
-    display("$pocet,$idors,$jmena");
     
     // zjistíme, zda to může být rozpracovaná přihláška
     $open= log_find_saved($email); // uložená přihláška a nejsou přihlášení
     if ($open) { // -------- nalezena rozepsaná přihláška
-      $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$email"];
-      $vars->klient= $jmena;
-//      $vars->ido= $ido;
-//      $vars->idr= $idr;
-      dotaz("Chcete pokračovat ve vyplňování přihlášky uložené $open?",'rozepsana','prihlaska');
+      // doplní vars: continue, ido, idr
+      $DOM->user= ["show","<i class='fa fa-user'></i> <br>$email"];
+      vyber("Chcete pokračovat ve vyplňování přihlášky uložené $open?",
+          ["ANO:klient:$vars->ido/$vars->idr",'NE:prihlaska:1']);
+      goto end;
     } // nalezena rozepsaná přihláška
     
-    elseif ($pocet==1) { // -------------------------------- známý a jednoznačný mail
+    // jinak zjistíme, zda jej máme v databázi
+    $regexp= "REGEXP '(^|[;,\\\\s]+)$email($|[;,\\\\s]+)'";
+    list($pocet,$idors)= select_2(
+       "SELECT COUNT(id_osoba),GROUP_CONCAT(CONCAT(id_osoba,'/',IFNULL(id_rodina,0),'/',IFNULL(role,'-')))
+        FROM osoba LEFT JOIN tvori USING (id_osoba)
+        WHERE deleted='' AND kontakt=1 AND email $regexp ORDER BY IFNULL(role,'')");
+    display("osoba => $pocet: $idors");
+    
+    if ($pocet==0) {
+      list($pocet,$idors)= select_2(
+         "SELECT COUNT(id_osoba),GROUP_CONCAT(CONCAT(id_osoba,'/',id_rodina,'/',role))
+          FROM osoba AS o JOIN tvori USING (id_osoba) JOIN rodina AS r USING (id_rodina)
+          WHERE o.deleted='' AND r.deleted='' AND kontakt=0 AND emaily $regexp ORDER BY role");
+      display("rodina => $pocet: $idors");
+    }
+
+    if ($pocet==1) { // -------------------------------- známý a jednoznačný mail
       list($ido,$idr)= explode('/',$idors);
       klient("$ido/$idr");
     } // známý a jednoznačný mail
@@ -292,29 +304,41 @@ function kontrola_pinu($email,$pin) {
     } // neznámý mail
     elseif ($pocet>1) { // -------------------------------- nejednoznačný mail
       $dotazy= [];
-      foreach (explode(',',$idors) AS $idor) {
-        list($ido,$idr)= explode('/',$idor);
-        $rodina= $idr ? 'rodina '.select('nazev','rodina',"id_rodina=$idr") : 'bez rodiny';
-        list($jmeno,$prijmeni)= select('jmeno,prijmeni','osoba',"id_osoba=$ido");
-        $dotazy[]= "$jmeno $prijmeni:klient:$ido/$idr:$rodina";
+      // zkusíme redukovat - pokud je a|b tak další vynecháme
+      $cleni= explode(',',$idors);
+      $rodic= [];
+      foreach ($cleni as $clen) {
+        list($ido,$idr,$role)= explode('/',$clen);
+        if (in_array($role,['a','b'])) $rodic[]= "$ido/$idr";
       }
-      vyber($TEXT->usermail_nad4,$dotazy);
+      if (count($rodic)==1) 
+        klient($rodic[0]);
+      else {
+        foreach ($cleni as $clen) {
+          list($ido,$idr,$role)= explode('/',$clen);
+          if (count($rodic)>1 && !in_array($role,['a','b'])) continue;
+          $rodina= $idr ? 'rodina '.select('nazev','rodina',"id_rodina=$idr") : 'bez rodiny';
+          list($jmeno,$prijmeni)= select('jmeno,prijmeni','osoba',"id_osoba=$ido");
+          $dotazy[]= "$jmeno $prijmeni:klient:$ido/$idr:$rodina";
+        }
+        vyber($TEXT->usermail_nad4,$dotazy);
+      }
     } // nejednoznačný mail      
   }
+end:  
 } // overit pin
 // ------------------------------------------------------------------------------------------- kient
 function klient($idor) { 
 # $id je nositelem přihlašovacího mailu
   global $DOM, $TEXT, $vars, $akce;
   list($ido,$idr)= explode('/',$idor);
-  list($idr,$jmena)= select_2(
-      "IFNULL(id_rodina,0),CONCAT(jmeno,' ',prijmeni)",
-      'osoba LEFT JOIN tvori USING (id_osoba)',
-      "id_osoba=$ido");
+  list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
   $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
   $vars->klient= $jmena;
-  $vars->ido= $ido;
-  $vars->idr= $idr;
+//  $vars->ido= $ido;
+//  $vars->idr= $idr;
+  log_write('id_osoba',$vars->ido);
+  log_write('id_rodina',$vars->idr);
   // osobu známe  - zjistíme zda již není přihlášen
   list($idp,$kdy,$kdo/*,$web_json*/)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,''),web_json",
       "pobyt JOIN spolu USING (id_pobyt) "
@@ -339,10 +363,14 @@ function klient($idor) {
   }
 } // klient
 // --------------------------------------------------------------------------------------- rozepsaná
-function rozepsana() { 
-# načte údaje a jejich změny
-  prihlaska(true);
-} // rozepsaná
+//function rozepsana($idor) { 
+//# načte údaje a jejich změny
+////  global $vars;
+//  klient($idor);
+////  log_write('id_osoba',$vars->ido);
+////  log_write('id_rodina',$vars->idr);
+////  prihlaska(true);
+//} // rozepsaná
 // ---------------------------------------------------------------------------------------- kontrola
 function kontrola($all) { 
 # zkontroluje formát dat
@@ -357,25 +385,27 @@ function ulozit_stav($elems) {
 //  prihlaska();
 } // uložit stav
 // -------------------------------------------------------------------------------------- přihlas se
-function prihlaska($rozepsana=false) { 
+function prihlaska($nova=0) { 
 # připrav prázdný formulář přihlášení osob
 # doplň DOM o položky osob
   global $DOM, $vars, $akce;
-  // načti data
+  // podle ido,idr nastav počáteční informace o klientovi
   kompletuj_pobyt($vars->idr,$vars->ido);
   // nastavení formuláře
-  $vars->form= (object)[
-      'pass'=>0, // inicializovat pozici pro 0
-      'par'=>1,'deti'=>$akce->p_deti,'pecouni'=>$akce->p_deti?1:0, // 1=tlačítko, 2=seznam
-      'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>0,
-      'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
-      'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
-      'exit'=>0,      // 1 => první stisk 
-  ];
-  // pokud navazuje na rozepsanou
-  if ($rozepsana) {
-//    $vars->pobyt->pracovni[1]= 'byla zmena';
-    log_load_changes();
+  if ($vars->continue??0 && !$nova) {
+    log_load_changes();   // z uchované přihlášky
+    log_write_changes();  // do současné
+  }
+  else {
+    // počáteční 
+    $vars->form= (object)[
+        'pass'=>0, // inicializovat pozici pro 0
+        'par'=>1,'deti'=>$akce->p_deti,'pecouni'=>$akce->p_deti?1:0, // 1=tlačítko, 2=seznam
+        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>0,
+        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
+        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
+        'exit'=>0,      // 1 => první stisk 
+    ];
   }
   $form= form();
   // změny zobrazení
@@ -703,9 +733,10 @@ function vyber($dotaz,$odpovedi) { // -------------- výběr z více možností
   $DOM->alertbox_text= $dotaz;
     $DOM->alertbox_butts= '';
   foreach ($odpovedi as $odpoved) {
-    list($text,$fce,$par,$subtext)= explode(':',$odpoved);
+    list($text,$fce,$par,$subtext)= explode(':',$odpoved.':::');
+    if ($subtext??0) $subtext= "<br><small>$subtext</small>";
     $DOM->alertbox_butts.= "
-      <button onclick=\"php2('$fce,=$par')\">$text<br><small>$subtext</small></button> &nbsp;
+      <button onclick=\"php2('$fce,=$par')\">$text$subtext</button> &nbsp;
     ";
   }
 } // popup s výběrem z více možností
@@ -1788,14 +1819,14 @@ function log_find_saved($email) { // -------------------------------------------
   $idp= select_2('id_pobyt','prihlaska',
       "id_pobyt!=0 AND id_akce=$akce->id_akce AND email='$email' ");
   if ($idp) goto end; // už se povedlo přihlásit
-  list($idpr,$open)= select_2('id_prihlaska,open','prihlaska',
-      "id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
-    . " AND id_prihlaska>110 " // předtím není zohledněno UTF-8
-    . " ORDER BY id_prihlaska DESC LIMIT 1");
+  list($idpr,$open)= select_2("SELECT id_prihlaska,open FROM prihlaska 
+      WHERE id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' 
+      AND id_prihlaska>110 ORDER BY id_prihlaska DESC LIMIT 1");
   if (!$idpr) goto end;
   $vars->continue= $idpr;
+  list($vars->ido,$vars->idr)= select_2(
+      "SELECT id_osoba,id_rodina FROM prihlaska WHERE id_prihlaska=$idpr");
   $found= sql_time1($open);
-//  die('end');
 end:
   return $found;
 } // načtení data uloženého stavu 
@@ -2404,10 +2435,18 @@ function pdo_query_2($query,$quiet=false) {
   }
   return $res;
 }
-function select_2($expr,$table,$cond) { // ------------------------------------------------ select 2
+function select_2($expr,$table='',$cond='') { // ------------------------------------------------ select 2
 # navrácení hodnoty jednoduchého dotazu
+# pokud je jediný argument je to celý dotaz
+  if ( !$table ) {
+    $result= array();
+    $qry= $expr;
+    $res= pdo_query_2($qry,1);
+    if ( !$res ) log_error(wu("chyba funkce select:$qry/".pdo_error()));
+    else $result= pdo_fetch_row($res);
+  }
 # pokud $expr obsahuje čárku, vrací pole hodnot, pokud $expr je hvězdička vrací objekt, 
-  if ( strstr($expr,",") ) {
+  elseif ( strstr($expr,",") ) {
     $result= array();
     $qry= "SELECT $expr FROM $table WHERE $cond";
     $res= pdo_query_2($qry,1);
@@ -2432,10 +2471,11 @@ function select_2($expr,$table,$cond) { // -------------------------------------
 //                                                 debug($result,"select");
   return $result;
 }
-function select1_2($expr,$table,$cond) { // ---------------------------------------------- select1 2
+function select1_2($expr,$table='',$cond='') { // ---------------------------------------------- select1 2
 # navrácení hodnoty jednoduchého dotazu - $expr musí vracet jednu hodnotu
+# pokud je jediný argument je to celý dotaz
   $result= '';
-  $qry= "SELECT $expr AS _result_ FROM $table WHERE $cond";
+  $qry= $table ? "SELECT $expr AS _result_ FROM $table WHERE $cond" : $expr;
   $res= pdo_query_2($qry,1);
   if ( $res ) {
     $o= pdo_fetch_object($res);
