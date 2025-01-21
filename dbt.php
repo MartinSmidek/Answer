@@ -164,14 +164,14 @@
   $add_options= (object) [
     'watch_git'    => 1,                // sleduj git-verzi aplikace a jádra, při změně navrhni restart
     'curr_version' => 1,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
-    'watch_access' => 3,
+    'watch_access' => 67,               // 1 + 2 + 64
     'path_akce'    => "'$path_akce'", // absolutní cesta do složky Akce
     'path_foto'    => "'$path_foto'", // absolutní cesta do složky fotky
     'group_db'     => "'ezer_answer'",
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
-       "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
-         abbr:{1:'S',2:'F',3:'S+F'},
-         css:{1:'ezer_ys',2:'ezer_fa',3:'ezer_db'}}",
+       "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia',65:'S+DS',66:'F+DS',67:'S+F+DS'},
+         abbr:{1:'S',2:'F',3:'S+F',65:'S+DS',66:'F+DS',67:'S+F+DS'},
+         css:{1:'ezer_ys',2:'ezer_fa',3:'ezer_db',65:'ezer_ys ezer_ds',66:'ezer_fa ezer_ds',67:'ezer_db ezer_ds'}}",
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'",

@@ -343,7 +343,7 @@ form _lst [,,370,*] {
   // zobraz mailist podle access
   proc init_mailist() { var sel:text
     page.map.mapa_clear(1);
-    sel.set(ask('mail2_mailist',my_access.get,menu_par.get));
+    sel.set(ask('mail2_mailist',has_access.get,menu_par.get));
     sel;
     bm_vyber.selects(sel);
     bm_vyber.key(function('select',"for (var key in select.Items) return key; return 0;",bm_vyber));
@@ -366,7 +366,7 @@ form _lst [,,370,*] {
     idh.get; [ bh.browse_seek(conc("id_osoba=",idh.get)); bh.onrowclick ]
   | track_past.set(conc("kdy BETWEEN ADDDATE(NOW(),-",menu_par.get('days'),") AND NOW()"));
     bh.browse_load(conc(
-      'h.access & ',my_access.get,' AND ',cnd," AND ",bh_filtr.get," AND ",track_past.get));
+      'h.access & ',has_access.get,' AND ',cnd," AND ",bh_filtr.get," AND ",track_past.get));
   }
   view h: table osoba
   view ht: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
@@ -397,7 +397,7 @@ form _lst [,,370,*] {
     idf.get; [ bf.browse_seek(conc("id_osoba=",idf.get)); bf.onrowclick ]
   | track_past.set(conc("kdy BETWEEN ADDDATE(NOW(),-",menu_par.get('days'),") AND NOW()"));
     bf.browse_load(conc(
-      'f.access & ',my_access.get,' AND ',cnd," AND ",bf_filtr.get," AND ",track_past.get));
+      'f.access & ',has_access.get,' AND ',cnd," AND ",bf_filtr.get," AND ",track_past.get));
   }
   view f: table rodina
   view fh: table _track { join:"ON kde='rodina' AND klic=id_rodina" }
@@ -422,7 +422,7 @@ form _lst [,,370,*] {
   func bo_reload(cnd) { var cond:text
     if (virgin) start();
     bo_cnd= cnd;
-    cond= `o.access & ${my_access} AND ${cnd} AND ${bo_filtr}`;
+    cond= `o.access & ${has_access} AND ${cnd} AND ${bo_filtr}`;
     if (ido) bo.browse_seek(`id_osoba=${ido}`,cond);
     elseif (!bo.browse_load(cond,'',bo_having))
       page.page_init()
@@ -431,7 +431,7 @@ form _lst [,,370,*] {
 //    [ virgin.get; start ];
 //    bo_cnd.set(cnd);
 //    ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
-//  | bo.browse_load(conc('o.access & ',my_access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
+//  | bo.browse_load(conc('o.access & ',has_access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
 //  | page.page_init
 //  }
   select o_vyber [163,5,154,] {tag:'o', type:'map'
@@ -621,7 +621,7 @@ form _lst [,,370,*] {
     br_cnd.set(cnd);
     idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
   |    // echo("load: br_filtr=",br_filtr.get);
-    br.browse_load(conc('r.access & ',my_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
+    br.browse_load(conc('r.access & ',has_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,154,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
@@ -1039,7 +1039,7 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
     proc onclick() {
       form.init(2); form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
-      access.set(my_access.get); access.change(1);
+      access.set(has_access.get); access.change(1);
       ukon.set('d'); ukon.change(1); castka.change(1);
       datum.set(now); datum.change(1);
   }}
@@ -1131,7 +1131,7 @@ form _prispevky [,,375,min_h+-180] {css:'ae_frame shift_down'
     proc onclick() {
       form.init(2); form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
-      access.set(my_access.get); access.change(1);
+      access.set(has_access.get); access.change(1);
       ukon.set('p'); ukon.change(1); castka.change(1);
       datum.set(now); datum.change(1);
   }}
@@ -1237,7 +1237,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
     func onclick() {
       form.init(); form_state('u|z','n|s');
       id_o= ido; id_o.change(1); del= ''; del.change(1);
-      access= my_access; access.change(1);
+      access= has_access; access.change(1);
       typ.key(0); typ.change(); datum= now(); datum.change(1);
   }}
   # -------------------------- Uložit
@@ -1659,19 +1659,19 @@ form _cmd [,,706,32] { css:'ae_frame'
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
     proc onclick() { var jmeno:text
       // ochrana před vytvářením s access=3
-      not(eq(my_access.get,3));
+      not(eq(has_access.get,3));
       // buďto úplně nová s novým členem, nebo nová s nastaveným členem
       jmeno.set(conc(page.oso.prijmeni.get," ",page.oso.jmeno.get));
       switch(choose(conc("Mám vytvořit novou rodinu s novým členem, <br>nebo s ",jmeno,"?"),
           conc("nový člen:2,",jmeno,":1,Zpět:0")),
       0,{ stop },
       1,{ set_state('newr');
-          page.rod.access.set(my_access.get); foreach(page.rod.tagged('N'),change_x); },
+          page.rod.access.set(has_access.get); foreach(page.rod.tagged('N'),change_x); },
       2,{ set_state('newro');
-          page.rod.access.set(my_access.get); foreach(page.rod.tagged('N'),change_x);
-          page.oso.access.set(my_access.get); foreach(page.oso.tagged('I'),change_x); }
+          page.rod.access.set(has_access.get); foreach(page.rod.tagged('N'),change_x);
+          page.oso.access.set(has_access.get); foreach(page.oso.tagged('I'),change_x); }
       )
-    | eq(my_access.get,3);
+    | eq(has_access.get,3);
       alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
   }}
   // vymazat
@@ -1700,7 +1700,7 @@ form _cmd [,,706,32] { css:'ae_frame'
   button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
     func onclick() { var _sex:number, _prijmeni:text, elem:ezer
-      if (my_access==3) { // ochrana před vytvářením s access=3
+      if (has_access==3) { // ochrana před vytvářením s access=3
         alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
         return
       }
@@ -1710,7 +1710,7 @@ form _cmd [,,706,32] { css:'ae_frame'
         break;
       case 'osoba':
         set_state('newx');
-        page.oso.access= my_access;
+        page.oso.access= has_access;
         for (elem of page.oso.tagged('I')) {
           elem.change(1); 
         }
@@ -1719,7 +1719,7 @@ form _cmd [,,706,32] { css:'ae_frame'
         _sex= page.oso.sex; _prijmeni= page.oso.prijmeni;
         set_state('newo');
         page.oso.sex= _sex; page.oso.prijmeni= _prijmeni; page.oso.narozeni= now();
-        page.oso.access= my_access;
+        page.oso.access= has_access;
         page.rod.t_role= 'd';
         for (elem of page.oso.tagged('I')) {
           elem.change(1); 
