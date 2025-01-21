@@ -72,10 +72,10 @@ func akce_onstart() { var m:object
   my_access= sys('user','access');
   my_org= sys('user','org');
   // pro správce Domu setkání přidej org_ds
-  if (has_skill('yd2') && my_access<org_ds) my_access= my_access+org_ds;
+  if (has_skill('yd2') && my_access<org_ds) my_access= my_access | org_ds;
   m= match('(?:^|\s)(t|T)(?:\s|$)',sys('user','skills'));
   team_access= !m ? 0 : (m.s1=='T' ? 2 : 1);
-  echo(`team_access=${team_access}, my_org=${my_org}`);
+  echo(`team_access=${team_access}, my_org=${my_org}, my_access=${my_access}`);
 //  my_org= my_access==3 ? sys('user','org') : my_access;  ????????? 22/5/2024
   // hodnoty zapamatované pro navázání na předchozí session
   the_source= get_cookie(`${sys('root')}_akce_source`,'sey');
