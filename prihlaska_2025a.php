@@ -525,6 +525,7 @@ function nove_dite() {
   }
   $id--;
   vytvor_clena($id,'d',1);
+  log_write_changes();
   form_deti(2);
 }
 
@@ -780,15 +781,15 @@ function read_elems($elems) { // -----------------------------------------------
         default: continue 2;
       }
       if (is_array($tab->$fld)) {
-        if ($val!=$tab->$fld[0]) {
+        if (isset($tab->$fld[1])) { // změna změněné hodnoty
+          $tab->$fld[1]= $val;
+        }
+        elseif ($val!=$tab->$fld[0]) { // změna dosud nezměněné položky
           $tab->$fld[1]= $val;
           $vars->kontrola= 0;
         }
-        else {
-          unset($tab->$fld[1]);
-        }
       }
-      elseif ($tab->$fld!=$val) {
+      elseif ($tab->$fld!=$val) { // změna dosud nezměněné položky
         $tab->$fld= [$tab->$fld,$val];
       }
     }
@@ -1870,7 +1871,7 @@ function log_load_changes() { // -----------------------------------------------
         else {
           if (!isset($vars->$name[$id])) {
             if ($name=='cleni') {
-              vytvor_clena($id,$val1->role,$val1->spolu??0);
+              vytvor_clena($id,$val1->role,$val1->spolu);
             }
           }
           $vars->$name[$id]->$fld= 
