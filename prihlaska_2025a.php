@@ -21,14 +21,14 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'martin.smidek@gmail.com';
 //$TEST_mail= 'marie@smidkova.eu';
 //$TEST_mail= 'jakub@smidek.eu';
-//$TEST_mail= 'kancelar@setkani.org';
+$TEST_mail= 'kancelar@setkani.org';
 //$TEST_mail= 'zahradnicek@fnusa.cz';
 //$TEST_mail= 'petr.janda@centrum.cz';
 //$TEST_mail= 'p.kvapil@kvapil.cz';
 //$TEST_mail= 'bucek@fem.cz';
 //$TEST_mail= 'hanasmidkova@seznam.cz';
 //$TEST_mail= 'j-novotny@centrum.cz';
-$TEST_mail= 'jslachtova@seznam.cz';
+//$TEST_mail= 'jslachtova@seznam.cz';
 //$TEST_mail= 'sequens@seznam.cz';              // oba osobní ale ten stejný
 //$TEST_mail= 'nemec_pavel@hotmail.com';        // oba jen rodinný
 //$TEST_mail= '';
@@ -335,8 +335,8 @@ function klient($idor) {
   list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
   $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
   $vars->klient= $jmena;
-//  $vars->ido= $ido;
-//  $vars->idr= $idr;
+  $vars->ido= $ido;
+  $vars->idr= $idr;
   log_write('id_osoba',$vars->ido);
   log_write('id_rodina',$vars->idr);
   // osobu známe  - zjistíme zda již není přihlášen
@@ -406,6 +406,7 @@ function prihlaska($nova=0) {
         'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
         'exit'=>0,      // 1 => první stisk 
     ];
+    log_write_changes();  // zapiš počáteční skeleton form
   }
   $form= form();
   // změny zobrazení
@@ -515,6 +516,17 @@ function prazdna() {
   initialize(0);
   $DOM->rozlouceni= 'show';
 } // prazdna
+// ---------------------------------------------------------------------------------- přidání dítěte
+function nove_dite() { 
+  global $vars;
+  $id= 0;
+  foreach (array_keys($vars->cleni) as $is) {
+    $id= min($id,$is);
+  }
+  $id--;
+  vytvor_clena($id,'d',1);
+  form_deti(2);
+}
 
 // ================================================================================= prvky formuláře
 function form_manzele() { // -------------------------------------------------------- zobrazení páru
@@ -552,14 +564,14 @@ function form_manzele() { // ---------------------------------------------------
   }
   $DOM->form_par= ['show',$clenove];
 } // form - manželé
-function form_deti($detail) { // ------------------------------------------------ zobrazení dětí
+function form_deti($detail) { // ---------------------------------------------------- zobrazení dětí
   global $DOM, $vars;
   $clenove= '';
   if ($detail==1) {
     $clenove.= "<br><button onclick=\"php2('form_deti,=2');\" >
       <i class='fa fa-eye'></i> zobrazit naše děti</button>";
   }
-  else {
+  else { // detail==2
     $clenove.= "<div id='deti' class='cleni'>";
     $deti= '';
     $jsou_deti= 0;
@@ -591,11 +603,14 @@ function form_deti($detail) { // -----------------------------------------------
       $clenove.= "<p><i>Naše děti (zapište prosím i ty, které necháváte doma). $pozn</i></p>";
     }
     $clenove.= $deti;
-    $clenove.= "<br><button name='cmd_dalsi_dite'>
+    $clenove.= "<br><button onclick=\"php2('nove_dite');\" >
       <i class='fa fa-green fa-plus'></i> chci přidat další dítě</button>";
       $clenove.= "</div>";
   }
-  $vars->form->deti= $detail;
+  if ($vars->form->deti!=$detail) {
+    $vars->form->deti= $detail;
+    log_write_changes();
+  }
   $DOM->form_deti= ['show',$clenove];
 } // form - seznam dětí
 function form_pecouni($detail) { // ------------------------------------------ zobrazení pečounů
@@ -1337,14 +1352,14 @@ function vytvor_rodinu() { // --------------------------------------------------
 }
 function vytvor_clena($ido,$role,$spolu) { // ----------------------------------------- vytvor clena
   // inicializace dat pro dospělou osobu, přidáme roli a že je na akci
-  global $o_fld;
+  global $vars,$o_fld;
   $vars->cleni[$ido]= (object)[];
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
     if (strpos($omez,$role)!==false)
       $vars->cleni[$ido]->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
-  $vars->cleni[$ido]->role= $role;
-  $vars->cleni[$ido]->spolu= $spolu;
+  $vars->cleni[$ido]->role= ['',$role];
+  $vars->cleni[$ido]->spolu= [0,$spolu];
 }
 function vytvor_web_json() { // ---------------------------------------------------- vytvor web_json
   global $errors, $vars;
@@ -1779,6 +1794,7 @@ function log_write_changes() { // ----------------------------------------------
   if (($idw= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $changes= (object)[];
     foreach ((array)$vars as $name=>$val0) {
+      // zapiš hodnoty s indexem 1 tzn. změněné
       if (in_array($name,['cleni','rodina'])) {
         if (!is_array($val0)) continue;
         foreach ($val0 as $id=>$val1) {
@@ -1804,10 +1820,12 @@ function log_write_changes() { // ----------------------------------------------
         }
       }
     }
+    // přidej aktuální skeleton formuláře
+    $changes->form= $vars->form;
     $val= json_encode_2($changes);
     $res= pdo_query_2("UPDATE prihlaska SET save=NOW(),vars_json='$val' WHERE id_prihlaska=$idw",1);
     if ($res===false && $TRACE)
-      display("LOG_WRITE_VARS fail");
+      display("LOG_WRITE_CHANGES fail");
   }
   elseif ($TRACE)
       display("LOG_WRITE_VARS fail - no sesssion");
@@ -1838,13 +1856,26 @@ function log_load_changes() { // -----------------------------------------------
   if (!$vars_json) goto end;
   $chngs= json_decode($vars_json,false); // JSON objects will be returned as objects
   foreach ($chngs as $name=>$val0) {
+    if ($name=='form') {
+      $vars->form= $val0;
+      continue;
+    }
     foreach ($val0 as $id=>$val1) {
       foreach ($val1 as $fld=>$val2) {
         if ($name=='pobyt') {
-          $vars->$name->$fld[1]= $val2;
+          $vars->$name->$fld= 
+            [is_array($vars->$name->$fld) ? $vars->$name->$fld[0] : $vars->$name->$fld
+            ,$val2];
         }
         else {
-          $vars->$name[$id]->$fld[1]= $val2;
+          if (!isset($vars->$name[$id])) {
+            if ($name=='cleni') {
+              vytvor_clena($id,$val1->role,$val1->spolu??0);
+            }
+          }
+          $vars->$name[$id]->$fld= 
+            [is_array($vars->$name[$id]->$fld) ? $vars->$name[$id]->$fld[0] : $vars->$name[$id]->$fld
+            ,$val2];
         }
       }
     }
