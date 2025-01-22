@@ -1099,7 +1099,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
         alert(msg);
       }
     }
-    item { title:'ukázat data', skill:'m', 
+    item { title:'ukázat data', skill:'m|mm', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
       func onclick_() {}
     }
@@ -1475,6 +1475,10 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
     item { title:'=zazurovění dětí a rodiny', skill:'daea', proc onclick () {
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
+    item { title:'-ukázat data', skill:'m|mm', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',['rodina',key_rodina],&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 }
 # ==========================================================================================> MODULY
