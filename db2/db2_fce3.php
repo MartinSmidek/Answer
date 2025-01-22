@@ -10707,7 +10707,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
 function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
   global $USER;
-  $access= $USER->access;
+  $access= 0 + $USER->access;
   $msg= '';
   $cleni= "";
   $rodiny= array();
