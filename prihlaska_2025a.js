@@ -8,23 +8,23 @@
  */
 
 // ------------------------------------------------------------------------------------ elem changed
-// pro název PHP funkce vzatý z button.id
+// vrátí změněný element s jeho novou hodnotou
 function elem_changed(elem) {
   elem.classList.add('chng');
-  let x= {cmd:'ulozit_stav',args:[{}]};
+  let x= {cmd:'ulozit_stav',args:[]};
   let id= jQuery(elem).attr('id');
+  x.args[0]= id;
   if (id && jQuery(elem).hasClass('chng')) { 
     if (jQuery(elem).attr('type') === 'checkbox') {
         // Pro checkbox vrátíme 0 nebo 1 podle stavu
-        x.args[0][id]= jQuery(elem).is(':checked') ? 1 : 0;
+        x.args[1]= jQuery(elem).is(':checked') ? 1 : 0;
     } else {
         // Pro ostatní inputy a textarea vrátíme jejich hodnotu
-        x.args[0][id]= jQuery(elem).val();
+        x.args[1]= jQuery(elem).val();
     }
   }
   ask(x,after_php);
 }
-
 // ===========================================================================================> AJAX
 // ---------------------------------------------------------------- php se jménem funkce v button.id
 // pro název PHP funkce vzatý z button.id
@@ -93,6 +93,7 @@ function after_php(DOM) {
         case 'show': elem.show(); break;
         case 'disable': elem.prop('disabled', true); break;
         case 'enable': elem.prop('disabled', false); break;
+        case 'ok': elem.addClass('chng_ok'); break;
         default: 
           if (elem.is('input')) 
             elem.val(val); 

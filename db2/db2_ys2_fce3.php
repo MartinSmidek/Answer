@@ -3338,7 +3338,8 @@ function prihl_open($ida,$hotove=1) { trace();
         ,GROUP_CONCAT(DISTINCT stav ORDER BY p.id_prihlaska) AS _stavy
         ,TRIM(GROUP_CONCAT(DISTINCT LEFT(browser,4) SEPARATOR ' '))
         ,MAX(p.id_prihlaska) AS _id_prihlaska
-        ,COUNT(*) AS x, MIN(open) AS _open_, MAX(p.id_pobyt) AS _pobyt
+        ,MAX(IFNULL(p.id_pobyt,0)) AS _pobyt
+        ,COUNT(*) AS x, MIN(open) AS _open_
       FROM prihlaska AS p
       LEFT JOIN rodina USING (id_rodina)
       LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%')
@@ -3349,11 +3350,12 @@ function prihl_open($ida,$hotove=1) { trace();
       GROUP BY _email
       $HAVING
       ORDER BY _open_ DESC");
-  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak,$idpr)= pdo_fetch_array($rp))) {
+  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak,$idw,$idp)= pdo_fetch_array($rp))) {
     $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
+    $_idw= $idw ? tisk2_ukaz_prihlasku($idw,$ida,$idp,'','',$idw) : $idw;
     $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');
-    $row= "<tr><td title='$stavy' align='right'>$idpr => </td><td>$kdy</td><td title='$jak'>$email</td>"
+    $row= "<tr><td title='$stavy' align='right'>$_idw => </td><td>$kdy</td><td title='$jak'>$email</td>"
         . "<td>$osoba $_ido</td><td>$rodina $_idr</td>"
         . ( $ido ? '' : "<td title='$stavy'>$pokusy</td>")
         . "<td>$jak</td></tr>";
