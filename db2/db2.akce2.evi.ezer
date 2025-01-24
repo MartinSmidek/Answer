@@ -873,12 +873,22 @@ form _page {
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' }
     show vek   [,,30,] {title:'věk', format:'r' }
     show role  [,,10,] {title:'role'}
-    proc onrowclick() {
-      has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
-      this.blur(1);
-    | cleni_click(id_osoba.get);
-      [ track.display; track.back_show('osoba',ido.get) ];
+    func onrowclick() {
+      if (has_skill('mrop')) {
+        this.browse_active(last); cleni_click(ido0);
+        this.blur(1);
+      }
+      else {
+        cleni_click(id_osoba);
+        if (track.display()) track.back_show('osoba',ido);
+      }
     }
+//    proc onrowclick() {
+//      has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
+//      this.blur(1);
+//    | cleni_click(id_osoba.get);
+//      [ track.display; track.back_show('osoba',ido.get) ];
+//    }
     proc cleni_click(id) {
       accessed(org.get);
       // zobrazení člena rodiny, případná úprava focus

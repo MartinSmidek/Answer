@@ -75,7 +75,7 @@ func akce_onstart() { var m:object
   if (has_skill('yd2') && my_access<org_ds) my_access= my_access | org_ds;
   m= match('(?:^|\s)(t|T)(?:\s|$)',sys('user','skills'));
   team_access= !m ? 0 : (m.s1=='T' ? 2 : 1);
-  echo(`team_access=${team_access}, my_org=${my_org}`);
+  echo(`team_access=${team_access}, my_org=${my_org}, my_access=${my_access}`);
 //  my_org= my_access==3 ? sys('user','org') : my_access;  ????????? 22/5/2024
   // hodnoty zapamatované pro navázání na předchozí session
   the_source= get_cookie(`${sys('root')}_akce_source`,'sey');
@@ -1111,7 +1111,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
         alert(msg);
       }
     }
-    item { title:'ukázat data', skill:'m', 
+    item { title:'ukázat data', skill:'m|mm', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
       func onclick_() {}
     }
@@ -1487,6 +1487,10 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
     item { title:'=zazurovění dětí a rodiny', skill:'daea', proc onclick () {
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
+    item { title:'-ukázat data', skill:'m|mm', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',['rodina',key_rodina],&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 }
 # ==========================================================================================> MODULY
