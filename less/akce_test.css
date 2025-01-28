@@ -91,10 +91,22 @@ html body div.wrapper main div.box {
 }
 html body div.wrapper main div.box div.clen,
 html body div.wrapper main div.box div.rodina {
-  display: inline-block;
+  display: table;
   padding: 5px;
   margin: 5px;
   background: #f7c2c9;
+}
+html body div.wrapper main div.box div.clen .modal,
+html body div.wrapper main div.box div.rodina .modal {
+  z-index: 2001;
+  position: relative;
+  display: inline;
+}
+html body div.wrapper main div.box.modal-box {
+  padding: 0px;
+  margin: 0px;
+  background: transparent;
+  display: inline-block;
 }
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;

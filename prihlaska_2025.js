@@ -74,7 +74,8 @@ function php0(name_pars) {
   }
   jQuery('#errorbox').hide().html('');
   jQuery('#mailbox').hide().html('');
-  jQuery('.popup').hide(); jQuery('#popup_mask').hide()
+//  jQuery('.popup').hide(); 
+  jQuery('#popup_mask').hide()
   ask(x,after_php);
 }
 // --------------------------------------------------------------------------------------- after php

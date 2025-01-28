@@ -64,8 +64,16 @@ html {
           display:block; margin: 20px; padding: 20px;
           background-color: @form_b;
           div.clen, div.rodina {
-            display: inline-block; padding: 5px; margin: 5px;
+            display: table; padding: 5px; margin: 5px;
             background: darken(@form_b,10%);
+            .modal { // samostatně editovaná skupina 
+              z-index:2001; position:relative; display:inline;
+            }
+          }
+          &.modal-box {
+            padding: 0px; margin: 0px;
+            background: transparent;
+            display: inline-block;
           }
           div.clen {
             margin-left: 50px; 

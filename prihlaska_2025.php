@@ -17,7 +17,7 @@ ini_set('display_errors', 'On');
 $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
 $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
-//$TEST_mail= 'martin@smidek.eu';
+$TEST_mail= 'martin@smidek.eu';
 //$TEST_mail= 'martin.smidek@gmail.com';
 //$TEST_mail= 'marie@smidkova.eu';
 //$TEST_mail= 'jakub@smidek.eu';
@@ -32,7 +32,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'z.krtek@seznam.cz';
 //$TEST_mail= 'sequens@seznam.cz';              // oba osobní ale ten stejný
 //$TEST_mail= 'nemec_pavel@hotmail.com';        // oba jen rodinný
-//$TEST_mail= '';
+$TEST_mail= 'pavel.bajer@volny.cz';             // bezdětní
 //$TEST_mail= '';
 //$TEST_mail= '';
 
@@ -473,9 +473,9 @@ function prihlaska($nova=1) {
         'deti'=>$akce->p_deti, // 0=nic, 1=tlačítko, 2=seznam
         'pecouni'=>$akce->p_pecouni ? 0 : -1, // -1=nejsou povolení
         'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>0,
-        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
-        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
-        'exit'=>0,      // 1 => první stisk 
+//        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
+//        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
+//        'exit'=>0,      // 1 => první stisk 
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
@@ -588,26 +588,12 @@ function prazdna() {
 } // prazdna
 // ---------------------------------------------------------------------------------- přidání dítěte
 function nove_dite() { 
-  global $vars;
-  $id= 0;
-  foreach (array_keys($vars->cleni) as $is) {
-    $id= min($id,$is);
-  }
-  $id--;
-  vytvor_clena($id,'d',1);
-  log_write_changes();
+  vytvor_noveho_clena('d',1);
   form_deti(2);
 }
 // --------------------------------------------------------------------------------- přidání pečouna
 function novy_pecoun() { 
-  global $vars;
-  $id= 0;
-  foreach (array_keys($vars->cleni) as $is) {
-    $id= min($id,$is);
-  }
-  $id--;
-  vytvor_clena($id,'p',1);
-  log_write_changes();
+  vytvor_noveho_clena('p',1);
   form_pecouni(2);
 }
 
@@ -689,12 +675,12 @@ function form_deti($detail) { // -----------------------------------------------
       if (get('o','umrti',$id)) 
         $deti.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['jmeno','prijmeni',', *','narozeni',' &dagger;','umrti'])
+          . elem_text('o',$id,['jmeno',' ','prijmeni',', *','narozeni',' &dagger;','umrti'])
           . "</div>";
       else
         $deti.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role'])
+          . elem_text('o',$id,['jmeno',' ','prijmeni',',','narozeni',',','role'])
           . elem_input('o',$id,['note'])
           . "</div>";
     }
@@ -743,26 +729,31 @@ function form_pecouni($detail) { // ------------------------------------------ z
       <i class='fa fa-eye'></i> zobrazit pečovatele</button>";
   }
   else { // detail==2
-    // pokud jsou nějací členové s role=p tak zobraz napřed je, teprve na další stisk přidej prázdné
     $part.= "<div id='pecouni' class='cleni'>";
     $part.= '<p><i>Volba osobního pečovatele</i></p>';
-    foreach ($vars->cleni as $id=>$clen) {
+    // zpbraz známé pečouny 
+    foreach (array_keys($vars->cleni) as $id) {
       if ($id<0 || get_role($id)!='p') continue;
       $spolu= get('o','spolu',$id);
       $part.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['jmeno','prijmeni',', ','narozeni'])
+          . elem_text('o',$id,['jmeno',' ','prijmeni',', ','narozeni'])
           . ($spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
           . "</div>";
     }
+    // zobraz vkládané pečovatele
     foreach ($vars->cleni as $id=>$clen) {
       if ($id>0 || get_role($id)!='p') continue;
+      // ochrana proti dalšímu nevyřešenému pečounovi
       $part.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni'])
-          . ($clen->spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
+          . elem_input('o',$id,['spolu']) . "<div class='modal'>"
+          . elem_input('o',$id,['jmeno','prijmeni']) . '</div>'
+          . ($clen->spolu ? elem_input('o',$id,['narozeni']) . '<br>'
+            . elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
           . "</div>";
     }
-    $part.= "<br><button onclick=\"php2('novy_pecoun');\">
+    // zobraz hledání nového
+    $part.= "<br><button onclick=\"php2('hledej,=1');\">
       <i class='fa fa-green fa-plus'></i> chci přihlásit dalšího osobního pečovatele</button>";
     $part.= "</div>";
   }
@@ -820,7 +811,7 @@ function form() { trace();
 //    $enable_send= '';
 //    $kontrola_txt= '';
 //  }
-//  // -------------------------------------------- redakce formuláře
+  // -------------------------------------------- redakce formuláře
 //  $enable_green= $vars->kontrola ? 'fa-green' : '';
 //  $odeslat= $vars->form->oprava??0 ? "uložit opravu" : "odeslat přihlášku";
 //  $exit= $vars->form->exit 
@@ -830,7 +821,11 @@ function form() { trace();
 //        <button id='prihlasit' onclick='php();' $enable_send><i class='fa $enable_green fa-send-o'></i>
 //           $odeslat</button>
 //         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
-  $kontrola_txt= $exit= '';
+  $exit= "<button id='prihlasit' onclick='php();'><i class='fa fa-green fa-send-o'></i>
+           odeslat přihlášku</button>
+         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
+  $kontrola_txt= '';
+//  $exit= '';
   $form= <<<__EOF
     <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
     <div id='form_par'></div>
@@ -848,22 +843,25 @@ __EOF;
 } // form - základní skeleton
 
 function hlaska($text,$continue='') { // --------------------------------- hláška
+# zobrazí hlášku s Ok pro ukončení případně na přechod na $continue
   global $DOM;
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   $DOM->alertbox_text= $text;
-  $cmd= $continue ? "php2('$continue');" : "jQuery('.popup').hide();jQuery('#popup_mask').hide();";
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
+  $cmd= $continue ? "php2('$continue')" : "";
   $DOM->alertbox_butts= "
-    <button onclick=\"$cmd\">OK</button>";
+    <button onclick=\"$cmd;$off\">OK</button>";
 } // popup s OK
 function dotaz($dotaz,$ano,$ne) { // -------------- dotaz s funkcemi pro ano a ne
   global $DOM;
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   $DOM->alertbox_text= $dotaz;
-  $cmd_ano= $ano ? "php2('$ano');" : "jQuery('.popup').hide();jQuery('#popup_mask').hide();";
-  $cmd_ne= $ne ? "php2('$ne');" : "jQuery('.popup').hide();jQuery('#popup_mask').hide();";
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
+  $cmd_ano= $ano ? "php2('$ano')" : "";
+  $cmd_ne= $ne ? "php2('$ne')" : "";
   $DOM->alertbox_butts= "
-    <button onclick=\"$cmd_ano\">ANO</button> &nbsp;
-    <button onclick=\"$cmd_ne\">NE</button>
+    <button onclick=\"$cmd_ano;$off\">ANO</button> &nbsp;
+    <button onclick=\"$cmd_ne;$off\">NE</button>
     ";
 } // popup s ANO / NE
 function vyber($dotaz,$odpovedi) { // -------------- výběr z více možností
@@ -871,15 +869,102 @@ function vyber($dotaz,$odpovedi) { // -------------- výběr z více možností
   global $DOM;
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   $DOM->alertbox_text= $dotaz;
-    $DOM->alertbox_butts= '';
+  $DOM->alertbox_butts= '';
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
   foreach ($odpovedi as $odpoved) {
     list($text,$fce,$par,$subtext)= explode(':',$odpoved.':::');
     if ($subtext??0) $subtext= "<br><small>$subtext</small>";
     $DOM->alertbox_butts.= "
-      <button onclick=\"php2('$fce,$par')\">$text$subtext</button> &nbsp;
+      <button onclick=\"php2('$fce,$par');$off\">"
+        . "$text$subtext</button> &nbsp;
     ";
   }
 } // popup s výběrem z více možností
+
+function hledej($faze,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledání osoby
+# $fáze=1 ... vyplnění jména a příjmení --> (3,5)
+#       2 ... čekání na úplné vyplnění --> (3)
+#       3 ... test vyplnění --> (2), nalezení stejnojmenných a zobrazení jako radiobuttons --> (4,5)
+#       4 ... pokud bylo vráceno ID tak vložení --> (5)
+#       5 ... pokud bylo zvoleno vložení nového --> (5)
+#       6 ... uvolnění dialogu, exit
+  global $DOM, $vars;
+  $DOM->modalbox= 'show'; $DOM->popup_mask= 'show'; 
+  switch ($faze) {
+    case 1: // ------------------------ primární dialog
+      $DOM->modalbox_text= 'Vyplňte prosím jméno a příjmení a potom zvolte Prohledat evidenci';
+      $DOM->modalbox_body= "
+        <div class='box modal-box'>
+          <label class='upper'>jméno<input type='text' id='jmeno' size='7'></label>
+          <label class='upper'>příjmení<input type='text' id='prijmeni' size='10'></label>
+        </div>
+        ";
+      $DOM->modalbox_butts= "
+        <button onclick=\"php2('hledej,=3,=0,jmeno,prijmeni');\">Prohledat evidenci</button> &nbsp;
+        <button onclick=\"php2('hledej,=6');\">Zpět</button>
+        ";
+      break; // primární dialog
+    case 2: // ------------------------ wait
+      break; // wait
+    case 3: // ------------------------ ujistíme se o zadání a pak projdeme jmenovce
+      if (!$jmeno || !$prijmeni) {
+        hlaska("Zadejte prosím jméno i příjmení",'hledej,=2,=0,jmeno,prijmeni');
+        break;
+      }
+      // nalezení jmenovců
+      $DOM->modalbox_body= "
+        <div class='box modal-box'>
+          <label class='upper'>jméno<input type='text' id='jmeno' size='7' disabled value='$jmeno'></label>
+          <label class='upper'>příjmení<input type='text' id='prijmeni' size='10' disabled value='$prijmeni'></label>
+        </div>
+        ";
+      $dotazy= [];
+      $ro= pdo_query_2("
+        SELECT o.id_osoba,
+          ROUND(IF(MONTH(narozeni),DATEDIFF(NOW(),narozeni)/365.2425,YEAR(NOW())-YEAR(narozeni))) AS _vek,
+          IF(adresa=1,o.obec,CONCAT('',r.obec)) AS _obec,
+          IF(kontakt=1,o.telefon,CONCAT('',r.telefony)) AS _telefon
+        FROM osoba AS o
+        LEFT JOIN 
+        ( SELECT id_osoba,obec,telefony
+          FROM tvori JOIN rodina USING (id_rodina)
+          WHERE deleted='' 
+          GROUP BY id_osoba,role
+          ORDER BY role ASC LIMIT 1
+        )  AS r ON r.id_osoba=o.id_osoba 
+        WHERE o.deleted='' AND umrti='' AND jmeno='$jmeno' AND prijmeni='$prijmeni'
+        HAVING _vek>15
+        ORDER BY _vek
+      ");
+      while ($ro && (list($id,$vek,$obec)= pdo_fetch_array($ro))) {
+        $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id,=$jmeno,=$prijmeni:$vek let, $obec";
+      }      
+      if (count($dotazy)==0) {
+      }
+      elseif (count($dotazy)>=1) {
+        $dotazy[]= "$jmeno $prijmeni:hledej:=5,=0,=$jmeno,=$prijmeni:která není v evidenci";
+        vyber("vyber si",$dotazy);
+      }
+      break; // procházení jmenovců
+    case 4: // ------------------------ vložení zvolené osoby
+      nacti_clena($ido,'p',1);
+      form_pecouni(2);
+      $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
+      break; // vložení zvolené osoby
+    case 5: // ------------------------ vytvoření zvolené osoby
+      $ido= vytvor_noveho_clena('p',1);
+      $vars->cleni[$ido]->jmeno= ['',$jmeno];
+      $vars->cleni[$ido]->prijmeni= ['',$prijmeni];
+      form_pecouni(2);
+      $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
+      break; // vytvoření zvolené osoby
+    case 6: // ------------------------ 
+      $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
+      break;
+  }
+} // popup pro nalezení nebo vložení osoby
+
+
 function array2object(array $array) {
   $object = new stdClass();
   foreach($array as $key => $value) {
@@ -951,6 +1036,7 @@ function page() {
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
   $hide= "style='display:none'";
+  $hide_2002= "style='display:none;z-index:2002'";
   echo <<<__EOD
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -1007,9 +1093,14 @@ function page() {
         </div>
         <!-- popup ----------------------------------------------------------------------------- -->
         <div id='popup_mask'></div>
-        <div $hide id='alertbox' class='popup' title='Upozornění'>
+        <div $hide_2002 id='alertbox' class='popup' title='Upozornění'>
           <p id='alertbox_text'></p>
           <p id='alertbox_butts'></p>
+        </div>
+        <div $hide id='modalbox' class='popup' title='Evidence pečovatele'>
+          <p id='modalbox_text'></p>
+          <p id='modalbox_body'></p>
+          <p id='modalbox_butts'></p>
         </div>
       </main>
       <footer>
@@ -1138,9 +1229,9 @@ function read_akce() { // ------------------------------------------------------
         'pass'=>0, // inicializovat pozici pro 0
         'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
         'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
-        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
-        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
-        'exit'=>0,      // 1 => první stisk 
+//        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
+//        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
+//        'exit'=>0,      // 1 => první stisk 
     ];
   }
 end:    
@@ -1309,7 +1400,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='o' ? $vars->cleni[$id]  : $vars->pobyt);
   $prfx= "{$id}_";
 //  $prfx= $table=='r' ? ''                 : ($table=='o' ? "{$id}_"           : '');
-  if (!isset($pair->_show_)) $pair->_show_= 1;
+//  if (!isset($pair->_show_)) $pair->_show_= 1;
   foreach ($flds as $fld) {
     if (!isset($desc[$fld])) {
 //      $html.= $fld;
@@ -1332,14 +1423,16 @@ function elem_input($table,$id,$flds) { // -------------------------------------
     else {
       $v= $pair->$fld;
     }
+    // pokud je v režimu kontroly zajisti orámování chng
+    $chng_css= in_array($name,$vars->form->kontrola) ? 'chng' : 'chng_ok';      
     $todo= '';
     // rozpoznání povinnosti položky
     if (substr($title,0,1)=='*') { //  && ($table!='o' || $pair->spolu)) {
       $title=  "<b style='color:red'>*</b>".substr($title,1);
-      if ($vars->form->todo 
-        && ($v=='' || in_array($typ,['select','sub_select']) && $v==0 || isset($pair->_corr_->$fld))) {
-        $todo= " class='missing'";
-      }
+//      if ($vars->form->todo 
+//        && ($v=='' || in_array($typ,['select','sub_select']) && $v==0 || isset($pair->_corr_->$fld))) {
+//        $todo= " class='missing'";
+//      }
     }
     $oninput= "onchange=\"elem_changed(this);\"";
     switch ($typ) {
@@ -1375,7 +1468,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
       $v= $v?: 0;
     default:
       $x= $v ? "value='$v'" : ''; // "placeholder='$holder'";
-      $c= $v_chng ? " class='chng_ok' " : '';
+      $c= $v_chng ? " class='$chng_css' " : '';
       $html.= "<label class='upper'>$title<input type='text' id='$name' size='$len' $x$c$todo $oninput></label>";
     }
   }
@@ -1408,6 +1501,18 @@ function vytvor_clena($ido,$role,$spolu) { // ----------------------------------
   }
   $vars->cleni[$ido]->role= ['',$role];
   $vars->cleni[$ido]->spolu= [0,$spolu];
+}
+// --------------------------------------------------------------------------------- přidání pečouna
+function vytvor_noveho_clena($role,$spolu) { 
+  global $vars;
+  $ido= 0;
+  foreach (array_keys($vars->cleni) as $is) {
+    $ido= min($ido,$is);
+  }
+  $ido--;
+  vytvor_clena($ido,$role,$spolu);
+  log_write_changes();
+  return $ido;
 }
 function vytvor_web_json() { // ---------------------------------------------------- vytvor web_json
   global $errors, $vars;

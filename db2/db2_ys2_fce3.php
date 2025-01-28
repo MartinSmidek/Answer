@@ -3265,7 +3265,10 @@ function prihl_add() { trace();
 # --------------------------------------------------------------------------------------- prihl show
 # vrátí tabulku osobních otázek páru
 function prihl_show($idp,$idw) { trace();
-  $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw);
+  $verze= select('verze','prihlaska',"id_prihlaska=$idw");
+  $html= $verze=='2025.1' 
+      ? sys_db_rec_show('prihlaska','id_prihlaska',$idw)
+      : prihl_show0($idp,$idw);
   return $html;
 }
 function prihl_show0($idp,$idpr) { trace();
