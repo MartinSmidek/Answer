@@ -259,6 +259,16 @@ function browseShow_addClass(show,i,css) {
 function get_type(elem) {
   return elem.type;
 }
+// --------------------------------------------------------------------------------------- match tag
+// vrátí 1 pokud elem.tag vyhovuje regulárnímu výrazu
+function match_tag(elem,regexpr) {
+  let ok= 0;
+  if (elem.options!==undefined && elem.options.tag!==undefined) {
+    let re= new RegExp(regexpr);
+    ok= re.test(elem.options.tag) ? 1 : 0;
+  }
+  return ok;
+}
 // ---------------------------------------------------------------------------------------- add days
 // funkce pro přičtení/odečtení 'ofset' dnů k danému datu.
 function add_days(datum,ofset) {

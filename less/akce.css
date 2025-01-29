@@ -64,6 +64,7 @@ html body div.wrapper main {
 }
 html body div.wrapper main .chng {
   outline: 2px solid red;
+  background: yellow;
 }
 html body div.wrapper main .chng_ok {
   outline: 2px solid green;

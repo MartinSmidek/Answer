@@ -376,6 +376,7 @@ table akce { key_id:'id_duakce'
   number web_obsazeno
   number web_kalendar  // chlapi.online 1=ukázat v kalendáři 2=ukázat jen jako rezervovaný termín
   text web_online
+  text web_prihlaska   // PHP soubor realizující přihlášku
   text web_anotace
   text web_url
   text web_wordpress

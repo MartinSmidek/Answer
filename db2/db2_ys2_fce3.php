@@ -287,16 +287,14 @@ function akce_clone($ida,$rok,$save=0) {
 }
 # ----------------------------------------------------------------------------------- akce prihlaska
 # vrátí URL přihlášky pro ostrou nebo testovací databázi
-function akce_prihlaska($id_akce,$cmd,$par='') {
-  global $answer_db;
-  $prihlaska= 
-      $answer_db=='ezer_db2'      ? 'prihlaska_2025.php' : (
-      $answer_db=='ezer_db2_test' ? 'prihlaska_2025.php'   : '???');
-  $goal= "$prihlaska?akce=$id_akce$par";
+function akce_prihlaska($id_akce,$prihlaska,$par='') {
+//  global $answer_db;
+//  $prihlaska= 
+//      $answer_db=='ezer_db2'      ? 'prihlaska_2025.php' : (
+//      $answer_db=='ezer_db2_test' ? 'prihlaska_2025.php'   : '???');
+  $goal= "$prihlaska.php?akce=$id_akce$par";
   $url= "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['HTTP_HOST']}/$goal";
-  switch ($cmd) {
-    case 'a': $res= "<a href='$url' target='pri'>$goal</a>"; break;
-  }
+  $res= "<a href='$url' target='pri'>$goal</a>"; 
   return $res;
 }
 # ----------------------------------------------------------------------------------- akce ucastnici

@@ -17,7 +17,7 @@ ini_set('display_errors', 'On');
 $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
 $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
-$TEST_mail= 'martin@smidek.eu';
+//$TEST_mail= 'martin@smidek.eu';
 //$TEST_mail= 'martin.smidek@gmail.com';
 //$TEST_mail= 'marie@smidkova.eu';
 //$TEST_mail= 'jakub@smidek.eu';
@@ -33,7 +33,9 @@ $TEST_mail= 'martin@smidek.eu';
 //$TEST_mail= 'sequens@seznam.cz';              // oba osobní ale ten stejný
 //$TEST_mail= 'nemec_pavel@hotmail.com';        // oba jen rodinný
 //$TEST_mail= 'pavel.bajer@volny.cz';           // bezdětní
-//$TEST_mail= 'milada.barotova@gmail.com';      // vdova
+$TEST_mail= 'milada.barotova@gmail.com';      // vdova
+//$TEST_mail= 'lina.ondra@gmail.com';           // úmrtí dítěte
+//$TEST_mail= '';
 //$TEST_mail= '';
 
 $errors= [];
@@ -672,14 +674,20 @@ function form_manzele() { // ---------------------------------------------------
   foreach (array_keys($vars->cleni) as $id) {
     $role= get_role($id);
     if (in_array($role,['a','b'])) {
-      $upozorneni= $akce->p_upozorneni
-        ? "<p class='souhlas'><input type='checkbox' id='{$id}_Xupozorneni' value=''  "
-        . (get('o','Xupozorneni',$id) ? 'checked' : '')
-        . " {$mis_upozorneni[$role]}><label for='{$id}_Xupozorneni' class='souhlas'>"
-        . str_replace('@',$role=='b'?'a':'',$akce->upozorneni)
-        . "</label></p>"
-        : '';
-      $clenove.= "<div class='clen'>" 
+      if (get('o','umrti',$id)) {
+        $clenove.= "<div class='clen'>" 
+          . elem_text('o',$id,['jmeno',' ','prijmeni',', *','narozeni',' &dagger;','umrti'])
+          . "</div>";
+      }
+      else {
+        $upozorneni= $akce->p_upozorneni
+          ? "<p class='souhlas'><input type='checkbox' id='{$id}_Xupozorneni' value=''  "
+          . (get('o','Xupozorneni',$id) ? 'checked' : '')
+          . " {$mis_upozorneni[$role]}><label for='{$id}_Xupozorneni' class='souhlas'>"
+          . str_replace('@',$role=='b'?'a':'',$akce->upozorneni)
+          . "</label></p>"
+          : '';
+        $clenove.= "<div class='clen'>" 
           . ( $id>0
               ? elem_input('o',$id,['spolu']) . elem_text('o',$id,['<span>','jmeno',' ','prijmeni']) 
                 . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
@@ -688,7 +696,8 @@ function form_manzele() { // ---------------------------------------------------
               : elem_input('o',$id,['spolu']) . elem_input('o',$id,['jmeno','prijmeni'])
                 . ($role=='b' ? elem_input('o',$id,['rodne']) : '')
                 . elem_input('o',$id,[',','narozeni'])
-                . elem_text('o',$id,['role']))
+                . elem_text('o',$id,['role'])
+            )
           . '<br>'
           . ($akce->p_kontakt ? elem_input('o',$id,['email','telefon']) : '')
           . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
@@ -697,6 +706,7 @@ function form_manzele() { // ---------------------------------------------------
               'aktivita','cirkev','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) 
           . $upozorneni
           . "</div>";
+      }
     }
   }
   $DOM->form_par= ['show',$clenove];
@@ -720,7 +730,7 @@ function form_deti($detail) { // -----------------------------------------------
       $jsou_deti++;
       if (get('o','umrti',$id)) {
         $deti.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu'])
+//          . elem_input('o',$id,['spolu'])
           . elem_text('o',$id,['jmeno',' ','prijmeni',', *','narozeni',' &dagger;','umrti'])
           . "</div>";
       }
@@ -1397,7 +1407,6 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
           if (!in_array($id,$but)) {
             $missed[]= "$prfx$f";
             display("chybí $table $id $f");
-            goto end;
           }
         }
       }
@@ -1414,7 +1423,6 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
             if (!in_array($id,$but)) {
               $missed[]= "$prfx$f";
               display("chybí $table $id $f");
-              goto end;
             }
           }
         }
@@ -1431,7 +1439,6 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
             if (!in_array($id,$but)) {
               $missed[]= "$prfx$f";
               display("chybí $table $id $f");
-              goto end;
             }
           }
         }
