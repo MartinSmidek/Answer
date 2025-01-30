@@ -10490,7 +10490,11 @@ function evid2_deti_access($idr,$access=3) {
 function evid2_elim_tips($type) {
   $ret= (object)array('ids'=>0,'tip'=>"''");
   if ($type=='mail') {
-    $ret= evid2_elim_mail_tips();
+    $ret= evid2_elim_fld_tips('email');
+    goto end;
+  }
+  elseif ($type=='telefon') {
+    $ret= evid2_elim_fld_tips('telefon');
     goto end;
   }
   switch ($type) {
@@ -10559,16 +10563,17 @@ end:
   return $ret;
 }
 # ---------------------------------------------------------------------------------- evid2 elim_tips
-# tipy na duplicitu mailů - vrací seznam
+# tipy na duplicitu mailů nebo telefonů - vrací seznam
 #   mail - lidi se stejným mailem
-function evid2_elim_mail_tips() {
+function evid2_elim_fld_tips($fld) {
   $ret= (object)array('ids'=>0,'tip'=>"''");
   $m_os= [];
-  $zs= pdo_qry("SELECT id_osoba,email FROM osoba WHERE kontakt=1 AND email!='' AND deleted='' "
+  $zs= pdo_qry("SELECT id_osoba,$fld FROM osoba WHERE kontakt=1 AND $fld!='' AND deleted='' "
 //      . "AND prijmeni='Červeň'"
       . "ORDER BY id_osoba ");
   while ($zs && (list($ido,$mails)= pdo_fetch_row($zs))) {
     foreach (preg_split('/\s*[,;]\s*/',trim($mails," \n\r\t;,#")) as $m) {
+      $m= str_replace(' ','',$m);
       if (!isset($m_os[$m])) 
         $m_os[$m]= [$ido];
       else

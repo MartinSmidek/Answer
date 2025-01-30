@@ -11,6 +11,35 @@ function TEST() {
   $zmen= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$od')>0");
   return "v $table bylo za $dnu dnu $zmen zmen";
 }
+# ------------------------------------------------------------------------------------------- ds2 kc
+function CORR() {
+  $n= 0;
+  $ro= pdo_qry("
+    SELECT id_osoba, prijmeni,jmeno,COUNT(*) AS _n,
+      GROUP_CONCAT(id_dar) AS _dar,
+      GROUP_CONCAT(id_akce) AS _akce,
+      GROUP_CONCAT(t.id_rodina) AS _rodina,
+      GROUP_CONCAT(id_platba) AS _platba
+    --  ,kdo,kdy
+    FROM osoba AS o
+    LEFT JOIN dar USING (id_osoba)
+    LEFT JOIN spolu USING (id_osoba)
+    LEFT JOIN pobyt USING (id_pobyt)
+    LEFT JOIN tvori AS t USING (id_osoba)
+    LEFT JOIN platba ON  id_oso=o.id_osoba
+    -- LEFT JOIN _track ON kde='osoba' AND klic=o.id_osoba AND fld='access'
+    WHERE o.deleted='' AND o.access=64 AND id_osoba<27500
+    GROUP BY id_osoba 
+    HAVING ISNULL(_dar) AND ISNULL(_akce) AND ISNULL(_rodina) AND ISNULL(_platba)
+  ");
+  while ($ro && (list($ido,$prijmeni,$jmeno)= pdo_fetch_array($ro))) {
+    $n++;
+    display("CORR $ido: $prijmeni $jmeno");
+    query_track("UPDATE osoba SET deleted='H 2025-01-30' WHERE id_osoba=$ido");  
+//    break;
+  }    
+  return "$n skryto";
+}
 # ----------------------------------------------------------------------------------------- clenstvo
 # doplní typ členství Y všem činným před $od
 function clenstvo($doit=0,$od='2017-03-04') {
