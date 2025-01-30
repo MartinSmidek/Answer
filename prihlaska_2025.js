@@ -25,6 +25,11 @@ function elem_changed(elem) {
   }
   ask(x,after_php);
 }
+// --------------------------------------------------------------------------------------- clear css
+// odstraní dané css
+function clear_css(css) {
+  jQuery('.'+css).removeClass(css);
+}
 // ===========================================================================================> AJAX
 // ---------------------------------------------------------------- php se jménem funkce v button.id
 // pro název PHP funkce vzatý z button.id
