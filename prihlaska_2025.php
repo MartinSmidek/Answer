@@ -26,7 +26,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'petr.janda@centrum.cz';
 //$TEST_mail= 'p.kvapil@kvapil.cz';
 //$TEST_mail= 'bucek@fem.cz';
-//$TEST_mail= 'hanasmidkova@seznam.cz';
+$TEST_mail= 'hanasmidkova@seznam.cz';
 //$TEST_mail= 'j-novotny@centrum.cz';
 //$TEST_mail= 'jslachtova@seznam.cz';
 //$TEST_mail= 'z.krtek@seznam.cz';
@@ -35,7 +35,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'pavel.bajer@volny.cz';           // bezdětní
 //$TEST_mail= 'milada.barotova@gmail.com';      // vdova
 //$TEST_mail= 'lina.ondra@gmail.com';           // úmrtí dítěte
-$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
+//$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
 //$TEST_mail= '';
 
 $errors= [];
@@ -209,6 +209,8 @@ if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
   $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
   $TEST= 1;
 }
+
+//$TEST= 2; // ===================================================================================== 2 => potlačení INSERT a UPDATE
 
 connect_db();           // napojení na databázi a na Ezer 
 read_akce();            // načtení údajů o akci z Answeru 
@@ -538,83 +540,82 @@ end:
 function prihlasit() { 
 # zapíše přihlášku do Answeru
   global $DOM, $vars, $akce, $errors;
-//  debug($elems,'prihlasit');
-//  read_elems($elems);
-//  $spolu= 0;
-//  foreach (array_keys($vars->cleni) as $id) {
-//    $spolu+= get('c','spolu',$id);
-//  }
-//  if (!$spolu) {
-//    hlaska('Přihlaste prosím na akci aspoň jednu osobu');
-//  }
-//  else {
-    // vytvoření pobytu
-    log_append_stav('zapis');
-    // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
-    $ucast= 0; // = účastník
-    if (isset($vars->pobyt->Xvps)) { // volba VPS (ne)sloužit
-      $sluzba= get('p','Xvps');
-      $ucast= $sluzba==1 ? 1 : 0;
-    }
-    set('p','funkce',$ucast);
-    // vytvoříme nový záznam pro pobyt, pokud nejde o opravu
-    if (!$vars->pobyt->id_pobyt) 
-      db_open_pobyt();
-    // ------------------------------ oprav rodinné údaje případně vytvoř rodinu
-    db_vytvor_nebo_oprav_rodinu();
+  // vytvoření pobytu
+  log_append_stav('zapis');
+  // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
+  $ucast= 0; // = účastník
+  if (isset($vars->pobyt->Xvps)) { // volba VPS (ne)sloužit
+    $sluzba= get('p','Xvps');
+    $ucast= $sluzba==1 ? 1 : 0;
+  }
+  set('p','funkce',$ucast);
+  // vytvoříme nový záznam pro pobyt, pokud nejde o opravu
+  if (!$vars->pobyt->id_pobyt) 
+    db_open_pobyt();
+  // ------------------------------ oprav rodinné údaje případně vytvoř rodinu
+  db_vytvor_nebo_oprav_rodinu();
+  if (count($errors)) goto db_end;
+  
+  // ------------------------------ přidej (případně vytvoř) členy rodiny
+  foreach (array_keys($vars->cleni) as $id) {
+    // přidání člena rodiny
+    db_vytvor_nebo_oprav_clena($id);
     if (count($errors)) goto db_end;
-    // ------------------------------ přidej (případně vytvoř) členy rodiny
-    foreach (array_keys($vars->cleni) as $id) {
-      // přidání člena rodiny
-      db_vytvor_nebo_oprav_clena($id);
-      if (count($errors)) goto db_end;
+  }
+  
+  // ------------------------------ vyřeš osobní pečovatele
+  foreach (array_keys($vars->cleni) as $id_dite) {
+    $id_pecoun= get_pecoun($id_dite);
+    if ($id_pecoun) {
+      db_zapis_pecovani($id_dite,$id_pecoun);
     }
-    db_close_pobyt();
-    log_write_changes(); // po zápisu do pobytu
-    // ------------------------------ uzavři formulář závěrečnou zprávou a mailem
-    $ucastnici= ''; $del= ''; 
-    $emails= [$vars->email]; 
-    foreach (array_keys($vars->cleni) as $id) {
-      $spolu= get('o','spolu',$id);
-      if (!$spolu) continue;
-      $jmeno= get('o','jmeno',$id);
-      $prijmeni= get('o','prijmeni',$id);
-      $ucastnici.= "$del$jmeno $prijmeni"; 
-      $del= ', ';
-      if (!in_array(get_role($id),['a','b'])) continue;
-      $ems= preg_split('/[,;]/',get('o','email',$id));
-      foreach ($ems as $email) {
-        $email= trim($email);
-        if ($email && !in_array($email,$emails)) 
-          $emails[]= $email;
-      }
+  }
+
+  // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
+  db_close_pobyt();
+  log_write_changes(); // po zápisu do pobytu
+  $ucastnici= ''; $del= ''; 
+  $emails= [$vars->email]; 
+  foreach (array_keys($vars->cleni) as $id) {
+    $spolu= get('o','spolu',$id);
+    if (!$spolu) continue;
+    $jmeno= get('o','jmeno',$id);
+    $prijmeni= get('o','prijmeni',$id);
+    $ucastnici.= "$del$jmeno $prijmeni"; 
+    $del= ', ';
+    if (!in_array(get_role($id),['a','b'])) continue;
+    $ems= preg_split('/[,;]/',get('o','email',$id));
+    foreach ($ems as $email) {
+      $email= trim($email);
+      if ($email && !in_array($email,$emails)) 
+        $emails[]= $email;
     }
-    // mail 
-    $emaily= implode(', ',$emails);
-    $mail_subj= "Potvrzení přijetí přihlášky ($vars->klient) na akci $akce->nazev.";
-    $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci "
-    . "<b>$akce->nazev, $akce->misto</b> $akce->oddo pro účastníky $ucastnici."
-    . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
-    . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
-    . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-    . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
-    . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
-    $ok_mail= simple_mail($akce->garant_mail, $emails, $mail_subj,$mail_body,$akce->garant_mail); 
-    if ($ok_mail!='ok') { $errors[]= $ok_mail; goto db_end; }
-    $DOM->form= ['show',
-        "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.
-         <br>$akce->garant_jmeno"];
-    log_close();
+  }
+  // mail 
+  $emaily= implode(', ',$emails);
+  $mail_subj= "Potvrzení přijetí přihlášky ($vars->klient) na akci $akce->nazev.";
+  $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci "
+  . "<b>$akce->nazev, $akce->misto</b> $akce->oddo pro účastníky $ucastnici."
+  . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
+  . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
+  . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
+  . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
+  . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
+  $ok_mail= simple_mail($akce->garant_mail, $emails, $mail_subj,$mail_body,$akce->garant_mail); 
+  if ($ok_mail!='ok') { $errors[]= $ok_mail; goto db_end; }
+  $DOM->form= ['show',
+      "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.
+       <br>$akce->garant_jmeno"];
+  log_close();
 db_end:
-    if (count($errors)) {
-      log_append_stav('ko');
-      log_error(implode('|',$errors));
-      $DOM->form= ['show',
-          "Při zpracování přihlášky došlo bohužel k chybě. 
-           <br>Přihlaste se prosím posláním mailu organizátorům akce
-           <br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"];
-    }
-//  }
+  if (count($errors)) {
+    log_append_stav('ko');
+    log_error(implode('|',$errors));
+    $DOM->form= ['show',
+        "Při zpracování přihlášky došlo bohužel k chybě. 
+         <br>Přihlaste se prosím posláním mailu organizátorům akce
+         <br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"];
+  }
 } // prihlasit
 // ------------------------------------------------------------------------------- zahodit rozepsané
 function zahodit() { 
@@ -667,7 +668,7 @@ function DOM_zmena_spolu($idc) { // --------------------------------------------
   // zruš nevyplněného člena, který nepojede
   if (!get('o','spolu',$idc) && $idc<0 
       && get('o','jmeno',$idc)=='' && get('o','prijmeni',$idc)=='') {
-    if (!isset($vars->cleni[$idc]->o_pecoun) || !get('o','o_pecoun',$idc)) {
+    if (!get_pecoun($idc)) {
       unset($vars->cleni[$idc]);
       $clen_ID= "c_$idc"; 
       $DOM->$clen_ID= ['hide'];
@@ -742,8 +743,8 @@ function form_deti($detail) { // -----------------------------------------------
       // příprava osobního pečovatele - pokud jsou povoleni 
       if ($vars->form->pecouni ?? 0) { // jsou povoleni
         $display= $spolu ? "style='display:block'" : "style='display:none'";
-        if (!isset($vars->cleni[$id]->o_pecoun)) $vars->cleni[$id]->o_pecoun= 0;
-        $id_pecoun= get('o','o_pecoun',$id);
+        if (!get_pecoun($id)) $vars->cleni[$id]->o_pecoun= 0; // o_pecoun nemusí být definováno
+        $id_pecoun= get_pecoun($id);
         if ($id_pecoun) { // je osobní pečovatel
           $pecoun= $id_pecoun ? form_pecoun($id_pecoun) : '';
           $pecoun_form= "<div id='f_$id' class='clen' $display>$pecoun</div>";
@@ -757,9 +758,9 @@ function form_deti($detail) { // -----------------------------------------------
         $display_minus= $spolu && $id_pecoun ? "style='display:block'" : "style='display:none'";
         $pecoun_button= 
             "<button id='b_{$id}_plus' $display_plus onclick=\"php2('hledej,=1,=$id');\">
-              <i class='fa fa-green fa-plus'></i> osobní pečovatel</button>
+              <i class='fa fa-green fa-plus'></i> pečovatel pro toto dítě</button>
              <button id='b_{$id}_minus' $display_minus onclick=\"php2('form_pecoun_clear,=$id');\">
-              <i class='fa fa-red fa-minus'></i> osobní pečovatel</button>";
+              <i class='fa fa-red fa-minus'></i> pečovatel pro toto dítě</button>";
       }
       // vlož dítě
       $clen_ID= "c_$id"; 
@@ -821,15 +822,15 @@ function form_pecoun($id) { // ------------------------------------------ zobraz
   }
   return $part;
 } // form osobní pečoun
-function form_pecoun_show($id,$form=null) { // -------------- ukáže tlačítka a form osobního pečouna
+function form_pecoun_show($id_dite,$form=null) { // -------------- ukáže tlačítka a form osobního pečouna
   global $DOM;
-  $spolu= get('o','spolu',$id);
-  $button_plus= "b_{$id}_plus";
-  $button_minus= "b_{$id}_minus";
-  $fid= "f_$id";
+  $spolu= get('o','spolu',$id_dite);
+  $button_plus= "b_{$id_dite}_plus";
+  $button_minus= "b_{$id_dite}_minus";
+  $fid= "f_$id_dite";
   if ($spolu) { // dítě jede
-    $DOM->$button_plus= [get('o','o_pecoun',$id) ? 'hide' : 'show']; 
-    $DOM->$button_minus= [get('o','o_pecoun',$id) ? 'show' : 'hide']; 
+    $DOM->$button_plus= [get_pecoun($id_dite) ? 'hide' : 'show']; 
+    $DOM->$button_minus= [get_pecoun($id_dite) ? 'show' : 'hide']; 
     $DOM->$fid= $form===null ? ['show'] : ['show',$form];
   }
   else { // dítě nejede  
@@ -841,7 +842,7 @@ function form_pecoun_show($id,$form=null) { // -------------- ukáže tlačítka
 function form_pecoun_clear($id_dite) { // ------------------------------ odstranění osobního pečouna
 # odstranění pečouna daného dítěte ve vars i v DOM
   global $DOM, $vars;
-  $id_pecoun= get('o','o_pecoun',$id_dite);
+  $id_pecoun= get_pecoun($id_dite);
   set('o','o_pecoun','',$id_dite);
   unset($vars->cleni[$id_pecoun]);
   $name= "f_$id_dite"; $DOM->$name= ['empty'];
@@ -973,6 +974,7 @@ function vyber($dotaz,$odpovedi) { // -------------- výběr z více možností
     ";
   }
 } // popup s výběrem z více možností
+
 function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledání osoby
 # $fáze=1 ... vyplnění jména a příjmení --> (3,5)
 #       2 ... čekání na úplné vyplnění --> (3)
@@ -987,8 +989,8 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       $DOM->modalbox_text= 'Vyplňte prosím jméno a příjmení a potom zvolte Prohledat evidenci';
       $DOM->modalbox_body= "
         <div class='box modal-box'>
-          <label class='upper'>jméno<input type='text' id='jmeno' size='7'></label>
-          <label class='upper'>příjmení<input type='text' id='prijmeni' size='10'></label>
+          <label class='upper'>jméno<input type='text' id='jmeno' size='10'></label>
+          <label class='upper'>příjmení<input type='text' id='prijmeni' size='12'></label>
         </div>
         ";
       $DOM->modalbox_butts= "
@@ -1006,8 +1008,8 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       // nalezení jmenovců
       $DOM->modalbox_body= "
         <div class='box modal-box'>
-          <label class='upper'>jméno<input type='text' id='jmeno' size='7' disabled value='$jmeno'></label>
-          <label class='upper'>příjmení<input type='text' id='prijmeni' size='10' disabled value='$prijmeni'></label>
+          <label class='upper'>jméno<input type='text' id='jmeno' size='10' disabled value='$jmeno'></label>
+          <label class='upper'>příjmení<input type='text' id='prijmeni' size='12' disabled value='$prijmeni'></label>
         </div>
         ";
       $dotazy= [];
@@ -1029,13 +1031,37 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
         ORDER BY _vek
       ");
       while ($ro && (list($id,$vek,$obec)= pdo_fetch_array($ro))) {
-        $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id_dite,=$id,=$jmeno,=$prijmeni:$vek let, $obec";
+        if (je_na_teto_akci($id)) { 
+          $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id_dite,=$id,=$jmeno,=$prijmeni:"
+              . "<b class='fa-green'>$vek let, na akci s rodiči</b>";
+        }
+        else {
+          // zjistíme, zda nejde o člena přihlašované rodiny
+          $idr= $vars->idr;
+          $je_z_rodiny= $idr>0 
+              ? select1_2("SELECT COUNT(*) FROM tvori WHERE id_rodina=$idr AND id_osoba=$id AND role='d'")
+              : 0;
+          $dotazy[]= "$jmeno $prijmeni:hledej:=5,=$id_dite,=$id,=$jmeno,=$prijmeni:"
+              . ( $je_z_rodiny 
+                ? "<b class='fa-green'>$vek let, sourozenec</b>" 
+                : "$vek let, $obec");
+        }
       }      
-      $dotazy[]= "$jmeno $prijmeni:hledej:=5,=$id_dite,=0,=$jmeno,=$prijmeni:"
-          . "<b class='fa-red'>která není v evidenci</b>";
+      $dotazy[]= "$jmeno $prijmeni:hledej:=6,=$id_dite,=0,=$jmeno,=$prijmeni:"
+          . "<b class='fa-red'>chci přidat do evidence</b>";
       vyber("Vyberte pečovatele nebo vyplňte údaje nového",$dotazy);
       break; // procházení jmenovců
-    case 4: // ------------------------ vložení zvolené osoby
+    case 4: // ------------------------ vložení zvolené osoby, která je na kurzu
+      nacti_clena($ido,'p',0);
+      $vars->cleni[$id_dite]->o_pecoun= [0,$ido];
+      $vars->cleni[$ido]->o_dite= [0,$id_dite];
+      $vars->cleni[$ido]->role= [0,'p'];
+      log_write_changes(); 
+      $div= "f_$id_dite";
+      form_pecoun_show($id_dite,form_pecoun($ido));
+      $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
+      break; // vložení zvolené osoby, která je na kurzu
+    case 5: // ------------------------ vložení zvolené osoby
       nacti_clena($ido,'p',1);
       $vars->cleni[$id_dite]->o_pecoun= [0,$ido];
       $vars->cleni[$ido]->o_dite= [0,$id_dite];
@@ -1045,7 +1071,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       form_pecoun_show($id_dite,form_pecoun($ido));
       $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
       break; // vložení zvolené osoby
-    case 5: // ------------------------ vytvoření zvolené osoby
+    case 6: // ------------------------ vytvoření zvolené osoby
       $ido= vytvor_noveho_clena('p',1);
       $vars->cleni[$id_dite]->o_pecoun= [0,$ido];
       $vars->cleni[$ido]->o_dite= [0,$id_dite];
@@ -1057,7 +1083,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       form_pecoun_show($id_dite,form_pecoun($ido));
       $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
       break; // vytvoření zvolené osoby
-    case 6: // ------------------------ 
+    case 7: // ------------------------ konec
       $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
       break;
   }
@@ -1257,8 +1283,8 @@ function connect_db() { // -----------------------------------------------------
   $mysql_tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   # trasování 
   if ($TEST) {
-//    $totrace= 'Mu';
-    $totrace= 'u';
+    $totrace= 'Mu';
+//    $totrace= 'u';
   }
   $y= (object)[];
   // otevření databáze a redefine OBSOLETE
@@ -1357,6 +1383,11 @@ function get_role($id) { // ----------------------------------------------------
     $role= is_array($role) ? ($role[1] ?? $role[0]) : $role;
   }
   return $role;
+}
+function get_pecoun($id_dite) { // ----------------------------------------------------- get pečouna
+# vrátí 0 pokud nemá pečouna
+  global $vars;
+  return isset($vars->cleni[$id_dite]->o_pecoun) ? get('o','o_pecoun',$id_dite) : 0;
 }
 function get($table,$fld,$id=0) { // ----------------------------------------------------------- get
 # vrátí hodnotu v datovém tvaru - pro rodinnou není nutné udávat id
@@ -1655,6 +1686,13 @@ function byli_na_aktualnim_LK($rodina) { // ----------------------------------- 
       "akce.druh=1 AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
   return $byli;
 }
+function je_na_teto_akci($ido) { // ------------------------------------------------ je na této akci
+# zjistí, jestli daná osoba už je an této akci přihlášena
+  global $akce;
+  $je= select1_2("SELECT COUNT(*) FROM spolu JOIN pobyt USING (id_pobyt)
+      WHERE id_osoba=$ido AND id_akce=$akce->id_akce");
+  return $je;
+}
 function nacti_pobyt($idp) { trace();// -------------------------------------------------------- nacti pobyt
   global $vars, $p_fld;
   $vars->pobyt= (object)['id_pobyt'=>$idp];
@@ -1805,6 +1843,7 @@ function db_open_pobyt() { // --------------------------------------------------
   return $idp;
 }
 function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vytvor_nebo_oprav_clena
+# pokud mají roli=p a jsou noví přidáme je do rodiny, pokud nejsou noví do rodiny se nepřidají
   global $errors, $o_fld, $akce, $vars; 
   // pobyt a rodina už musí být zapsané
   $idp= $vars->pobyt->id_pobyt;
@@ -1885,7 +1924,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     $kontakt= 0;
     foreach ((array)$clen as $f=>$vals) {
       if (!isset($o_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
-      if (in_array($f,['spolu','role','vztah'])) continue; // nepatří do tabulky
+      if (in_array($f,['spolu','role','vztah','o_dite','o_pecoun'])) continue; // nepatří do tabulky
       if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
         if (in_array($f,['telefon','email','nomail']) && ($clen->kontakt[0]??0)==0) {
           $kontakt= 1; // přepnout z rodinného na osobní kontakt 
@@ -1969,6 +2008,25 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
     }
   }
 }
+function db_zapis_pecovani($id_dite,$id_pecoun) { // ----------------------------- db zapis_pecovani
+# propoj dítě s pečounem 
+# dítě má spolu.s_role=2
+# pečoun má spolu.s_role=5 a spolu.pecovane=id_dite  
+  global $vars;
+  $ida= $vars->id_akce;
+  $idp= $vars->pobyt->id_pobyt;
+  $s_dite= select1_2("SELECT id_spolu FROM spolu "
+      . "WHERE id_pobyt=$idp AND id_osoba=$id_dite");
+  $s_pecoun= select1_2("SELECT id_spolu FROM spolu JOIN pobyt USING (id_pobyt)"
+      . "WHERE id_akce=$ida AND id_osoba=$id_pecoun");
+  if (!$s_pecoun) {
+    log_error("Nastal problém s navázáním osobního pečovatele");
+  }
+  else {
+    query_track_2("UPDATE spolu SET s_role=2 WHERE id_spolu=$s_dite");
+    query_track_2("UPDATE spolu SET s_role=5,pecovane=$id_dite WHERE id_spolu=$s_pecoun");
+  }
+}
 function db_close_pobyt() { // ------------------------------------------------------ db close_pobyt
   global $errors, $p_fld, $vars;
   // úschova pobyt
@@ -2002,7 +2060,7 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $AKCE, $VERZE, $akce;
+  global $TEST, $AKCE, $VERZE, $akce;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
@@ -2012,7 +2070,7 @@ function log_open($email) { // -------------------------------------------------
     $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE',open=NOW(),IP='$ip',"
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
-      $_SESSION[$AKCE]->id_prihlaska= $id= pdo_insert_id();
+      $_SESSION[$AKCE]->id_prihlaska= $id= $TEST<2 ? pdo_insert_id() : 1;
       pdo_query_2("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
           . "VALUE (NOW(),'WEB','prihlaska',$id,'i','id_akce',$ida)",1);
       session_write_close();
@@ -2463,18 +2521,14 @@ function _ezer_qry($op,$table,$cond_key,$chng) { // ----------------------------
 # _ezer_qry = ezer_qry ALE
 # $TEST>0 zapne trasování
 # $TEST>1 nezapíše do db, vrací jako hodnotu 1
-  global $TEST, $trace, $USER;
+  global $USER;
   $ok= 1;
-  if ($TEST<2) {
-    $USER->abbr= 'WEB';
-    $ok= ezer_qry_2($op,$table,$cond_key,$chng,(object)['soft_u'=>1]);
-  }
-  if ($TEST) {
-    $trace.= debugx($chng,"$op $table.$cond_key = $ok (test=$TEST)");
-  }
+  $USER->abbr= 'WEB';
+  $ok= ezer_qry_2($op,$table,$cond_key,$chng,(object)['soft_u'=>1]);
   return $ok;
 }
-function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer verzi netestuje old
+function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { 
+# oproti Ezer verzi netestuje old
 # záznam změn do tabulky _track
 # 1. ezer_qry("INSERT",$table,$x->key,$zmeny[,$key_id]);       -- vložení 1 záznamu
 # 2. ezer_qry("UPDATE",$table,$x->key,$zmeny[,$key_id]);       -- oprava 1 záznamu
@@ -2486,7 +2540,7 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer ver
 #     zmeny= { fld:field, op:m|p|a, val:value}                    -- SET fld=value
 # verze 2:
 # par =  { id_key, soft_u }
-  global $ezer_db, $mysql_db, $mysql_db_track, $mysql_tracked, $USER;
+  global $ezer_db, $mysql_db, $mysql_db_track, $mysql_tracked, $USER, $TEST;
 //                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
   $key_id=    $par->key_id??'';
   // 0 testuje se table.old při rozdílu se vyvolá chyba | 1 do track se vlozi zmeny.old bez testu
@@ -2523,8 +2577,7 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer ver
     $key_val= 0;
     $qry= "INSERT INTO $table ($flds) VALUES ($vals)";
     $res= pdo_query_2($qry,$quiet);
-//    $result= $tab=="_cis" ?  $id_cis : pdo_insert_id();
-    $result= $res===false ? 0 : pdo_insert_id();
+    $result= $TEST<2 ? ($res===false ? 0 : pdo_insert_id()) : 2;
     $keys= $result;
     break;
   case 'UPDATE':
@@ -2536,32 +2589,7 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer ver
       if ( $fld!='zmena_kdo' && $fld!='zmena_kdy' ) $tracked[0][]= $zmena;
       $val= pdo_real_escape_string($zmena->val);
       switch ( $zmena->op ) {
-//      case 'a':
-//        $set.= "$del$fld=concat($fld,'$val')";
-//        break;
-//      case 'p':
-//        $set.= "$del$fld=concat('$val',$fld)";
-//        break;
-//      case 'd': // delete záznam row v chat
-//        $va= explode('|',$zmena->old);
-//        $old= pdo_real_escape_string($zmena->old);
-//        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
-//        unset($va[2*$zmena->row-2],$va[2*$zmena->row-1]);
-//        $vn= pdo_real_escape_string(implode('|',$va));
-//        $set.= "$del$fld='$vn'";
-//        $and.= " AND $fld='$old'";
-//        break;
-//      case 'c': // change záznam row v chat
-//        $old= pdo_real_escape_string($zmena->old);
-//        $va= explode('|',$old);
-//        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
-//        $va[2*$zmena->row-1]= $val;
-//        $vn= implode('|',$va);
-//        $set.= "$del$fld='$vn'";
-//        $and.= " AND $fld='$old'";
-//        break;
       case 'u':
-//      case 'U': // určeno pro hromadné změny
         $set.= "$del$fld='$val'";
         if ( isset($zmena->old) && !$soft_u ) {
           $old= pdo_real_escape_string($zmena->old);
@@ -2593,46 +2621,6 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer ver
     }
     $keys= $key_val;
     break;
-//  case 'UPDATE_keys':
-////                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
-//    $akeys= explode(',',$cond_key);
-//    sort($akeys);
-//    foreach ($akeys as $i => $key) {
-//      $tracked[$i][0]= $zmeny;
-//      $tracked[$i][0]->key= $key;
-//    }
-//    $keys= implode(',',$akeys);
-//    $fld= $zmeny->fld;
-//    $val= pdo_real_escape_string($zmeny->val);
-//    switch ( $zmeny->op ) {
-//    case 'm':
-//      // zjištění starých hodnot podle seznamu klíčů
-//      $qry= "SELECT GROUP_CONCAT($fld SEPARATOR '|') as $fld FROM $table WHERE $key_id IN ($keys)";
-//      $res= pdo_query_2($qry,1);
-//      if ( $res ) {
-//        $row= pdo_fetch_assoc($res);
-//        foreach (explode('|',$row[$fld]) as $i => $old) {
-//          $tracked[$i][0]->old= $old;
-//        }
-//      }
-//      $qry= "UPDATE $table SET $fld='$val' WHERE $key_id IN ($keys)";
-//      break;
-//    case 'a':
-//    case 'p':
-//      $concat= $zmeny->op=='a' ? "concat($fld,'$val')" : "concat('$val',$fld)";
-//      $qry= "UPDATE $table SET $fld=$concat WHERE $key_id IN ($keys)";
-//      break;
-//    case 'd':
-//    case 'c':
-//      fce_error("ezer_qry: hromadná operace {$zmeny->op} neimplementována");
-//      break;
-//    }
-//    // provedení UPDATE pro záznamy podle seznamu klíčů
-////                                                         display($qry);
-//    pdo_query_2($qry,1);
-//    break;
-//  default:
-//    fce_error("ezer_qry: operace $op neimplementována");
   }
   // zápis změn do _track
   if (strpos($table,".")!==false) {
@@ -2673,16 +2661,23 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer ver
 end:
   return $result;
 }
-function pdo_query_2($query,$quiet=false) {
+function pdo_query_2($query,$quiet=false) { // ------------------------------- tudy jdou všechny SQL
   global $ezer_db, $curr_db, $y, $TEST, $totrace;
   $err= '';   
   $ok= 'ok';
+  $insert_update= 0;
   $myqry= strtr($query,array('"'=>"'","<="=>'&le;',"<"=>'&lt;'));
   $pdo= $ezer_db[$curr_db][0];
   try {
-    if ( preg_match('/^\s*(INSERT|UPDATE)/',$query) ) {
-      $res= $pdo->exec($query);
-      if ($res===false) $err= $pdo->errorInfo()[2];
+    $m= null;
+    if ( preg_match('/^\s*(?:INSERT INTO|UPDATE)\s+(\w+)/i',$query,$m) ) {
+      $insert_update= $m[1];
+      if ($TEST<2) {
+        $res= $pdo->exec($query);
+        if ($res===false) $err= $pdo->errorInfo()[2];
+      }
+      else 
+        $res= 1;
     }
     else {
       $res= $pdo->query($query);
@@ -2697,10 +2692,10 @@ function pdo_query_2($query,$quiet=false) {
       else log_error($err);
     }
     // trasování
-    if ( $TEST && $totrace && strpos($totrace,'M')!==false ) {
+    if ( $TEST && $totrace && strpos($totrace,'M')!==false && $insert_update!='_track') {
       $pretty= trim($myqry);
-      if ( strpos($pretty,"\n")===false )
-        $pretty= preg_replace("/(WHERE|GROUP)/","\n\t\$1",$pretty);
+      if ($insert_update!='prihlaska')
+        $pretty= "<b style='color:red'>$pretty</b>";
       if ( isset($y) ) $y->qry= (isset($y->qry)?"$y->qry\n":'')."* $ok \"$pretty\"\n ";
     }
   }
@@ -2713,7 +2708,7 @@ function pdo_query_2($query,$quiet=false) {
     $res= false;
   }
   return $res;
-}
+} // <== tudy jdou všechny SQL
 function select_2($expr,$table='',$cond='') { // ------------------------------------------------ select 2
 # navrácení hodnoty jednoduchého dotazu
 # pokud je jediný argument je to celý dotaz
@@ -2757,8 +2752,8 @@ function select1_2($expr,$table='',$cond='') { // ------------------------------
   $qry= $table ? "SELECT $expr AS _result_ FROM $table WHERE $cond" : $expr;
   $res= pdo_query_2($qry,1);
   if ( $res ) {
-    $o= pdo_fetch_object($res);
-    $result= $o ? $o->_result_ : '';
+    $o= pdo_fetch_row($res);
+    $result= $o[0];
   }
   return $result;
 }
@@ -2786,3 +2781,82 @@ function map_cis_2($druh,$val='zkratka',$order='poradi') { // ------------------
   }
   return $cis;
 }
+function query_track_2($qry,$quiet=false) { // --------------------------------------- query track_2
+# oproti Ezer verzi netestuje old
+# provede některá SQL včetně zápisu do _track
+#   INSERT INTO tab (f1,f2,...) VALUES (v1,v2,...) ... vrací ID nového záznamu
+#   UPDATE tab SET f1=v1, f2=v2, ... WHERE id_tab=v0
+# kde vi jsou jednoduché hodnoty: číslo nebo string uzavřený v apostorfech 
+# trasovaná tabulka musí být uvedena v $mysql_tracked, jeji klíč musí být buďto ve tvaru id_tab
+# nebo být uveden v $mysql_tracked_id jako tab=>id
+  global $mysql_db_track, $mysql_tracked, $mysql_tracked_id, $TEST;
+  // rozklad výrazu: 1:table, 2:field list, 3:values list
+  $res= 0;
+  $m= null;
+  $ok= preg_match('/(INSERT)\s+INTO\s+([\w\.]+)\s+\(([,\s\w]+)\)\s+VALUE(?:S|)\s+\(((?:.|\s)+)\)$/',$qry,$m)
+    || preg_match('/(UPDATE)\s+([\w\.]+)\s+SET\s+(.*)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m)
+    || preg_match('/(DELETE)\s+FROM\s+([\w\.]+)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m)
+  ;
+//  debug($m);
+  $fce= $m[1] ?: '';
+  $tab= $m[2] ?: '';
+  if ( $mysql_db_track && strpos($mysql_tracked,",$tab,")!==false ) {
+    global $USER;
+    $abbr= isset($USER->abbr) ? $USER->abbr : 'WEB';
+    if ($ok && $fce=='INSERT') {
+      $fld= explode_csv($m[3]); 
+      $val= explode_csv($m[4]); 
+      $res= pdo_query_2($qry,$quiet);
+      $key_val= $TEST<2 ? pdo_insert_id() : 3;
+      for ($i= 0; $i<count($fld); $i++) {
+        $f= $fld[$i];
+        $v= $val[$i];
+//        if ($v[0]=="'") $v= substr($v,1,-1);
+//        $v= pdo_real_escape_string($v);
+        pdo_query_2("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
+            . "VALUE (NOW(),'$abbr','$tab',$key_val,'I','$f',$v)",$quiet);
+      }
+      $res= $key_val;
+    }
+    elseif ($ok && $fce=='UPDATE') {
+  //    debug($m);
+      $sets= explode_csv($m[3]); 
+      $key_id= $m[4];
+      $key_val= $m[5];
+      // kontrola podmínky
+      $ok= $key_id=="id_$tab" || $key_id==$mysql_tracked_id[$tab];
+      if ($ok) {
+        foreach ($sets as $set) {
+          list($fld,$val)= explode('=',$set,2);
+          if ($val[0]=="'") $val= substr($val,1,-1);
+          $val= pdo_real_escape_string($val);
+          pdo_query_2("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
+            . "VALUE (NOW(),'$abbr','$tab',$key_val,'u','$fld','$val')",$quiet);
+        }
+        $res= pdo_query_2($qry,$quiet);
+      }
+    }
+    elseif ($ok && $fce=='DELETE') {
+      $key_id= $m[3];
+      $key_val= $m[4];
+      // kontrola podmínky
+      $ok= $key_id=="id_$tab" || $key_id==$mysql_tracked_id[$tab];
+      if ($ok) {
+        pdo_query_2("INSERT INTO _track (kdy,kdo,kde,klic,op) "
+            . "VALUE (NOW(),'$abbr','$tab',$key_val,'x')",$quiet);
+        $res= pdo_query_2("DELETE FROM $tab WHERE $key_id=$key_val",$quiet);
+      }
+    }
+    else {
+      $ok= 0;
+    }
+    if (!$ok) {
+      log_error("funkce query-track nemá předepsaný tvar argumentu ale $qry");
+    }
+  }
+  else {
+    $res= pdo_query_2($qry,$quiet);
+  }
+end:
+  return $res;
+} 
