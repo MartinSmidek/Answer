@@ -111,10 +111,14 @@ html body div.wrapper main div.box.modal-box {
 }
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
+  margin-top: 10px;
 }
 html body div.wrapper main div.box div.clen button {
   float: right;
-  margin: 0px 10px -5px 0px;
+  margin: 0px 10px -6px 0px;
+}
+html body div.wrapper main div.box div.clen div.clen {
+  margin-left: 0px;
 }
 html body div.wrapper main div.box div.paru {
   margin: 10px 5px !important;
