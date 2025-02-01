@@ -11,7 +11,7 @@
 // vrátí změněný element s jeho novou hodnotou
 function elem_changed(elem) {
   elem.classList.add('chng');
-  let x= {cmd:'ulozit_stav',args:[]};
+  let x= {cmd:'DOM_zmena',args:[]};
   let id= jQuery(elem).attr('id');
   x.args[0]= id;
   if (id && jQuery(elem).hasClass('chng')) { 
@@ -102,6 +102,7 @@ function after_php(DOM) {
         case 'ok': elem.addClass('chng_ok').removeClass('chng'); break;
         case 'ko': elem.addClass('chng').removeClass('chng_ok'); break;
         case 'empty': elem.empty(); break;
+        case 'remove': elem.remove(); break;
         default: 
           if (elem.is('input')) 
             elem.val(val); 
