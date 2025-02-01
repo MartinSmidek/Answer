@@ -35,7 +35,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'pavel.bajer@volny.cz';           // bezdětní
 //$TEST_mail= 'milada.barotova@gmail.com';      // vdova
 //$TEST_mail= 'lina.ondra@gmail.com';           // úmrtí dítěte
-//$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
+$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
 //$TEST_mail= '';
 
 $errors= [];
@@ -132,7 +132,8 @@ function polozky() { // --------------------------------------------------------
   $o_fld= array_merge(
     [ // položky tabulky OSOBA
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
-      'o_pecoun'  =>[ 0,'osobní pečovatel','x','d'],  // 0=tlačítko n=id_osoba
+      'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
+      'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
       'jmeno'     =>[ 7,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
       'rodne'     =>[10,'rozená','','ab'],
@@ -146,7 +147,7 @@ function polozky() { // --------------------------------------------------------
       'email'     =>[35,'* e-mailová adresa','mail','ab']
       ] : [],
     $akce->p_obcanky ? [
-      'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
+      'obcanka'   =>[11,'číslo OP nebo pasu','','abp'],
       ] : [],
     $akce->p_pro_LK ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
@@ -475,7 +476,7 @@ function prihlaska($nova=1) {
         'pass'=>0,      // inicializovat pozici pro 0
         'par'=>1,
         'deti'=>$akce->p_deti, // 0=nic, 1=tlačítko, 2=seznam
-        'pecouni'=>$akce->p_pecouni ? 0 : -1, // -1=nejsou povolení
+        'pecouni'=>$akce->p_pecouni, // 0=nejsou povolení
         'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>0,
 //        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
 //        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
@@ -632,11 +633,6 @@ function nove_dite() {
   vytvor_noveho_clena('d',1);
   form_deti(2);
 }
-// --------------------------------------------------------------------------------- přidání pečouna
-function novy_pecoun() { 
-  vytvor_noveho_clena('p',1);
-  form_pecouni(2);
-}
 
 // ================================================================================= reakce na změny
 // ------------------------------------------------------------------------------------- ulozit stav
@@ -683,16 +679,15 @@ function form_manzele() { // ---------------------------------------------------
           : '';
         $clenove.= "<div class='clen'>" 
           . ( $id>0
-              ? elem_input('o',$id,['spolu']) . elem_text('o',$id,['<span>','jmeno',' ','prijmeni']) 
+              ? elem_input('o',$id,['spolu']) . elem_text('o',$id,['<div>','jmeno',' ','prijmeni']) 
                 . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
-                . elem_text('o',$id,[', ','narozeni', ', ','role','</span>'])
+                . elem_text('o',$id,[', ','narozeni', ', ','role','</div>'])
 //                  . elem_text('o',$id,[' ... TEST: ','vzdelani','|','cirkev'])
               : elem_input('o',$id,['spolu']) . elem_input('o',$id,['jmeno','prijmeni'])
                 . ($role=='b' ? elem_input('o',$id,['rodne']) : '')
                 . elem_input('o',$id,[',','narozeni'])
-                . elem_text('o',$id,['role'])
+                . elem_text('o',$id,['role']) . '<br>'
             )
-          . '<br>'
           . ($akce->p_kontakt ? elem_input('o',$id,['email','telefon']) : '')
           . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
           . '<br>'
@@ -705,6 +700,7 @@ function form_manzele() { // ---------------------------------------------------
   }
   $DOM->form_par= ['show',$clenove];
 } // form - manželé
+
 function form_deti($detail) { // ---------------------------------------------------- zobrazení dětí
   # detail=1 ... tlačítko [zobraz děti]
   # detail=2 ... děti a tlačítko [nové dítě] a tlačítko [zobraz pečouny]
@@ -718,10 +714,34 @@ function form_deti($detail) { // -----------------------------------------------
   else { // detail==2
     $part.= "<div id='deti' class='cleni'>";
     $deti= '';
-    $jsou_deti= 0;
-    foreach ($vars->cleni as $id=>$clen) {
-      if ($id<0 || get_role($id)!='d') continue;
-      $jsou_deti++;
+    $deti_nove= '';
+    foreach (array_keys($vars->cleni) as $id) {
+      if (get_role($id)!='d') continue;
+      $pecoun_button= $pecoun_form= '';
+      $spolu= get('o','spolu',$id);
+      // příprava osobního pečovatele - pokud jsou povoleni 
+      if ($vars->form->pecouni ?? 0) { // jsou povoleni
+        $display= $spolu ? "style='display:block'" : "style='display:none'";
+        if (!isset($vars->cleni[$id]->o_pecoun)) $vars->cleni[$id]->o_pecoun= 0;
+        $id_pecoun= get('o','o_pecoun',$id);
+        if ($id_pecoun) { // je osobní pečovatel
+          $pecoun= $id_pecoun ? form_pecoun($id_pecoun) : '';
+          $pecoun_form= "<div id='f_$id' class='clen' $display>$pecoun</div>";
+          $name= "b_{$id}_minus";
+        }
+        else { // není osobní pečovatel
+          $pecoun_form= "<div id='f_$id' class='clen'></div>";
+          $name= "b_{$id}_plus";
+        }
+        $display_plus= $spolu && !$id_pecoun ? "style='display:block'" : "style='display:none'";
+        $display_minus= $spolu && $id_pecoun ? "style='display:block'" : "style='display:none'";
+        $pecoun_button= 
+            "<button id='b_{$id}_plus' $display_plus onclick=\"php2('hledej,=1,=$id');\">
+              <i class='fa fa-green fa-plus'></i> osobní pečovatel</button>
+             <button id='b_{$id}_minus' $display_minus onclick=\"php2('form_pecoun_clear,=$id_pecoun');\">
+              <i class='fa fa-red fa-minus'></i> osobní pečovatel</button>";
+      }
+      // vlož dítě
       if (get('o','umrti',$id)) {
         // zemřelé dítě
         $deti.= "<div class='clen'>" 
@@ -729,47 +749,34 @@ function form_deti($detail) { // -----------------------------------------------
           . elem_text('o',$id,['jmeno',' ','prijmeni',', *','narozeni',' &dagger;','umrti'])
           . "</div>";
       }
-      else {
+      elseif ($id>0) {
         // dítě
-        $vars->cleni[$id]->o_pecoun= 0;
-        $display= get('o','spolu',$id) ? "style='display:block'" : "style='display:none'";
         $deti.= "<div class='clen'>" 
-          . "<button id='b_$id' $display onclick=\"\"><i class='fa fa-green fa-plus'></i>
-              osobní pečovatel</button>"
+          . $pecoun_button
           . elem_input('o',$id,['spolu'])
           . elem_text('o',$id,['jmeno',' ','prijmeni',', ','narozeni',', ', 'role'])
           . elem_input('o',$id,['note'])
+          . $pecoun_form
+          . "</div>";
+      }
+      else { // $id<0
+//        if (get('o','prijmeni',$id) || get('o','jmeno',$id)) $jsou_deti++;
+        $deti_nove.= "<div class='clen'>" 
+          . $pecoun_button
+          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','note'])
+          . $pecoun_form
           . "</div>";
       }
     }
-    foreach ($vars->cleni as $id=>$clen) {
-      if ($id>0 || get_role($id)!='d') continue;
-      if (get('o','prijmeni',$id) || get('o','jmeno',$id)) $jsou_deti++;
-        $deti.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','note'])
-          . "</div>";
-    }
     if ($deti) {
-      $pozn= $jsou_deti ? '' 
-          : "<br>Pokud děti nemáte, nechte všechna pole prázdná a zrušte 'jede na akci'.";
+      $pozn= "<br>Pokud děti nemáte, nechte všechna pole prázdná a zrušte 'jede na akci'.";
       $part.= "<p><i>Naše děti (zapište prosím i ty, které necháváte doma). $pozn</i></p>";
     }
-    $part.= $deti;
+    $part.= $deti.$deti_nove;
     $part.= "<br><button onclick=\"php2('nove_dite');\" >
       <i class='fa fa-green fa-plus'></i> chci přidat další dítě</button>";
-//    // pokud jsou povolení pečouni, zařaď je za děti
-//    if ($vars->form->pecouni>=0) { 
-//      $part.= "<div id='form_pecouni'></div>";
-//      if ($vars->form->pecouni==0) {
-//        $vars->form->pecouni= 1;
-//        log_write_changes();
-//      }
-//    }
     $part.= "</div>";
     $DOM->form_deti= ['show',$part];
-//    if ($vars->form->pecouni>0) { 
-//      form_pecouni($vars->form->pecouni);
-//    }
   } // seznam
   if ($vars->form->deti!=$detail) {
     $vars->form->deti= $detail;
@@ -777,50 +784,49 @@ function form_deti($detail) { // -----------------------------------------------
   }
 //  $DOM->form_deti= ['show',$part];
 } // form - seznam dětí
-function form_pecouni($detail) { // ------------------------------------------ zobrazení pečounů
-  # detail=1 ... tlačítko [zobraz pečouny]
-  # detail=2 ... pečouni a tlačítko [nový pečoun]
-  global $DOM, $vars;
-  $part= '';
-  if ($detail==1) {
-    $part.= "<br><button onclick=\"php2('form_pecouni,=2');\">
-      <i class='fa fa-eye'></i> chci přihlásit osobního pečovatele</button>";
-  } // tlačítko
-  else { // detail==2
-    $part.= "<div id='pecouni' class='cleni'>";
-    $part.= '<p><i>Volba osobního pečovatele</i></p>';
-    // zpbraz známé pečouny 
-    foreach (array_keys($vars->cleni) as $id) {
-      if ($id<0 || get_role($id)!='p') continue;
-      $spolu= get('o','spolu',$id);
-      $part.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['jmeno',' ','prijmeni',', ','narozeni'])
-          . ($spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
-          . "</div>";
-    }
-    // zobraz vkládané pečovatele
-    foreach ($vars->cleni as $id=>$clen) {
-      if ($id>0 || get_role($id)!='p') continue;
-      // ochrana proti dalšímu nevyřešenému pečounovi
-      $part.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu']) . "<div class='modal'>"
-          . elem_input('o',$id,['jmeno','prijmeni']) . '</div>'
-          . ($clen->spolu ? elem_input('o',$id,['narozeni']) . '<br>'
-            . elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
-          . "</div>";
-    }
-    // zobraz hledání nového
-    $part.= "<br><button onclick=\"php2('hledej,=1');\">
-      <i class='fa fa-green fa-plus'></i> chci přihlásit dalšího osobního pečovatele</button>";
-    $part.= "</div>";
-  } // seznam
-  if ($vars->form->pecouni!=$detail) {
-    $vars->form->pecouni= $detail;
-    log_write_changes();
+
+function form_pecoun($id) { // ------------------------------------------ zobrazení osobního pečouna
+# údaje pečouna $id osobně pečujícího o $id_dite
+  $part= "<i>Osobní pečovatel pro toto dítě bude</i><br>";
+  if ($id<0) {
+    $part.= '' //elem_input('o',$id,['spolu']) 
+        . elem_input('o',$id,['jmeno','prijmeni']) . elem_input('o',$id,['narozeni']) . '<br>'
+        . elem_input('o',$id,['obcanka','telefon']);
   }
-  $DOM->form_pecouni= ['show',$part];
-} // form - seznam pečounů
+  else { // $id>0
+    $part.= '' //elem_input('o',$id,['spolu'])
+        . elem_text('o',$id,['<div>','jmeno',' ','prijmeni',', ','narozeni','</div>'])
+        . elem_input('o',$id,['obcanka','telefon']);
+  }
+  return $part;
+} // form osobní pečoun
+function form_pecoun_show($id,$form=null) { // -------------- ukáže tlačítka a form osobního pečouna
+  global $DOM;
+  $spolu= get('o','spolu',$id);
+  $button_plus= "b_{$id}_plus";
+  $button_minus= "b_{$id}_minus";
+  $fid= "f_$id";
+  if ($spolu) { // dítě jede
+    $DOM->$button_plus= [get('o','o_pecoun',$id) ? 'hide' : 'show']; 
+    $DOM->$button_minus= [get('o','o_pecoun',$id) ? 'show' : 'hide']; 
+    $DOM->$fid= $form===null ? ['show'] : ['show',$form];
+  }
+  else { // dítě nejede  
+    $DOM->$button_plus= ['hide'];
+    $DOM->$button_minus= ['hide'];
+    $DOM->$fid= $form===null ? ['hide'] : ['hide',$form];
+  }
+} // form a tlačítka pečouna
+function form_pecoun_clear($id_pecoun) { // ---------------------------- odstranění osobního pečouna
+# odstranění pečouna ve vars i v DOM
+  global $DOM;
+  $id_dite= get('o','o_dite',$id_pecoun);
+  set('o','o_dite','',$id_pecoun);
+  set('o','o_pecoun','',$id_dite);
+  $name= "f_$id_dite"; $DOM->$name= ['empty'];
+  $name= "b_{$id_dite}_minus"; $DOM->$name= ['hide'];
+  $name= "b_{$id_dite}_plus"; $DOM->$name= ['show'];
+} // odstranění osobního pečouna
 
 function form() { trace();
   global $vars, $akce;
@@ -946,7 +952,7 @@ function vyber($dotaz,$odpovedi) { // -------------- výběr z více možností
     ";
   }
 } // popup s výběrem z více možností
-function hledej($faze,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledání osoby
+function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledání osoby
 # $fáze=1 ... vyplnění jména a příjmení --> (3,5)
 #       2 ... čekání na úplné vyplnění --> (3)
 #       3 ... test vyplnění --> (2), nalezení stejnojmenných a zobrazení jako radiobuttons --> (4,5)
@@ -965,15 +971,15 @@ function hledej($faze,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledán
         </div>
         ";
       $DOM->modalbox_butts= "
-        <button onclick=\"php2('hledej,=3,=0,jmeno,prijmeni');\">Prohledat evidenci</button> &nbsp;
-        <button onclick=\"php2('hledej,=6');\">Zpět</button>
+        <button onclick=\"php2('hledej,=3,=$id_dite,=0,jmeno,prijmeni');\">Prohledat evidenci</button> &nbsp;
+        <button onclick=\"php2('hledej,=6,=$id_dite');\">Zpět</button>
         ";
       break; // primární dialog
     case 2: // ------------------------ wait
       break; // wait
     case 3: // ------------------------ ujistíme se o zadání a pak projdeme jmenovce
       if (!$jmeno || !$prijmeni) {
-        hlaska("Zadejte prosím jméno i příjmení",'hledej,=2,=0,jmeno,prijmeni');
+        hlaska("Zadejte prosím jméno i příjmení","hledej,=2,=$id_dite,=0,jmeno,prijmeni");
         break;
       }
       // nalezení jmenovců
@@ -1002,23 +1008,32 @@ function hledej($faze,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledán
         ORDER BY _vek
       ");
       while ($ro && (list($id,$vek,$obec)= pdo_fetch_array($ro))) {
-        $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id,=$jmeno,=$prijmeni:$vek let, $obec";
+        $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id_dite,=$id,=$jmeno,=$prijmeni:$vek let, $obec";
       }      
-      $dotazy[]= "$jmeno $prijmeni:hledej:=5,=0,=$jmeno,=$prijmeni:která není v evidenci";
-      vyber("vyber si",$dotazy);
+      $dotazy[]= "$jmeno $prijmeni:hledej:=5,=$id_dite,=0,=$jmeno,=$prijmeni:"
+          . "<b class='fa-red'>která není v evidenci</b>";
+      vyber("Vyberte pečovatele nebo vyplňte údaje nového",$dotazy);
       break; // procházení jmenovců
     case 4: // ------------------------ vložení zvolené osoby
       nacti_clena($ido,'p',1);
+      $vars->cleni[$id_dite]->o_pecoun= [0,$ido];
+      $vars->cleni[$ido]->o_dite= [0,$id_dite];
+      $vars->cleni[$ido]->role= [0,'p'];
       log_write_changes(); 
-      form_pecouni(2);
+      $div= "f_$id_dite";
+      form_pecoun_show($id_dite,form_pecoun($ido));
       $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
       break; // vložení zvolené osoby
     case 5: // ------------------------ vytvoření zvolené osoby
       $ido= vytvor_noveho_clena('p',1);
+      $vars->cleni[$id_dite]->o_pecoun= [0,$ido];
+      $vars->cleni[$ido]->o_dite= [0,$id_dite];
+      $vars->cleni[$ido]->role= [0,'p'];
       $vars->cleni[$ido]->jmeno= ['',$jmeno];
       $vars->cleni[$ido]->prijmeni= ['',$prijmeni];
       log_write_changes(); 
-      form_pecouni(2);
+      $div= "f_$id_dite";
+      form_pecoun_show($id_dite,form_pecoun($ido));
       $DOM->modalbox= 'hide'; $DOM->popup_mask= 'hide';
       break; // vytvoření zvolené osoby
     case 6: // ------------------------ 
@@ -1039,10 +1054,11 @@ function array2object(array $array) {
   }
   return $object;
 }
+
 function read_elem($id,$val,&$errs) { // ------------------------------------------------- read elem
 # načte element změněný uživatelem a poslaný z JS
 # z hodnoty se odstraní levo i pravostranné mezery
-  global $DOM, $vars, $p_fld, $r_fld, $o_fld;  
+  global $vars, $p_fld, $r_fld, $o_fld;  
   $m= null;
   if (preg_match("/(.)_([\-\d]+)_(.*)/",$id,$m)) { // t_idt_name
     $tab= $fmt= false;
@@ -1053,11 +1069,6 @@ function read_elem($id,$val,&$errs) { // ---------------------------------------
       case 'r': $tab= $vars->rodina[$idt]; $fmt= $r_fld[$fld][2]; break;
       case 'p': $tab= $vars->pobyt;  $fmt= $p_fld[$fld][2]; break;
       default: return;
-    }
-    // reakce na změnu položky spolu
-    if ($t=='o' && $fld=='spolu' && isset($vars->cleni[$idt]->o_pecoun)) {
-      $button= "b_$idt";
-      $DOM->$button= [$val ? 'show' : 'hide'];
     }
     // změna hodnoty
     if (is_array($tab->$fld)) {
@@ -1072,7 +1083,7 @@ function read_elem($id,$val,&$errs) { // ---------------------------------------
     elseif ($tab->$fld!=$val) { // změna dosud nezměněné položky
       $tab->$fld= [$tab->$fld,$val];
     }
-    // kontrola hodnot
+    // kontrola hodnoty
     if ($val!==false) {
       $ok= true;
       switch ($fmt) {
@@ -1089,6 +1100,10 @@ function read_elem($id,$val,&$errs) { // ---------------------------------------
           }
           break;      
       }
+    }
+    // reakce na změnu položky spolu
+    if ($t=='o' && $fld=='spolu' && isset($vars->cleni[$idt]->o_pecoun)) {
+      form_pecoun_show($idt); 
     }
   }
 } // převod do $vars
@@ -1294,16 +1309,16 @@ function read_akce() { // ------------------------------------------------------
       mně/nám mohly vzniknout v souvislosti s nedodržením těchto zásad účasti na kurzu, a veškerá rizika
       v takovém případě přebíráme na sebe.";
   // -------------------------------------------- počáteční nastavení formuláře
-  if (!($vars->form??null)) {
-    $vars->form= (object)[
-        'pass'=>0, // inicializovat pozici pro 0
-        'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
-        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
-//        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
-//        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
-//        'exit'=>0,      // 1 => první stisk 
-    ];
-  }
+//  if (!($vars->form??null)) {
+//    $vars->form= (object)[
+//        'pass'=>0, // inicializovat pozici pro 0
+//        'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
+//        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
+////        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
+////        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
+////        'exit'=>0,      // 1 => první stisk 
+//    ];
+//  }
 end:    
 //  global $trace;
 //  $trace.= debugx($akce,'hodnoty web_online');
@@ -1564,7 +1579,9 @@ function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vyt
   global $vars,$o_fld;
   $vars->cleni[$ido]= (object)[];
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
-    if (strpos($omez,$role)!==false)
+    if ($typ=='x') 
+      continue;
+    elseif (strpos($omez,$role)!==false)
       $vars->cleni[$ido]->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
   $vars->cleni[$ido]->role= ['',$role];
@@ -1660,7 +1677,7 @@ function nacti_rodinu($idr) { // -----------------------------------------------
     }
   }
 }
-function nacti_clena($ido,$role,$spolu) { // -------------------------------------------------- nacti clena
+function nacti_clena($ido,$role,$spolu) { // ------------------------------------------- nacti clena
   // přečteme položky dané osoby, přidáme roli a že je na akci
   global $vars, $o_fld, $sub_options;
   $clen= $vars->cleni[$ido]= (object)[];
@@ -2084,9 +2101,13 @@ function log_load_changes() { // -----------------------------------------------
         else {
           if (!isset($vars->$name[$id])) {
             if ($name=='cleni') {
-              vytvor_clena($id,$val1->role,$val1->spolu);
+              if ($id<0)
+                vytvor_clena($id,$val1->role??'',$val1->spolu);
+              else 
+                nacti_clena($id,$val1->role??'',$val1->spolu);
             }
           }
+          if (!isset($vars->$name[$id]->$fld)) $vars->$name[$id]->$fld= '';
           $vars->$name[$id]->$fld= 
             [is_array($vars->$name[$id]->$fld) ? $vars->$name[$id]->$fld[0] : $vars->$name[$id]->$fld
             ,$val2];

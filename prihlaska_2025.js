@@ -101,6 +101,7 @@ function after_php(DOM) {
         case 'enable': elem.prop('disabled', false); break;
         case 'ok': elem.addClass('chng_ok').removeClass('chng'); break;
         case 'ko': elem.addClass('chng').removeClass('chng_ok'); break;
+        case 'empty': elem.empty(); break;
         default: 
           if (elem.is('input')) 
             elem.val(val); 
