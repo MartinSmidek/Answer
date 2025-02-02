@@ -224,7 +224,7 @@ html body div.popup {
   padding: 20px;
   border-left: 20px solid red;
   background: #ffeeaa;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 5px 5px 10px 10px rgba(0, 0, 0, 0.5);
 }
 html body #popup_mask {
   display: none;
@@ -238,6 +238,11 @@ html body #popup_mask {
 }
 html body #mailbox {
   border-left: 20px solid grey;
+}
+html body #alertbox_back {
+  right: 10px;
+  top: 10px;
+  position: absolute;
 }
 html body #errorbox {
   border-left: 20px solid red;
