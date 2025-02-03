@@ -7,6 +7,29 @@
 
  */
 
+// ------------------------------------------------------------------------------------ elem changed
+// vrátí změněný element s jeho novou hodnotou
+function elem_changed(elem) {
+  elem.classList.add('chng');
+  let x= {cmd:'DOM_zmena',args:[]};
+  let id= jQuery(elem).attr('id');
+  x.args[0]= id;
+  if (id && jQuery(elem).hasClass('chng')) { 
+    if (jQuery(elem).attr('type') === 'checkbox') {
+        // Pro checkbox vrátíme 0 nebo 1 podle stavu
+        x.args[1]= jQuery(elem).is(':checked') ? 1 : 0;
+    } else {
+        // Pro ostatní inputy a textarea vrátíme jejich hodnotu
+        x.args[1]= jQuery(elem).val();
+    }
+  }
+  ask(x,after_php);
+}
+// --------------------------------------------------------------------------------------- clear css
+// odstraní dané css
+function clear_css(css) {
+  jQuery('.'+css).removeClass(css);
+}
 // ===========================================================================================> AJAX
 // ---------------------------------------------------------------- php se jménem funkce v button.id
 // pro název PHP funkce vzatý z button.id
@@ -39,8 +62,8 @@ function php0(name_pars) {
     else if (np[i]=='*') {
       x.args[i]= {};
       jQuery('input, textarea').each(function() {
-        let id= $(this).attr('id');
-        if (id) { 
+        let id= jQuery(this).attr('id');
+        if (id && jQuery(this).hasClass('chng')) { 
           if (jQuery(this).attr('type') === 'checkbox') {
               // Pro checkbox vrátíme 0 nebo 1 podle stavu
               x.args[i][id]= jQuery(this).is(':checked') ? 1 : 0;
@@ -56,7 +79,8 @@ function php0(name_pars) {
   }
   jQuery('#errorbox').hide().html('');
   jQuery('#mailbox').hide().html('');
-  jQuery('.popup').hide(); jQuery('#popup_mask').hide()
+//  jQuery('.popup').hide(); 
+  jQuery('#popup_mask').hide()
   ask(x,after_php);
 }
 // --------------------------------------------------------------------------------------- after php
@@ -75,6 +99,10 @@ function after_php(DOM) {
         case 'show': elem.show(); break;
         case 'disable': elem.prop('disabled', true); break;
         case 'enable': elem.prop('disabled', false); break;
+        case 'ok': elem.addClass('chng_ok').removeClass('chng'); break;
+        case 'ko': elem.addClass('chng').removeClass('chng_ok'); break;
+        case 'empty': elem.empty(); break;
+        case 'remove': elem.remove(); break;
         default: 
           if (elem.is('input')) 
             elem.val(val); 
