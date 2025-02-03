@@ -286,7 +286,7 @@ try {
 catch (Throwable $e) {
   $msg= $e->getMessage();
   $line= $e->getLine();
-  append_log("<b style='color:red'>FATAL</b> ... $msg na řádku $line");
+  append_log("<b style='color:red'>FATAL</b> $msg na řádku $line");
   echo "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org.";
 }
@@ -470,7 +470,7 @@ function klient($idor,$nova_prihlaska=1) {
     $vars->idr= $idr;
     log_write('id_osoba',$vars->ido);
     log_write('id_rodina',$vars->idr);
-    append_log("KLIENT ... $jmena $vars->email ... přihláška $vars->id_prihlaska");
+    append_log("KLIENT ... $jmena ");
     return prihlaska($nova_prihlaska);
   }
 } // klient
@@ -625,8 +625,7 @@ function prihlasit() {
       "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.
        <br>$akce->garant_jmeno"];
   $idp= $vars->pobyt->id_pobyt;
-  append_log("<b style='color:green'>POBYT</b> ... $ucastnici $vars->email ... přihláška $vars->id_prihlaska "
-      . "pobyt $idp");
+  append_log("<b style='color:green'>POBYT </b> ... $ucastnici pobyt $idp");
   log_close();
 db_end:
   if (count($errors)) {
@@ -2268,22 +2267,22 @@ function log_error($msg) { // --------------------------------------------------
   elseif ($TRACE)
       display("LOG_ERROR fail - no sesssion");
   // vložení do souboru prihlaska_2025.log.php
-  append_log("<b style='color:red'>ERROR</b> ... $msg");
+  append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
   log_write('close','NOW()');
 }
 function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE;
-  $file= 'prihlaska_2025.log.php';
+  global $AKCE, $MYSELF;
+  $file= "$MYSELF.log.php";
   $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
-  $prefix= date('Y-m-d H:i:s')." akce=$akce, id_prihlaska=$idw, mail=$email";
+  $msg= date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
       file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>\n");
   }
-  file_put_contents($file, "$prefix\n$msg\n", FILE_APPEND);
+  file_put_contents($file, "$msg\n", FILE_APPEND);
 }
 # ============================================================================= vytváření PDF obrazu
 function gen_html($to_save=0) {
