@@ -2,26 +2,20 @@
 /*
   (c) 2025 Martin Smidek <martin@smidek.eu>
 
-  3. verze online přihlašování pro YMCA Setkání (jen obnovy a LK MS YS)
+  online přihlašování pro YMCA Setkání  - verze 2025.2 pro Obnovy MS YS + Letní kurz MS YS
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
 $MYSELF= 'prihlaska_2025';
-$VERZE= '2025.1'; // verze přihlášek: rok.release
-$ORG= 1;  // verze pro YMCA Setkání
+$VERZE= '2025.2'; // verze přihlášek: rok.release
 
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
-//error_reporting(E_ALL);
-error_reporting(0);
+error_reporting(E_ALL);
 ini_set('display_errors', 'On');
-set_error_handler(function ($severity, $message, $file, $line) {
-    throw new ErrorException($message, 0, $severity, $file, $line);
-});
 
-try {
-  // detekce varianty: normální nebo testovací 
-  $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
-  $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
+// detekce varianty: normální nebo testovací 
+$_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
+$_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
 //$TEST_mail= 'martin@smidek.eu';               // v létě nebyli umí VPS
 //$TEST_mail= 'martin.smidek@gmail.com';
@@ -45,54 +39,54 @@ try {
 //$TEST_mail= 'petr.jekyll@gmail.com';          // v létě nebyli neumí VPS
 //$TEST_mail= '';
 
-  $errors= [];
+$errors= [];
 
 // ========================================================================== parametrizace aplikace
 // texty a nastavení položky jsou popsány ve funkci položky - jsou pozměněny podle načtené akce
-  $TEXT= (object)[
-    'usermail_nad1' => 
-        'Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.',  
-    'usermail_pod1' => 
-        '<i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, abyste ji vyplňovali společně.</i>',  
-    'usermail_nad2' => 
-        'Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
-         <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>',  
-    'usermail_nad3' => 
-        'Tento mail v evidenci YMCA Setkání nemáme, tato akce předpokládá, že jste se již nějaké naší 
-          akce zúčastnil/a, přihlaste se prosím pomocí toho, který jste tehdy použil/a',
-    'usermail_nad4' => 
-        'Tento mail v evidenci YMCA Setkání nemáme, pokud jste se již nějaké naší akce zúčastnil/a, 
-         přihlaste se prosím pomocí toho, který jste tehdy použil/a',
-    'usermail_nad4' => 
-        'Tento mail máme na základě předchozích přihlášek a účastí na našich akcích uvedený 
-         ve více souvislostech - zvolte prosím správnou možnost.',
-    'osoby_nad1' => 
-        'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.',
-    'rozlouceni1' => 
-        'Přejeme Vám hezký den.',
-    'rozlouceni2' => 
-        'Přejeme Vám příjemný pobyt.',
-  ];
-  $akce_default= [ // položky které aplikace umí
-  //  'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
-    'p_rodina'      =>  0, // rodinné přihlášení
-    'p_deti'        =>  0, // ... s dětmi
-    'p_pecouni'     =>  0, // ... mohou mít pečouny
-    'p_pro_LK'      =>  0, // pro manželský pár s dětmi a osobními pečovateli na LK MS
-    'p_rod_adresa'  =>  0, // umožnit kontrolu a úpravu rodinné adresy 
-    'p_obcanky'     =>  0, // umožnit kontrolu a úpravu číslo obč. průkazu
-    'p_kontakt'     =>  0, // umožnit kontrolu a úpravu telefonu a emailu
-    'p_souhlas'     =>  0, // vyžadovat souhlas (GDPR) 
-    'p_ukladat'     =>  0, // povolit znovunačtení při přihlášení
-    'p_kontrola'    =>  0, // vynutit kontrolu dat před uložením
-  // -- jen pro obnovy MS
-    'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
-    'p_vps'         =>  0, // OBNOVA MS: nastavit funkci VPS podle letního kurzu
-  // -- jen pro LK MS
-    'p_upozorneni'  =>  0, // LETNÍ KURZ MS: vyžadovat akceptaci upozornění
-  //  'p_dokument'    =>  0, // LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
-  ]; 
-  function polozky() { // -------------------------------------------------------------------- položky
+$TEXT= (object)[
+  'usermail_nad1' => 
+      'Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.',  
+  'usermail_pod1' => 
+      '<i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, abyste ji vyplňovali společně.</i>',  
+  'usermail_nad2' => 
+      'Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
+       <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>',  
+  'usermail_nad3' => 
+      'Tento mail v evidenci YMCA Setkání nemáme, tato akce předpokládá, že jste se již nějaké naší 
+        akce zúčastnil/a, přihlaste se prosím pomocí toho, který jste tehdy použil/a',
+  'usermail_nad4' => 
+      'Tento mail v evidenci YMCA Setkání nemáme, pokud jste se již nějaké naší akce zúčastnil/a, 
+       přihlaste se prosím pomocí toho, který jste tehdy použil/a',
+  'usermail_nad4' => 
+      'Tento mail máme na základě předchozích přihlášek a účastí na našich akcích uvedený 
+       ve více souvislostech - zvolte prosím správnou možnost.',
+  'osoby_nad1' => 
+      'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.',
+  'rozlouceni1' => 
+      'Přejeme Vám hezký den.',
+  'rozlouceni2' => 
+      'Přejeme Vám příjemný pobyt.',
+];
+$akce_default= [ // položky které aplikace umí
+//  'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
+  'p_rodina'      =>  0, // rodinné přihlášení
+  'p_deti'        =>  0, // ... s dětmi
+  'p_pecouni'     =>  0, // ... mohou mít pečouny
+  'p_pro_LK'      =>  0, // pro manželský pár s dětmi a osobními pečovateli na LK MS
+  'p_rod_adresa'  =>  0, // umožnit kontrolu a úpravu rodinné adresy 
+  'p_obcanky'     =>  0, // umožnit kontrolu a úpravu číslo obč. průkazu
+  'p_kontakt'     =>  0, // umožnit kontrolu a úpravu telefonu a emailu
+  'p_souhlas'     =>  0, // vyžadovat souhlas (GDPR) 
+  'p_ukladat'     =>  0, // povolit znovunačtení při přihlášení
+  'p_kontrola'    =>  0, // vynutit kontrolu dat před uložením
+// -- jen pro obnovy MS
+  'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
+  'p_vps'         =>  0, // OBNOVA MS: nastavit funkci VPS podle letního kurzu
+// -- jen pro LK MS
+  'p_upozorneni'  =>  0, // LETNÍ KURZ MS: vyžadovat akceptaci upozornění
+//  'p_dokument'    =>  0, // LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
+]; 
+function polozky() { // -------------------------------------------------------------------- položky
   global $akce, $options, $sub_options, $p_fld, $r_fld, $o_fld;
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
@@ -195,100 +189,93 @@ try {
 // hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
 //   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 //   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-  if (!count($_POST)) {
-    if (!isset($_GET['akce']) ) {
-      die("Online přihlašování není k dispozici."); 
-    }
-    else {
-      $TEST= $_GET['test']??0 ? ($_ANSWER?(0+$_GET['test']):0) : 0;
-      $MAIL= $_GET['mail']??1 ? 1 : ($_ANSWER?0:1);
-      initialize($_GET['akce']); // přenese TEST i MAIL
-    }
-  }
-  if (!isset($_SESSION['akce'])) { session_reset(); }
-  $AKCE= "A_{$_SESSION['akce']}";
-  $vars= $_SESSION[$AKCE]??(object)[];
-  $TEST= $vars->TEST;
-  $MAIL= $vars->MAIL;
-
-  // pouze pro lokální testování natvrdo test a ne maily
-  if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
-    $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
-    $TEST= 1;
-  }
-
-//$TEST= 2; // ===================================================================================== 2 => potlačení INSERT a UPDATE
-  connect_db();           // napojení na databázi a na Ezer 
-  read_akce();            // načtení údajů o akci z Answeru 
-
-  $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
-    // počáteční stav
-    'user'=>'hide',
-    'usermail'=>'show', 'email'=>'enable', 'pin'=>'hide', 
-    'zadost_o_pin'=>'show', 'kontrola_pinu'=>'hide',
-    'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
-    'pin'=>'hide', 'kontrola_pinu'=>'hide', 'form'=>'hide',
-    // testování
-    'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST>1 ? ', bez zápisu' : ''),
-    'mailbox'=>'hide', 
-    'errorbox'=>'hide',
-    'alertbox'=>'hide',
-  ];
-
-  if ( count($_POST) ) {
-    // volání přes AJAX z existující klientské části
-    polozky();              // popis získávaných položek
-    $fce= $_POST['cmd'];
-    $args= $_POST['args']??[];
-    if ($TEST) {
-      $call= "function <b>$fce</b>";
-      foreach ($args as $name=> $value) {
-        if ($name=='*')
-          $call.= "<br>$name";
-        else 
-          $call.= "<br>$name=$value";
-      }
-    }
-    $DOM= (object)[];
-    if ( function_exists($fce)) {
-      $vars= $_SESSION[$AKCE];
-      call_user_func_array($fce,$args); // modifikuje $DOM
-      if ($vars->id_akce??0)
-        $_SESSION[$AKCE]= $vars;
-    }
-    else {
-      $call.= " <b style='color:red'>neexistuje</b>";
-      $DOM->errorbox= ['show',$call];
-      $errors[]= $call;
-    }
-    // případné trasování
-    if ($TEST) {
-      global $trace;
-      $trace= $trace??'' ? "<hr>$trace" : '';
-      if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
-      if (isset($y->error)) $trace.= '<hr>'.nl2br($y->error);
-      $trace.= '<hr>'.nl2br($y->qry??'');
-  //    unset($vars->DOM->trace); // zahodíme staré trace
-      $dump= debugx($vars);
-      $DOM->trace= "$call$trace<hr>$dump";
-    }
-    // pokračujeme v JS
-    header('Content-type: application/json; charset=UTF-8');
-    $yjson= json_encode($DOM);
-    echo $yjson;
+if (!count($_POST)) {
+  if (!isset($_GET['akce']) ) {
+    die("Online přihlašování není k dispozici."); 
   }
   else {
-    // volání z příkazové řádky vytvoří novou klienstkou část 
-    page();
-    // po vytvoření klienta je volána funkce start()
+    $TEST= $_GET['test']??0 ? ($_ANSWER?(0+$_GET['test']):0) : 0;
+    $MAIL= $_GET['mail']??1 ? 1 : ($_ANSWER?0:1);
+    initialize($_GET['akce']); // přenese TEST i MAIL
   }
 }
-catch (Throwable $e) {
-  $msg= $e->getMessage();
-  $line= $e->getLine();
-  append_log("FATAL ... $msg na řádku $line");
-  echo "Omlouváme se, během práce programu došlo k nečekané chybě."
-  . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org.";
+if (!isset($_SESSION['akce'])) { session_reset(); }
+$AKCE= "A_{$_SESSION['akce']}";
+$vars= $_SESSION[$AKCE]??(object)[];
+$TEST= $vars->TEST;
+$MAIL= $vars->MAIL;
+
+// pouze pro lokální testování natvrdo test a ne maily
+if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
+  $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
+  $TEST= 1;
+}
+
+//$TEST= 2; // ===================================================================================== 2 => potlačení INSERT a UPDATE
+
+connect_db();           // napojení na databázi a na Ezer 
+read_akce();            // načtení údajů o akci z Answeru 
+
+$DOM_default= (object)[ // pro start aplikace s prázdným SESSION
+  // počáteční stav
+  'user'=>'hide',
+  'usermail'=>'show', 'email'=>'enable', 'pin'=>'hide', 
+  'zadost_o_pin'=>'show', 'kontrola_pinu'=>'hide',
+  'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
+  'pin'=>'hide', 'kontrola_pinu'=>'hide', 'form'=>'hide',
+  // testování
+  'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST>1 ? ', bez zápisu' : ''),
+  'mailbox'=>'hide', 
+  'errorbox'=>'hide',
+  'alertbox'=>'hide',
+];
+
+if ( count($_POST) ) {
+  // volání přes AJAX z existující klientské části
+  polozky();              // popis získávaných položek
+  $fce= $_POST['cmd'];
+  $args= $_POST['args']??[];
+  if ($TEST) {
+    $call= "function <b>$fce</b>";
+    foreach ($args as $name=> $value) {
+      if ($name=='*')
+        $call.= "<br>$name";
+      else 
+        $call.= "<br>$name=$value";
+    }
+  }
+  $DOM= (object)[];
+  if ( function_exists($fce)) {
+    $vars= $_SESSION[$AKCE];
+    call_user_func_array($fce,$args); // modifikuje $DOM
+    if ($vars->id_akce??0)
+      $_SESSION[$AKCE]= $vars;
+  }
+  else {
+    $call.= " <b style='color:red'>neexistuje</b>";
+    $DOM->errorbox= ['show',$call];
+    $errors[]= $call;
+  }
+  // případné trasování
+  if ($TEST) {
+    global $trace;
+    $trace= $trace??'' ? "<hr>$trace" : '';
+    if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
+    if (isset($y->error)) $trace.= '<hr>'.nl2br($y->error);
+    $trace.= '<hr>'.nl2br($y->qry??'');
+//    unset($vars->DOM->trace); // zahodíme staré trace
+    $dump= debugx($vars);
+    $DOM->trace= "$call$trace<hr>$dump";
+  }
+  // pokračujeme v JS
+  header('Content-type: application/json; charset=UTF-8');
+  $yjson= json_encode($DOM);
+  echo $yjson;
+}
+else {
+  // volání z příkazové řádky vytvoří novou klienstkou část 
+  page();
+  // po vytvoření klienta je volána funkce start()
 }
 
 // -------------------------------------------------------------zahájení nebo pokračování po ctrl-r
@@ -445,7 +432,6 @@ function klient($idor,$nova_prihlaska=1) {
   list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
   // osobu známe  - zjistíme zda již není přihlášen
   $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
-  append_log("KLIENT ... $jmena $vars->email");
   list($idp,$kdy,$kdo/*,$web_json*/)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,''),web_json",
       "pobyt JOIN spolu USING (id_pobyt) "
       . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
@@ -1715,11 +1701,11 @@ function init_value($typ) { // -------------------------------------------------
 function byli_na_aktualnim_LK($rodina) { // ----------------------------------- byli na_aktualnim_LK
 # pro pobyt na obnově zjistí, zda rodina byla na jejím LK 
 # ... 0 nebyla vůbec | 1 jako účastníci | 2 jako sloužící VPS
-  global $ORG, $akce;
+  global $akce;
   $obnova_mesic= select_2('MONTH(datum_od)','akce',"id_duakce=$akce->id_akce");
   $rok_LK= $obnova_mesic>7 ? date('Y') : date('Y')-1;
   $byli= select1_2('IFNULL(IF(funkce=1,2,1),0)','pobyt JOIN akce ON id_akce=id_duakce',
-      "akce.druh=1 AND akce.access=$ORG AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
+      "akce.druh=1 AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
   return $byli;
 }
 function je_na_teto_akci($ido) { // ------------------------------------------------ je na této akci
@@ -2263,23 +2249,9 @@ function log_error($msg) { // --------------------------------------------------
   }
   elseif ($TRACE)
       display("LOG_ERROR fail - no sesssion");
-  // vložení do souboru prihlaska_2025.log.php
-  append_log("ERROR ... $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
   log_write('close','NOW()');
-}
-function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE;
-  $file= 'prihlaska_2025.log.php';
-  $akce= $AKCE??'?';
-  $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
-  $email= $_SESSION[$AKCE]->email??'?';
-  $prefix= date('Y-m-d H:i:s')." akce=$akce, id_prihlaska=$idw, mail=$email";
-  if (!file_exists($file)) {
-      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>\n");
-  }
-  file_put_contents($file, "$prefix\n$msg\n", FILE_APPEND);
 }
 # ============================================================================= vytváření PDF obrazu
 function gen_html($to_save=0) {
@@ -2581,7 +2553,6 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
     }
     else {
       $msg= "CHYBA při odesílání mailu došlo k chybě: $mail->ErrorInfo";
-      log_error($msg);
     }
   }
 end:
@@ -2779,7 +2750,7 @@ function pdo_query_2($query,$quiet=false) { // ------------------------------- t
     $res= false;
   }
   return $res;
-} // <== tudy jdou všechny SQL 
+} // <== tudy jdou všechny SQL
 function select_2($expr,$table='',$cond='') { // ------------------------------------------------ select 2
 # navrácení hodnoty jednoduchého dotazu
 # pokud je jediný argument je to celý dotaz
@@ -2787,14 +2758,16 @@ function select_2($expr,$table='',$cond='') { // -------------------------------
     $result= array();
     $qry= $expr;
     $res= pdo_query_2($qry,1);
-    if ( $res ) $result= pdo_fetch_row($res);
+    if ( !$res ) log_error(wu("chyba funkce select:$qry/".pdo_error()));
+    else $result= pdo_fetch_row($res);
   }
 # pokud $expr obsahuje čárku, vrací pole hodnot, pokud $expr je hvězdička vrací objekt, 
   elseif ( strstr($expr,",") ) {
     $result= array();
     $qry= "SELECT $expr FROM $table WHERE $cond";
     $res= pdo_query_2($qry,1);
-    if ( $res ) $result= pdo_fetch_row($res);
+    if ( !$res ) log_error(wu("chyba funkce select:$qry/".pdo_error()));
+    else $result= pdo_fetch_row($res);
   }
   elseif ( $expr=='*' ) {
     $result= array();
@@ -2833,6 +2806,22 @@ function select_object_2($expr,$table,$cond) { // ------------------------------
   $res= pdo_query_2($qry,1);
   if ( $res ) $result= pdo_fetch_object($res);
   return $result;
+}
+function map_cis_2($druh,$val='zkratka',$order='poradi') { // ---------------------------- map cis_2
+# zjištění hodnot číselníku a vrácení jako překladového pole
+#   array (data => $val, ...)
+  global $mysql_db, $ezer_db;
+  $db= $mysql_db;
+  if ( isset($ezer_db[$db][5])) {
+    $db= $ezer_db[$db][5];
+  }
+  $cis= array();
+  $qry= "SELECT * FROM $db._cis WHERE druh='$druh' ORDER BY $order";
+  $res= pdo_query_2($qry,1);
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
+    $cis[$row['data']]= $row[$val];
+  }
+  return $cis;
 }
 function query_track_2($qry,$quiet=false) { // --------------------------------------- query track_2
 # oproti Ezer verzi netestuje old
@@ -2913,19 +2902,3 @@ function query_track_2($qry,$quiet=false) { // ---------------------------------
 end:
   return $res;
 } 
-function map_cis_2($druh,$val='zkratka',$order='poradi') { // ---------------------------- map cis_2
-# zjištění hodnot číselníku a vrácení jako překladového pole
-#   array (data => $val, ...)
-  global $mysql_db, $ezer_db;
-  $db= $mysql_db;
-  if ( isset($ezer_db[$db][5])) {
-    $db= $ezer_db[$db][5];
-  }
-  $cis= array();
-  $qry= "SELECT * FROM $db._cis WHERE druh='$druh' ORDER BY $order";
-  $res= pdo_query_2($qry,1);
-  while ( $res && $row= pdo_fetch_assoc($res) ) {
-    $cis[$row['data']]= $row[$val];
-  }
-  return $cis;
-}
