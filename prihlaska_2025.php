@@ -43,6 +43,7 @@ try {
 //$TEST_mail= 'lina.ondra@gmail.com';           // úmrtí dítěte
 //$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
 //$TEST_mail= 'petr.jekyll@gmail.com';          // v létě nebyli neumí VPS
+//$TEST_mail= 'zencakova@seznam.cz';            // duplicita
 //$TEST_mail= '';
 
   $errors= [];
@@ -411,6 +412,7 @@ function kontrola_pinu($email,$pin) {
       $DOM->pin= "hide";
       $DOM->zadost_o_pin= "show";
       $DOM->usermail_pod= '';
+      append_log("MAIL? neznámý $email");
     } // neznámý mail
     elseif ($pocet>1) { // -------------------------------- nejednoznačný mail
       $dotazy= [];
@@ -424,14 +426,17 @@ function kontrola_pinu($email,$pin) {
       if (count($rodic)==1) 
         klient($rodic[0],1);
       else {
+        $dupl= "";
         foreach ($cleni as $clen) {
           list($ido,$idr,$role)= explode('/',$clen);
           if (count($rodic)>1 && !in_array($role,['a','b'])) continue;
           $rodina= $idr ? 'rodina '.select('nazev','rodina',"id_rodina=$idr") : 'bez rodiny';
           list($jmeno,$prijmeni)= select('jmeno,prijmeni','osoba',"id_osoba=$ido");
           $dotazy[]= "$jmeno $prijmeni:klient:=$ido/$idr,1:$rodina";
+          $dupl.= " $ido-$role-$idr";
         }
         vyber($TEXT->usermail_nad4,$dotazy);
+        append_log("MAIL? $pocet &times; $email ... $dupl (id_osoba-role-id_rodina)");
       }
     } // nejednoznačný mail      
   }
