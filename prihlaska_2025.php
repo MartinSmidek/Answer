@@ -17,7 +17,7 @@ ini_set('display_errors', 'On');
 $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
 $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
-//$TEST_mail= 'martin@smidek.eu';               // v létě nebyli
+//$TEST_mail= 'martin@smidek.eu';               // v létě nebyli umí VPS
 //$TEST_mail= 'martin.smidek@gmail.com';
 //$TEST_mail= 'marie@smidkova.eu';
 //$TEST_mail= 'jakub@smidek.eu';
@@ -36,6 +36,7 @@ $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
 //$TEST_mail= 'milada.barotova@gmail.com';      // vdova
 //$TEST_mail= 'lina.ondra@gmail.com';           // úmrtí dítěte
 //$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
+//$TEST_mail= 'petr.jekyll@gmail.com';          // v létě nebyli neumí VPS
 //$TEST_mail= '';
 
 $errors= [];
@@ -543,6 +544,9 @@ function prihlasit() {
   log_append_stav('zapis');
   // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
   $ucast= 0; // = účastník
+  if ($akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))) {
+    $ucast= 9;
+  } 
   if (isset($vars->pobyt->Xvps)) { // volba VPS (ne)sloužit
     $sluzba= get('p','Xvps');
     $ucast= $sluzba==1 ? 1 : 0;
