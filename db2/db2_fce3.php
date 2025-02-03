@@ -3540,12 +3540,15 @@ function ucast2_browse_ask($x,$tisk=false) {
         ? "LEFT JOIN platba AS u ON id_pob=id_pobyt"
         : "LEFT JOIN uhrada AS u USING (id_pobyt)";
     $qp= pdo_qry("
-      SELECT p.*,$uhrada1 AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
+      SELECT p.*,$uhrada1 AS uhrada,
+        IFNULL(id_prihlaska,0) AS id_prihlaska,IFNULL(prijata,-1) AS prijata $ms1
       FROM pobyt AS p
       $uhrada2
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       -- LEFT JOIN prihlaska AS pr USING (id_pobyt)
-      LEFT JOIN (SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
+      LEFT JOIN (
+        SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt,IF(verze>=2025,prijata,-2) AS prijata 
+        FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
       $ms2
       WHERE $cond_p $AND
       GROUP BY p.id_pobyt
@@ -3678,7 +3681,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',id_prihlaska,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
+           . "keys_rodina='',id_prihlaska,prijata,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
 //           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
@@ -3742,7 +3745,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $zz= array();
     foreach ($pobyt as $idp=>$p) {
       $p_access= 0;
-      $p_access_web= $p->web_zmena=='0000-00-00' ? 0 : 16;
+      $p_access_web= $p->web_zmena=='0000-00-00' || $p->prijata>=0 ? 0 : 16;
       $idr= $p->i0_rodina ?: 0;
       $p->access= 5;
       $z= (object)array();
@@ -7706,6 +7709,14 @@ function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='',$title='',$text='') {
   $title= $title ? "title='$title'" : '';
   $text= $text ?: $idp;
   return "<b><a $style $title href='ezer://akce2.ucast.ucast_pobyt_akce/$idp/$ida'>$text</a></b>";
+}
+# ----------------------------------------------------------------------------- tisk2 ukaz_prihlasku
+# zobrazí odkaz na řádek s pobytem s případným přepnutím akce
+function tisk2_ukaz_prihlasku($idw,$ida,$idp,$barva='',$title='',$text='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  $title= $title ? "title='$title'" : '';
+  $text= $text ?: $idp;
+  return "<b><a $style $title href='ezer://akce2.ucast.ucast_prihlaska/$idw/$ida/$idp'>$text</a></b>";
 }
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození 
@@ -15215,7 +15226,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     global $ezer_root;
     if ( $fname ) {
       foreach ( explode(',',$fname) as $fnamesb ) {
-        list($fname,$bytes)= explode(':',$fnamesb);
+        list($fname)= explode(':',$fnamesb);
         $fname= trim($fname);
         $has_dir= strrpos($fname,'/');
         $fpath= $has_dir ? $fname : "docs/$ezer_root/$fname";
@@ -15232,10 +15243,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $d= pdo_fetch_object($res);
   // napojení na mailer
   $html= '';
-//   $klub= "klub@proglas.cz";
   $martin= "martin@smidek.eu";
-//   $jarda= "cerny.vavrovice@seznam.cz";
-//   $jarda= $martin;
   // poslání mailů
   $mail= mail2_new_PHPMailer();
   if ( !$mail ) { 

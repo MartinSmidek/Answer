@@ -62,6 +62,13 @@ html body div.wrapper main {
   height: calc(100% - 120px - 50px);
   overflow: auto;
 }
+html body div.wrapper main .chng {
+  outline: 2px solid red;
+  background: yellow;
+}
+html body div.wrapper main .chng_ok {
+  outline: 2px solid green;
+}
 html body div.wrapper main br {
   clear: both;
 }
@@ -85,13 +92,33 @@ html body div.wrapper main div.box {
 }
 html body div.wrapper main div.box div.clen,
 html body div.wrapper main div.box div.rodina {
-  display: inline-block;
+  display: table;
   padding: 5px;
   margin: 5px;
   background: #eae1c8;
 }
+html body div.wrapper main div.box div.clen .modal,
+html body div.wrapper main div.box div.rodina .modal {
+  z-index: 2001;
+  position: relative;
+  display: inline;
+}
+html body div.wrapper main div.box.modal-box {
+  padding: 0px;
+  margin: 0px;
+  background: transparent;
+  display: inline-block;
+}
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
+  margin-top: 10px;
+}
+html body div.wrapper main div.box div.clen button {
+  float: right;
+  margin: 0px 10px -6px 0px;
+}
+html body div.wrapper main div.box div.clen div.clen {
+  margin-left: 0px;
 }
 html body div.wrapper main div.box div.paru {
   margin: 10px 5px !important;
@@ -197,7 +224,7 @@ html body div.popup {
   padding: 20px;
   border-left: 20px solid red;
   background: #ffeeaa;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 5px 5px 10px 10px rgba(0, 0, 0, 0.5);
 }
 html body #popup_mask {
   display: none;
@@ -211,6 +238,11 @@ html body #popup_mask {
 }
 html body #mailbox {
   border-left: 20px solid grey;
+}
+html body #alertbox_back {
+  right: 10px;
+  top: 10px;
+  position: absolute;
 }
 html body #errorbox {
   border-left: 20px solid red;

@@ -12,8 +12,9 @@ var the_duakce_local= 0,    // zobrazená akce - pokud se liší od the_duakce, 
     the_pobyt: number,
     zalozka: text,          // evid | plat | akce
     back: object,
-    zmeny: object,           // objekt naplněný požadavkem zobrazení nedávných změn - obecně podle času
-    web_zmeny: number       // 1 = sledovat změny vložené online přihláškou na tuto akci
+    zmeny: object,          // objekt naplněný požadavkem zobrazení nedávných změn - obecně podle času
+    vsechny_zmeny= 0        // 0=jen online nepřijaté změny, 1=všechny v zadané minulosti
+//    web_zmeny: number       // 1 = sledovat změny vložené online přihláškou na tuto akci
 
 # -------------------------------------------------------------------------==> . inicializace panelu
 
@@ -101,9 +102,14 @@ func ucast_pobyt_akce(_idp,_ida)  {
   if (_ida!=the_duakce_local) akce_load(_ida);
   ucast_pobyt(_idp);
 }
+# ukázání přihlášky s případným přepnutím akce
+function ucast_prihlaska(_idw,_ida,_idp)  {
+  if (_ida!=the_duakce_local) akce_load(_ida);
+  if (_idp) ucast_pobyt(_idp);
+  Prihlaska.Show(_idw);
+}
 func ucast_pobyt_akce_platba(_idp,_ida)  {
-//  if (_ida!=the_duakce_local) 
-    akce_load(_ida);
+  akce_load(_ida);
   page.plt.onclick();
   ucast_pobyt(_idp);
 }
@@ -140,15 +146,27 @@ proc init_ucast2() {
   panel.display(1,'akce2'); panel.display(0,'akce1');
   u2.reload
 }
-proc prijeti_prihlasky () { var msg:text
-  msg.set(ask('web_zmena_ok',the_pobyt.get,0));
-  msg;
-  [ confirm(msg,"<br>Beru přihlášku a vzniklé změny na vědomí.");
-    msg.set(ask('web_zmena_ok',the_pobyt.get,1));
-    refresh_ucast(the_pobyt.get) 
-  ]
-| alert("Účast ",the_pobyt.get,
-      " nevznikla online přihláškou nebo tato byla již vzata na vědomí - více info ve změnách.")            
+func prijeti_prihlasky () { var msg:text
+  msg= php.web_zmena_ok(the_pobyt,0);
+  if (msg) {
+    if (confirm(msg,"<br>Beru přihlášku a vzniklé změny na vědomí.")) {
+      msg= php.web_zmena_ok(the_pobyt,1);
+      refresh_ucast(the_pobyt);
+    }
+  }
+  else 
+    alert(`Účast ${the_pobyt} nevznikla online přihláškou nebo tato byla již vzata na vědomí - více info ve změnách.`)
+}
+func prijeti_prihlasky_new (idw,stav) { 
+  if (stav==0) {
+    if (confirm("Beru přihlášku a vzniklé změny na vědomí.")) {
+      php.query_track(`UPDATE prihlaska SET prijata=1 WHERE id_prihlaska=${idw}`);
+      js.set_css_changed(0,'zmeneny');
+      refresh_ucast(the_pobyt);
+    }
+  }
+  else 
+    alert(`Přihláška byla již vzata na vědomí - více info ve změnách.`)
 }
 # --------------------------------------------------------------------------==> . změny rozměru okna
 
@@ -402,11 +420,11 @@ proc neni_ulozen_clen() { var no: number
     warning('neuložené změny pro osobu použij [Zpět] nebo [Uložit]') ];
   return(no)
 }
-# --------------------------------------------------==> . clear_zmeny
-# obsluha označení změněných polí
-proc clear_zmeny(tables) {
-  zmeny.set(0);
-}
+//# --------------------------------------------------==> . clear_zmeny
+//# obsluha označení změněných polí
+//func clear_zmeny(tables) {
+//  zmeny= 0;
+//}
 # --------------------------------------------------==> . zámky
 func ucast_lock_on(_table,_id) { var lock:object, msg:text
   lock= php.table_lock('on',_table,_id); 
@@ -793,13 +811,15 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show key_rodina
     show keys_rodina // [,,50,] {format:'t'}  // seznam duplicitních rodin
     show id_prihlaska
+    show prijata
     // zobrazení - předpokládá že org_ds=64
     show _nazev [,,100,] { title:'příjmení', format:'s+q*'
       css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
     }
     # --- varianta A plná jména
     show _jmena [,,190,] { title:'jméno/a', format:'tsq%' 
-      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' }
+      css_cell:'prijata,-1:,0:zmeneny,1:' }
+//      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' }
     # varianta B na úkor _jmena
     show _docs   [,,0,] { title:'dokumenty', format:"tsq", css_cell:'_dupl,0:,1:ezer_db',
       help:'d pokud má dokumenty, F/f pokud jsou fotky, popis možných kopií'
@@ -898,17 +918,19 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         break;
       }
       // označ nedávno změněné hodnoty, chce-li se to
-      if (zmeny) {
+      if (vsechny_zmeny || prijata==0) {
+        if (!vsechny_zmeny && prijata==0) {
+          zmeny= php.akce2_zmeny(the_duakce,72);
+        }
         js.set_css_changed(array(
             array(rod.get,'rodina',rod.key_rodina),
             array(pob.get,'pobyt',u.b.key_pobyt),
-            array(os1.get,'osoba',os1.key_osoba),
-            array(sp1.get,'spolu',sp1.key_spolu),
-            array(os2.get,'osoba',os2.key_osoba),
-            array(sp2.get,'spolu',sp2.key_spolu)
           ),
-          'zmeneny',
+          vsechny_zmeny ? 'zmeneny2' : 'zmeneny',
           zmeny.chngs);
+      }
+      elseif (!vsechny_zmeny) {
+        js.set_css_changed(0,'zmeneny');
       }
     }
     func reload_evid() { var id2:number, row:number
@@ -989,7 +1011,12 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     # ------------------------==> . kontextové_menu
     menu ctx { type:'context' //, join:frame
       item { title:'přijetí webových změn', 
-        func onclick () { prijeti_prihlasky() } }
+        func onclick () { 
+          if (id_prihlaska) 
+            prijeti_prihlasky_new(id_prihlaska,prijata) 
+          else
+            prijeti_prihlasky() 
+      } }
       item { title:'zrušit výběr'
         func onclick () { b.selected('clear') } }
       item { title:'-přesunout do vybraného pobytu'
@@ -1367,18 +1394,21 @@ form _evidence [,,623,] { style:'height:fit-content'
           alert(ret.html);
         }
     } }
-    item { title:'-barvit údaje změněné online'
-      func onclick () { web_zmeny= 1; 
-    } }
-    item { title:'ukončit barvení změn' 
-      func onclick () { js.web_changes(0,'zmeneny',''); web_zmeny= 0;
-    } }
-    item { title:'-obarvit nové údaje'
+//    item { title:'-barvit údaje změněné online'
+//      func onclick () { web_zmeny= 1; 
+//    } }
+    item { title:'-barvit všechny změněné údaje'
       func onclick () { var ret:object
         hodin_zmeny= prompt2("zadej stáří obarvených změn v hodinách",72);
-        ret= php.akce2_zmeny(the_duakce,hodin_zmeny);
-        if (ret.errs) warning(ret.errs);
-        zmeny= ret;
+        zmeny= php.akce2_zmeny(the_duakce,hodin_zmeny);
+        vsechny_zmeny= 1;
+        u.b.browse_refresh(u.b.key_pobyt);
+    } }
+    item { title:'barvit jen nepřijaté web-změny' 
+      func onclick () { 
+        js.set_css_changed(0,'zmeneny2');
+        vsechny_zmeny= 0;
+        u.b.browse_refresh(u.b.key_pobyt);
     } }
 //    item { title:'=m: opravit i0_rodina,pouze', skill:'m'
 //      proc onclick () {
@@ -1609,7 +1639,8 @@ panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', t
     panel.popup(0,0,0,1);
   }
   use h: form {
-    label txt [0,0,*,*] { style:'overflow:auto;background:white' }
+    label txt [0,0,*,*] { style:'overflow:auto' }
+//    label txt [0,0,*,*] { style:'overflow:auto;background:white' }
   }
 }
 # -----------------------------------------------------------------------------------------==> SPOLU
@@ -2128,17 +2159,16 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
         }
 //        if (rody=='-:0:nerodina' && cleni.browse_count()>1) { form.display(1,'u')}
       }
-      if (web_zmeny) {
-        js.web_changes(array(
-            array(rod.get,'rodina',rod.key_rodina),
+      // označ nedávno změněné hodnoty, chce-li se to
+      if (zmeny) {
+        js.set_css_changed(array(
             array(os1.get,'osoba',os1.key_osoba),
             array(sp1.get,'spolu',sp1.key_spolu),
             array(os2.get,'osoba',os2.key_osoba),
-            array(sp2.get,'spolu',sp2.key_spolu),
-            array(pob.get,'pobyt',u.b.key_pobyt)
+            array(sp2.get,'spolu',sp2.key_spolu)
           ),
-          'zmeneny',
-          php.akce2_zmeny_web(the_pobyt));
+          vsechny_zmeny ? 'zmeneny2' : 'zmeneny',
+          zmeny.chngs);
       }
     }
     # ------------------------==> . kontextové_menu

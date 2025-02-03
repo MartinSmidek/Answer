@@ -49,6 +49,8 @@ html {
         }
       }
       main {
+        .chng { outline:2px solid red; background:yellow }
+        .chng_ok { outline:2px solid green }
         max-width: @width; margin:0 auto; height: calc(100% - @head_h - @foot_h); overflow: auto;
         br {
           clear:both;
@@ -62,11 +64,25 @@ html {
           display:block; margin: 20px; padding: 20px;
           background-color: @form_b;
           div.clen, div.rodina {
-            display: inline-block; padding: 5px; margin: 5px;
+            display: table; padding: 5px; margin: 5px;
             background: darken(@form_b,10%);
+            .modal { // samostatně editovaná skupina 
+              z-index:2001; position:relative; display:inline;
+            }
+          }
+          &.modal-box {
+            padding: 0px; margin: 0px;
+            background: transparent;
+            display: inline-block;
           }
           div.clen {
-            margin-left: 50px; 
+            margin-left: 50px; margin-top: 10px;
+            button {
+              float: right; margin: 0px 10px -6px 0px;
+            }
+            div.clen {
+              margin-left: 0px; 
+            }
           }
           div.paru {
             margin: 10px 5px !important; 
@@ -135,7 +151,8 @@ html {
     div.popup { 
       z-index:2001; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);    
       text-align: center; padding: 20px; border-left: 20px solid red;
-      background: @popup_b; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      background: @popup_b; 
+      box-shadow: 5px 5px 10px 10px rgba(0, 0, 0, 0.5);
     }
     #popup_mask {
       display: none;
@@ -144,6 +161,7 @@ html {
     }
     // ----------------------------------------------------------------------------- trasování
     #mailbox { border-left: 20px solid grey; }
+    #alertbox_back { right: 10px; top: 10px; position: absolute; }
     #errorbox { border-left: 20px solid red; }
     section.trace {
       margin-top: 10px; border-top:3px dashed red;
