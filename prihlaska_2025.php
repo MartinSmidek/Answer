@@ -286,7 +286,7 @@ try {
 catch (Throwable $e) {
   $msg= $e->getMessage();
   $line= $e->getLine();
-  append_log("FATAL ... $msg na řádku $line");
+  append_log("<b style='color:red'>FATAL</b> ... $msg na řádku $line");
   echo "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org.";
 }
@@ -445,7 +445,6 @@ function klient($idor,$nova_prihlaska=1) {
   list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
   // osobu známe  - zjistíme zda již není přihlášen
   $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
-  append_log("KLIENT ... $jmena $vars->email");
   list($idp,$kdy,$kdo/*,$web_json*/)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,''),web_json",
       "pobyt JOIN spolu USING (id_pobyt) "
       . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
@@ -471,6 +470,7 @@ function klient($idor,$nova_prihlaska=1) {
     $vars->idr= $idr;
     log_write('id_osoba',$vars->ido);
     log_write('id_rodina',$vars->idr);
+    append_log("KLIENT ... $jmena $vars->email ... přihláška $vars->id_prihlaska");
     return prihlaska($nova_prihlaska);
   }
 } // klient
@@ -624,6 +624,9 @@ function prihlasit() {
   $DOM->form= ['show',
       "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.
        <br>$akce->garant_jmeno"];
+  $idp= $vars->pobyt->id_pobyt;
+  append_log("<b style='color:green'>POBYT</b> ... $ucastnici $vars->email ... přihláška $vars->id_prihlaska "
+      . "pobyt $idp");
   log_close();
 db_end:
   if (count($errors)) {
@@ -2116,7 +2119,7 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $TEST, $AKCE, $VERZE, $akce;
+  global $TEST, $AKCE, $VERZE, $akce, $vars;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
@@ -2127,6 +2130,7 @@ function log_open($email) { // -------------------------------------------------
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= $id= $TEST<2 ? pdo_insert_id() : 1;
+      $vars->id_prihlaska= $id;
       pdo_query_2("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
           . "VALUE (NOW(),'WEB','prihlaska',$id,'i','id_akce',$ida)",1);
       session_write_close();
@@ -2264,7 +2268,7 @@ function log_error($msg) { // --------------------------------------------------
   elseif ($TRACE)
       display("LOG_ERROR fail - no sesssion");
   // vložení do souboru prihlaska_2025.log.php
-  append_log("ERROR ... $msg");
+  append_log("<b style='color:red'>ERROR</b> ... $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
   log_write('close','NOW()');
