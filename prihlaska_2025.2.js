@@ -89,8 +89,10 @@ function after_php(DOM) {
   for (const id in DOM) {
     let elem= jQuery(`#${id}`),
         value= DOM[id];
-    if (!elem.length) 
-      alert(`chyba programu - '${id}' je neznámé id`);
+    if (!elem.length) {
+      error(`chyba DOM - '${id}' je neznámé id`);
+      continue;
+    }
     if (!Array.isArray(value)) value= [value];
     for (let i = 0; i < value.length; i++) {
       let val = value[i];
@@ -121,24 +123,37 @@ function ask(x,then,arg) {
   jQuery.ajax({url:myself_url, data:x, method: 'POST',
     success: function(y) {
       if ( typeof(y)==='string' ) {
-        error("Došlo k chybě 1 v komunikaci se serverem - '"+xx.cmd+"'");
-        jQuery('#errorbox').show().html(y);
+//        error("Došlo k chybě 1 v komunikaci se serverem - '"+xx.cmd+"'");
+        errorbox_only(y);
+//        jQuery('#errorbox').show().html(y);
+//        jQuery('#form').hide();
       }
       else if ( y.error ) {
-        error("Došlo k chybě 2 v komunikaci se serverem - '"+y.error+"'");
-        jQuery('#errorbox').show().html(y.error);
+//        error("Došlo k chybě 2 v komunikaci se serverem - '"+y.error+"'");
+        errorbox_only(y.error);
+//        jQuery('#errorbox').show().html(y.error);
+//        jQuery('#form').hide();
       }
       else if ( then ) {
         then.apply(undefined,[y,arg]);
       }
     },
     error: function(xhr) {
-      error("Došlo k chybě 3 v komunikaci se serverem");
-      jQuery('#errorbox').show().html(xhr.responseText);
+//      error("Došlo k chybě 3 v komunikaci se serverem");
+      errorbox_only(xhr.responseText);
+//      jQuery('#errorbox').show().html(xhr.responseText);
+//      jQuery('#form').hide();
     }
   })
 }
 // ------------------------------------------------------------------------------------------- error
 function error(msg) {
-//  alert(msg + " pokud napises na martin@smidek.eu pokusim se pomoci, Martin");
+  let x= {cmd:'DOM_error',args:[msg]};
+  ask(x);
+}
+function errorbox_only(msg) {
+  jQuery('#form').hide();
+  jQuery('.popup').hide();
+  jQuery('#popup_mask').hide();
+  jQuery('#errorbox').show().html(msg);
 }

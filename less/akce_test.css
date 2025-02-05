@@ -112,13 +112,15 @@ html body div.wrapper main div.box.modal-box {
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
   margin-top: 10px;
+  /*div.clen { margin-left: 0px; }*/
 }
 html body div.wrapper main div.box div.clen button {
   float: right;
   margin: 0px 10px -6px 0px;
 }
-html body div.wrapper main div.box div.clen div.clen {
-  margin-left: 0px;
+html body div.wrapper main div.box div.clen span,
+html body div.wrapper main div.box div.clen div {
+  margin: 0px 0px 0px 10px;
 }
 html body div.wrapper main div.box div.paru {
   margin: 10px 5px !important;
@@ -175,6 +177,14 @@ html body div.wrapper main div.box label.check_spolu {
   font-size: 12px;
 }
 html body div.wrapper main div.box label.check_spolu input {
+  display: block;
+  margin: 5px 15px;
+}
+html body div.wrapper main div.box label.check_souhlas {
+  float: left;
+  font-size: 12px;
+}
+html body div.wrapper main div.box label.check_souhlas input {
   display: block;
   margin: 5px 15px;
 }
