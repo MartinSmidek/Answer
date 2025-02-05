@@ -597,7 +597,7 @@ end:
 // --------------------------------------------------------------------------------------- přihlásit
 function prihlasit() { 
 # zapíše přihlášku do Answeru
-  global $DOM, $vars, $akce, $errors;
+  global $DOM, $vars, $akce, $errors, $TEST;
   // vytvoření pobytu
   log_append_stav('zapis');
   // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
@@ -635,6 +635,11 @@ function prihlasit() {
 
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
   db_close_pobyt();
+  // generování PDF s osobními a citlivými údaji pro Letní kurz
+  if ($akce->p_dokument && $TEST<2) {
+    $msg= gen_html(1);
+    if ($TEST) display($msg);
+  }
   log_write_changes(); // po zápisu do pobytu
   $ucastnici= ''; $del= ''; 
   $emails= [$vars->email]; 
@@ -2404,12 +2409,12 @@ function gen_html($to_save=0) {
   }
   $html.= "<p></p>";
   // redakce citlivých údajů
-  $jm= $m->jazyk; $jm= $jm ? ", $jm" : '';
-  $jz= $z->jazyk; $jz= $jz ? ", $jz" : '';
+  $jm= $m->jazyk; $jm= $jm ? "; $jm" : '';
+  $jz= $z->jazyk; $jz= $jz ? "; $jz" : '';
   $udaje= [
     ['Vzdělání',              $m->vzdelani, $z->vzdelani],
     ['Povolání, zaměstnání',  $m->zamest, $z->zamest],
-    ['Zájmy, znalost jazyků',"$m->zajmy $jm", "$z->zajmy $jz"],
+    ['Zájmy; znalost jazyků',"$m->zajmy$jm", "$z->zajmy$jz"],
     ['Popiš svoji povahu',    $m->Xpovaha, $z->Xpovaha],
     ['Vyjádři se o vašem manželství', $m->Xmanzelstvi, $z->Xmanzelstvi],
     ['Co od účasti očekávám', $m->Xocekavani, $z->Xocekavani],
