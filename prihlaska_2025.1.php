@@ -1,10 +1,11 @@
 <?php
-/*
-  (c) 2025 Martin Smidek <martin@smidek.eu>
-
-  3. verze online přihlašování pro YMCA Setkání (jen obnovy a LK MS YS)
-  debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
-
+/**
+ * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
+ * 
+ * verze 2025.1
+ * 2025-02-03 ostrá verze 2025.1 pro Obnovy 
+ * 
+ * debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
  */
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok

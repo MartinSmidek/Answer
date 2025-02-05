@@ -1,16 +1,16 @@
 <?php
-/*
-  (c) 2025 Martin Smidek <martin@smidek.eu>
-
-  3. verze online přihlašování pro YMCA Setkání (jen obnovy a LK MS YS)
-  debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
-
+/**
+ * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
+ * 
+ * verze 2025.2
+ * 2025-02-04 obohacení verze 2025.1 pro Obnovy tj. p_typ='O' o Letní kurz tj. p_typ='O'
+ * 
+ * debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
  */
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok.release
 $SUBVERZE= '2'; // verze přihlášek: rok.release
 $MYSELF= "prihlaska_$VERZE.$SUBVERZE";
-
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 //error_reporting(E_ALL);
@@ -27,7 +27,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //$TEST_mail= 'marie@smidkova.eu';
 //$TEST_mail= 'jakub@smidek.eu';
 //$TEST_mail= 'kancelar@setkani.org';           // v létě dělali VPS
-$TEST_mail= 'zahradnicek@fnusa.cz';
+//$TEST_mail= 'zahradnicek@fnusa.cz';
 //$TEST_mail= 'petr.janda@centrum.cz';
 //$TEST_mail= 'p.kvapil@kvapil.cz';
 //$TEST_mail= 'bucek@fem.cz';
