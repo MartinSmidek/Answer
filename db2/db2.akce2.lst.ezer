@@ -838,7 +838,7 @@ form _page [,,275,360] {
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
-  func p_show() { var ch:ezer
+  func p_show() { var ch:ezer, akci:text
     p_tag= php.select1('barva','_cis',`druh='ms_akce_typ' AND data=${druh.key()}`);
     if (!p_tag) return;
     form.display(1,p_tag);
@@ -850,9 +850,17 @@ form _page [,,275,360] {
     for (ch of form.tagged('pri')) {
       if (js.get_type(ch)=='check') ch.init();
     }
-    tp_pracovni= "sem prosím napište vzkaz organizátorům, např. informace, které nebylo možné nikam napsat";
+    tp_pracovni= "sem prosím napište vzkaz organizátorům, zejména informace k pobytu, které nebylo možné nikam napsat";
     if (match('M|O|R',p_tag)) p_rodina= 1;
     if (match('J',p_tag)) p_jednotlivec= 1;
+    akci= '???';
+    switch (p_tag) { 
+      case 'O': akci= 'obnovu MS'; break;
+      case 'M': akci= 'Letní kurz MS'; break;
+      case 'O': akci= 'akci pro rodiny'; break;
+      case 'J': akci= 'akci pro jednotlivce'; break;
+    }
+    p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
       web_online= json_encode(p_json); web_online.change();
     }
@@ -862,12 +870,14 @@ form _page [,,275,360] {
     p_href= p_enable ? php.akce_prihlaska(page.a_akce,web_prihlaska,
         conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0')) : '';
   }
-  check p_enable [13,30,150,] { tag:'pri,M,O,R,J', title:'povolit online přihlášení', format:'n', value:'0', 
-      css:'ae_parm', style:'padding-bottom:2px;z-index:1'}  
-  label p_href [181,35,209,20] { tag:'pri,M,O,R,J', style:'text-align:right' }
-  check p_TEST [411,30,50,] { tag:'pri,M,O,R,J', title:'TEST', value:'0', format:'dn',
+  label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
+      style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
+  check p_enable [13,30,10,] { tag:'pri,M,O,R,J', title:'', format:'n', value:'0', 
+      style:'padding-bottom:2px;z-index:2'}  
+  label p_href [156,37,300,20] { tag:'pri,M,O,R,J', style:'text-align:right' }
+  check p_TEST [362,50,50,] { tag:'pri,M,O,R,J', title:'TEST', value:'0', format:'dn',
       help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' }
-  check p_MAIL [411,46,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
+  check p_MAIL [411,50,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
       help:'MAIL=1 (dflt) posílá maily, MAIL=0 je pouze zobrazuje (pro chráněné IP adresy)' }
   
   # -----------==> .. zobrazení varianty přihlášky podle p_tag
@@ -884,10 +894,10 @@ form _page [,,275,360] {
     check p_oso_adresa [200,280,246,] { tag:'pri,M,O,R,J', title:'osobní adresa', format:'d'}
   label [13,320,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }
     check p_registrace [30,340,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem', format:'d'}
-    check p_souhlas [250,340,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)', format:'d'}
+    check p_souhlas [250,340,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}
   label [13,380,151,20] { tag:'pri,M,O' title:'<b>Nastavení pro akce MS</b>' }
     check p_obnova [30,400,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
-    check p_vps [30,420,301,] { tag:'pri,O', title:'OBNOVA MS: nastavit funkci VPS podle letního kurzu'}
+    check p_vps [30,420,350,] { tag:'pri,O', title:'OBNOVA MS: VPS z letního kurzu poptat jestli budou sloužit'}
     check p_upozorneni [30,400,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
     check p_dokument [30,420,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
   // ruční změna JSON
@@ -902,7 +912,7 @@ form _page [,,275,360] {
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
       akce_lock('off'); 
-      p_json= {};
+      p_json= {p_typ:p_tag}; // základní typ: O,M,R,J
       for (elem of form.tagged(p_tag)) {
         typ= js.get_type(elem);
         if (typ=='check') {
