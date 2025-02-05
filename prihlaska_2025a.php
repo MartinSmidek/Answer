@@ -1778,14 +1778,14 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $AKCE, $VERZE, $akce;
+  global $AKCE, $VERZE, $SUBVERZE, $akce;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
     $ida= $akce->id_akce;
     $abbr= $version= $platform= null;
     ezer_browser($abbr,$version,$platform);
-    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE',open=NOW(),IP='$ip',"
+    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE.$SUBVERZE',open=NOW(),IP='$ip',"
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= $id= pdo_insert_id();

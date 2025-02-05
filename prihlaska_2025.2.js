@@ -106,8 +106,14 @@ function after_php(DOM) {
         case 'empty': elem.empty(); break;
         case 'remove': elem.remove(); break;
         default: 
-          if (elem.is('input')) 
-            elem.val(val); 
+          if (elem.is('input')) {
+            if (elem.is(':checkbox')) {
+              elem.prop('checked',val); 
+            }
+            else {
+              elem.val(val); 
+            }
+          }
           else 
             elem.html(val.charAt(0)=='+' 
               ? elem.html()+val.substring(1) 

@@ -6,9 +6,10 @@
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
-$MYSELF= 'prihlaska_2025';
-$VERZE= '2025.1'; // verze přihlášek: rok.release
 $ORG= 1;  // verze pro YMCA Setkání
+$VERZE= '2025'; // verze přihlášek: rok
+$SUBVERZE= '2'; // verze přihlášek: release
+$MYSELF= "prihlaska_$VERZE.$SUBVERZE";
 
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 //error_reporting(E_ALL);
@@ -2123,14 +2124,14 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $TEST, $AKCE, $VERZE, $akce, $vars;
+  global $TEST, $AKCE, $VERZE, $SUBVERZE, $akce, $vars;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
     $ida= $akce->id_akce;
     $abbr= $version= $platform= null;
     ezer_browser($abbr,$version,$platform);
-    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE',open=NOW(),IP='$ip',"
+    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE.$SUBVERZE',open=NOW(),IP='$ip',"
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= $id= $TEST<2 ? pdo_insert_id() : 1;
@@ -2278,12 +2279,12 @@ function log_close() { // ------------------------------------------------------
   log_write('close','NOW()');
 }
 function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE, $MYSELF;
-  $file= "$MYSELF.log.php";
+  global $AKCE, $VERZE, $SUBVERZE;
+  $file= "prihlaska.log.php";
   $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
-  $msg= date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
+  $msg= "$VERZE.$SUBVERZE ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
       file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>\n");
   }
