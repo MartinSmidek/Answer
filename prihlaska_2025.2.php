@@ -3,15 +3,15 @@
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
  * 
  * verze 2025.2
- * 2025-02-04 obohacení verze 2025.1 pro Obnovy tj. p_typ='O' o Letní kurz tj. p_typ='O'
+ * 2025-02-04 sjednocení verze 2025.1 (pro Obnovy) s přihlášením na Letní kurz
  * 
- * debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
  */
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok.release
 $SUBVERZE= '2'; // verze přihlášek: rok.release
 $MYSELF= "prihlaska_$VERZE.$SUBVERZE";
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
+// debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 //error_reporting(E_ALL);
 error_reporting(0);
@@ -219,15 +219,18 @@ try {
   $TEST= $vars->TEST;
   $MAIL= $vars->MAIL;
 
-  // pouze pro lokální testování natvrdo test a ne maily
-  if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
-    $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
-    $TEST= 1;
-  }
+//  // pouze pro lokální testování natvrdo test a ne maily
+//  if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
+//    $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
+//    $TEST= 1;
+//  }
 
 //$TEST= 2; // ===================================================================================== 2 => potlačení INSERT a UPDATE
   connect_db();           // napojení na databázi a na Ezer 
   read_akce();            // načtení údajů o akci z Answeru 
+  if (!isset($akce->p_typ) ) {
+    die("Online přihlašování není ještě k dispozici."); 
+  }
 
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
     // počáteční stav
@@ -451,7 +454,7 @@ end:
 // ------------------------------------------------------------------------------------------- kient
 function klient($idor,$nova_prihlaska=1) { 
 # $id je nositelem přihlašovacího mailu
-  global $DOM, $TEXT, $vars, $akce;
+  global $DOM, $AKCE, $TEXT, $vars, $akce;
   list($ido,$idr)= explode('/',$idor);
   list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
   // osobu známe  - zjistíme zda již není přihlášen
@@ -471,6 +474,8 @@ function klient($idor,$nova_prihlaska=1) {
     log_write('id_pobyt',$idp);
     $DOM->usermail= "hide";
     $DOM->rozlouceni_text= $TEXT->rozlouceni2;
+    $_SESSION[$AKCE]->id_prihlaska= $vars->idw_old;
+    append_log("DOTAZ= ... klient přihlášen $jmena ");
     hlaska("Na tuto akci jste již $od_kdy přihlášeni$kym","prazdna");
   }
   else {
@@ -597,7 +602,7 @@ end:
 // --------------------------------------------------------------------------------------- přihlásit
 function prihlasit() { 
 # zapíše přihlášku do Answeru
-  global $DOM, $vars, $akce, $errors;
+  global $DOM, $vars, $akce, $errors, $TEST;
   // vytvoření pobytu
   log_append_stav('zapis');
   // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
@@ -635,6 +640,11 @@ function prihlasit() {
 
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
   db_close_pobyt();
+  // generování PDF s osobními a citlivými údaji pro Letní kurz
+  if ($akce->p_dokument??0 && $TEST<2) {
+    $msg= gen_html(1);
+    if ($TEST) display($msg);
+  }
   log_write_changes(); // po zápisu do pobytu
   $ucastnici= ''; $del= ''; 
   $emails= [$vars->email]; 
@@ -1252,7 +1262,7 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 // =============================================================================== zobrazení stránky
 function page() {
-  global $MYSELF, $_TEST, $TEST, $TEST_mail, $TEXT, $akce, $rel_root;
+  global $MYSELF, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
@@ -1285,7 +1295,7 @@ function page() {
     <div class="wrapper">
       <header>
         <div class="header">
-          <div id='info' class='info'></div>
+          <div id='info' class='info'>$DOM_default->info</div>
           <a class="logo" href="https://www.setkani.org" target="web" title="" >
             <img src="/img/husy_ymca.png" alt=""></a>
           <div id='user' class="user"></div>
@@ -2248,9 +2258,13 @@ function log_find_saved($email) { // -------------------------------------------
   global $vars;
   // zkusíme najít poslední verzi přihlášky - je ve fázi (c)
   $found= '';
-  $idp= select_2('id_pobyt','prihlaska',
-      "id_pobyt!=0 AND id_akce=$vars->id_akce AND email='$email' ");
-  if ($idp) goto end; // už se povedlo přihlásit
+  list($idp,$idw)= select_2("SELECT id_pobyt,id_prihlaska FROM prihlaska "
+      . "WHERE id_pobyt!=0 AND id_akce=$vars->id_akce AND email='$email' "
+      . "ORDER BY id_prihlaska DESC LIMIT 1");
+  if ($idp) {
+    $vars->idw_old= $idw;
+    goto end;  
+  } // už se povedlo přihlásit
   list($idpr,$open)= select_2("SELECT id_prihlaska,open FROM prihlaska 
       WHERE id_pobyt=0 AND id_akce=$vars->id_akce AND email='$email' AND vars_json!='' 
       AND id_prihlaska>110 ORDER BY id_prihlaska DESC LIMIT 1");
@@ -2325,7 +2339,8 @@ function append_log($msg) { // -------------------------------------------------
   $email= $_SESSION[$AKCE]->email??'?';
   $msg= "$VERZE.$SUBVERZE ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
-      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>\n");
+      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>"
+          . "\n<b>VERZE  DATUM      ČAS      FUNKCE     KLIENT </b>\n");
   }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
@@ -2404,12 +2419,12 @@ function gen_html($to_save=0) {
   }
   $html.= "<p></p>";
   // redakce citlivých údajů
-  $jm= $m->jazyk; $jm= $jm ? ", $jm" : '';
-  $jz= $z->jazyk; $jz= $jz ? ", $jz" : '';
+  $jm= $m->jazyk; $jm= $jm ? "; $jm" : '';
+  $jz= $z->jazyk; $jz= $jz ? "; $jz" : '';
   $udaje= [
     ['Vzdělání',              $m->vzdelani, $z->vzdelani],
     ['Povolání, zaměstnání',  $m->zamest, $z->zamest],
-    ['Zájmy, znalost jazyků',"$m->zajmy $jm", "$z->zajmy $jz"],
+    ['Zájmy; znalost jazyků',"$m->zajmy$jm", "$z->zajmy$jz"],
     ['Popiš svoji povahu',    $m->Xpovaha, $z->Xpovaha],
     ['Vyjádři se o vašem manželství', $m->Xmanzelstvi, $z->Xmanzelstvi],
     ['Co od účasti očekávám', $m->Xocekavani, $z->Xocekavani],
