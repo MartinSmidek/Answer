@@ -6,4 +6,5 @@
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
+//$_GET['test']= 2;
 require_once("prihlaska_2025.2.php");
