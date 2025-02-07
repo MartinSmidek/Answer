@@ -251,6 +251,7 @@ try {
     polozky();              // popis získávaných položek
     $fce= $_POST['cmd'];
     $args= $_POST['args']??[];
+    $call= '';
     if ($TEST) {
       $call= "function <b>$fce</b>";
       foreach ($args as $name=> $value) {
