@@ -129,6 +129,8 @@ try {
 
   connect_db();           // napojení na databázi a na Ezer 
   read_akce();            // načtení údajů o akci z Answeru 
+  $TEST= 1;
+  $MAIL= 0;
   if (!isset($akce->p_typ) ) {
     die("Online přihlašování není ještě k dispozici."); 
   }
