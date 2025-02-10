@@ -134,7 +134,7 @@ try {
   if (!isset($akce->p_typ) ) {
     die("Online přihlašování není ještě k dispozici."); 
   }
-
+echo "test=$TEST,mail=$MAIL";
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
     // počáteční stav
     'user'=>'hide',
