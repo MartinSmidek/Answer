@@ -123,8 +123,8 @@ try {
   if (!isset($_SESSION['akce'])) { session_reset(); }
   $AKCE= "A_{$_SESSION['akce']}";
   $vars= $_SESSION[$AKCE]??(object)[];
-  $TEST= $vars->TEST;
-  $MAIL= $vars->MAIL;
+  $TEST= $vars->TEST= 1;
+  $MAIL= $vars->MAIL= 0;
   $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
 
   connect_db();           // napojení na databázi a na Ezer 
