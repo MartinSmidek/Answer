@@ -48,9 +48,6 @@ set_error_handler(function ($severity, $message, $file, $line) {
 // </editor-fold>
 
 try {
-  // detekce varianty: normální nebo testovací 
-  $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
-  $_ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
      
   $errors= [];
 
@@ -68,11 +65,12 @@ try {
         'Tento mail v evidenci YMCA Setkání nemáme, tato akce předpokládá, že jste se již nějaké naší 
           akce zúčastnil/a, přihlaste se prosím pomocí toho, který jste tehdy použil/a',
     'usermail_nad4' => 
-        'Tento mail v evidenci YMCA Setkání nemáme, pokud jste se již nějaké naší akce zúčastnil/a, 
-         přihlaste se prosím pomocí toho, který jste tehdy použil/a',
-    'usermail_nad4' => 
         'Tento mail máme na základě předchozích přihlášek a účastí na našich akcích uvedený 
          ve více souvislostech - zvolte prosím správnou možnost.',
+    'usermail_nad5' => 
+        'Tento mail v evidenci YMCA Setkání nemáme, pokud jste se již nějaké naší akce zúčastnili, 
+         přihlaste se prosím pomocí mailu, který jste tehdy použil/a 
+         - pokud s námi budete poprvé, pokračujte registrací.',
     'osoby_nad1' => 
         'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.',
     'rozlouceni1' => 
@@ -82,6 +80,7 @@ try {
   ];
   $akce_default= [ // položky které aplikace umí
   //  'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
+    'p_registrace'  =>  0, // je povoleno registrovat se neznámým emailem
     'p_rodina'      =>  0, // rodinné přihlášení
     'p_deti'        =>  0, // ... s dětmi
     'p_pecouni'     =>  0, // ... mohou mít pečouny
@@ -97,9 +96,181 @@ try {
     'p_vps'         =>  0, // OBNOVA MS: nastavit funkci VPS podle letního kurzu
   // -- jen pro LK MS
     'p_upozorneni'  =>  0, // LETNÍ KURZ MS: vyžadovat akceptaci upozornění
-  //  'p_dokument'    =>  0, // LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
+    'p_dokument'    =>  0, // LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
   ]; 
-  function polozky() { // -------------------------------------------------------------------- položky
+// ========================================================================================== .MAIN.
+// rozlišení na volání z příkazové řádky - úvodní s prázdným SESSION nebo po ctrl-r
+// a na volání přes AJAX z klientské části
+
+// pro první volání nebo ctrl-r nastav akci
+// hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
+//   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
+//   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
+  $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
+  $virgin= true;
+  if (!count($_POST)) { // zde se proběhne jen poprvé
+    $virgin= false;
+    if (!isset($_GET['akce']) ) {
+      die("Online přihlašování není k dispozici."); 
+    }
+    // detekce varianty: normální nebo testovací 
+    $ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
+    // odvození požadavku na test a ostrý mail
+    $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
+    $MAIL= $_GET['mail']??1 ? 1 : ($ANSWER?0:1);
+    initialize($_GET['akce']); // přenese TEST i MAIL
+  }
+  if (!isset($_SESSION['akce'])) { session_reset(); }
+  $AKCE= "A_{$_SESSION['akce']}";
+  $vars= $_SESSION[$AKCE]??(object)[];
+  $TEST= $vars->TEST;
+  $MAIL= $vars->MAIL;
+  $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
+
+  connect_db();           // napojení na databázi a na Ezer 
+  read_akce();            // načtení údajů o akci z Answeru 
+  if (!isset($akce->p_typ) ) {
+    die("Online přihlašování není ještě k dispozici."); 
+  }
+
+  $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
+    // počáteční stav
+    'user'=>'hide',
+    'usermail'=>'show', 'email'=>['show','empty','enable'], 'pin'=>'hide', 
+    'zadost_o_pin'=>'show', 'kontrola_pinu'=>'hide',
+    'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
+    'pin'=>'hide', 'kontrola_pinu'=>'hide', 'registrace'=>'hide', 'form'=>'hide',
+    // testování
+    'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST>1 ? ', bez zápisu' : ''),
+    'mailbox'=>'hide', 
+    'errorbox'=>'hide',
+    'alertbox'=>'hide',
+  ];
+
+  if ( count($_POST) ) {
+    // volání přes AJAX z existující klientské části
+    polozky();              // popis získávaných položek
+    $fce= $_POST['cmd'];
+    $args= $_POST['args']??[];
+    $call= '';
+    if ($TEST) {
+      $call= "function <b>$fce</b>";
+      foreach ($args as $name=> $value) {
+        if ($name=='*')
+          $call.= "<br>$name";
+        else 
+          $call.= "<br>$name=$value";
+      }
+    }
+    $DOM= (object)[];
+    if ( function_exists($fce)) {
+      $vars= $_SESSION[$AKCE];
+      call_user_func_array($fce,$args); // modifikuje $DOM
+      if ($vars->id_akce??0)
+        $_SESSION[$AKCE]= $vars;
+    }
+    else {
+      $call.= " <b style='color:red'>neexistuje</b>";
+      $DOM->errorbox= ['show',$call];
+      $errors[]= $call;
+    }
+    // případné trasování
+    if ($TEST) {
+      global $trace;
+      $trace= $trace??'' ? "<hr>$trace" : '';
+      if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
+      if (isset($y->error)) $trace.= '<hr>'.nl2br($y->error);
+      $trace.= '<hr>'.nl2br($y->qry??'');
+  //    unset($vars->DOM->trace); // zahodíme staré trace
+      $dump= debugx($vars,'$vars');
+      $dump.= debugx($akce,'$akce');
+      $DOM->trace= "$call$trace<hr>$dump";
+    }
+    // pokračujeme v JS
+    header('Content-type: application/json; charset=UTF-8');
+    $yjson= json_encode($DOM);
+    echo $yjson;
+  }
+  else {
+    // volání z příkazové řádky vytvoří novou klientskou část 
+    page();
+    // po vytvoření klienta je volána funkce start()
+  }
+}
+catch (Throwable $e) {
+  $msg= $e->getMessage();
+  $line= ''; $del= '';
+  $tline= ''; $tdel= '';
+  $traceback= $e->getTrace();
+  $max_depth= 12;
+  $max_string= 12;
+  for ($depth=0; $depth<=$max_depth; $depth++ ) {
+    if (isset($traceback[$depth]['line'])) {
+      $L= $traceback[$depth]['line'];
+      $F= $traceback[$depth]['function'];
+      $args= '';
+      if ($F=='{closure}') $F= '';
+      else {
+        $A= $traceback[$depth]['args'];
+        $dela= '';
+        for ($i=0; $i<count($A); $i++) {
+          $Ai= $A[$i];
+          if ( is_string($Ai) ) {
+            $arg= mb_substr(htmlspecialchars($Ai,ENT_NOQUOTES,'UTF-8'),0,$max_string)
+                .(mb_strlen($Ai)>$max_string?'...':'');
+          }
+          elseif (is_numeric($Ai))
+            $arg= $Ai;
+          else
+            $arg= '?';
+          $args.= "$dela$arg";
+          $dela= ',';
+        }
+        $args= "($args)";
+      }
+      $line.= "$del $L:$F$args "; $del= '<';
+      $tline.= "$tdel $L: $F $args "; $tdel= '<br>';
+      
+    }
+    else break;
+  }
+  append_log("<b style='color:red'>CATCH</b> $msg na řádku $line");
+  echo "Omlouváme se, během práce programu došlo k nečekané chybě."
+  . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
+  . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
+      . "<br>$msg na řádku $tline" : '');
+  exit;
+}
+// -------------------------------------------------------------------- obnova počátečního nastavení
+function initialize($id_akce) { 
+# zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní a zapomene všechny hodnoty
+  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL, $ANSWER;
+  do_session_restart();
+  if ($id_akce) {
+    $_SESSION['akce']= $id_akce;
+    $AKCE= "A_$id_akce"; // ID akce pro SESSION
+    $_SESSION[$AKCE]= (object)[
+      'id_akce'=>$id_akce,
+      'TEST'=>$TEST, 'MAIL'=>$MAIL, 
+      'ANSWER'=>$ANSWER,  // při zahájení (nebo po ctrl-r) bylo přihlášeno do Answeru
+      'ido'=>0, 'idr'=>0, 'pin'=>'',  // ověřený klient
+      'form'=>(object)[],
+  //    'DOM'=>$DOM_default,
+      'cleni'=>[],
+      'rodina'=>[],
+      'pobyt'=>(object)[],
+      'chk_souhlas'=>0,
+    ];
+    // pro volání přes AJAX
+    $vars= $_SESSION[$AKCE];
+    $DOM= $DOM_default;
+  }
+  else {
+    $vars= (object)[];
+    $DOM= (object)[];
+  }
+}
+function polozky() { // -------------------------------------------------------------------- položky
   global $akce, $options, $sub_options, $p_fld, $r_fld, $o_fld;
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
@@ -156,11 +327,9 @@ try {
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'vztah'     =>[ 9,'manžel/maželka','select','ab'],
-      'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d']],
-    $akce->p_kontakt ? [
+      'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d'],
       'telefon'   =>[15,'telefon','','abp'],
-      'email'     =>[35,'* e-mailová adresa','mail','ab']
-      ] : [],
+      'email'     =>[35,'* e-mailová adresa','mail','ab']],
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'číslo OP nebo pasu','','abp'],
       ] : [],
@@ -195,207 +364,84 @@ try {
     }
   }
 } // definice položek formuláře
-// ========================================================================================== .MAIN.
-// rozlišení na volání z příkazové řádky - úvodní s prázdným SESSION nebo po ctrl-r
-// a na volání přes AJAX z klientské části
-
-// pro první volání nebo ctrl-r nastav akci
-// hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
-//   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
-//   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-  if (!count($_POST)) {
-    if (!isset($_GET['akce']) ) {
-      die("Online přihlašování není k dispozici."); 
-    }
-    else {
-      $TEST= $_GET['test']??0 ? ($_ANSWER?(0+$_GET['test']):0) : 0;
-      $MAIL= $_GET['mail']??1 ? 1 : ($_ANSWER?0:1);
-      initialize($_GET['akce']); // přenese TEST i MAIL
-    }
-  }
-  if (!isset($_SESSION['akce'])) { session_reset(); }
-  $AKCE= "A_{$_SESSION['akce']}";
-  $vars= $_SESSION[$AKCE]??(object)[];
-  $TEST= $vars->TEST;
-  $MAIL= $vars->MAIL;
-
-//  // pouze pro lokální testování natvrdo test a ne maily
-//  if ($_SERVER["SERVER_NAME"]=='answer-test.bean') {
-//    $MAIL= 0; // $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
-//    $TEST= 1;
-//  }
-
-//$TEST= 2; // ===================================================================================== 2 => potlačení INSERT a UPDATE
-  connect_db();           // napojení na databázi a na Ezer 
-  read_akce();            // načtení údajů o akci z Answeru 
-  if (!isset($akce->p_typ) ) {
-    die("Online přihlašování není ještě k dispozici."); 
-  }
-
-  $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
-    // počáteční stav
-    'user'=>'hide',
-    'usermail'=>'show', 'email'=>'enable', 'pin'=>'hide', 
-    'zadost_o_pin'=>'show', 'kontrola_pinu'=>'hide',
-    'usermail_nad'=>$TEXT->usermail_nad1, 'usermail_pod'=>$TEXT->usermail_pod1, 
-    'pin'=>'hide', 'kontrola_pinu'=>'hide', 'form'=>'hide',
-    // testování
-    'info'=> $MAIL ? 'hide' : 'simulace mailů'.($TEST>1 ? ', bez zápisu' : ''),
-    'mailbox'=>'hide', 
-    'errorbox'=>'hide',
-    'alertbox'=>'hide',
-  ];
-
-  if ( count($_POST) ) {
-    // volání přes AJAX z existující klientské části
-    polozky();              // popis získávaných položek
-    $fce= $_POST['cmd'];
-    $args= $_POST['args']??[];
-    if ($TEST) {
-      $call= "function <b>$fce</b>";
-      foreach ($args as $name=> $value) {
-        if ($name=='*')
-          $call.= "<br>$name";
-        else 
-          $call.= "<br>$name=$value";
-      }
-    }
-    $DOM= (object)[];
-    if ( function_exists($fce)) {
-      $vars= $_SESSION[$AKCE];
-      call_user_func_array($fce,$args); // modifikuje $DOM
-      if ($vars->id_akce??0)
-        $_SESSION[$AKCE]= $vars;
-    }
-    else {
-      $call.= " <b style='color:red'>neexistuje</b>";
-      $DOM->errorbox= ['show',$call];
-      $errors[]= $call;
-    }
-    // případné trasování
-    if ($TEST) {
-      global $trace;
-      $trace= $trace??'' ? "<hr>$trace" : '';
-      if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
-      if (isset($y->error)) $trace.= '<hr>'.nl2br($y->error);
-      $trace.= '<hr>'.nl2br($y->qry??'');
-  //    unset($vars->DOM->trace); // zahodíme staré trace
-      $dump= debugx($vars,'$vars');
-      $dump.= debugx($akce,'$akce');
-      $DOM->trace= "$call$trace<hr>$dump";
-    }
-    // pokračujeme v JS
-    header('Content-type: application/json; charset=UTF-8');
-    $yjson= json_encode($DOM);
-    echo $yjson;
-  }
-  else {
-    // volání z příkazové řádky vytvoří novou klienstkou část 
-    page();
-    // po vytvoření klienta je volána funkce start()
-  }
-}
-catch (Throwable $e) {
-  $msg= $e->getMessage();
-  $line= $e->getLine();
-  append_log("<b style='color:red'>FATAL</b> $msg na řádku $line");
-  echo "Omlouváme se, během práce programu došlo k nečekané chybě."
-  . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org.";
-}
-// -------------------------------------------------------------zahájení nebo pokračování po ctrl-r
-function start() { 
-# zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní
-  initialize($_SESSION['akce']??0);
-}
-// -------------------------------------------------------------------- obnova počátečního nastavení
-function initialize($id_akce) { 
-# zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní a zapomene všechny hodnoty
-  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL;
-  do_session_restart();
-  if ($id_akce) {
-    $_SESSION['akce']= $id_akce;
-    $AKCE= "A_$id_akce"; // ID akce pro SESSION
-    $_SESSION[$AKCE]= (object)[
-      'id_akce'=>$id_akce,
-      'TEST'=>$TEST, 'MAIL'=>$MAIL,
-      'ido'=>0, 'idr'=>0, 'pin'=>'',  // ověřený klient
-      'form'=>(object)[],
-  //    'DOM'=>$DOM_default,
-      'cleni'=>[],
-      'rodina'=>[],
-      'pobyt'=>(object)[],
-      'chk_souhlas'=>0,
-    ];
-    // pro volání přes AJAX
-    $vars= $_SESSION[$AKCE];
-    $DOM= $DOM_default;
-  }
-  else {
-    $vars= (object)[];
-    $DOM= (object)[];
-  }
-}
 // ============================================================================== reakce na tlačítka
 // každá z následujících funkcí je reakcí na kliknutí na nějaké tlačítko
 // a dostává parametry specifikované u tlačítka. 
 // Po ukončení funkce odevzdá změněné DOM a čeká se na další reakci uživatele
+// --------------------------------------------------------------zahájení nebo pokračování po ctrl-r
+function start() { 
+# zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní
+  initialize($_SESSION['akce']??0);
+} // úvodní obrazovka
 // ------------------------------------------------------------------------------------ zadost o pin
 function zadost_o_pin($email) { trace();
 # pro korektní id.email pošle mail s PINem a zobrazí cmd.kontrola_pinu
 # pro nekorektní id.email zobrazí chybu a opakuje
-  global $DOM, $TEST, $TEXT, $vars, $akce;
+  global $DOM, $ANSWER, $_TEST, $vars;
   $chyby= '';
-  $ok= check_mail($email,$chyby);
+  $vars->email= trim($email); // pro korespondenci
+  $ok= check_mail($vars->email,$chyby);
   if ($ok) {
-    // zašleme PIN 
-    $pin= rand(1000,9999);
-    $msg= simple_mail($akce->garant_mail, $email, "PIN ($pin) pro prihlášení na akci",
-        "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
-    if ( $msg!='ok' ) {
-      $chyby.= "Litujeme, mail s PINem se nepovedlo odeslat, přihlas se prosím na akci jiným způsobem."
-          . "<br>($msg)";
+    if ($_TEST && !$ANSWER) {
+      vyber("Jsi v testovací databázi a nejsi nepřihlášen do Answeru. "
+          . "Maily se budou opravdu posílat! <b style='color:red'>Ok?</b>",
+          ["ANO:poslat_pin","NE"]);
     }
-    if ( $msg=='ok' ) { // simple_mail může doplnit DOM->mailbox
-      $vars->pin= $pin;
-      $DOM->zadost_o_pin= "hide";
-      $DOM->email= "disable";
-      $DOM->pin= $TEST ? ["show",$pin] : "show"; 
-      $DOM->kontrola_pinu= "show";
-      $DOM->usermail_nad= $TEXT->usermail_nad2;
-      $DOM->usermail_pod= "Byl vám poslán mail";
+    else {
+      poslat_pin();
     }
   }
   if ($chyby) {
     $DOM->usermail_pod= zvyraznit("<p>$chyby</p>");
   }
 } // zadost o pin
+// -------------------------------------------------------------------------------------- poslat pin
+function poslat_pin() { trace();
+# pro korektní id.email pošle mail s PINem a zobrazí cmd.kontrola_pinu
+# pro nekorektní id.email zobrazí chybu a opakuje
+  global $DOM, $TEST, $TEXT, $vars, $akce;
+  // zašleme PIN 
+  $pin= rand(1000,9999);
+  $msg= simple_mail($akce->garant_mail, $vars->email, "PIN ($pin) pro prihlášení na akci",
+      "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
+  if ( $msg!='ok' ) {
+    $DOM->usermail_pod= zvyraznit("<>Litujeme, mail s PINem se nepovedlo odeslat, "
+        . "přihlaste se prosím na akci jiným způsobem.<br>($msg)</p>");
+  }
+  else { // simple-mail může doplnit DOM->mailbox
+    $vars->pin= $pin;
+    $DOM->zadost_o_pin= "hide";
+    $DOM->email= "disable";
+    $DOM->pin= $TEST ? ["show",$pin] : "show"; 
+    $DOM->kontrola_pinu= "show";
+    $DOM->usermail_nad= $TEXT->usermail_nad2;
+    $DOM->usermail_pod= "Byl vám poslán mail";
+  }
+} // poslat pin
 // ----------------------------------------------------------------------------------- kontrola pinu
-function kontrola_pinu($email,$pin) { 
+function kontrola_pinu($pin) { 
 # pokud je nesprávný pin ???
 # pokud je správný pin zjisti jestli je email známý a jednoznačný
 # pokud je známý a jednoznačný vyplň user a připrav formulář přihlášení osob
 # pokud je neznámý umožni zadání jiného
 # pokud je nejednoznačný umožni zadání jiného
-  global $DOM, $TEXT, $vars;
+  global $DOM, $TEXT, $akce, $vars;
   if ($pin!=$vars->pin) { // chyba pinu
     $DOM->usermail_pod= zvyraznit("<p>Do mailu jsme poslali odlišný PIN, podívejte se prosím pozorně</p>");
   }
   else { // pin je ok - založíme záznam v tabulce prihlaska
-    $vars->email= $email; // pro korespondenci
-//    log_open($email);  // email je ověřený  <==== posunuto až do klient()
-    
     // zjistíme, zda to může být rozpracovaná přihláška
-    $open= log_find_saved($email); // uložená přihláška a nejsou přihlášení
+    $open= log_find_saved($vars->email); // uložená přihláška a nejsou přihlášení
     if ($open) { // -------- nalezena rozepsaná přihláška
       // doplní vars: continue, ido, idr
-      $DOM->user= ["show","<i class='fa fa-user'></i> <br>$email"];
+      $DOM->user= ["show","<i class='fa fa-user'></i> <br>$vars->email"];
       vyber("Chcete pokračovat ve vyplňování přihlášky uložené $open?",
           ["ANO:klient:=$vars->ido/$vars->idr,=0","NE:klient:=$vars->ido/$vars->idr,=1"]);
       goto end;
     } // nalezena rozepsaná přihláška
     
     // jinak zjistíme, zda jej máme v databázi
-    $regexp= "REGEXP '(^|[;,\\\\s]+)$email($|[;,\\\\s]+)'";
+    $regexp= "REGEXP '(^|[;,\\\\s]+)$vars->email($|[;,\\\\s]+)'";
     list($pocet,$idors)= select_2(
        "SELECT COUNT(id_osoba),GROUP_CONCAT(CONCAT(id_osoba,'/',IFNULL(id_rodina,0),'/',IFNULL(role,'-')))
         FROM osoba LEFT JOIN tvori USING (id_osoba)
@@ -408,20 +454,30 @@ function kontrola_pinu($email,$pin) {
           FROM osoba AS o JOIN tvori USING (id_osoba) JOIN rodina AS r USING (id_rodina)
           WHERE o.deleted='' AND r.deleted='' AND kontakt=0 AND emaily $regexp ORDER BY role");
       display("rodina => $pocet: $idors");
-    }
+    } // úprava $pocet, pokud je to rodinný mail
 
     if ($pocet==1) { // -------------------------------- známý a jednoznačný mail
       list($ido,$idr)= explode('/',$idors);
       klient("$ido/$idr",1);
     } // známý a jednoznačný mail
     elseif ($pocet==0) { // -------------------------------- neznámý mail
-      $DOM->usermail_nad= $TEXT->usermail_nad3;
-      $DOM->email= 'enable';
-      $DOM->kontrola_pinu= "hide";
-      $DOM->pin= "hide";
-      $DOM->zadost_o_pin= "show";
-      $DOM->usermail_pod= '';
-      append_log("MAIL? neznámý $email");
+      if ($akce->p_registrace) {
+        $DOM->usermail_nad= $TEXT->usermail_nad5;
+        $DOM->usermail_pod= "empty";
+        $DOM->kontrola_pinu= "hide";
+        $DOM->pin= "hide";
+        $DOM->registrace= "show";
+        
+      }
+      else {
+        $DOM->usermail_nad= $TEXT->usermail_nad3;
+        $DOM->email= 'enable';
+        $DOM->kontrola_pinu= "hide";
+        $DOM->pin= "hide";
+        $DOM->zadost_o_pin= "show";
+        $DOM->usermail_pod= '';
+        append_log("MAIL? neznámý $vars->email");
+      }
     } // neznámý mail
     elseif ($pocet>1) { // -------------------------------- nejednoznačný mail
       $dotazy= [];
@@ -445,58 +501,80 @@ function kontrola_pinu($email,$pin) {
           $dupl.= " $ido-$role-$idr";
         }
         vyber($TEXT->usermail_nad4,$dotazy);
-        append_log("MAIL? $pocet &times; $email ... $dupl (id_osoba-role-id_rodina)");
+        append_log("MAIL? $pocet &times; $vars->email ... $dupl (id_osoba-role-id_rodina)");
       }
     } // nejednoznačný mail      
   }
 end:  
 } // overit pin
-// ------------------------------------------------------------------------------------------- kient
+// -------------------------------------------------------------------------------------- registrace
+function registrace($sex) { 
+# $ano=1/2 pokračujeme s registrací jako muž nebo žena
+# $ano=0 pokračujeme s žádostí o jiný mail
+  global $DOM, $vars;
+  $DOM->usermail= 'hide';
+  kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
+  set('o','email',$vars->email,-$sex);
+  append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
+  return klient("0/0");
+} // registrace
+// ------------------------------------------------------------------------------------------ klient
 function klient($idor,$nova_prihlaska=1) { 
 # $id je nositelem přihlašovacího mailu
   global $DOM, $AKCE, $TEXT, $vars, $akce;
+  $idp= 0;
   list($ido,$idr)= explode('/',$idor);
-  list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
-  // osobu známe  - zjistíme zda již není přihlášen
-  $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
-  list($idp,$kdy,$kdo/*,$web_json*/)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,''),web_json",
-      "pobyt JOIN spolu USING (id_pobyt) "
-      . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
-      "(id_osoba={$ido} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
-      . "ORDER BY id_pobyt DESC LIMIT 1");
-  if ($idp) { // ------------------------------- už jsou zapsaní 
-    $od_kdy= $kdy ? ' od '.sql_time1($kdy) : '';
-    $kym= $kdo=='WEB' ? ' online přihláškou.' : '';
-    if ($kdo && $kdo!='WEB') {
-      list($jmeno,$prijmeni)= select_2('forename,surname','_user',"abbr='$kdo'");
-      $kym= ". $jmeno $prijmeni";
-    } 
-    log_write('id_pobyt',$idp);
-    $DOM->usermail= "hide";
-    $DOM->rozlouceni_text= $TEXT->rozlouceni2;
-    $_SESSION[$AKCE]->id_prihlaska= $vars->idw_old;
-    append_log("DOTAZ= ... klient přihlášen $jmena ");
-    hlaska("Na tuto akci jste již $od_kdy přihlášeni$kym","prazdna");
-  }
-  else {
-    log_open($vars->email);  // email je ověřený 
-    $DOM->usermail= 'hide';
+  if ($ido) { // známý klient - je přihlášen na akci?
+    list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
+    // osobu známe  - zjistíme zda již není přihlášen
+    $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
+    list($idp,$kdy,$kdo)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
+        "pobyt JOIN spolu USING (id_pobyt) "
+        . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
+        "(id_osoba={$ido} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
+        . "ORDER BY id_pobyt DESC LIMIT 1");
+    if ($idp) { // ------------------------------- už jsou zapsaní 
+      $od_kdy= $kdy ? ' od '.sql_time1($kdy) : '';
+      $kym= $kdo=='WEB' ? ' online přihláškou.' : '';
+      if ($kdo && $kdo!='WEB') {
+        list($jmeno,$prijmeni)= select_2('forename,surname','_user',"abbr='$kdo'");
+        $kym= ". $jmeno $prijmeni";
+      } 
+      log_write('id_pobyt',$idp);
+      $DOM->usermail= "hide";
+      $DOM->rozlouceni_text= $TEXT->rozlouceni2;
+      if (isset($vars->idw_old)) {
+        $_SESSION[$AKCE]->id_prihlaska= $vars->idw_old;
+      }
+      append_log("DOTAZ= ... už je přihlášen $jmena ");
+      hlaska("Na tuto akci jste již $od_kdy <br>přihlášeni$kym","start");
+      goto end;
+    }
+  }  // známý klient - je přihlášen na akci?
+  log_open($vars->email);  // email je ověřený 
+  $DOM->usermail= 'hide';
+  $vars->ido= $ido;
+  $vars->idr= $idr;
+  if ($ido) { // přihláška známého
     $vars->klient= $jmena;
-    $vars->ido= $ido;
-    $vars->idr= $idr;
     log_write('id_osoba',$vars->ido);
     log_write('id_rodina',$vars->idr);
     append_log("KLIENT ... $jmena ");
-    return prihlaska($nova_prihlaska);
+    // podle ido,idr nastav počáteční informace o klientovi
+    kompletuj_pobyt($vars->idr,$vars->ido);
+    return formular($nova_prihlaska);
   }
+  else { // přihláška nového
+    $vars->klient= '';
+    return formular(1);
+  } // přihláška nového
+end:
 } // klient
-// -------------------------------------------------------------------------------------- přihlas se
-function prihlaska($nova=1) { 
+// ------------------------------------------------------------------------------ formulář přihlášky
+function formular($nova=1) { 
 # připrav prázdný formulář přihlášení osob
 # doplň DOM o položky osob
   global $DOM, $vars, $akce;
-  // podle ido,idr nastav počáteční informace o klientovi
-  kompletuj_pobyt($vars->idr,$vars->ido);
   // nastavení formuláře
   if (($vars->continue??0) && $nova==0) {
     log_load_changes();   // z uchované přihlášky
@@ -523,7 +601,7 @@ function prihlaska($nova=1) {
   $DOM->form= ['show',$form];
   if ($vars->form->par) form_manzele();
   if ($vars->form->deti) form_deti($vars->form->deti);
-} // prihlaska
+} // formulář přihlášky
 // ---------------------------------------------------------------------------- zkontrolovat úplnost
 function kontrolovat() { 
 # zkontroluje bezchybnost a úplnost přihlášky
@@ -626,6 +704,10 @@ function prihlasit() {
   // ------------------------------ oprav (případně vytvoř) členy rodiny
   foreach (array_keys($vars->cleni) as $id) {
     // přidání člena rodiny
+    if (!isset($vars->klient)) { // pokud je to registarce chybí klient
+      if (get('o','email',$id)==$vars->email) 
+        $vars->klient= get('o','jmeno',$id).' '.get('o','prijmeni',$id);
+    }
     db_vytvor_nebo_oprav_clena($id);
     if (count($errors)) goto db_end;
   }
@@ -694,15 +776,8 @@ db_end:
 // ------------------------------------------------------------------------------- zahodit rozepsané
 function zahodit() { 
 # zrušit rozepsanou přihlášku
-  dotaz("Mám smazat rozepsanou přihlášku bez uložení?","prazdna",'');
+  dotaz("Mám smazat rozepsanou přihlášku bez uložení?","start",'');
 } // zahodit
-// --------------------------------------------------------------------------------- prázdná stránka
-function prazdna() { 
-# jen template stránky
-  global $DOM;
-  initialize(0);
-  $DOM->rozlouceni= 'show';
-} // prazdna
 // ---------------------------------------------------------------------------------- přidání dítěte
 function nove_dite() { 
   vytvor_noveho_clena('d',1);
@@ -750,7 +825,6 @@ function DOM_zmena_spolu($idc) { // --------------------------------------------
 function DOM_error($msg) {
   log_error($msg);
   throw new Exception($msg);
-//  throw new Exception("$msg na řádku " . __LINE__);
 }
 // ================================================================================= prvky formuláře
 function form_manzele() { // -------------------------------------------------------- zobrazení páru
@@ -1028,22 +1102,21 @@ function hlaska($text,$continue='') { // --------------------------------- hlá�
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   $DOM->alertbox_back= 'hide';
   $DOM->alertbox_text= $text;
-  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide()";
   $cmd= $continue ? "php2('$continue')" : "";
-  $DOM->alertbox_butts= "
-    <button onclick=\"$cmd;$off\">OK</button>";
+  $DOM->alertbox_butts= "<button onclick=\"$off;$cmd;\">OK</button>";
 } // popup s OK
 function dotaz($dotaz,$ano,$ne) { // -------------- dotaz s funkcemi pro ano a ne
   global $DOM;
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   $DOM->alertbox_back= 'hide';
   $DOM->alertbox_text= $dotaz;
-  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide()";
   $cmd_ano= $ano ? "php2('$ano')" : "";
   $cmd_ne= $ne ? "php2('$ne')" : "";
   $DOM->alertbox_butts= "
-    <button onclick=\"$cmd_ano;$off\">ANO</button> &nbsp;
-    <button onclick=\"$cmd_ne;$off\">NE</button>
+    <button onclick=\"$off;$cmd_ano;\">ANO</button> &nbsp;
+    <button onclick=\"$off;$cmd_ne;\">NE</button>
     ";
 } // popup s ANO / NE
 function vyber($dotaz,$odpovedi,$back=0) { // -------------- výběr z více možností
@@ -1056,14 +1129,13 @@ function vyber($dotaz,$odpovedi,$back=0) { // -------------- výběr z více mo�
   }
   $DOM->alertbox_text= $dotaz;
   $DOM->alertbox_butts= '';
-  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide();";
+  $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide()";
   foreach ($odpovedi as $odpoved) {
     list($text,$fce,$par,$subtext)= explode(':',$odpoved.':::');
     if ($subtext??0) $subtext= "<br><small>$subtext</small>";
-    $DOM->alertbox_butts.= "
-      <button onclick=\"php2('$fce,$par');$off\">"
-        . "$text$subtext</button> &nbsp;
-    ";
+    $par= $par ? ",$par" : '';
+    $php2= $fce ? "php2('$fce$par');" : '';
+    $DOM->alertbox_butts.= "<button onclick=\"$off;$php2\">$text$subtext</button> &nbsp;";
   }
 } // popup s výběrem z více možností
 
@@ -1268,6 +1340,7 @@ function page() {
   $icon= "akce$_TEST.png";
   $hide= "style='display:none'";
   $hide_2002= "style='display:none;z-index:2002'";
+  $info= $DOM_default->info=='hide' ? '' : $DOM_default->info;
   echo <<<__EOD
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -1295,7 +1368,7 @@ function page() {
     <div class="wrapper">
       <header>
         <div class="header">
-          <div id='info' class='info'>$DOM_default->info</div>
+          <div id='info' class='info'>$info</div>
           <a class="logo" href="https://www.setkani.org" target="web" title="" >
             <img src="/img/husy_ymca.png" alt=""></a>
           <div id='user' class="user"></div>
@@ -1307,12 +1380,17 @@ function page() {
         <div $hide id='errorbox' title='errorbox' class='box' style='border-left: 20px solid red'></div>
         <div $hide id='mailbox' title='mailbox' class='box' style='border-left: 20px solid grey'></div>
         <!-- identifikace osoby mailem a pinem ------------------------------------------------- -->
-        <div id='usermail' title='usermail' class='box'>
+        <div $hide id='usermail' title='usermail' class='box'>
           <p id='usermail_nad'>$TEXT->usermail_nad1</p>
           <input id='email' title='váš email' type="text" size="24" value='$TEST_mail' placeholder='@'>
           <input $hide id='pin' title='doručený PIN' type='text' size="4" >
           <button id='zadost_o_pin' onclick="php('email');">Požádat o PIN</button>
-          <button $hide id='kontrola_pinu' onclick="php('email,pin');">ověřit PIN</button>
+          <button $hide id='kontrola_pinu' onclick="php('pin');">ověřit PIN</button>
+          <span $hide id='registrace'>
+            <button onclick="php2('start');">zkusím jiný mail</button>
+            <button onclick="php2('registrace,=1');">registrace (muž)</button>
+            <button onclick="php2('registrace,=2');">registrace (žena)</button>
+          </span>
           <p id='usermail_pod'>$TEXT->usermail_pod1</p>
         </div>
         <!-- formulář -------------------------------------------------------------------------- -->
@@ -1585,7 +1663,7 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
     $rodina= $vars->rodina[$idr];
     foreach ($r_fld as $f=>list(,$title,$typ)) {
       if (substr($title,0,1)=='*') { // je to povinné?
-        if (is_array($rodina->$f)) {
+        if (is_array($rodina->$f??null)) {
           $v= $rodina->$f[1] ?? $rodina->$f[0];
           if ($v=='' || in_array($typ,['check','select','sub_select']) && $v==0) {
             if (!in_array($f,$but)) {
@@ -1775,8 +1853,11 @@ function byli_na_aktualnim_LK($rodina) { // ----------------------------------- 
   global $ORG, $akce;
   $obnova_mesic= select_2('MONTH(datum_od)','akce',"id_duakce=$akce->id_akce");
   $rok_LK= $obnova_mesic>7 ? date('Y') : date('Y')-1;
-  $byli= select1_2('IFNULL(IF(funkce=1,2,1),0)','pobyt JOIN akce ON id_akce=id_duakce',
-      "akce.druh=1 AND akce.access=$ORG AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
+  $byli= select1_2(
+      "SELECT IFNULL(IF(funkce IN (1,2),1,0),0)
+       FROM pobyt JOIN akce ON id_akce=id_duakce 
+       WHERE akce.druh=1 AND akce.access=$ORG AND YEAR(akce.datum_od)=$rok_LK 
+         AND pobyt.i0_rodina='$rodina'");
   return $byli;
 }
 function je_na_teto_akci($ido) { // ------------------------------------------------ je na této akci
@@ -2332,12 +2413,13 @@ function log_close() { // ------------------------------------------------------
   log_write('close','NOW()');
 }
 function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE, $VERZE, $SUBVERZE;
+  global $AKCE, $VERZE, $SUBVERZE, $TEST;
   $file= "prihlaska.log.php";
   $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
-  $msg= "$VERZE.$SUBVERZE ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
+  $x= $TEST==2 ? "TEST=2" : "$VERZE.$SUBVERZE";
+  $msg= "$x ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
       file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>"
           . "\n<b>VERZE  DATUM      ČAS      FUNKCE     KLIENT </b>\n");

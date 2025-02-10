@@ -912,6 +912,12 @@ form _page [,,275,360] {
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
       akce_lock('off'); 
+      // kontrola konzistence
+      if (p_registrace && !(p_kontakt && p_rod_adresa)) {
+        alert("pro registraci je potřeba kontakt a rodiná adresa");
+        return;
+      }
+      // uložení změn
       p_json= {p_typ:p_tag}; // základní typ: O,M,R,J
       for (elem of form.tagged(p_tag)) {
         typ= js.get_type(elem);

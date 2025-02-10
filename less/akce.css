@@ -197,7 +197,7 @@ html body div.wrapper main div.box p.souhlas {
   font-style: italic;
 }
 html body div.wrapper main div.box span {
-  display: block;
+  display: contents;
   margin: 20px 5px 0 5px;
   float: left;
 }

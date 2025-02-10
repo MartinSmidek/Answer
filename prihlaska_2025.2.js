@@ -91,20 +91,32 @@ function after_php(DOM) {
         value= DOM[id];
     if (!elem.length) {
       error(`chyba DOM - '${id}' je neznámé id`);
-      continue;
+      break;
     }
     if (!Array.isArray(value)) value= [value];
     for (let i = 0; i < value.length; i++) {
       let val = value[i];
       switch (val) {
-        case 'hide': elem.hide(); break;
-        case 'show': elem.show(); break;
-        case 'disable': elem.prop('disabled', true); break;
-        case 'enable': elem.prop('disabled', false); break;
-        case 'ok': elem.addClass('chng_ok').removeClass('chng'); break;
-        case 'ko': elem.addClass('chng').removeClass('chng_ok'); break;
-        case 'empty': elem.empty(); break;
-        case 'remove': elem.remove(); break;
+        case 'hide': 
+          elem.hide(); break;
+        case 'show': 
+          elem.show(); break;
+        case 'disable': 
+          elem.prop('disabled', true); break;
+        case 'enable': 
+          elem.prop('disabled', false); break;
+        case 'ok': 
+          elem.addClass('chng_ok').removeClass('chng'); break;
+        case 'ko': 
+          elem.addClass('chng').removeClass('chng_ok'); break;
+        case 'remove': 
+          elem.remove(); break;
+        case 'empty': 
+          if (elem.is('input')) 
+            elem.val(''); 
+          else
+            elem.empty(); 
+          break;
         default: 
           if (elem.is('input')) {
             if (elem.is(':checkbox')) {
@@ -128,27 +140,18 @@ function ask(x,then,arg) {
   var xx= x;
   jQuery.ajax({url:myself_url, data:x, method: 'POST',
     success: function(y) {
-      if ( typeof(y)==='string' ) {
-//        error("Došlo k chybě 1 v komunikaci se serverem - '"+xx.cmd+"'");
+      if ( typeof(y)==='string' ) { 
         errorbox_only(y);
-//        jQuery('#errorbox').show().html(y);
-//        jQuery('#form').hide();
       }
       else if ( y.error ) {
-//        error("Došlo k chybě 2 v komunikaci se serverem - '"+y.error+"'");
         errorbox_only(y.error);
-//        jQuery('#errorbox').show().html(y.error);
-//        jQuery('#form').hide();
       }
       else if ( then ) {
         then.apply(undefined,[y,arg]);
       }
     },
     error: function(xhr) {
-//      error("Došlo k chybě 3 v komunikaci se serverem");
       errorbox_only(xhr.responseText);
-//      jQuery('#errorbox').show().html(xhr.responseText);
-//      jQuery('#form').hide();
     }
   })
 }
