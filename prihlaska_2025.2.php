@@ -123,18 +123,16 @@ try {
   if (!isset($_SESSION['akce'])) { session_reset(); }
   $AKCE= "A_{$_SESSION['akce']}";
   $vars= $_SESSION[$AKCE]??(object)[];
-  $TEST= $vars->TEST= 1;
-  $MAIL= $vars->MAIL= 0;
+  $TEST= $vars->TEST;
+  $MAIL= $vars->MAIL;
   $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
 
   connect_db();           // napojení na databázi a na Ezer 
   read_akce();            // načtení údajů o akci z Answeru 
-  $TEST= 1;
-  $MAIL= 0;
   if (!isset($akce->p_typ) ) {
     die("Online přihlašování není ještě k dispozici."); 
   }
-echo "test=$TEST,mail=$MAIL";
+
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
     // počáteční stav
     'user'=>'hide',
