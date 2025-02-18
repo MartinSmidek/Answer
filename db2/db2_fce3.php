@@ -3694,7 +3694,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4," /*datplatby,*/
           . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
           . "svp,zpusobplat,naklad_d,poplatek_d,platba_d,potvrzeno_d"
-          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
+          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,sleva_zada,sleva_duvod"
+          . ",vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni,web_souhlas
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
           . ",email,gmail"

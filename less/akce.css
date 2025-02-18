@@ -188,6 +188,13 @@ html body div.wrapper main div.box label.check_souhlas input {
   display: block;
   margin: 5px 15px;
 }
+html body div.wrapper main div.box div.check_sleva {
+  float: left;
+  padding: 20px 0 0 10px;
+}
+html body div.wrapper main div.box div.check_sleva input {
+  margin: 5px 10px;
+}
 html body div.wrapper main div.box select {
   padding: 1px;
 }

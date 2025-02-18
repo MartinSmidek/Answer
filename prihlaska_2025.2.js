@@ -88,6 +88,7 @@ function php0(name_pars) {
 function after_php(DOM) {
   for (const id in DOM) {
     let elem= jQuery(`#${id}`),
+        closure= elem.closest('label').length ? elem.closest('label') : elem,
         value= DOM[id];
     if (!elem.length) {
       error(`chyba DOM - '${id}' je neznámé id`);
@@ -97,10 +98,10 @@ function after_php(DOM) {
     for (let i = 0; i < value.length; i++) {
       let val = value[i];
       switch (val) {
-        case 'hide': 
-          elem.hide(); break;
+        case 'hide': // pokud je obalené label uprav to
+          closure.hide(); break;
         case 'show': 
-          elem.show(); break;
+          closure.show(); break;
         case 'disable': 
           elem.prop('disabled', true); break;
         case 'enable': 

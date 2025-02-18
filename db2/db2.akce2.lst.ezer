@@ -882,6 +882,7 @@ form _page [,,275,360] {
   
   # -----------==> .. zobrazení varianty přihlášky podle p_tag
   check p_pozde [13,66,300,] { tag:'pri,M,O,R,J', title:'od teď přihlášené brát jen jako náhradníky'}
+  check p_sleva [250,66,300,] { tag:'pri,M,O,R,J', title:'žádost o slevu'}
   edit tp_pracovni [13,110,438,40] { tag:'pri,M,O,R,J', title:"^Nápovědný text nad poznámkou k pobytu na akci (hvězdičkou učiníte poznámku povinnou)"}
   check p_rodina [13,160,131,] { tag:'pri,M,O,R', title:'<b>rodinné přihlášení</b>', format:'d'}
     check p_deti [30,180,78,] { tag:'pri,M,O,R', title:'včetně dětí'} 
