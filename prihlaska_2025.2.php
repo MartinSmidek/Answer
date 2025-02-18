@@ -10,6 +10,7 @@ $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok.release
 $SUBVERZE= '2'; // verze přihlášek: rok.release
 $MYSELF= "prihlaska_$VERZE.$SUBVERZE";
+$TEST_mail= '';
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
 // debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
