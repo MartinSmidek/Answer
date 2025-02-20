@@ -91,6 +91,7 @@ html body div.wrapper main div.box {
   background-color: #FDEFF1;
 }
 html body div.wrapper main div.box div.clen,
+html body div.wrapper main div.box div.solo,
 html body div.wrapper main div.box div.rodina {
   display: table;
   padding: 5px;
@@ -98,6 +99,7 @@ html body div.wrapper main div.box div.rodina {
   background: #f7c2c9;
 }
 html body div.wrapper main div.box div.clen .modal,
+html body div.wrapper main div.box div.solo .modal,
 html body div.wrapper main div.box div.rodina .modal {
   z-index: 2001;
   position: relative;
@@ -112,7 +114,6 @@ html body div.wrapper main div.box.modal-box {
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
   margin-top: 10px;
-  /*div.clen { margin-left: 0px; }*/
 }
 html body div.wrapper main div.box div.clen button {
   float: right;

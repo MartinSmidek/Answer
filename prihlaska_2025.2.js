@@ -94,6 +94,7 @@ function after_php(DOM) {
       error(`chyba DOM - '${id}' je neznámé id`);
       break;
     }
+    if (value==='') continue;
     if (!Array.isArray(value)) value= [value];
     for (let i = 0; i < value.length; i++) {
       let val = value[i];
