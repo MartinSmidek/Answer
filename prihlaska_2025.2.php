@@ -933,7 +933,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
         $deti.= "<div id='$clen_ID' class='clen'>" 
           . $pecoun_button
           . elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['<span>','jmeno',' ','prijmeni',', ','narozeni',', ', 'role','</span>'])
+          . elem_text_or_input('o',$id,['<span>','jmeno',' ','prijmeni',', ','narozeni',', ', 'role','</span>'])
           . elem_input('o',$id,['note'])
           . $pecoun_form
           . "</div>";
@@ -1094,12 +1094,14 @@ function form_MO($new) { trace();
   $kontrola_txt= '';
 //  $exit= '';
   $form= <<<__EOF
+    <div class='rodina'>
+      $rod_adresa
+    </div>
     <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
     <div id='form_par'></div>
     <div id='form_deti'></div>
     $clenove
     <div class='rodina'>
-      $rod_adresa
       $pobyt
     </div>
     $souhlas
@@ -1859,6 +1861,18 @@ function elem_input($table,$id,$flds,$to_hide=0) { // --------------------------
       $c= $v_chng ? " class='$chng_css' " : '';
       $html.= "<label class='upper'$hide>$title"
           . "<input type='text' id='$name' size='$len' $x$c$todo $oninput></label>";
+    }
+  }
+  return $html;
+}
+function elem_text_or_input($table,$id,$flds) { // ------------ pro definovaný elem text jinak input
+  $html= '';
+  foreach ($flds as $fld) {
+    if (get_fmt($table,$fld,$id)) {
+      $html.= elem_text($table,$id,[$fld]);
+    }
+    else {
+      $html.= elem_input($table,$id,[$fld]);
     }
   }
   return $html;
