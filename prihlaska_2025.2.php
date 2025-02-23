@@ -46,7 +46,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
 //$TEST_mail= 'petr.jekyll@gmail.com';          // v létě nebyli neumí VPS
 //$TEST_mail= 'zencakova@seznam.cz';            // duplicita
-//$TEST_mail= '';
+//$TEST_mail= 'balous.petr@gmail.com';          // bez evidované manželky
 
 // </editor-fold>
 
@@ -102,6 +102,9 @@ try {
     initialize($_GET['akce']); // přenese TEST i MAIL
   }
   if (!isset($_SESSION['akce'])) { session_reset(); }
+  if (!isset($_SESSION['akce']) ) {
+    die("Online přihlašování není možné, zkontrolujte prosím správnost adresy."); 
+  }
   $AKCE= "A_{$_SESSION['akce']}";
   $vars= $_SESSION[$AKCE]??(object)[];
   $TEST= $vars->TEST;
@@ -111,7 +114,7 @@ try {
   connect_db();           // napojení na databázi a na Ezer 
   read_akce();            // načtení údajů o akci z Answeru 
   if (!isset($akce->p_typ) ) {
-    die("Online přihlašování není ještě k dispozici."); 
+    die("Online přihlašování pro tuto akce není možné."); 
   }
 
   polozky();              // popis položek a jiných textů
@@ -262,6 +265,9 @@ function polozky() { // --------------------------------------------------------
       'osoby_nad1' => 
           typ_akce('MO') ? 'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.' : (
           typ_akce('J') ? 'Zkontrolujte a případně doplňte své údaje.' : ''),  
+      'strava' =>
+          '<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do 10 let poloviční porce);'
+          . '<br>nebo ji můžete jmenovitě upravit, případně vybrat dietu.',
       'rozlouceni1' => 
           'Přejeme Vám hezký den.',
       'rozlouceni2' => 
@@ -291,6 +297,8 @@ function polozky() { // --------------------------------------------------------
       'funkce'    => map_cis_2('ms_akce_funkce','zkratka'),
       'Xvps'      => [''=>'něco prosím vyberte',1=>'počítáme se službou VPS',
                       2=>'raději bychom byli v "odpočinkové" skupince'],
+      'Xpolovicni'    => [1=>'celá',2=>'poloviční'],
+      'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],
     ];
   $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
@@ -311,6 +319,11 @@ function polozky() { // --------------------------------------------------------
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
+    ] : [],
+    typ_akce('MO') && ($akce->p_strava??0) ? [
+      'Xstrava_s'   =>[ 0,'snídaně','check'],
+      'Xstrava_o'   =>[ 0,'obědy','check'],
+      'Xstrava_v'   =>[ 0,'večeře','check'],
     ] : []
   );
   $r_fld= array_merge(
@@ -332,8 +345,6 @@ function polozky() { // --------------------------------------------------------
   $o_fld= array_merge(
     [ // položky tabulky OSOBA
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
-      'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
-      'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
       'jmeno'     =>[ 7,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
       'rodne'     =>[10,'rozená','','ab'],
@@ -360,6 +371,16 @@ function polozky() { // --------------------------------------------------------
       'Xocekavani' =>['70/2','* co očekáváš od účasti na MS','area','ab'],
       'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
       'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
+    ] : [],
+    typ_akce('MO') && ($akce->p_strava??0) ? [
+      'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
+      'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
+      'Xstrava'     =>[ 0,'','x','abdp'],  // 0 = podle rodiny, 1 = upřesnění
+      'Xstrava_s'   =>[ 0,'snídaně','check','abdp'],
+      'Xstrava_o'   =>[ 0,'obědy','check','abdp'],
+      'Xstrava_v'   =>[ 0,'večeře','check','abdp'],
+      'Xpolovicni'  =>[10,'porce','select','abdp'],
+      'Xdieta'      =>[15,'dieta','select','abdp'],
     ] : []
   );
   // případné opravy podle akce
@@ -509,8 +530,8 @@ function kontrola_pinu($pin) { trace();
         foreach ($cleni as $clen) {
           list($ido,$idr,$role)= explode('/',$clen);
           if (count($rodic)>1 && !in_array($role,['a','b'])) continue;
-          $rodina= $idr ? 'rodina '.select('nazev','rodina',"id_rodina=$idr") : 'bez rodiny';
-          list($jmeno,$prijmeni)= select('jmeno,prijmeni','osoba',"id_osoba=$ido");
+          $rodina= $idr ? 'rodina '.select_2('nazev','rodina',"id_rodina=$idr") : 'bez rodiny';
+          list($jmeno,$prijmeni)= select_2('jmeno,prijmeni','osoba',"id_osoba=$ido");
           $dotazy[]= "$jmeno $prijmeni:klient:=$ido/$idr,1:$rodina";
           $dupl.= " $ido-$role-$idr";
         }
@@ -608,12 +629,13 @@ function kontrolovat() { trace();
   $chybi= [];
   $chybi_osobni= $chybi_rodinne= 0;
   $spolu= 0;
-  // ------------------------------ je aspoň jeden přihlášený?
+  // ------------------------------ je aspoň jeden dospělý přihlášený?
   foreach (array_keys($vars->cleni) as $id) {
-    $spolu+= get('c','spolu',$id);
+    if (in_array(get_role($id),['a','b']))
+      $spolu+= get('c','spolu',$id);
   }
   if (!$spolu) {
-    hlaska('Přihlaste prosím na akci aspoň jednu osobu');
+    hlaska('Přihlaste prosím na akci aspoň jednu dospělou osobu');
     goto end;
   }
   // ------------------------------ jsou vyplněné všechny údaje?
@@ -628,9 +650,9 @@ function kontrolovat() { trace();
         $chybi= array_merge($chybi,$miss); 
       }
       // souhlas s upozorněním 
-      if ($akce->p_upozorneni &&!get('o','Xupozorneni',$id)) {
-        $chybi_upozorneni.= "<br>Potvrďte prosím, že berete na vědomí upozornění - "
-            . (get('o','role',$id)=='b' ? 'žena' : 'muž');
+      if ($akce->p_upozorneni && in_array(get_role($id),['a','b']) && !get('o','Xupozorneni',$id)) {
+        $chybi_upozorneni.= "<br>Potvrďte prosím, že berete na vědomí upozornění pro "
+            . (get('o','role',$id)=='b' ? 'ženu' : 'muže');
       }
     }
   }
@@ -808,13 +830,22 @@ function DOM_zmena($elem_ID,$val) {
 } // změna v DOM
 function DOM_zmena_spolu($idc) { // ---------------------------------------------- změna volby spolu
 # volá se z read_elem při změně položky spolu
-  global $DOM, $vars;
+  global $DOM, $vars, $akce;
+  $spolu= get('o','spolu',$idc);
   // ukaž resp. schovej zobrazení osobního pečovatele
   if (isset($vars->cleni[$idc]->o_pecoun)) {
     form_pecoun_show($idc); 
   }
+  // zruš zvláštnost stravy člena při změně spolu
+  if (typ_akce('MO') && $akce->p_strava) {
+    form_strava_default($idc);
+    if ($spolu) 
+      $DOM->strava= '+'.form_strava($idc,0,0); // přidat uzel
+    else
+      form_strava($idc,0,1); // změnit dom na nic nebo button
+  }
   // zruš nevyplněného člena, který nepojede
-  if (!get('o','spolu',$idc) && $idc<0 
+  if (!$spolu && $idc<0 
       && get('o','jmeno',$idc)=='' && get('o','prijmeni',$idc)=='') {
     if (!get_pecoun($idc)) {
       unset($vars->cleni[$idc]);
@@ -847,6 +878,10 @@ function form_manzele() { trace(); // ------------------------------------------
           . "</div>";
       }
       else {
+//        $strava= typ_akce('MO') && $akce->p_strava ? form_strava($id,0,0) : ''; // tlačítko nebo elementy
+        $vlastnosti= typ_akce('M') 
+          ? elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
+            'aktivita','cirkev','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) : '';
         $upozorneni= $akce->p_upozorneni
           ? "<p class='souhlas'>"
             . "<input type='checkbox' id='o_{$id}_Xupozorneni' value='' onchange='elem_changed(this);' "
@@ -857,7 +892,8 @@ function form_manzele() { trace(); // ------------------------------------------
           : '';
         $clenove.= "<div id='$clen_ID' class='clen'>" 
           . ( $id>0
-              ? elem_input('o',$id,['spolu']) 
+              ? ''
+                . elem_input('o',$id,['spolu']) 
                 . elem_text('o',$id,['<div>','jmeno',' ','prijmeni']) 
                 . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
                 . elem_text('o',$id,[', ','narozeni', ', ','role','</div>'])
@@ -869,9 +905,8 @@ function form_manzele() { trace(); // ------------------------------------------
             )
           . ($akce->p_kontakt ? elem_input('o',$id,['email','telefon']) : '')
           . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
-          . '<br>'
-          . elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
-              'aktivita','cirkev','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) 
+//          . $strava
+          . '<br>' . $vlastnosti 
           . $upozorneni
           . "</div>";
       }
@@ -901,6 +936,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
       // příprava osobního pečovatele - pokud jsou povoleni 
       if ($vars->form->pecouni ?? 0) { // jsou povoleni
         $display= $spolu ? "style='display:block'" : "style='display:none'";
+//        $strava= typ_akce('MO') && $akce->p_strava ? form_strava($id,0,0) : ''; // tlačítko nebo elementy
         if (!get_pecoun($id)) $vars->cleni[$id]->o_pecoun= 0; // o_pecoun nemusí být definováno
         $id_pecoun= get_pecoun($id);
         if ($id_pecoun) { // je osobní pečovatel
@@ -931,10 +967,11 @@ function form_deti($detail) {trace(); // ---------------------------------------
       elseif ($id>0) {
         // dítě
         $deti.= "<div id='$clen_ID' class='clen'>" 
-          . $pecoun_button
+          . $pecoun_button 
           . elem_input('o',$id,['spolu'])
           . elem_text_or_input('o',$id,['<span>','jmeno',' ','prijmeni',', ','narozeni',', ', 'role','</span>'])
           . elem_input('o',$id,['note'])
+//          . $strava
           . $pecoun_form
           . "</div>";
       }
@@ -943,6 +980,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
         $deti_nove.= "<div id='$clen_ID' class='clen'>" 
           . $pecoun_button
           . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','note'])
+//          . $strava
           . $pecoun_form
           . "</div>";
       }
@@ -964,18 +1002,68 @@ function form_deti($detail) {trace(); // ---------------------------------------
 //  $DOM->form_deti= ['show',$part];
 } // form - seznam dětí
 
+function form_strava_default($id) { trace(); // ------------------------------- default stravu osoby
+  set('o','Xstrava',  0,$id); // 0 = default
+  set('o','Xstrava_s',1,$id);
+  set('o','Xstrava_o',1,$id);
+  set('o','Xstrava_v',1,$id);
+  set('o','Xpolovicni', get_vek($id)<10 ? 2 : 1,$id); // 1 = celá, 2 = poloviční
+  set('o','Xdieta',   1,$id); // 1 je normální strava
+}
+function form_strava($id,$rozepsat,$dom=1) { trace(); // ------------------ specifikace stravy osoby
+# pro dom=0 vrátí tlačítko obalené div
+# pro dom=1 obměňuje ten div podle spolu (hide nebo show) a podle Xstrava (tlačítko nebo rozpis)
+# pro rozepsat=1 vnutí Xstrava=1
+  global $DOM, $vars;
+  $part= '';
+  $spolu= get('o','spolu',$id);
+  if ($rozepsat) {
+    form_strava_default($id);
+    $vars->cleni[$id]->Xstrava= 1;
+  }
+  $strava_id= "c_{$id}_strava";
+  $strava= $vars->cleni[$id]->Xstrava; // 0 = rodinná varianta, 1 = upřesnění
+  $vek= get_vek($id);
+  $vek_roku= kolik_1_2_5($vek,"rok,roky,roků");
+  $polovicni= $vek<10 ? 1 : 0;
+  $pro= " pro " . get('o','jmeno',$id) . ($polovicni ? ", $vek_roku" : ''); 
+  $pro= "<b>$pro:</b>";
+  $button= "<i class='fa fa-cutlery'></i> $pro <button onclick=\"php2('form_strava,=$id,=1,=1');\" >"
+      . "upravit objednávku </button>";
+  $rozpis= "$pro " . elem_input('o',$id,['Xstrava_s','Xstrava_o','Xstrava_v','Xpolovicni','Xdieta']); 
+  if ($dom) {
+    if ($spolu && $strava) 
+      $DOM->$strava_id= ['show',$rozpis];
+    elseif ($spolu && !$strava) 
+      $DOM->$strava_id= ['show',$button];
+    elseif (!$spolu) 
+      $DOM->$strava_id= ['remove'];
+  }
+  else { // dom=0 ... vrácení prvotního formuláře
+    $part= "<div class='strava_rozpis' id='$strava_id'>";
+    $part.= $spolu ? ($strava ? $rozpis : $button) : '';
+    $part.= "</div>";
+  }
+  return $part;
+} // form strava
+
 function form_pecoun($id) { trace(); // --------------------------------- zobrazení osobního pečouna
 # údaje pečouna $id osobně pečujícího o $id_dite
+  global $DOM,$akce;
   $part= "<i>Osobní pečovatel pro toto dítě bude</i><br>";
   if ($id<0) {
-    $part.= '' //elem_input('o',$id,['spolu']) 
+    $part.= elem_input('o',$id,['spolu'],'hide') 
         . elem_input('o',$id,['jmeno','prijmeni']) . elem_input('o',$id,['narozeni']) 
         . elem_input('o',$id,['obcanka','<br>','email','telefon']);
   }
   else { // $id>0
-    $part.= '' //elem_input('o',$id,['spolu'])
+    $part.= elem_input('o',$id,['spolu'],'hide')
         . elem_text('o',$id,['<div>','jmeno',' ','prijmeni',', ','narozeni','</div>'])
         . elem_input('o',$id,['obcanka','telefon']);
+  }
+  // doplň mu stravu
+  if ($akce->p_strava) {
+    $DOM->strava= '+'.form_strava($id,0,0); // přidat uzel
   }
   return $part;
 } // form osobní pečoun
@@ -985,26 +1073,37 @@ function form_pecoun_show($id_dite,$form=null) { trace(); //  ukáže tlačítka
   $button_plus= "b_{$id_dite}_plus";
   $button_minus= "b_{$id_dite}_minus";
   $fid= "f_$id_dite";
+  $id_pecoun= get_pecoun($id_dite);
   if ($spolu) { // dítě jede
-    $DOM->$button_plus= [get_pecoun($id_dite) ? 'hide' : 'show']; 
-    $DOM->$button_minus= [get_pecoun($id_dite) ? 'show' : 'hide']; 
+    $DOM->$button_plus= [$id_pecoun ? 'hide' : 'show']; 
+    $DOM->$button_minus= [$id_pecoun ? 'show' : 'hide']; 
     $DOM->$fid= $form===null ? ['show'] : ['show',$form];
   }
   else { // dítě nejede  
     $DOM->$button_plus= ['hide'];
     $DOM->$button_minus= ['hide'];
     $DOM->$fid= $form===null ? ['hide'] : ['hide',$form];
+    // dítě nejede a pečoun není dítětem přihlašované rodiny
+    if (get_role($id_pecoun)=='p') { // spolu pečouna mimo rodinu není vidět
+      set('o','spolu',0,$id_pecoun);
+    }
   }
 } // form a tlačítka pečouna
 function form_pecoun_clear($id_dite) { trace(); // --------------------- odstranění osobního pečouna
 # odstranění pečouna daného dítěte ve vars i v DOM
-  global $DOM, $vars;
+  global $DOM, $akce;
   $id_pecoun= get_pecoun($id_dite);
   set('o','o_pecoun','',$id_dite);
-  unset($vars->cleni[$id_pecoun]);
+  set('o','spolu',0,$id_pecoun);
+  set('o','o_dite',0,$id_pecoun);
+  $name= "o_{$id_pecoun}_spolu"; $DOM->$name= [0];
   $name= "f_$id_dite"; $DOM->$name= ['empty'];
   $name= "b_{$id_dite}_minus"; $DOM->$name= ['hide'];
   $name= "b_{$id_dite}_plus"; $DOM->$name= ['show'];
+  // zruš mu stravu
+  if ($akce->p_strava) {
+    $name= "c_{$id_pecoun}_strava"; $DOM->$name= 'remove';
+  }
 } // odstranění osobního pečouna
 
 function form_solo($id) { trace(); // -------------------------------- zobrazení osoby včetně adresy
@@ -1027,7 +1126,7 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
 
 function form_MO($new) { trace();
 # pokud je new=1 nastaví se složky na default
-  global $vars, $akce;
+  global $TEXT, $vars, $akce;
   if ($new) {
     // části a počáteční nastavení formuláře
     $vars->form= (object)[
@@ -1044,16 +1143,15 @@ function form_MO($new) { trace();
   $msg= '';
   $mis_souhlas= '';
   $red_x= 'fa fa-times fa-red';
-  $clenove= '';
   // -------------------------------------------- úprava rodinné adresy
-  $rod_adresa= '';
+  $zacatek= '';
   if ($vars->form->rodina) {
-    $rod_adresa= "<p>Zapište, nebo zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
+    $zacatek= "<p>Zapište, nebo zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
     $idr= key($vars->rodina);
     if ($idr<0) { // požadujeme název rodiny
-      $rod_adresa.= elem_input('r',$idr,['nazev']).'<br>';
+      $zacatek.= elem_input('r',$idr,['nazev']).'<br>';
     }
-    $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba','<br>','r_ms']);
+    $zacatek.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba','<br>','r_ms']);
   }
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
@@ -1078,6 +1176,20 @@ function form_MO($new) { trace();
   if ($akce->p_sleva) {
     $pobyt.= elem_input('p',0,['sleva_zada']) . elem_input('p',0,['sleva_duvod'],1);
   }
+  // -------------------------------------------- strava
+  $strava= '';
+  if ($akce->p_strava) {
+    $strava= "<div>$TEXT->strava" 
+//        . elem_input('p',$idr,['Xstrava_s','Xstrava_o','Xstrava_v']) 
+        . '</div>';
+    foreach (array_keys($vars->cleni) as $id) {
+      if (get('c','spolu',$id)) {
+        $strava.= form_strava($id,0,0);
+      }
+    }
+
+    $strava= "<div id='strava' class='rodina'>$strava</div>";
+  }
   // -------------------------------------------- souhlas
   $souhlas= $akce->p_souhlas
     ? "<p class='souhlas'>"
@@ -1095,15 +1207,13 @@ function form_MO($new) { trace();
 //  $exit= '';
   $form= <<<__EOF
     <div class='rodina'>
-      $rod_adresa
+      $zacatek
     </div>
     <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
     <div id='form_par'></div>
     <div id='form_deti'></div>
-    $clenove
-    <div class='rodina'>
-      $pobyt
-    </div>
+    $strava
+    <div class='rodina'>$pobyt</div>
     $souhlas
     $exit
     <p id="vyplneni_msg">$msg</p>
@@ -1190,7 +1300,7 @@ function dotaz($dotaz,$ano,$ne) { // -------------- dotaz s funkcemi pro ano a n
 } // popup s ANO / NE
 function vyber($dotaz,$odpovedi,$back=0) { // -------------- výběr z více možností
 # $odpovedi= [ text:funkce:parametr:podtext
-# $back=1 zobrazí x pro zrušní dialogu ale ponechání modální masky
+# $back=1 zobrazí x pro zrušení dialogu ale ponechání modální masky
   global $DOM;
   $DOM->alertbox= 'show'; $DOM->popup_mask= 'show';
   if ($back) {
@@ -1556,6 +1666,7 @@ function read_akce() { // ------------------------------------------------------
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
   $akce->oddo= sql2oddo($od,$do,1);
+  $akce->od= $od;
   $akce->rok= $rok;
   $MarketaZelinkova= 6849;
   list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
@@ -1595,20 +1706,7 @@ function read_akce() { // ------------------------------------------------------
       Zatržením prohlašuji, že jsem si plně vědom@, že pořadatel neodpovídá za škody a újmy, které by 
       mně/nám mohly vzniknout v souvislosti s nedodržením těchto zásad účasti na kurzu, a veškerá rizika
       v takovém případě přebíráme na sebe.";
-  // -------------------------------------------- počáteční nastavení formuláře
-//  if (!($vars->form??null)) {
-//    $vars->form= (object)[
-//        'pass'=>0, // inicializovat pozici pro 0
-//        'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
-//        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
-////        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
-////        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
-////        'exit'=>0,      // 1 => první stisk 
-//    ];
-//  }
 end:    
-//  global $trace;
-//  $trace.= debugx($akce,'hodnoty web_online');
   if ($msg) {
     die($msg);
   }
@@ -1627,6 +1725,13 @@ function get_role($id) { // ----------------------------------------------------
     $role= is_array($role) ? ($role[1] ?? $role[0]) : $role;
   }
   return $role;
+}
+function get_vek($id) { // ----------------------------------------------------------------- get věk
+# vrátí věk osoby nebo 99
+  global $akce;
+  $narozeni= get('o','narozeni',$id);
+  $vek= $narozeni ? roku_k(sql_date1($narozeni,1),$akce->od) : 99;
+  return $vek;
 }
 function get_pecoun($id_dite) { // ----------------------------------------------------- get pečouna
 # vrátí 0 pokud nemá pečouna
@@ -1658,19 +1763,6 @@ function gets($table,$id=0) { // -----------------------------------------------
     $v= is_array($pair->$f) ? ($pair->$f[1] ?? $pair->$f[0]) : $pair->$f;
     if (in_array($typ,['select','sub_select'])) 
       $v= $options[$f][$v] ?? '?';
-    $ret->$f= $v;
-  }
-  return $ret;
-}
-function inits($table) { // --     ---------------------------------------------------------- init s
-# vrátí iniciální hodnotu všech položek jako objekt
-  global $p_fld, $r_fld, $o_fld, $options;
-  $ret= (object)[];
-  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
-  foreach ($desc as $f=>list(,,$typ)) {
-    $v= init_value($typ);
-    if (in_array($typ,['select','sub_select'])) 
-      $v= $options[$f][0] ?? '?';
     $ret->$f= $v;
   }
   return $ret;
@@ -1772,7 +1864,7 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
 end:
   return $missed;
 }
-function elem_input($table,$id,$flds,$to_hide=0) { // ----------------------------------- elem input
+function elem_input($table,$id,$flds,$to_hide='') { // ----------------------------------- elem input
 # vytvoř část formuláře - pro vstup
   global $p_fld, $r_fld, $o_fld, $vars, $options;
   $html= '';
@@ -1808,33 +1900,29 @@ function elem_input($table,$id,$flds,$to_hide=0) { // --------------------------
     }
     // pokud je v režimu kontroly zajisti orámování chng
     $chng_css= in_array($name,$vars->form->kontrola) ? 'chng' : 'chng_ok';      
-    $todo= '';
     // rozpoznání povinnosti položky
     if (substr($title,0,1)=='*') { //  && ($table!='o' || $pair->spolu)) {
       $title=  "<b style='color:red'>*</b>".substr($title,1);
-//      if ($vars->form->todo 
-//        && ($v=='' || in_array($typ,['select','sub_select']) && $v==0 || isset($pair->_corr_->$fld))) {
-//        $todo= " class='missing'";
-//      }
     }
     $oninput= "onchange=\"elem_changed(this);\"";
     $hide= $to_hide ? " style='display:none'" : '';
     switch ($typ) {
     case 'check_souhlas':
     case 'check_spolu':
-    case 'check':
+//    case 'check':
       $x=  $v ? 'checked' : '';
       $html.= "<label class='$typ'$hide>$title"
-          . "<input type='checkbox' id='$name' value='x' $x$todo $oninput></label>";
+          . "<input type='checkbox' id='$name' value='x' $x $oninput></label>";
       break;
+    case 'check':
     case 'check_sleva':
       $x=  $v ? 'checked' : '';
-      $html.= "<div class='$typ'$hide><input type='checkbox' id='$name' value='x' $x$todo $oninput>"
+      $html.= "<div class='$typ'$hide><input type='checkbox' id='$name' value='x' $x $oninput>"
           . "<label for='$name'>$title</label></div>";
       break;
     case 'select':
     case 'sub_select':
-      $html.= "<label class='upper'$hide>$title<select$todo id='$name' $oninput>";
+      $html.= "<label class='upper'$hide>$title<select id='$name' $oninput>";
       if (isset($options[$fld][''])) {
         $selected= !$v ? 'selected' : '';
         $html.= "<option disabled='disabled' $selected>{$options[$fld]['']}</option>";
@@ -1850,7 +1938,7 @@ function elem_input($table,$id,$flds,$to_hide=0) { // --------------------------
       list($cols,$rows)= explode('/',$len);
       $v= br2nl($v);
       $html.= "<label class='upper-area'$hide>$title"
-          . "<textarea rows='$rows' cols='$cols' id='$name'$todo $oninput>"
+          . "<textarea rows='$rows' cols='$cols' id='$name' $oninput>"
 //          . "oninput=\"this.classList.add('chng');\">"
           . "$v</textarea></label>";
       break;
@@ -1860,7 +1948,7 @@ function elem_input($table,$id,$flds,$to_hide=0) { // --------------------------
       $x= $v ? "value='$v'" : ''; // "placeholder='$holder'";
       $c= $v_chng ? " class='$chng_css' " : '';
       $html.= "<label class='upper'$hide>$title"
-          . "<input type='text' id='$name' size='$len' $x$c$todo $oninput></label>";
+          . "<input type='text' id='$name' size='$len' $x$c $oninput></label>";
     }
   }
   return $html;
@@ -1899,9 +1987,10 @@ function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vyt
   global $vars,$o_fld;
   $vars->cleni[$ido]= (object)[];
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
-    if ($typ=='x') 
-      continue;
-    elseif (strpos($omez,$role)!==false)
+//    if ($typ=='x') 
+//      continue;
+//    else
+      if (strpos($omez,$role)!==false)
       $vars->cleni[$ido]->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
   $vars->cleni[$ido]->role= ['',$role];
@@ -2528,6 +2617,19 @@ function append_log($msg) { // -------------------------------------------------
 function gen_html($to_save=0) {
 # vygeneruje textový tvar přihlášky, pro to_save=1 uloží do pobyt to_save=2 uloží do prihlasky
   global $akce, $vars;
+  $inits= function($table) { // --     ---------------------------------------------------------- init s
+  # vrátí iniciální hodnotu všech položek jako objekt
+    global $p_fld, $r_fld, $o_fld, $options;
+    $ret= (object)[];
+    $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
+    foreach ($desc as $f=>list(,,$typ)) {
+      $v= init_value($typ);
+      if (in_array($typ,['select','sub_select'])) 
+        $v= $options[$f][0] ?? '?';
+      $ret->$f= $v;
+    }
+    return $ret;
+  };
   $ted= date("j.n.Y H:i:s");
   $html= '';
   $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$akce->nazev\"</h3>";
@@ -2535,8 +2637,8 @@ function gen_html($to_save=0) {
   // odlišení muže, ženy a dětí
   $sebou= []; $deti= $del_d= ''; $chuvy= '';
   $r= gets('r');
-  $m= inits('o');
-  $z= inits('o');
+  $m= $inits('o');
+  $z= $inits('o');
   foreach (array_keys($vars->cleni) as $id) {
     $o= gets('o',$id);
     switch (get_role($id)) {
