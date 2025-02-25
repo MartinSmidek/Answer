@@ -91,7 +91,7 @@ function after_php(DOM) {
         closure= elem.closest('label').length ? elem.closest('label') : elem,
         value= DOM[id];
     if (!elem.length) {
-      error(`chyba DOM - '${id}' je neznámé id`);
+      error(`chyba DOM - '${id}' je neznámé id`,DOM);
       break;
     }
     if (value==='') continue;
@@ -158,8 +158,11 @@ function ask(x,then,arg) {
   })
 }
 // ------------------------------------------------------------------------------------------- error
-function error(msg) {
-  let x= {cmd:'DOM_error',args:[msg]};
+function error(msg,DOM) {
+  let tr= DOM.trace || '',
+      index= tr.indexOf("<hr>");
+  tr= index !== -1 ? tr.substring(0, index) : tr.substring(0, 24);
+  let x= {cmd:'DOM_error',args:[msg,tr]};
   ask(x);
 }
 function errorbox_only(msg) {

@@ -54,7 +54,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
   $akce_default= [ // položky které aplikace umí
   // základní typ přihlášky
     'p_typ'         =>  0, // M|O|R|J
-  //  'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
+    'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
     'p_registrace'  =>  0, // je povoleno registrovat se neznámým emailem
     'p_sleva'       =>  0, // umožnit požádat o slevu
     'p_deti'        =>  0, // ... s dětmi
@@ -65,7 +65,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_souhlas'     =>  0, // vyžadovat souhlas (GDPR) 
   // -- pro MS Obnovy i LK
     'p_strava'      =>  0, // umožnit zadat stravu
-    'p_detska'      => 10, // hranice poloviční stravy
+    'p_detska_od'   =>  3, // hranice poloviční stravy
+    'p_detska_do'   => 10, // hranice poloviční stravy
   // -- jen pro obnovy MS
     'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
   // -- jen pro LK MS
@@ -99,6 +100,12 @@ try {
     }
     // detekce varianty: normální nebo testovací 
     $ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
+    
+    
+        $ANSWER= 1;
+        
+        
+        
     // odvození požadavku na test a ostrý mail
     $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
     $MAIL= $_GET['mail']??1 ? 1 : ($ANSWER?0:1);
@@ -208,14 +215,18 @@ catch (Throwable $e) {
     else break;
   }
   if (preg_match('/chyba DOM/',$msg)) {
-    global $trace;
-    $msg.= ' DOM';
+    global $old_trace; // pouze přes DOM_error
+    $errpos= "$msg after $old_trace";
   }
-  append_log("<b style='color:red'>CATCH</b> $msg na řádku $line");
-  echo "Omlouváme se, během práce programu došlo k nečekané chybě."
+  else {
+    $errpos= "$msg na řádku $tline";
+  }
+  append_log("<b style='color:red'>CATCH</b> $errpos");
+  $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
-      . "<br>$msg na řádku $tline" : '');
+      . "<br>$errpos" : '');
+  echo $errmsg;
   exit;
 }
 // -------------------------------------------------------------------- obnova počátečního nastavení
@@ -274,9 +285,10 @@ function polozky() { // --------------------------------------------------------
           typ_akce('J') ? 'Zkontrolujte a případně doplňte své údaje.' : ''),  
       'deti' =>
           "<p><b>Naše děti</b> (zapište prosím i ty, které necháváte doma)."
-          . '<br>Pečovatele pro dítě přidávejte pouze pokud nevyužijete služeb našeho kolektivu pečovatelů.</p>',
+          . '<br>Pečovatele pro dítě přidávejte, pouze pokud nevyužijete služeb našeho kolektivu pečovatelů.</p>',
       'strava' =>
-          '<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do 10 let poloviční porce);'
+          "<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem od $akce->p_detska_od "
+          . "do $akce->p_detska_do let poloviční porce);"
           . '<br>nebo ji můžete jmenovitě upravit, případně vybrat dietu.',
       'rozlouceni1' => 
           'Přejeme Vám hezký den.',
@@ -370,7 +382,7 @@ function polozky() { // --------------------------------------------------------
       ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
-      'zamest'    =>[35,'* povolání, obor ve kterém pracujete/budete pracovat','','ab'],
+      'zamest'    =>[35,'* povolání, obor, ve kterém pracujete/budete pracovat','','ab'],
       'zajmy'     =>[35,'* zájmy','','ab'],
       'jazyk'     =>[20,'znalost jazyků (Aj, Nj, ...)','','ab'],
       'aktivita'  =>[35,'aktivita v církvi, ve společnosti','','ab'],
@@ -711,6 +723,7 @@ function kontrolovat() { trace();
   // -------------------------------- pokud vše prošlo zobraz shrnutí a vrať se nebo přihlas
   list($text)= souhrn('kontrola');
   vyber($text,["Odeslat tyto údaje:prihlasit","Upravit údaje před odesláním:"]);
+  $DOM->nic= 'nic';
 end:  
   debug($chybi,"chybějící ID");
 }
@@ -720,14 +733,29 @@ function prihlasit() { trace();
   global $DOM, $vars, $akce, $errors, $TEST;
   // vytvoření pobytu
   log_append_stav('zapis');
-  // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
-  $ucast= 0; // = účastník
-  if ($akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))) {
-    $ucast= 9;
-  } 
-  if (isset($vars->pobyt->Xvps)) { // volba VPS (ne)sloužit
-    $sluzba= get('p','Xvps');
-    $ucast= $sluzba==1 ? 1 : 0;
+  // -------------------------------- funkce na kurzu
+  $ucast= 9; // náhradník protože pozdě přihlášený
+  if (!$akce->p_pozde) {
+    if (typ_akce('M')) {
+      $umi_vps= in_array(1,explode(',',get('r','r_umi')));
+      if ($umi_vps) { // VPS bereme vždy
+        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS nebo účastník
+      }
+      else {
+        $ucast= 13; // přihláška
+      }
+    } 
+    elseif (typ_akce('O')) {
+      if (key($vars->rodina)>0 && byli_na_aktualnim_LK(key($vars->rodina))) {
+        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS nebo účastník
+      }
+      else {
+        $ucast= 9; // náhradník 
+      }
+    } 
+    else {
+      $ucast= 0; // účastník
+    }
   }
   set('p','funkce',$ucast);
   // vytvoříme nový záznam pro pobyt, pokud nejde o opravu
@@ -900,7 +928,9 @@ function DOM_zmena_slevy($on) { // ---------------------------------------------
   global $DOM;
   $DOM->p_0_sleva_duvod= $on ? 'show' : 'hide';
 } // změna volby slevy
-function DOM_error($msg) {
+function DOM_error($msg,$tr) {
+  global $old_trace;
+  $old_trace= $tr;
   log_error($msg);
   throw new Exception($msg);
 }
@@ -962,7 +992,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
   $part= '';
   if ($detail==1) {
     $part.= "<br><button onclick=\"php2('form_deti,=2');\" >
-      <i class='fa fa-eye'></i> zobrazit naše děti</button>";
+      <i class='fa fa-eye'></i> zobrazit, zapsat naše děti</button>";
     $DOM->form_deti= ['show',$part];
   } // tlačítko
   else { // detail==2
@@ -1071,20 +1101,21 @@ function form_strava_default($id,$cmd) { trace(); // ---------------- default st
 # cmd=set nastaví stravu na default
 # cmd=not vrátí 1 pokud strava není defaultní
   global $akce;
+  $ji= get_vek($id)>$akce->p_detska_od;
   switch ($cmd) {
     case 'set':
-      set('o','Xstrava_s',1,$id);
-      set('o','Xstrava_o',1,$id);
-      set('o','Xstrava_v',1,$id);
-      set('o','Xporce', get_vek($id)<$akce->p_detska ? 2 : 1,$id); // 1 = celá, 2 = poloviční
+      set('o','Xstrava_s',$ji,$id);
+      set('o','Xstrava_o',$ji,$id);
+      set('o','Xstrava_v',$ji,$id);
+      set('o','Xporce', get_vek($id)<$akce->p_detska_do ? 2 : 1,$id); // 1 = celá, 2 = poloviční
       set('o','Xdieta',   1,$id); // 1 je normální strava
       break;
     case 'not':
       $not= 0;
-      if (get('o','Xstrava_s',$id)!=1) $not= 1;
-      if (get('o','Xstrava_o',$id)!=1) $not= 1;
-      if (get('o','Xstrava_v',$id)!=1) $not= 1;
-      if (get('o','Xporce',$id)!= (get_vek($id)<$akce->p_detska ? 2 : 1)) $not= 1;
+      if (get('o','Xstrava_s',$id)!=$ji) $not= 1;
+      if (get('o','Xstrava_o',$id)!=$ji) $not= 1;
+      if (get('o','Xstrava_v',$id)!=$ji) $not= 1;
+      if (get('o','Xporce',$id)!= (get_vek($id)<$akce->p_detska_do ? 2 : 1)) $not= 1;
       if (get('o','Xdieta',   $id)!=1) $not= 1;
       return $not;
   }
@@ -1105,7 +1136,7 @@ function form_strava_osoba($id,$click) { trace(); // ------------------ specifik
   // pro děti s poloviční porcí zobraz věk
   $vek= get_vek($id);
   $vek_roku= kolik_1_2_5($vek,"rok,roky,roků");
-  $polovicni= $vek<$akce->p_detska ? 1 : 0;
+  $polovicni= $vek<$akce->p_detska_do ? 1 : 0;
   $pro= "<i class='fa fa-cutlery'></i> pro " . get('o','jmeno',$id) . ($polovicni ? ", $vek_roku" : ''); 
   $pro= "<b>$pro:</b>";
   // html
@@ -2718,7 +2749,7 @@ function souhrn($ucel) {
       $objednavka.= "bez stravy";
     }
     elseif ($ns+$no+$nv==3) {
-      $objednavka.= "strava: ";
+      $objednavka.= "snídaně, obědy, večeře: ";
     }
     else {
       $jidlo= $ns ? "snídaně" : '';
@@ -2755,7 +2786,7 @@ function souhrn($ucel) {
     // text ke kontrole po vyplnění
     ? "Přihlašujeme se $na a objednáváme pro $objednavka " 
     // text zaslaný mailem po přihlášení
-    : "Dobrý den,<p>dostali jsme vaši přihlášku $na, ve které pro účastníky objednáváte $objednavka."
+    : "Dobrý den,<p>dostali jsme vaši přihlášku $na, ve které pro účastníky objednáváte $objednavka"
       . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
   . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
   . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
