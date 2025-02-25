@@ -1710,6 +1710,7 @@ function akce2_pobyt_default_vsem($id_akce) {  trace();
 # 130524 oživena položka SVP
 # 190501 pokud je $zapsat=1 budou dětem stanoveny kategorie podle věku
 # 210510 hnízda
+# 250224 nastavení spolu.pulstrava má přednost před kategorií
 function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $warn= '';
   $zmeny_kat= array(); // pro zapsat==1 bude obsahovat provedené změny kategorie u dětí
@@ -1723,7 +1724,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $luzka= $pristylky= $bez= $cela= $polo= 0;
   $msg= '';
   $qo= "SELECT o.prijmeni,o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
-         s.pecovane,s.s_role,s.dite_kat,id_spolu,
+         s.pecovane,s.s_role,s.dite_kat,id_spolu,s.pulstrava,
          (SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -1822,7 +1823,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
     }
     $ret->zmeny_kat= $zmeny;    
   }
-//                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_expr

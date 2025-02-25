@@ -2255,6 +2255,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     func onclick() { var ret: object
       ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
+      if (ret.warn) warning(ret.warn);
       copy_by_name(ret,form);
       vzorec.change(); luzka.change(); pristylky.change(); pocetdnu.change(); svp.change();
       strava_cel.change(); strava_pol.change(); kocarek.change();

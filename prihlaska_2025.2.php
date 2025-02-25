@@ -204,6 +204,10 @@ catch (Throwable $e) {
     }
     else break;
   }
+  if (preg_match('/chyba DOM/',$msg)) {
+    global $trace;
+    $msg.= ' DOM';
+  }
   append_log("<b style='color:red'>CATCH</b> $msg na řádku $line");
   echo "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
@@ -297,8 +301,8 @@ function polozky() { // --------------------------------------------------------
       'funkce'    => map_cis_2('ms_akce_funkce','zkratka'),
       'Xvps'      => [''=>'něco prosím vyberte',1=>'počítáme se službou VPS',
                       2=>'raději bychom byli v "odpočinkové" skupince'],
-      'Xpolovicni'    => [1=>'celá',2=>'poloviční'],
-      'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],
+      'Xpolovicni'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
+      'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
     ];
   $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
@@ -375,7 +379,7 @@ function polozky() { // --------------------------------------------------------
     typ_akce('MO') && ($akce->p_strava??0) ? [
       'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
       'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
-      'Xstrava'     =>[ 0,'','x','abdp'],  // 0 = podle rodiny, 1 = upřesnění
+      'Xstrava'     =>[ 0,'','x','abdp'],  // 0 = nedefinovaná, 1 = definovaná
       'Xstrava_s'   =>[ 0,'snídaně','check','abdp'],
       'Xstrava_o'   =>[ 0,'obědy','check','abdp'],
       'Xstrava_v'   =>[ 0,'večeře','check','abdp'],
@@ -601,6 +605,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
   }
   else { // přihláška nového
     $vars->klient= '';
+    kompletuj_pobyt($vars->idr,$vars->ido);
     return formular(1);
   } // přihláška nového
 end:
@@ -627,7 +632,7 @@ function kontrolovat() { trace();
 # zkontroluje bezchybnost a úplnost přihlášky
   global $DOM, $akce, $vars;
   $chybi= [];
-  $chybi_osobni= $chybi_rodinne= 0;
+  $chybi_osobni= $chybi_rodinne= $chybi_strava= 0;
   $spolu= 0;
   // ------------------------------ je aspoň jeden dospělý přihlášený?
   foreach (array_keys($vars->cleni) as $id) {
@@ -667,19 +672,21 @@ function kontrolovat() { trace();
   $miss= elems_missed('p',0,['Xsouhlas','sleva_duvod']);
   $chybi_souhlas= $akce->p_souhlas && !get('p','Xsouhlas') ? 1 : 0;
   $chybi_duvod= $akce->p_sleva && get('p','sleva_zada') && !get('p','sleva_duvod') ? 1 : 0;
+  $chybi_strava= $akce->p_strava ? $vars->form->strava!=2 : 0;
   if (count($miss)) {
     // souhlasy
     $chybi_rodinne++;
     $chybi= array_merge($chybi,$miss);  
   }
   // redakce případné výzvy
-  if (count($chybi) || $chybi_souhlas || $chybi_upozorneni || $chybi_duvod) {
+  if (count($chybi) || $chybi_souhlas || $chybi_upozorneni || $chybi_strava || $chybi_duvod) {
     foreach ($chybi as $name) { $DOM->$name= 'ko'; }
     $veta= 
          ($chybi_rodinne || $chybi_osobni ? 'Doplňte označené ' : '' )
         .($chybi_rodinne ? "společné údaje" : '')
         .($chybi_rodinne && $chybi_osobni ? ' a ' : '' )
         .($chybi_osobni ? "osobní údaje (alespoň u těch, kteří pojedou na akci)." : '')
+        .($chybi_strava ? "<br>Rozklikněte a případně potom upravte objednávku stravy" : '' )
         .($chybi_souhlas ? "<br>Potvrďte prosím váš souhlas s použitím osobních údajů" : '' )
         .($chybi_duvod ? "<br>Napište prosím, proč žádáte o slevu" : '' )
         . $chybi_upozorneni
@@ -743,8 +750,61 @@ function prihlasit() { trace();
     }
   }
 
+  // ------------------------------ zapiš objednávku stravy do db !!! pouze normální a bezlepkové
+  $fld= []; // pole s hodnotami pro zápis objednané stravy
+  if ($akce->p_strava) {
+    $strava= [];
+    $spec= []; // pro každou dietu zvlášť
+    $oddo= $akce->strava_oddo;  // 'vo' nebo 'oo'
+    // podle polozky.options
+    //   'Xpolovicni'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
+    //   'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
+    $dieta= [1=>'',2=>'_bl'];
+    $porce= [1=>'_cel',2=>'_pol'];
+    foreach ($dieta as $id=>$d) {
+      $spec[$id]= 0;
+      foreach ($porce as $ip=>$p) {
+        $fld["strava$p$d"]= 0;
+        $fld["cstrava$p$d"]= '';
+        foreach ([0,1,2] as $j) {
+          $strava[$id][$ip][$j]= 0;
+        }
+      }
+    }
+    foreach (array_keys($vars->cleni) as $idc) {
+      if (get('o','spolu',$idc)) {
+        $id= get('o','Xdieta',$idc); $d= $dieta[$id];
+        $ip= get('o','Xpolovicni',$idc); $p= $porce[$ip];
+        // odběr jídla
+        $ns= get('o','Xstrava_s',$idc); if (!$ns) $spec[$id]= 1;
+        $no= get('o','Xstrava_o',$idc); if (!$no) $spec[$id]= 1;
+        $nv= get('o','Xstrava_v',$idc); if (!$nv) $spec[$id]= 1;
+        // pokud je nějaké 
+        if ($ns+$no+$nv > 0) {
+          $fld["strava$p$d"]++;
+          // podrobně
+          $strava[$id][$ip][0]+= $ns;
+          $strava[$id][$ip][1]+= $no;
+          $strava[$id][$ip][2]+= $nv;
+        }
+      }
+    }
+    // zápis případných výjimek jako řetězce se jménem cstrava_cel apod.
+    foreach ($dieta as $id=>$d) {
+      if ($spec[$id]) {
+        foreach ($porce as $ip=>$p) {
+          $x= $strava[$id][$ip][0].$strava[$id][$ip][1].$strava[$id][$ip][2];
+          $xs= str_repeat($x,$akce->dnu);
+          $fld["cstrava$p$d"]= $oddo=='oo' 
+              ? '0'.substr($xs,1,-1).'0'
+              : '00'.substr($xs,2,-1).'0';
+        }
+      }
+    }
+  }
+
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
-  db_close_pobyt();
+  db_close_pobyt($fld);
   // generování PDF s osobními a citlivými údaji pro Letní kurz
   if ($akce->p_dokument??0 && $TEST<2) {
     $msg= gen_html(1);
@@ -838,11 +898,8 @@ function DOM_zmena_spolu($idc) { // --------------------------------------------
   }
   // zruš zvláštnost stravy člena při změně spolu
   if (typ_akce('MO') && $akce->p_strava) {
-    form_strava_default($idc);
-    if ($spolu) 
-      $DOM->strava= '+'.form_strava($idc,0,0); // přidat uzel
-    else
-      form_strava($idc,0,1); // změnit dom na nic nebo button
+    $vars->cleni[$idc]->Xstrava= 0;
+    form_strava_hide(); 
   }
   // zruš nevyplněného člena, který nepojede
   if (!$spolu && $idc<0 
@@ -878,7 +935,6 @@ function form_manzele() { trace(); // ------------------------------------------
           . "</div>";
       }
       else {
-//        $strava= typ_akce('MO') && $akce->p_strava ? form_strava($id,0,0) : ''; // tlačítko nebo elementy
         $vlastnosti= typ_akce('M') 
           ? elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
             'aktivita','cirkev','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) : '';
@@ -936,7 +992,6 @@ function form_deti($detail) {trace(); // ---------------------------------------
       // příprava osobního pečovatele - pokud jsou povoleni 
       if ($vars->form->pecouni ?? 0) { // jsou povoleni
         $display= $spolu ? "style='display:block'" : "style='display:none'";
-//        $strava= typ_akce('MO') && $akce->p_strava ? form_strava($id,0,0) : ''; // tlačítko nebo elementy
         if (!get_pecoun($id)) $vars->cleni[$id]->o_pecoun= 0; // o_pecoun nemusí být definováno
         $id_pecoun= get_pecoun($id);
         if ($id_pecoun) { // je osobní pečovatel
@@ -1002,54 +1057,88 @@ function form_deti($detail) {trace(); // ---------------------------------------
 //  $DOM->form_deti= ['show',$part];
 } // form - seznam dětí
 
-function form_strava_default($id) { trace(); // ------------------------------- default stravu osoby
-  set('o','Xstrava',  0,$id); // 0 = default
-  set('o','Xstrava_s',1,$id);
-  set('o','Xstrava_o',1,$id);
-  set('o','Xstrava_v',1,$id);
-  set('o','Xpolovicni', get_vek($id)<10 ? 2 : 1,$id); // 1 = celá, 2 = poloviční
-  set('o','Xdieta',   1,$id); // 1 je normální strava
-}
-function form_strava($id,$rozepsat,$dom=1) { trace(); // ------------------ specifikace stravy osoby
-# pro dom=0 vrátí tlačítko obalené div
-# pro dom=1 obměňuje ten div podle spolu (hide nebo show) a podle Xstrava (tlačítko nebo rozpis)
-# pro rozepsat=1 vnutí Xstrava=1
+function form_strava_hide($init=0) { trace(); // ------------------------ tlačítko objednávka stravy
+# init=1 vrátí div a tlačítko jako text
+# init=0 smaže formálář objednávek a zobrazí jen tlačítko
   global $DOM, $vars;
-  $part= '';
-  $spolu= get('o','spolu',$id);
-  if ($rozepsat) {
-    form_strava_default($id);
+  $vars->form->strava= 1; // jen tlačítko
+  $button= "<button onclick=\"php2('form_strava_show');\" >"
+      . "<i class='fa fa-cutlery'></i> objednat stravu</button>";
+  if ($init) { // volání jen z form_MO
+    return "<div id='strava' class='rodina'>$button</div>";
+  }
+  else { // při změně, která modifikuje stravy, vrať tlačítko a zruš stravu
+    $DOM->strava= ['empty',$button];
+  }
+}
+function form_strava_show() { trace(); // ----------------------------------- seznam strav pro pobyt 
+  global $DOM, $TEXT, $vars;
+  $strava= "<div>$TEXT->strava</div>"; 
+  foreach (array_keys($vars->cleni) as $id) {
+    if (get('c','spolu',$id)) {
+      $strava.= form_strava_osoba($id,0);
+    }
+  }
+  $vars->form->strava= 2; // seznam 
+  $DOM->strava= ['empty',$strava];
+}
+function form_strava_default($id,$cmd) { trace(); // ---------------- default stravu osoby: test|set
+# cmd=set nastaví stravu na default
+# cmd=not vrátí 1 pokud strava není defaultní
+  switch ($cmd) {
+    case 'set':
+      set('o','Xstrava_s',1,$id);
+      set('o','Xstrava_o',1,$id);
+      set('o','Xstrava_v',1,$id);
+      set('o','Xpolovicni', get_vek($id)<10 ? 2 : 1,$id); // 1 = celá, 2 = poloviční
+      set('o','Xdieta',   1,$id); // 1 je normální strava
+      break;
+    case 'not':
+      $not= 0;
+      if (get('o','Xstrava_s',$id)!=1) $not= 1;
+      if (get('o','Xstrava_o',$id)!=1) $not= 1;
+      if (get('o','Xstrava_v',$id)!=1) $not= 1;
+      if (get('o','Xpolovicni',$id)!= (get_vek($id)<10 ? 2 : 1)) $not= 1;
+      if (get('o','Xdieta',   $id)!=1) $not= 1;
+      return $not;
+  }
+}
+function form_strava_osoba($id,$click) { trace(); // ------------------ specifikace stravy osoby
+# zobrazí stravu jako rozpis, pokud není defaultní nebo pokud je click; jinak vrátí tlačítko
+# pro click=0 vrátí html
+# pro click=1 vnutí html přes $DOM
+# na vstupu platí, že spolu=1
+# pokud je Xstrava=0 doplní default
+  global $DOM, $vars;
+  // případně doplň default
+  if (!$vars->cleni[$id]->Xstrava) {
+    form_strava_default($id,'set');
     $vars->cleni[$id]->Xstrava= 1;
   }
-  $strava_id= "c_{$id}_strava";
-  $strava= $vars->cleni[$id]->Xstrava; // 0 = rodinná varianta, 1 = upřesnění
+  $rozepsat= $click || form_strava_default($id,'not');
+  // pro děti s poloviční porcí zobraz věk
   $vek= get_vek($id);
   $vek_roku= kolik_1_2_5($vek,"rok,roky,roků");
   $polovicni= $vek<10 ? 1 : 0;
-  $pro= " pro " . get('o','jmeno',$id) . ($polovicni ? ", $vek_roku" : ''); 
+  $pro= "<i class='fa fa-cutlery'></i> pro " . get('o','jmeno',$id) . ($polovicni ? ", $vek_roku" : ''); 
   $pro= "<b>$pro:</b>";
-  $button= "<i class='fa fa-cutlery'></i> $pro <button onclick=\"php2('form_strava,=$id,=1,=1');\" >"
-      . "upravit objednávku </button>";
-  $rozpis= "$pro " . elem_input('o',$id,['Xstrava_s','Xstrava_o','Xstrava_v','Xpolovicni','Xdieta']); 
-  if ($dom) {
-    if ($spolu && $strava) 
-      $DOM->$strava_id= ['show',$rozpis];
-    elseif ($spolu && !$strava) 
-      $DOM->$strava_id= ['show',$button];
-    elseif (!$spolu) 
-      $DOM->$strava_id= ['remove'];
+  // html
+  $html= $rozepsat 
+      ? "$pro " . elem_input('o',$id,['Xstrava_s','Xstrava_o','Xstrava_v','Xpolovicni','Xdieta'])
+      : "$pro <button onclick=\"php2('form_strava_osoba,=$id,=1');\" >"
+        . "upravit objednávku </button>";
+  $strava_id= "c_{$id}_strava";
+  if ($click) {
+    $DOM->$strava_id= ['show',$html];
   }
   else { // dom=0 ... vrácení prvotního formuláře
-    $part= "<div class='strava_rozpis' id='$strava_id'>";
-    $part.= $spolu ? ($strava ? $rozpis : $button) : '';
-    $part.= "</div>";
+    return "<div class='strava_rozpis' id='$strava_id'>$html</div>";
   }
-  return $part;
 } // form strava
 
 function form_pecoun($id) { trace(); // --------------------------------- zobrazení osobního pečouna
 # údaje pečouna $id osobně pečujícího o $id_dite
-  global $DOM,$akce;
+  global $akce, $vars;
   $part= "<i>Osobní pečovatel pro toto dítě bude</i><br>";
   if ($id<0) {
     $part.= elem_input('o',$id,['spolu'],'hide') 
@@ -1063,7 +1152,8 @@ function form_pecoun($id) { trace(); // --------------------------------- zobraz
   }
   // doplň mu stravu
   if ($akce->p_strava) {
-    $DOM->strava= '+'.form_strava($id,0,0); // přidat uzel
+    $vars->cleni[$id]->Xstrava= 0;
+    form_strava_hide(); 
   }
   return $part;
 } // form osobní pečoun
@@ -1091,7 +1181,7 @@ function form_pecoun_show($id_dite,$form=null) { trace(); //  ukáže tlačítka
 } // form a tlačítka pečouna
 function form_pecoun_clear($id_dite) { trace(); // --------------------- odstranění osobního pečouna
 # odstranění pečouna daného dítěte ve vars i v DOM
-  global $DOM, $akce;
+  global $DOM, $akce, $vars;
   $id_pecoun= get_pecoun($id_dite);
   set('o','o_pecoun','',$id_dite);
   set('o','spolu',0,$id_pecoun);
@@ -1102,7 +1192,8 @@ function form_pecoun_clear($id_dite) { trace(); // --------------------- odstran
   $name= "b_{$id_dite}_plus"; $DOM->$name= ['show'];
   // zruš mu stravu
   if ($akce->p_strava) {
-    $name= "c_{$id_pecoun}_strava"; $DOM->$name= 'remove';
+    $vars->cleni[$id_pecoun]->Xstrava= 0;
+    form_strava_hide(); 
   }
 } // odstranění osobního pečouna
 
@@ -1126,7 +1217,7 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
 
 function form_MO($new) { trace();
 # pokud je new=1 nastaví se složky na default
-  global $TEXT, $vars, $akce;
+  global $vars, $akce;
   if ($new) {
     // části a počáteční nastavení formuláře
     $vars->form= (object)[
@@ -1135,6 +1226,7 @@ function form_MO($new) { trace();
         'deti'=>$akce->p_deti, // 0=nic, 1=tlačítko, 2=seznam
         'pecouni'=>$akce->p_pecouni, // 0=nejsou povolení
         'rodina'=>$akce->p_rod_adresa,
+        'strava'=>$akce->p_strava,  // 0=akce bez stravy, 1=tlačítko Objednávka, 2=seznam strav
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
     ];
@@ -1179,16 +1271,7 @@ function form_MO($new) { trace();
   // -------------------------------------------- strava
   $strava= '';
   if ($akce->p_strava) {
-    $strava= "<div>$TEXT->strava" 
-//        . elem_input('p',$idr,['Xstrava_s','Xstrava_o','Xstrava_v']) 
-        . '</div>';
-    foreach (array_keys($vars->cleni) as $id) {
-      if (get('c','spolu',$id)) {
-        $strava.= form_strava($id,0,0);
-      }
-    }
-
-    $strava= "<div id='strava' class='rodina'>$strava</div>";
+    $strava= form_strava_hide(1); // jen tlačítko uvnitř <div id='strava'>
   }
   // -------------------------------------------- souhlas
   $souhlas= $akce->p_souhlas
@@ -1661,13 +1744,16 @@ function read_akce() { // ------------------------------------------------------
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
-  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do,$rok)= // doplnění garanta
-      select_2("access,nazev,misto,poradatel,datum_od,datum_do,YEAR(datum_od)",'akce',"id_duakce=$id_akce");
+  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do,$rok,$dnu,$strava_oddo)= select_2( // doplnění informací
+      "access,nazev,misto,poradatel,datum_od,datum_do,YEAR(datum_od),DATEDIFF(datum_do,datum_od),strava_oddo"
+      ,'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
   $akce->oddo= sql2oddo($od,$do,1);
   $akce->od= $od;
   $akce->rok= $rok;
+  $akce->dnu= $dnu+1;
+  $akce->strava_oddo= $strava_oddo;
   $MarketaZelinkova= 6849;
   list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select_2("COUNT(*),CONCAT(jmeno,' ',prijmeni),telefon,email",
@@ -2407,7 +2493,8 @@ function db_zapis_pecovani($id_dite,$id_pecoun) { // ---------------------------
     query_track_2("UPDATE spolu SET s_role=5,pecovane=$id_dite WHERE id_spolu=$s_pecoun");
   }
 }
-function db_close_pobyt() { // ------------------------------------------------------ db close_pobyt
+function db_close_pobyt($fld_plus) { // --------------------------------------------- db close_pobyt
+# fld_plus ... zápis hodnot mimo těch funkce polozky - např. strava
   global $errors, $p_fld, $vars;
   // úschova pobyt
   $idr= key($vars->rodina);
@@ -2424,6 +2511,9 @@ function db_close_pobyt() { // -------------------------------------------------
       $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
     }
   } 
+  foreach ($fld_plus as $f=>$val) {
+    $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$val];
+  }
   if (!_ezer_qry("UPDATE",'pobyt',$vars->pobyt->id_pobyt,$chng))  
     $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
   // poznamenání souhlasu se zpracováním osobních údajů
@@ -2481,7 +2571,7 @@ function log_append_stav($novy) { // -------------------------------------------
       display("LOG_APPEND_STAV fail for:$novy - no sesssion");
 }
 function log_write_changes() { // ------------------------------------------------ log write_changes
-  global $AKCE, $vars, $changes, $TRACE;
+  global $AKCE, $vars, $TRACE;
   if (($idw= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $changes= (object)[];
     foreach ((array)$vars as $name=>$val0) {
@@ -2501,8 +2591,8 @@ function log_write_changes() { // ----------------------------------------------
       }
       if (in_array($name,['pobyt'])) {
         if (!is_object($val0)) continue;
-        $id= $val0->id_pobyt;
         foreach ($val0 as $fld=>$val2) {
+          $id= $val0->id_pobyt;
           if (is_array($val2) && isset($val2[1])) {
             if (!isset($changes->$name)) $changes->$name= (object)[];
             if (!isset($changes->$name->$id)) $changes->$name->$id= (object)[];
