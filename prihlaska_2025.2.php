@@ -270,8 +270,8 @@ function polozky() { // --------------------------------------------------------
           typ_akce('MO') ? 'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.' : (
           typ_akce('J') ? 'Zkontrolujte a případně doplňte své údaje.' : ''),  
       'strava' =>
-          '<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do 10 let poloviční porce);'
-          . '<br>nebo ji můžete jmenovitě upravit, případně vybrat dietu.',
+          "<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do $akce->p_detska let poloviční porce);"
+          . '<br>nebo ji můžete jmenovitě upřesnit, případně vybrat dietu.',
       'rozlouceni1' => 
           'Přejeme Vám hezký den.',
       'rozlouceni2' => 
@@ -301,7 +301,7 @@ function polozky() { // --------------------------------------------------------
       'funkce'    => map_cis_2('ms_akce_funkce','zkratka'),
       'Xvps'      => [''=>'něco prosím vyberte',1=>'počítáme se službou VPS',
                       2=>'raději bychom byli v "odpočinkové" skupince'],
-      'Xpolovicni'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
+      'Xporce'    => [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
       'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
     ];
   $options['cirkev']['']= 'něco prosím vyberte';
@@ -383,7 +383,7 @@ function polozky() { // --------------------------------------------------------
       'Xstrava_s'   =>[ 0,'snídaně','check','abdp'],
       'Xstrava_o'   =>[ 0,'obědy','check','abdp'],
       'Xstrava_v'   =>[ 0,'večeře','check','abdp'],
-      'Xpolovicni'  =>[10,'porce','select','abdp'],
+      'Xporce'  =>[10,'porce','select','abdp'],
       'Xdieta'      =>[15,'dieta','select','abdp'],
     ] : []
   );
@@ -702,8 +702,9 @@ function kontrolovat() { trace();
     hlaska('opravte označené chybné údaje'); 
     goto end;   
   }
-  // -------------------------------- pokud vše prošlo pošli přihlášku
-  prihlasit();
+  // -------------------------------- pokud vše prošlo zobraz shrnutí a vrať se nebo přihlas
+  list($text)= souhrn('kontrola');
+  vyber($text,["Odeslat tyto údaje:prihlasit","Upravit údaje před odesláním:"]);
 end:  
   debug($chybi,"chybějící ID");
 }
@@ -757,7 +758,7 @@ function prihlasit() { trace();
     $spec= []; // pro každou dietu zvlášť
     $oddo= $akce->strava_oddo;  // 'vo' nebo 'oo'
     // podle polozky.options
-    //   'Xpolovicni'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
+    //   'Xporce'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
     //   'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
     $dieta= [1=>'',2=>'_bl'];
     $porce= [1=>'_cel',2=>'_pol'];
@@ -774,7 +775,7 @@ function prihlasit() { trace();
     foreach (array_keys($vars->cleni) as $idc) {
       if (get('o','spolu',$idc)) {
         $id= get('o','Xdieta',$idc); $d= $dieta[$id];
-        $ip= get('o','Xpolovicni',$idc); $p= $porce[$ip];
+        $ip= get('o','Xporce',$idc); $p= $porce[$ip];
         // odběr jídla
         $ns= get('o','Xstrava_s',$idc); if (!$ns) $spec[$id]= 1;
         $no= get('o','Xstrava_o',$idc); if (!$no) $spec[$id]= 1;
@@ -811,33 +812,10 @@ function prihlasit() { trace();
     if ($TEST) display($msg);
   }
   log_write_changes(); // po zápisu do pobytu
-  $ucastnici= ''; $del= ''; 
-  $emails= [$vars->email]; 
-  foreach (array_keys($vars->cleni) as $id) {
-    $spolu= get('o','spolu',$id);
-    if (!$spolu) continue;
-    $jmeno= get('o','jmeno',$id);
-    $prijmeni= get('o','prijmeni',$id);
-    $ucastnici.= "$del$jmeno $prijmeni"; 
-    $del= ', ';
-    if (!in_array(get_role($id),['a','b'])) continue;
-    $ems= preg_split('/[,;]/',get('o','email',$id));
-    foreach ($ems as $email) {
-      $email= trim($email);
-      if ($email && !in_array($email,$emails)) 
-        $emails[]= $email;
-    }
-  }
+  $mail_subj= "Potvrzení přijetí přihlášky ($vars->klient) na akci $akce->nazev.";
+  list($mail_body,$emails,$ucastnici)= souhrn('mail');
   // mail 
   $emaily= implode(', ',$emails);
-  $mail_subj= "Potvrzení přijetí přihlášky ($vars->klient) na akci $akce->nazev.";
-  $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci "
-  . "<b>$akce->nazev, $akce->misto</b> $akce->oddo pro účastníky $ucastnici."
-  . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
-  . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
-  . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-  . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
-  . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
   $ok_mail= simple_mail($akce->garant_mail, $emails, $mail_subj,$mail_body,$akce->garant_mail); 
   if ($ok_mail!='ok') { $errors[]= $ok_mail; goto db_end; }
   $DOM->form= ['show',
@@ -1085,12 +1063,13 @@ function form_strava_show() { trace(); // ----------------------------------- se
 function form_strava_default($id,$cmd) { trace(); // ---------------- default stravu osoby: test|set
 # cmd=set nastaví stravu na default
 # cmd=not vrátí 1 pokud strava není defaultní
+  global $akce;
   switch ($cmd) {
     case 'set':
       set('o','Xstrava_s',1,$id);
       set('o','Xstrava_o',1,$id);
       set('o','Xstrava_v',1,$id);
-      set('o','Xpolovicni', get_vek($id)<10 ? 2 : 1,$id); // 1 = celá, 2 = poloviční
+      set('o','Xporce', get_vek($id)<$akce->p_detska ? 2 : 1,$id); // 1 = celá, 2 = poloviční
       set('o','Xdieta',   1,$id); // 1 je normální strava
       break;
     case 'not':
@@ -1098,7 +1077,7 @@ function form_strava_default($id,$cmd) { trace(); // ---------------- default st
       if (get('o','Xstrava_s',$id)!=1) $not= 1;
       if (get('o','Xstrava_o',$id)!=1) $not= 1;
       if (get('o','Xstrava_v',$id)!=1) $not= 1;
-      if (get('o','Xpolovicni',$id)!= (get_vek($id)<10 ? 2 : 1)) $not= 1;
+      if (get('o','Xporce',$id)!= (get_vek($id)<$akce->p_detska ? 2 : 1)) $not= 1;
       if (get('o','Xdieta',   $id)!=1) $not= 1;
       return $not;
   }
@@ -1109,7 +1088,7 @@ function form_strava_osoba($id,$click) { trace(); // ------------------ specifik
 # pro click=1 vnutí html přes $DOM
 # na vstupu platí, že spolu=1
 # pokud je Xstrava=0 doplní default
-  global $DOM, $vars;
+  global $DOM, $akce, $vars;
   // případně doplň default
   if (!$vars->cleni[$id]->Xstrava) {
     form_strava_default($id,'set');
@@ -1119,14 +1098,14 @@ function form_strava_osoba($id,$click) { trace(); // ------------------ specifik
   // pro děti s poloviční porcí zobraz věk
   $vek= get_vek($id);
   $vek_roku= kolik_1_2_5($vek,"rok,roky,roků");
-  $polovicni= $vek<10 ? 1 : 0;
+  $polovicni= $vek<$akce->p_detska ? 1 : 0;
   $pro= "<i class='fa fa-cutlery'></i> pro " . get('o','jmeno',$id) . ($polovicni ? ", $vek_roku" : ''); 
   $pro= "<b>$pro:</b>";
   // html
   $html= $rozepsat 
-      ? "$pro " . elem_input('o',$id,['Xstrava_s','Xstrava_o','Xstrava_v','Xpolovicni','Xdieta'])
+      ? "$pro " . elem_input('o',$id,['Xstrava_s','Xstrava_o','Xstrava_v','Xporce','Xdieta'])
       : "$pro <button onclick=\"php2('form_strava_osoba,=$id,=1');\" >"
-        . "upravit objednávku </button>";
+        . "upřesnit objednávku </button>";
   $strava_id= "c_{$id}_strava";
   if ($click) {
     $DOM->$strava_id= ['show',$html];
@@ -1389,7 +1368,7 @@ function vyber($dotaz,$odpovedi,$back=0) { // -------------- výběr z více mo�
   if ($back) {
     $DOM->alertbox_back= ['show',"<button onclick=\"jQuery('#alertbox').hide()\">&times;</button>"];
   }
-  $DOM->alertbox_text= $dotaz;
+  $DOM->alertbox_text= ['empty',$dotaz];
   $DOM->alertbox_butts= '';
   $off= "jQuery('#alertbox').hide();jQuery('#popup_mask').hide()";
   foreach ($odpovedi as $odpoved) {
@@ -2704,6 +2683,80 @@ function append_log($msg) { // -------------------------------------------------
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
 # ============================================================================= vytváření PDF obrazu
+function souhrn($ucel) {
+# ucel = kontrola | dopis
+  global $akce, $vars, $options;
+  // akce
+  $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo ";
+  // účastníci
+  $ucastnici= ''; $del= ''; 
+  $objednavka= "<ul style='text-align:left'>";
+  $emails= [$vars->email]; 
+  foreach (array_keys($vars->cleni) as $id) {
+    $spolu= get('o','spolu',$id);
+    if (!$spolu) continue;
+    $jmeno= get('o','jmeno',$id);
+    $prijmeni= get('o','prijmeni',$id);
+    $ucastnici.= "$del$jmeno $prijmeni"; $del= ', ';
+    $vek= get_vek($id);
+    $vek= in_array(get_role($id),['d','p']) ? ' ('.kolik_1_2_5($vek,"rok,roky,roků").')' : '';
+    // jmenovitá objednávka
+    $objednavka.= "<li><b>$jmeno $prijmeni</b>$vek ";
+    // strava
+    $ns= get('o','Xstrava_s',$id); 
+    $no= get('o','Xstrava_o',$id); 
+    $nv= get('o','Xstrava_v',$id); 
+    // readakce stravy
+    if ($ns+$no+$nv==0) {
+      $objednavka.= "bez stravy";
+    }
+    elseif ($ns+$no+$nv==3) {
+      $objednavka.= "strava: ";
+    }
+    else {
+      $jidlo= $ns ? "snídaně" : '';
+      $jidlo.= ($jidlo && $no ? ', ' : '') . ($no ? "obědy" : '');
+      $jidlo.= ($jidlo ? ', ' : '') . ($nv ? "večeře" : '');
+      $objednavka.= "jen $jidlo:";
+    }
+    if ($ns+$no+$nv > 0) {
+      // dieta
+      $it= get('o','Xdieta',$id); 
+      if ($it<=1) {
+        $objednavka.= " normální";
+      }
+      else {
+        $objednavka.= ' dieta '.$options['Xdieta'][$it];
+      }
+      // porce
+      $ip= get('o','Xporce',$id); 
+      $objednavka.= ', porce '.$options['Xporce'][$ip];
+    }
+    $objednavka.= '</li>';
+    // shromáždění mailů
+    if (!in_array(get_role($id),['a','b'])) continue;
+    $ems= preg_split('/[,;]/',get('o','email',$id));
+    foreach ($ems as $email) {
+      $email= trim($email);
+      if ($email && !in_array($email,$emails)) 
+        $emails[]= $email;
+    }
+  }
+  $objednavka.= '</ul>';
+  // redakce
+  $html= $ucel=='kontrola'
+    // text ke kontrole po vyplnění
+    ? "Přihlašujeme se $na a objednáváme pro $objednavka " 
+    // text zaslaný mailem po přihlášení
+    : "Dobrý den,<p>dostali jsme vaši přihlášku $na, ve které pro účastníky objednáváte $objednavka."
+      . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
+  . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
+  . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
+  . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
+  . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
+  // konec: text, maily, úščastníci
+  return [$html,$emails,$ucastnici];
+} // souhrn přihlášky pro kontrolu a vložení do mailu
 function gen_html($to_save=0) {
 # vygeneruje textový tvar přihlášky, pro to_save=1 uloží do pobyt to_save=2 uloží do prihlasky
   global $akce, $vars;
