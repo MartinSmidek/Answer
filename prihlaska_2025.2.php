@@ -63,6 +63,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_obcanky'     =>  0, // umožnit kontrolu a úpravu číslo obč. průkazu
     'p_kontakt'     =>  0, // umožnit kontrolu a úpravu telefonu a emailu
     'p_souhlas'     =>  0, // vyžadovat souhlas (GDPR) 
+  // -- pro MS Obnovy i LK
+    'p_strava'      =>  0, // umožnit zadat stravu
+    'p_detska'      => 10, // hranice poloviční stravy
   // -- jen pro obnovy MS
     'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
   // -- jen pro LK MS
@@ -269,9 +272,12 @@ function polozky() { // --------------------------------------------------------
       'osoby_nad1' => 
           typ_akce('MO') ? 'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.' : (
           typ_akce('J') ? 'Zkontrolujte a případně doplňte své údaje.' : ''),  
+      'deti' =>
+          "<p><b>Naše děti</b> (zapište prosím i ty, které necháváte doma)."
+          . '<br>Pečovatele pro dítě přidávejte pouze pokud nevyužijete služeb našeho kolektivu pečovatelů.</p>',
       'strava' =>
-          "<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do $akce->p_detska let poloviční porce);"
-          . '<br>nebo ji můžete jmenovitě upřesnit, případně vybrat dietu.',
+          '<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem do 10 let poloviční porce);'
+          . '<br>nebo ji můžete jmenovitě upravit, případně vybrat dietu.',
       'rozlouceni1' => 
           'Přejeme Vám hezký den.',
       'rozlouceni2' => 
@@ -360,7 +366,7 @@ function polozky() { // --------------------------------------------------------
       'telefon'   =>[15,'telefon','','abp'],
       'email'     =>[35,'* e-mailová adresa','mail','abp']],
     $akce->p_obcanky ? [
-      'obcanka'   =>[11,'číslo OP nebo pasu','','abp'],
+      'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
       ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
@@ -952,7 +958,7 @@ function form_manzele() { trace(); // ------------------------------------------
 function form_deti($detail) {trace(); // -------------------------------------------- zobrazení dětí
   # detail=1 ... tlačítko [zobraz děti]
   # detail=2 ... děti a tlačítko [nové dítě] a tlačítko [zobraz pečouny]
-  global $DOM, $vars;
+  global $TEXT, $DOM, $vars;
   $part= '';
   if ($detail==1) {
     $part.= "<br><button onclick=\"php2('form_deti,=2');\" >
@@ -985,9 +991,9 @@ function form_deti($detail) {trace(); // ---------------------------------------
         $display_minus= $spolu && $id_pecoun ? "style='display:block'" : "style='display:none'";
         $pecoun_button= 
             "<button id='b_{$id}_plus' $display_plus onclick=\"php2('hledej,=1,=$id');\">
-              <i class='fa fa-green fa-plus'></i> pečovatel pro toto dítě</button>
+              <i class='fa fa-green fa-plus'></i> osobní pečovatel pro toto dítě</button>
              <button id='b_{$id}_minus' $display_minus onclick=\"php2('form_pecoun_clear,=$id');\">
-              <i class='fa fa-red fa-minus'></i> pečovatel pro toto dítě</button>";
+              <i class='fa fa-red fa-minus'></i> osobní pečovatel pro toto dítě</button>";
       }
       // vlož dítě
       $clen_ID= "c_$id"; 
@@ -1019,8 +1025,9 @@ function form_deti($detail) {trace(); // ---------------------------------------
       }
     }
     if ($deti) {
-      $pozn= "<br>Pokud děti nemáte, nechte všechna pole prázdná a zrušte 'jede na akci'.";
-      $part.= "<p><i>Naše děti (zapište prosím i ty, které necháváte doma). $pozn</i></p>";
+//      $pozn= "<br>Pokud děti nemáte, nechte všechna pole prázdná a zrušte 'jede na akci'.";
+//      $part.= "<p><i>Naše děti (zapište prosím i ty, které necháváte doma). $pozn</i></p>";
+      $part.= $TEXT->deti;
     }
     $part.= $deti.$deti_nove;
     $part.= "<br><button onclick=\"php2('nove_dite');\" >
