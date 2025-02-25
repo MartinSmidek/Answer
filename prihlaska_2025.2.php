@@ -100,12 +100,6 @@ try {
     }
     // detekce varianty: normální nebo testovací 
     $ANSWER= $_SESSION[$_TEST?'dbt':'db2']['user_id']??0;
-    
-    
-        $ANSWER= 1;
-        
-        
-        
     // odvození požadavku na test a ostrý mail
     $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
     $MAIL= $_GET['mail']??1 ? 1 : ($ANSWER?0:1);
