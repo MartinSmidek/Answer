@@ -2964,7 +2964,8 @@ function ds2_fio($cmd) {
       }
       $do= $cmd->do=='*' ? date('Y-m-d') : $cmd->do;
       $format= 'csv';
-      $url= "https://www.fio.cz/ib_api/rest/periods/$token/$od/$do/transactions.$format";
+//      $url= "https://www.fio.cz/ib_api/rest/periods/$token/$od/$do/transactions.$format";
+      $url= "https://fioapi.fio.cz/ib_api/rest/periods/$token/$od/$do/transactions.$format";
       $fp= fopen($url,'r');
 //      $data= fgetcsv($f, 1000, ",");
       $decode= 0;
