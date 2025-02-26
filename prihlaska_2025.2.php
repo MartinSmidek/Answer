@@ -46,7 +46,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //$TEST_mail= 'jandevaty9@seznam.cz';           // jedno dítě
 //$TEST_mail= 'petr.jekyll@gmail.com';          // v létě nebyli neumí VPS
 //$TEST_mail= 'zencakova@seznam.cz';            // duplicita
-//$TEST_mail= 'balous.petr@gmail.com';          // bez evidované manželky
+//$TEST_mail= 'balous.petr@gmail.com';          // bez evidované manželky ale s rodinou
+//$TEST_mail= 'cahat@post.cz';                  // bez rodiny
 
 // </editor-fold>
 
@@ -348,6 +349,7 @@ function polozky() { // --------------------------------------------------------
       'ulice'     =>[15,'* ulice a č.or. NEBO č.p.',''],
       'psc'       =>[ 5,'* PSČ',''],
       'obec'      =>[20,'* obec/město',''],
+      'stat'      =>[ 0,'stát',''],
       'spz'       =>[12,'SPZ auta na akci','']],
     typ_akce('MO') ? [
       'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS
@@ -650,7 +652,7 @@ function kontrolovat() { trace();
   // ------------------------------ je aspoň jeden dospělý přihlášený?
   foreach (array_keys($vars->cleni) as $id) {
     if (in_array(get_role($id),['a','b']))
-      $spolu+= get('c','spolu',$id);
+      $spolu+= get('o','spolu',$id);
   }
   if (!$spolu) {
     hlaska('Přihlaste prosím na akci aspoň jednu dospělou osobu');
@@ -958,9 +960,10 @@ function form_manzele() { trace(); // ------------------------------------------
           . ( $id>0
               ? ''
                 . elem_input('o',$id,['spolu']) 
-                . elem_text('o',$id,['<div>','jmeno',' ','prijmeni']) 
+                . '<div><b> '.(get_role($id)=='a' ? "Manžel" : "Manželka").' </b>'
+                . elem_text('o',$id,['jmeno',' ','prijmeni']) 
                 . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
-                . elem_text('o',$id,[', ','narozeni', ', ','role','</div>'])
+                . elem_text('o',$id,[', ','narozeni','</div>'])
 //                  . elem_text('o',$id,[' ... TEST: ','vzdelani','|','cirkev'])
               : 
                 '<b> '.(get_role($id)=='a' ? "Manžel" : "Manželka").' </b>'
@@ -1084,14 +1087,30 @@ function form_strava_hide($init=0) { trace(); // ------------------------ tlač�
 }
 function form_strava_show() { trace(); // ----------------------------------- seznam strav pro pobyt 
   global $DOM, $TEXT, $vars;
+  // ujistíme se, že jsou zapsána jména a data narození
+  $chybi= [];
+  foreach (array_keys($vars->cleni) as $id) {
+    if (get('o','spolu',$id)) {
+      $miss= elems_missed('o',$id,['Xupozorneni']);
+      if (count($miss)) {
+        $chybi= array_merge($chybi,$miss); 
+      }
+    }
+  }
+  if (count($chybi)) {
+    foreach ($chybi as $name) { $DOM->$name= 'ko'; }
+    hlaska('Před zvolením stravy doplňte prosím osobní údaje');
+    goto end;
+  }
   $strava= "<div>$TEXT->strava</div>"; 
   foreach (array_keys($vars->cleni) as $id) {
-    if (get('c','spolu',$id)) {
+    if (get('o','spolu',$id)) {
       $strava.= form_strava_osoba($id,0);
     }
   }
   $vars->form->strava= 2; // seznam 
   $DOM->strava= ['empty',$strava];
+end:
 }
 function form_strava_default($id,$cmd) { trace(); // ---------------- default stravu osoby: test|set
 # cmd=set nastaví stravu na default
@@ -2230,46 +2249,67 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
   $vars->cleni[$ido]->role= $role;
   $vars->cleni[$ido]->spolu= $o->umrti ? 0 : ($spolu ? [0,1] : 0);
 }
-function db_nacti_cleny_rodiny($idr,$prvni_ido) { // ------------------------- db nacti_cleny_rodiny
-  global $vars;
+function db_nacti_cleny_rodiny($idr) { // ------------------------------------ db nacti_cleny_rodiny
+//  global $vars;
   $roles= []; // role členů rodiny
+  $ido_a= $ido_b= 0; // nositelé rolí
   $ro= pdo_query_2(
     "SELECT id_osoba,role
     FROM osoba AS o JOIN tvori USING (id_osoba)
     WHERE id_rodina=$idr AND o.deleted='' AND role IN ('a','b','d','p') 
-    ORDER BY IF(id_osoba=$prvni_ido,'0',narozeni)  ",1);
+    ORDER BY narozeni ",1);
   while ($ro && (list($ido,$role)= pdo_fetch_array($ro))) {
     $roles[]= $role;
+    if ($role=='a') $ido_a= $ido;
+    if ($role=='b') $ido_b= $ido;
     nacti_clena($ido,$role,in_array($role,['a','b'])?1:0);
   }
-  // pokud ten $prvni_ido nemá email je mu vnucen ten přihlašovací
-  if (isset($vars->cleni[$prvni_ido])) {
-    if (!get('o','email',$prvni_ido)) {
-      set('o','email',$vars->email,$prvni_ido);
-    }
-  }
-  return $roles;
+//  // pokud ten $prvni_ido nemá email je mu vnucen ten přihlašovací
+//  if (isset($vars->cleni[$prvni_ido])) {
+//    if (!get('o','email',$prvni_ido)) {
+//      set('o','email',$vars->email,$prvni_ido);
+//    }
+//  }
+  return [$roles,$ido_a,$ido_b];
 }
 function kompletuj_pobyt($idr,$ido,$idp=0) { // ------------------------------------ kompletuj pobyt
 # zajisti aby ve vars->rodina a cleni byla úplná rodina (byť s prázdnými položkami)
-  // a byl iniciován resp. načten pobyt 
+# a byl iniciován resp. načten pobyt 
+//  global $vars;
+  $copy_adr= function($o,$r) {
+    $copied= 0;
+    if ($o) {
+      list($ulice,$psc,$obec,$stat)= 
+          select_2("SELECT ulice,psc,obec,stat FROM osoba WHERE id_osoba=$o AND adresa=1");
+      if ($psc) {
+        $copied= 1;
+        set('r','ulice',$ulice,$r);
+        set('r','psc',$psc,$r);
+        set('r','obec',$obec,$r);
+        set('r','stat',$stat,$r);
+      }
+    }
+    return $copied;
+  };
   if ($idr) { // rodina existuje
     nacti_rodinu($idr);        
-    $roles= db_nacti_cleny_rodiny($idr,$ido);
+    list($roles,$ido_a,$ido_b)= db_nacti_cleny_rodiny($idr);
     // případně do rodiny doplníme druhého z manželů
     if (!in_array('a',$roles)) 
       vytvor_clena(-1,'a',1);
     if (!in_array('b',$roles)) 
       vytvor_clena(-2,'b',1);
-//    if (!in_array('d',$roles)) 
-//      vytvor_clena(-3,'d',0);
+    // zkontroluj rodinnou adresu, případně ji doplň
+    if (!get('r','psc',$idr)) {
+      if (!$copy_adr($ido_a,$idr))
+        $copy_adr($ido_b,$idr);
+    }
   }
   elseif ($ido) { // vytvoříme rodinu a načteme klienta a doplníme druhého z manželů a dítě
     $role= select_2('sex','osoba',"id_osoba=$ido");
     vytvor_rodinu();        
     nacti_clena($ido,$role,1);
     vytvor_clena(-1,$role=='b' ? 'a' : 'b',1);
-//    vytvor_clena(-2,'d',0);
   }
   else { // vytvoříme rodinu včetně dítěte
     vytvor_rodinu();        
