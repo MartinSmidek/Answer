@@ -23,6 +23,11 @@
   // živá větev v github
   $git_app_branch= 'test';   // místo defaultu 'master'
 
+  // informace pro debugger
+  $dbg_info= (object)array(
+    'src_path'  => array('db2','ezer3.2') // poloha a preference zdrojových modulů
+  );
+
   // databáze
   $deep_root= "../files/answer";
   require_once("$deep_root/dbt.dbs.php");

@@ -235,7 +235,7 @@ function initialize($id_akce) {
       'id_akce'=>$id_akce,
       'TEST'=>$TEST, 'MAIL'=>$MAIL, 
       'ANSWER'=>$ANSWER,  // při zahájení (nebo po ctrl-r) bylo přihlášeno do Answeru
-      'ido'=>0, 'idr'=>0, 'pin'=>'',  // ověřený klient
+      'ido'=>0, 'idr'=>0, 'pin'=>'', 'klient'=>'', // ověřený klient jeho id je v prihlaska.id_osoba
       'form'=>(object)[],
   //    'DOM'=>$DOM_default,
       'cleni'=>[],
@@ -470,7 +470,7 @@ function poslat_pin() { trace();
   }
 } // poslat pin
 // ----------------------------------------------------------------------------------- kontrola pinu
-function kontrola_pinu($pin) { trace();
+function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
 # pokud je nesprávný pin ???
 # pokud je správný pin zjisti jestli je email známý a jednoznačný
 # pokud je známý a jednoznačný vyplň user a připrav formulář přihlášení osob
@@ -481,16 +481,17 @@ function kontrola_pinu($pin) { trace();
     $DOM->usermail_pod= zvyraznit("<p>Do mailu jsme poslali odlišný PIN, podívejte se prosím pozorně</p>");
   }
   else { // pin je ok - založíme záznam v tabulce prihlaska
-    // zjistíme, zda to může být rozpracovaná přihláška
-    $open= log_find_saved($vars->email); // uložená přihláška a nejsou přihlášení
-    if ($open) { // -------- nalezena rozepsaná přihláška
-      // doplní vars: continue, ido, idr
-      $DOM->user= ["show","<i class='fa fa-user'></i> <br>$vars->email"];
-      vyber("Chcete pokračovat ve vyplňování přihlášky uložené $open?",
-          ["ANO:klient:=$vars->ido/$vars->idr,=0","NE:klient:=$vars->ido/$vars->idr,=1"]);
-      goto end;
-    } // nalezena rozepsaná přihláška
-    
+    if (!$ignorovat_rozepsanou) {
+      // zjistíme, zda to může být rozpracovaná přihláška
+      $open= log_find_saved($vars->email); // uložená přihláška a nejsou přihlášení
+      if ($open) { // -------- nalezena rozepsaná přihláška
+        // doplní vars: continue, ido, idr
+        $DOM->user= ["show","<i class='fa fa-user'></i> <br>$vars->email"];
+        vyber("Chcete pokračovat ve vyplňování přihlášky uložené $open?",
+            ["ANO:klient:=$vars->ido/$vars->idr,=0","NE:kontrola_pinu:=$pin,=1"]);
+        goto end;
+      } // nalezena rozepsaná přihláška
+    }
     // jinak zjistíme, zda jej máme v databázi
     $regexp= "REGEXP '(^|[;,\\\\s]+)$vars->email($|[;,\\\\s]+)'";
     list($pocet,$idors)= select_2(
@@ -559,15 +560,13 @@ function kontrola_pinu($pin) { trace();
 end:  
 } // overit pin
 // -------------------------------------------------------------------------------------- registrace
-function registrace($sex) { trace();
+function registrace($gender) { trace();
 # $ano=1/2 pokračujeme s registrací jako muž nebo žena
 # $ano=0 pokračujeme s žádostí o jiný mail
   global $DOM, $vars;
   $DOM->usermail= 'hide';
-  kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
-  set('o','email',$vars->email,-$sex);
   append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
-  return klient("0/0");
+  return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
 } // registrace
 // ------------------------------------------------------------------------------------------ klient
 function klient($idor,$nova_prihlaska=1) { trace();
@@ -575,8 +574,9 @@ function klient($idor,$nova_prihlaska=1) { trace();
   global $DOM, $AKCE, $TEXT, $vars, $akce;
   $idp= 0;
   list($ido,$idr)= explode('/',$idor);
-  if ($ido) { // známý klient - je přihlášen na akci?
-    list($jmena)= select_2("SELECT CONCAT(jmeno,' ',prijmeni) FROM osoba WHERE id_osoba=$ido");
+  if ($ido>0) { // známý klient - je přihlášen na akci?
+    list($jmena,$vars->sex)= 
+        select_2("SELECT CONCAT(jmeno,' ',prijmeni),sex FROM osoba WHERE id_osoba=$ido");
     // osobu známe  - zjistíme zda již není přihlášen
     $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
     list($idp,$kdy,$kdo)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
@@ -606,10 +606,10 @@ function klient($idor,$nova_prihlaska=1) { trace();
   $DOM->usermail= 'hide';
   $vars->ido= $ido;
   $vars->idr= $idr;
-  if ($ido) { // přihláška známého
+  log_write('id_osoba',$vars->ido);
+  log_write('id_rodina',$vars->idr);
+  if ($ido>0) { // přihláška známého
     $vars->klient= $jmena;
-    log_write('id_osoba',$vars->ido);
-    log_write('id_rodina',$vars->idr);
     append_log("KLIENT ... $jmena ");
     // podle ido,idr nastav počáteční informace o klientovi
     kompletuj_pobyt($vars->idr,$vars->ido);
@@ -617,7 +617,8 @@ function klient($idor,$nova_prihlaska=1) { trace();
   }
   else { // přihláška nového
     $vars->klient= '';
-    kompletuj_pobyt($vars->idr,$vars->ido);
+    kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
+    set('o','email',$vars->email,$vars->ido); 
     return formular(1);
   } // přihláška nového
 end:
@@ -717,7 +718,6 @@ function kontrolovat() { trace();
   // -------------------------------- pokud vše prošlo zobraz shrnutí a vrať se nebo přihlas
   list($text)= souhrn('kontrola');
   vyber($text,["Odeslat tyto údaje:prihlasit","Upravit údaje před odesláním:"]);
-  $DOM->nic= 'nic';
 end:  
   debug($chybi,"chybějící ID");
 }
@@ -962,10 +962,12 @@ function form_manzele() { trace(); // ------------------------------------------
                 . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
                 . elem_text('o',$id,[', ','narozeni', ', ','role','</div>'])
 //                  . elem_text('o',$id,[' ... TEST: ','vzdelani','|','cirkev'])
-              : elem_input('o',$id,['spolu']) . elem_input('o',$id,['jmeno','prijmeni'])
+              : 
+                '<b> '.(get_role($id)=='a' ? "Manžel" : "Manželka").' </b>'
+                . elem_input('o',$id,['spolu']) . elem_input('o',$id,['jmeno','prijmeni'])
                 . ($role=='b' ? elem_input('o',$id,['rodne']) : '')
                 . elem_input('o',$id,[',','narozeni'])
-                . elem_text('o',$id,['role']) . '<br>'
+                . '<br>'
             )
           . ($akce->p_kontakt ? elem_input('o',$id,['email','telefon']) : '')
           . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
@@ -1295,7 +1297,7 @@ function form_MO($new) { trace();
     : '';
 
   $exit= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
-           odeslat přihlášku</button>
+           zkontrolovat a odeslat přihlášku</button>
          <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
   $kontrola_txt= '';
 //  $exit= '';

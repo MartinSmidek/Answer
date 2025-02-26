@@ -162,6 +162,7 @@ function error(msg,DOM) {
   let tr= DOM.trace || '',
       index= tr.indexOf("<hr>");
   tr= index !== -1 ? tr.substring(0, index) : tr.substring(0, 24);
+  if (!tr) tr= 'empty trace';
   let x= {cmd:'DOM_error',args:[msg,tr]};
   ask(x);
 }
