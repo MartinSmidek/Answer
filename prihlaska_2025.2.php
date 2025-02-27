@@ -2464,7 +2464,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     // zapiš, že patří do rodiny -- ale nikoliv pečouny
     // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
     if ($role!='p'
-        && !select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido a id_rodina=$idr")) {
+        && !select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr")) {
       $chng= []; 
       if (!count($errors)) {
         $chng= array(
