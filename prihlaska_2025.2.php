@@ -2833,7 +2833,7 @@ function souhrn($ucel) {
     ? "Přihlašujeme se $na a objednáváme pro $objednavka " 
     // text zaslaný mailem po přihlášení
     : "Dobrý den,<p>dostali jsme vaši přihlášku $na, ve které pro účastníky objednáváte $objednavka"
-      . "<br>Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
+      . "<br>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď. "
   . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
   . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
   . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
