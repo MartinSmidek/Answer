@@ -369,7 +369,6 @@ function polozky() { // --------------------------------------------------------
       'narozeni'  =>[10,'* datum narození','date','abdp'],
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
-      'vztah'     =>[ 9,'manžel/maželka','select','ab'],
       'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d'],
       'telefon'   =>[15,'telefon','','abp'],
       'email'     =>[35,'* e-mailová adresa','mail','abp']],
@@ -612,7 +611,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
   log_write('id_rodina',$vars->idr);
   if ($ido>0) { // přihláška známého
     $vars->klient= $jmena;
-    append_log("KLIENT ... $jmena ");
+    append_log("KLIENT ... $jmena id_osoba=$ido, id_rodina=$idr");
     // podle ido,idr nastav počáteční informace o klientovi
     kompletuj_pobyt($vars->idr,$vars->ido);
     return formular($nova_prihlaska);
@@ -2099,6 +2098,7 @@ function vytvor_rodinu() { // --------------------------------------------------
   foreach ($r_fld as $f=>list(,$title,$typ)) {
     $rodina->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
+  return $idr;
 }
 function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vytvor clena s daným ID
   // inicializace dat pro dospělou osobu, přidáme roli a že je na akci
@@ -2272,7 +2272,7 @@ function db_nacti_cleny_rodiny($idr) { // ------------------------------------ d
 //  }
   return [$roles,$ido_a,$ido_b];
 }
-function kompletuj_pobyt($idr,$ido,$idp=0) { // ------------------------------------ kompletuj pobyt
+function kompletuj_pobyt($idr,$ido) { // ------------------- kompletuj rodinu a vytvoř prázdný pobyt
 # zajisti aby ve vars->rodina a cleni byla úplná rodina (byť s prázdnými položkami)
 # a byl iniciován resp. načten pobyt 
 //  global $vars;
@@ -2286,7 +2286,7 @@ function kompletuj_pobyt($idr,$ido,$idp=0) { // --------------------------------
         set('r','ulice',$ulice,$r);
         set('r','psc',$psc,$r);
         set('r','obec',$obec,$r);
-        set('r','stat',$stat,$r);
+        set('r','stat',$stat ? ['',$stat] : '',$r); // pokud je stát vnuť jeho zapsání
       }
     }
     return $copied;
@@ -2304,26 +2304,22 @@ function kompletuj_pobyt($idr,$ido,$idp=0) { // --------------------------------
       if (!$copy_adr($ido_a,$idr))
         $copy_adr($ido_b,$idr);
     }
-  }
+  } // rodina existuje - jen klient
   elseif ($ido) { // vytvoříme rodinu a načteme klienta a doplníme druhého z manželů a dítě
-    $role= select_2('sex','osoba',"id_osoba=$ido");
-    vytvor_rodinu();        
+    $sex= select_2('sex','osoba',"id_osoba=$ido");
+    $role= $sex==2 ? 'b' : 'a';
+    $idr= vytvor_rodinu();        
     nacti_clena($ido,$role,1);
+    $copy_adr($ido,$idr);
     vytvor_clena(-1,$role=='b' ? 'a' : 'b',1);
-  }
-  else { // vytvoříme rodinu včetně dítěte
+  } // rodina neexistuje - jen klient
+  else { // nový klient - vytvoříme rodinu 
     vytvor_rodinu();        
     vytvor_clena(-1,'a',1);
     vytvor_clena(-2,'b',1);
-//    vytvor_clena(-3,'d',0);
-  }
-  // vytvoř nebo načti pobyt
-  if ($idp) {
-    nacti_pobyt($idp);
-  } // načti pobyt - pokud je povolena oprava uloženého
-  else {
-    vytvor_pobyt();
-  } // vytvoř pobyt
+  } // nový klient
+  // vytvoř pobyt
+  vytvor_pobyt();
 end:
 }
 # ================================================================================ zápis do databáze
@@ -2332,8 +2328,8 @@ function db_open_pobyt() { // --------------------------------------------------
   global $errors, $akce, $vars; 
   $ida= $akce->id_akce;
   $chng= array(
-    (object)['fld'=>'id_akce',     'op'=>'i','val'=>$ida],
-    (object)['fld'=>'web_zmena',   'op'=>'i','val'=>date('Y-m-d')]
+    (object)['fld'=>'id_akce',     'op'=>'i','val'=>$ida]
+//    (object)['fld'=>'web_zmena',   'op'=>'i','val'=>date('Y-m-d')]
   );
   $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
   if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
@@ -2381,14 +2377,10 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       $vars->cleni[$ido]= $vars->cleni[$id];
       $vars->cleni[$ido]->jmeno= $jmeno;
       $vars->cleni[$ido]->prijmeni= $prijmeni;
-      $vars->cleni[$ido]->narozeni= $narozeni;
+      $vars->cleni[$ido]->narozeni= sql_date1($narozeni);
       unset($vars->cleni[$id]);
       // případně vyměníme $id za $ido v _o_dite a o_pecoun
       $rewrite($id,$ido);
-      // pokud je to potřeba, rozšíříme povolení
-      if (!((0+$access) & (0+$akce->org))) {
-        $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|$akce->org);
-      }
     }
   } // asi nový člen ale zkusíme ho najít v databázi 
   else { // nenašli
@@ -2401,12 +2393,12 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     $kontakt= 0;
     $chng= array(
       (object)['fld'=>'sex',      'op'=>'i','val'=>$sex],
-      (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org],
-      (object)['fld'=>'web_zmena','op'=>'i','val'=>date('Y-m-d')]
+      (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org]
+//      (object)['fld'=>'web_zmena','op'=>'i','val'=>date('Y-m-d')]
     );
     foreach ((array)$clen as $f=>$vals) {
       if (!isset($o_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
-      if (in_array($f,['spolu','role','vztah','o_dite','o_pecoun'])) continue; // nepatří do tabulky
+      if (in_array($f,['spolu','role','o_dite','o_pecoun'])) continue; // nepatří do tabulky
       if (is_array($vals) && (!isset($vals[1]) || (isset($vals[1]) && $vals[1]!=$vals[0]))) {
         $v= $vals[1]??$vals[0];
         if (in_array($f,['telefon','email','nomail'])) {
@@ -2425,25 +2417,18 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     // případně vyměníme $id za $ido v _o_dite a o_pecoun
     $rewrite($id,$ido);
     
-//    log_write('id_osoba',$ido); // ???
-    // zapiš, že patří do rodiny
-    $chng= []; 
-    if (!count($errors)) {
-      $chng= array(
-        (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
-        (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
-        (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
-      );
-      $idt= _ezer_qry("INSERT",'tvori',0,$chng);
-      if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
-    }
   } // nenašli => zapíšeme novou osobu a připojíme ji do rodiny
   else { // našli => opravíme změněné hodnoty položek existující osoby
     $chng= [];
     $kontakt= 0;
+    $access= intval(select_2("SELECT access FROM osoba WHERE id_osoba=$ido"));
+    // pokud je to potřeba, rozšíříme povolení
+    if (!($access & intval($akce->org))) {
+      $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|intval($akce->org));
+    }
     foreach ((array)$clen as $f=>$vals) {
       if (!isset($o_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
-      if (in_array($f,['spolu','role','vztah','o_dite','o_pecoun'])) continue; // nepatří do tabulky
+      if (in_array($f,['spolu','role','o_dite','o_pecoun'])) continue; // nepatří do tabulky
       if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
         if (in_array($f,['telefon','email','nomail']) && ($clen->kontakt[0]??0)==0) {
           $kontakt= 1; // přepnout z rodinného na osobní kontakt 
@@ -2474,6 +2459,23 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     );
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
+
+    // zapiš, že patří do rodiny -- ale nikoliv pečouny
+    // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
+    if ($role!='p'
+        && !select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido a id_rodina=$idr")) {
+      $chng= []; 
+      if (!count($errors)) {
+        $chng= array(
+          (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
+          (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
+          (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
+        );
+        $idt= _ezer_qry("INSERT",'tvori',0,$chng);
+        if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
+      }
+    }
+    
   } // zapojíme do pobytu
 end:
   // konec
@@ -2487,8 +2489,8 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
     // musíme vytvořit rodinu 
     $chng= array(
 //      (object)['fld'=>'nazev',    'op'=>'i','val'=>$nazev],
-      (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org],
-      (object)['fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d')]
+      (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org]
+//      (object)['fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d')]
     );
     foreach ((array)$rodina as $f=>$vals) {
       if (!isset($r_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
@@ -3492,3 +3494,22 @@ function map_cis_2($druh,$val='zkratka',$order='poradi') { // ------------------
   }
   return $cis;
 }
+
+//function getFilenameWithoutExtension($trace) {
+//    if (isset($trace[0]['file'])) {
+//        $filePath = $trace[0]['file'];
+//        $filenameWithPath = pathinfo($filePath, PATHINFO_FILENAME);
+//        return $filenameWithPath;
+//    }
+//    return null;
+//}
+//
+//// Příklad použití
+//try {
+//    // Kód, který může vyvolat výjimku
+//    throw new Exception("Chyba!");
+//} catch (Exception $e) {
+//    $trace = $e->getTrace();
+//    $filenameWithoutExtension = getFilenameWithoutExtension($trace);
+//    echo "Jméno souboru bez cesty a přípony: $filenameWithoutExtension\n";
+//}
