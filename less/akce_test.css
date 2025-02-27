@@ -91,6 +91,7 @@ html body div.wrapper main div.box {
   background-color: #FDEFF1;
 }
 html body div.wrapper main div.box div.clen,
+html body div.wrapper main div.box div.solo,
 html body div.wrapper main div.box div.rodina {
   display: table;
   padding: 5px;
@@ -98,10 +99,17 @@ html body div.wrapper main div.box div.rodina {
   background: #f7c2c9;
 }
 html body div.wrapper main div.box div.clen .modal,
+html body div.wrapper main div.box div.solo .modal,
 html body div.wrapper main div.box div.rodina .modal {
   z-index: 2001;
   position: relative;
   display: inline;
+}
+html body div.wrapper main div.box div.clen div.strava_rozpis,
+html body div.wrapper main div.box div.solo div.strava_rozpis,
+html body div.wrapper main div.box div.rodina div.strava_rozpis {
+  /*border-top: 1px solid black;*/
+  padding-top: 5px;
 }
 html body div.wrapper main div.box.modal-box {
   padding: 0px;
@@ -112,15 +120,11 @@ html body div.wrapper main div.box.modal-box {
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
   margin-top: 10px;
-  /*div.clen { margin-left: 0px; }*/
+  /*            span, div { margin:0px 0px 0px 10px; }*/
 }
 html body div.wrapper main div.box div.clen button {
   float: right;
   margin: 0px 10px -6px 0px;
-}
-html body div.wrapper main div.box div.clen span,
-html body div.wrapper main div.box div.clen div {
-  margin: 0px 0px 0px 10px;
 }
 html body div.wrapper main div.box div.paru {
   margin: 10px 5px !important;
@@ -149,7 +153,7 @@ html body div.wrapper main div.box textarea {
   resize: none;
 }
 html body div.wrapper main div.box label.upper {
-  float: left;
+  display: inline-block;
   margin-left: 10px;
   font-size: 12px;
 }
@@ -188,6 +192,17 @@ html body div.wrapper main div.box label.check_souhlas input {
   display: block;
   margin: 5px 15px;
 }
+html body div.wrapper main div.box div.check_sleva {
+  display: inline-block;
+  padding: 20px 0 0 10px;
+}
+html body div.wrapper main div.box div.check_sleva input {
+  margin: 5px 10px;
+}
+html body div.wrapper main div.box div.check {
+  display: inline-block;
+  padding: 5px;
+}
 html body div.wrapper main div.box select {
   padding: 1px;
 }
@@ -197,7 +212,7 @@ html body div.wrapper main div.box p.souhlas {
   font-style: italic;
 }
 html body div.wrapper main div.box span {
-  display: block;
+  display: contents;
   margin: 20px 5px 0 5px;
   float: left;
 }

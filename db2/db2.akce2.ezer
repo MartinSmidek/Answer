@@ -458,6 +458,9 @@ table pobyt { key_id:'id_pobyt'
   number vratka2
   number vratka3
   number vratka4
+  // slevy
+  number sleva_zada
+  text sleva_duvod
   number sleva
   number vzorec //#
   number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem

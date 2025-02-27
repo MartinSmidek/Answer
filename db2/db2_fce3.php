@@ -1710,6 +1710,7 @@ function akce2_pobyt_default_vsem($id_akce) {  trace();
 # 130524 oživena položka SVP
 # 190501 pokud je $zapsat=1 budou dětem stanoveny kategorie podle věku
 # 210510 hnízda
+# 250224 nastavení spolu.pulstrava má přednost před kategorií
 function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $warn= '';
   $zmeny_kat= array(); // pro zapsat==1 bude obsahovat provedené změny kategorie u dětí
@@ -1723,7 +1724,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $luzka= $pristylky= $bez= $cela= $polo= 0;
   $msg= '';
   $qo= "SELECT o.prijmeni,o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
-         s.pecovane,s.s_role,s.dite_kat,id_spolu,
+         s.pecovane,s.s_role,s.dite_kat,id_spolu,s.pulstrava,
          (SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -3694,7 +3695,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4," /*datplatby,*/
           . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
           . "svp,zpusobplat,naklad_d,poplatek_d,platba_d,potvrzeno_d"
-          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
+          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,sleva_zada,sleva_duvod"
+          . ",vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni,web_souhlas
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
           . ",email,gmail"

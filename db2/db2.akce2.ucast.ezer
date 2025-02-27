@@ -801,7 +801,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     proc onchange() { reload(0) }}
   // seznam účastníků
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
-    optimize:°{ask:'ucast2_browse_ask'}, //css_rows:"dluh,1:yellow,2:blue"
+    optimize:{ask:'ucast2_browse_ask'}, //css_rows:"dluh,1:yellow,2:blue"
     // klíče
     show key_pobyt
     show _empty         // 1 pokud je rodina na pobytu prázdná
@@ -868,7 +868,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show cstrava_pol, show cstrava_pol_bm, show cstrava_pol_bl,
     show svp, show zpusobplat, show naklad_d, show poplatek_d,
     show platba_d, show potvrzeno_d, show zpusobplat_d, show datplatby_d, show ubytovani, 
-    show cd, show avizo, show sleva, show vzorec, show duvod_typ, show duvod_text,
+    show cd, show avizo, show sleva, show sleva_zada, show sleva_duvod,
+    show vzorec, show duvod_typ, show duvod_text,
     // klíč první a druhé osoby na akci
     show ido1, show ido2
     // změna
@@ -925,6 +926,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         js.set_css_changed(array(
             array(rod.get,'rodina',rod.key_rodina),
             array(pob.get,'pobyt',u.b.key_pobyt),
+            array(pla.get,'pobyt',u.b.key_pobyt),
           ),
           vsechny_zmeny ? 'zmeneny2' : 'zmeneny',
           zmeny.chngs);
@@ -2253,6 +2255,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     func onclick() { var ret: object
       ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
+      if (ret.warn) warning(ret.warn);
       copy_by_name(ret,form);
       vzorec.change(); luzka.change(); pristylky.change(); pocetdnu.change(); svp.change();
       strava_cel.change(); strava_pol.change(); kocarek.change();
@@ -2300,6 +2303,9 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     options:ms_cena_vzorec.zkratka }
   label [110,77,,] { tag:'cenik', title:"sleva:" }
   field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  // žádost o slevu z online přihlášky
+  check sleva_zada [212,74,87,] { title:"žádá o slevu", data:pobyt.sleva_zada, help:"většinou z online přihlášky" }
+  edit sleva_duvod [308,44,303,39] { title:'Γzdůvodnění žádosti o slevu', data:pobyt.sleva_duvod}
   // zdůvodnění ceny podle vzorce nebo textem
   func rozpis_ceny() {
     if (duvod_typ) { // vlastní text

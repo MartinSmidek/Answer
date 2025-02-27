@@ -49,12 +49,12 @@
       ))
     );
 
-  // cesta k utilitám MySQL/MariaDB
-  $ezer_mysql_path= array(
-      "C:/Apache/bin/mysql/mysql5.7.21/bin",  // *.bean
-      "/volume1/@appstore/MariaDB/usr/bin",   // Synology DOMA
-      "/volume1/@appstore/MariaDB/usr/bin"   // Synology YMCA
-    )[$ezer_server];
+//  // cesta k utilitám MySQL/MariaDB
+//  $ezer_mysql_path= array(
+//      "C:/Apache/bin/mysql/mysql5.7.21/bin",  // *.bean
+//      "/volume1/@appstore/MariaDB/usr/bin",   // Synology DOMA
+//      "/volume1/@appstore/MariaDB/usr/bin"   // Synology YMCA
+//    )[$ezer_server];
 
   // definice zápisů do _track
   $tracking= '_track';

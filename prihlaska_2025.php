@@ -6,4 +6,8 @@
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
+//$_GET['test']= 2;
+//$_GET['akce']= 3094; // Letní kurz 2025
+//$_GET['akce']= 3085; // Jarní obnova 2025
+//$_GET['akce']= 2973; // Víkend pro chlapy 2025
 require_once("prihlaska_2025.2.php");

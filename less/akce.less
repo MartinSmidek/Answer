@@ -63,11 +63,15 @@ html {
         div.box {
           display:block; margin: 20px; padding: 20px;
           background-color: @form_b;
-          div.clen, div.rodina {
+          div.clen, div.solo, div.rodina {
             display: table; padding: 5px; margin: 5px;
             background: darken(@form_b,10%);
             .modal { // samostatně editovaná skupina 
               z-index:2001; position:relative; display:inline;
+            }
+            div.strava_rozpis {
+              /*border-top: 1px solid black;*/
+              padding-top: 5px;
             }
           }
           &.modal-box {
@@ -78,8 +82,7 @@ html {
           div.clen {
             margin-left: 50px; margin-top: 10px;
             button { float: right; margin: 0px 10px -6px 0px; }
-            span, div { margin:0px 0px 0px 10px; }
-            /*div.clen { margin-left: 0px; }*/
+/*            span, div { margin:0px 0px 0px 10px; }*/
           }
           div.paru {
             margin: 10px 5px !important; 
@@ -102,7 +105,7 @@ html {
             resize: none;
           }
           label.upper {
-            float:left; margin-left: 10px; font-size: 12px;
+            display: inline-block; margin-left: 10px; font-size: 12px;
             input, select, textarea {
               display:block; margin: 0 5px 5px -5px;
             }
@@ -122,12 +125,19 @@ html {
             float:left; font-size: 12px;
             input { display:block; margin: 5px 15px; }
           }
+          div.check_sleva {
+            display: inline-block; padding: 20px 0 0 10px; 
+            input { margin: 5px 10px; }
+          }
+          div.check {
+            display: inline-block; padding: 5px;
+          }
           select { padding: 1px; }
           p.souhlas {
             font-size: 12px; clear:both; font-style: italic;
           }
           span {
-            display: block; margin: 20px 5px 0 5px; float: left;
+            display: contents; margin: 20px 5px 0 5px; float: left;
           }
           .missing {
             outline: 2px solid red;
