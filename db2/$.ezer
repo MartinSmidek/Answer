@@ -2,6 +2,8 @@
 # (c) 2008-2024 Martin Šmídek <martin@smidek.eu>
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
+  // přepne na kartu Účastníci, bude volána pomocí js.call_root_func z library modulů
+  func show_pobyt(_idp,_ida) { akce2.ucast.ucast_pobyt_akce_platba(_idp,_ida) }
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
@@ -30,11 +32,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     panel track { type:'popup'
       proc back_show(kde,klic) {}
     }
+    panel lst { type:'right' }
+    panel ucast { type:'plain'
+      func ucast_pobyt_akce_platba(_idp,_ida) {}
+    }
   }
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;ben'
+    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;aa'
       par:{
         infos: [
           {title:'[fa-object-group] Schema databáze',

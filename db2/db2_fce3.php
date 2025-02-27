@@ -1823,7 +1823,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
     }
     $ret->zmeny_kat= $zmeny;    
   }
-                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+//                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_expr

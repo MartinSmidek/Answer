@@ -10,9 +10,10 @@
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
 // debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 $ORG= 1;  // verze pro YMCA Setkání
-$VERZE= '2025'; // verze přihlášek: rok.release
-$SUBVERZE= '2'; // verze přihlášek: rok.release
-$MYSELF= "prihlaska_$VERZE.$SUBVERZE";
+$VERZE= '2025'; // verze přihlášek: rok
+$MINOR= '2'; // verze přihlášek: release
+$PATCH= '1'; // verze přihlášek: oprava 
+$MYSELF= "prihlaska_$VERZE.$MINOR"; // $PATCH se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
 // session
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
@@ -1632,7 +1633,7 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 // =============================================================================== zobrazení stránky
 function page() {
-  global $MYSELF, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
+  global $MYSELF, $PATCH, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
@@ -1651,7 +1652,7 @@ function page() {
     <link rel="shortcut icon" href="/db2/img/$icon" />
     <link rel="stylesheet" href="/less/akce$_TEST.css?verze=3" type="text/css" media="screen" charset='utf-8'>
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-    <script src="$MYSELF.js" type="text/javascript" charset="utf-8"></script>
+    <script src="$MYSELF.js?patch=$PATCH" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <script>
@@ -2585,14 +2586,14 @@ function db_close_pobyt($fld_plus) { // ----------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open($email) { // ------------------------------------------------------------ log open
   // vytvoří přihlášku a vloží informaci do logu a do _track
-  global $TEST, $AKCE, $VERZE, $SUBVERZE, $akce, $vars;
+  global $TEST, $AKCE, $VERZE, $MINOR, $akce, $vars;
   if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $email= pdo_real_escape_string($email);
     $ida= $akce->id_akce;
     $abbr= $version= $platform= null;
     ezer_browser($abbr,$version,$platform);
-    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE.$SUBVERZE',open=NOW(),IP='$ip',"
+    $res= pdo_query_2("INSERT INTO prihlaska SET verze='$VERZE.$MINOR',open=NOW(),IP='$ip',"
         . "browser='$platform $abbr $version',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= $id= $TEST<2 ? pdo_insert_id() : 1;
@@ -2744,12 +2745,12 @@ function log_close() { // ------------------------------------------------------
   log_write('close','NOW()');
 }
 function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE, $VERZE, $SUBVERZE, $TEST;
+  global $AKCE, $VERZE, $MINOR, $TEST;
   $file= "prihlaska.log.php";
   $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
-  $x= $TEST==2 ? "TEST=2" : "$VERZE.$SUBVERZE";
+  $x= $TEST==2 ? "TEST=2" : "$VERZE.$MINOR";
   $ida= strlen($akce)==6 ? substr($akce,2) : '????';
   $msg= "$x $ida ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
@@ -2819,6 +2820,13 @@ function souhrn($ucel) {
     }
   }
   $objednavka.= '</ul>';
+  // doplnění poznámky a případné žádosti o slevu
+  $pozn= get('p','pracovni');
+  $me= $ucel=='kontrola'? 'me' : 'te';
+  $objednavka.= $pozn ? "<p>Organizátorům vzkazuje$me: $pozn</p>" : '';
+  if (get('p','sleva_zada')) {
+    $objednavka.= "<p>Žádá$me o slevu, protože: ".get('p','sleva_duvod').'</p>';
+  }
   // redakce
   $html= $ucel=='kontrola'
     // text ke kontrole po vyplnění

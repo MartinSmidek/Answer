@@ -18,7 +18,7 @@
 
   // inicializace objektu Ezer
   $EZER= (object)array(
-      'version'=>"ezer{$_SESSION[$ezer_root]['ezer']}",
+      'version'=>'ezer3.2', // "ezer{$_SESSION[$ezer_root]['ezer']}",
       'options'=>(object)array(
           'mail' => "martin@smidek.eu",
           'phone' => "603&nbsp;150&nbsp;565",
@@ -28,7 +28,7 @@
       
   // informace pro debugger
   $dbg_info= (object)array(
-    'src_path'  => array('ms50','db2','ezer3.1') // poloha a preference zdrojových modulů
+    'src_path'  => array('ms50','db2','ezer3.2') // poloha a preference zdrojových modulů
   );
 
   // databáze

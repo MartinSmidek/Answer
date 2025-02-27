@@ -1,5 +1,5 @@
 # Systém Ans(w)er pro MS50+
-# (c) 2023 Martin Šmídek <martin@smidek.eu>
+# (c) 2024 Martin Šmídek <martin@smidek.eu>
 
 menu ms50 { type:'main', title:'ms50', active:*, _sys:'*'
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
