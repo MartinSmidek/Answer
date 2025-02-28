@@ -3263,11 +3263,17 @@ function prihl_add() { trace();
 # --------------------------------------------------------------------------------------- prihl show
 # vrátí tabulku osobních otázek páru
 function prihl_show($idp,$idw) { trace();
-  $verze= select('verze','prihlaska',"id_prihlaska=$idw");
+  $verze= select1("IFNULL(verze,'')",'prihlaska',"id_prihlaska=$idw");
   switch ($verze) {
-//    case '2025.1': $html= prihl_show_2025($idp,$idw,1); break;
-    case '2025.2': $html= prihl_show_2025($idp,$idw,2); break;
-    default: $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw); break;
+    case '2025.2': 
+      $html= prihl_show_2025($idp,$idw,2); 
+      break;
+    case '': 
+      $html= 'pobyt nevznikl online přihláškou';
+      break;
+    default: 
+      $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw); 
+      break;
   }
   return $html;
 }
