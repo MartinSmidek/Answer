@@ -1718,7 +1718,7 @@ panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
 panel PRIHLASKY [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     style:"height:calc(100% - 130px)"
   func prehled(hotove) { var y:object
-    clear(); panel.title= "Přehled nedokončených přihlášek";
+    clear(); panel.title= `Přehled ${hotove?'':'ne'}dokončených přihlášek`;
     h.txt= php.prihl_open(the_duakce,hotove);
     panel.popup(210,60);
   }

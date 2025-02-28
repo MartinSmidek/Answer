@@ -3264,64 +3264,114 @@ function prihl_add() { trace();
 # vrátí tabulku osobních otázek páru
 function prihl_show($idp,$idw) { trace();
   $verze= select('verze','prihlaska',"id_prihlaska=$idw");
-  $html= $verze=='2025.1' 
-      ? sys_db_rec_show('prihlaska','id_prihlaska',$idw)
-      : prihl_show0($idp,$idw);
+  switch ($verze) {
+//    case '2025.1': $html= prihl_show_2025($idp,$idw,1); break;
+    case '2025.2': $html= prihl_show_2025($idp,$idw,2); break;
+    default: $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw); break;
+  }
   return $html;
 }
-function prihl_show0($idp,$idpr) { trace();
+function prihl_show_2025($idp,$idpr,$minor) { trace();
+# minor je subverze uvedená 
   $html= 'pobyt nevznikl online přihláškou';
-  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
+//  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
+  list($idr,$json,$ida)= select('id_rodina,vars_json,id_akce','prihlaska',"id_prihlaska=$idpr");
   if (!$json || !$idr) goto end;
   $x= json_decode($json);
   debug($x);
-  $m= $z= (object)array();
-  foreach ($x->cleni as $ido=>$clen) {
-    $role= select('role','tvori',"id_rodina=$idr AND id_osoba=$ido");
-    if ($role=='a') { $m= $clen; $idm= $ido; }
-    if ($role=='b') { $z= $clen; $idz= $ido; }
-  }
-  if ($idpr) {
-    $vars_json= select('vars_json','prihlaska',"id_prihlaska=$idpr");
-    $vars= json_decode($vars_json);
-    if ($vars===null) {
-      $json_error= json_last_error_msg();
-      $m_telefon= $z_telefon= $m_email= $z_email= "";
+  // údaje z verze minor=2
+  $full= tisk2_ukaz_prihlasku($idpr,$ida,$idp,'','','úplná data');
+  $html= "<div style='text-align:right;width:100%'>$full</div>"; 
+  $html.= "<div style='font-size:12px'>";
+  // strava podle přihlášky
+  if ($x->form->strava??0 > 0) {
+    $html.= "<b>Strava</b><ul>";
+    foreach ($x->cleni as $ido=>$clen) {
+      if (!$clen->spolu) continue;
+      $jmeno= select('jmeno','osoba',"id_osoba=$ido");
+      $s= $clen->Xstrava_s??1;
+      $o= $clen->Xstrava_o??1;
+      $v= $clen->Xstrava_v??1;
+      $html.= "<li>$jmeno: ";
+      if ($s+$o+$v > 0) {
+        $html.= "s=$s, o=$o, v= $v";
+        $html.= ", porce=".($clen->Xporce??1 == 1 ? 'celá' : 'půl');
+        $html.= ", dieta=".($clen->Xdieta??1 == 1 ? 'ne' : 'ano');
+      }
+      else {
+        $html.= "bez stravy";
+      }
+      $html.= "</li>";
     }
-    else {
-      $json_error= '';
-      $get= function ($fld,$ido) use ($vars) {
-        $pair= $vars->cleni->$ido;
-        if (isset($pair->$fld)) {
-//          $v= trim(is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld);
-          $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? '') : '';
-        }
-        else $v= false;
-        return $v;
-      };
-      $m_telefon= $get('telefon',$idm); $z_telefon= $get('telefon',$idz);
-      $m_email= $get('email',$idm); $z_email= $get('email',$idz);
+    $html.= "</ul>";
+  }
+  // žádost o slevu
+  $pobyt= $x->pobyt->$idp??0;
+  if ($pobyt) {
+    if ($pobyt->sleva_zada??0) {
+      $html.= "<p><b>Žádá o slevu: </b>".($pobyt->sleva_duvod??'?').'</p>';
+    }
+    if ($pobyt->pracovni??0) {
+      $html.= "<p><b>Vzkaz: </b>".($pobyt->pracovni??'?').'</p>';
+    }
+    if ($pobyt->Xvps??0) {
+      $html.= "<p><b>Služba VPS: </b>".($pobyt->Xvps==1 ? 'ano' : 'odpočinek').'</p>';
     }
   }
-  $udaje= [
-//    ['- kontakt', $m_kontakt, $z_kontakt],
-    ['* email',   $m_email, $z_email],
-    ['* telefon', $m_telefon, $z_telefon],
-    ['Povaha',    $m->Xpovaha, $z->Xpovaha],
-    ['Manželství',$m->Xmanzelstvi, $z->Xmanzelstvi],
-    ['Očekávám',  $m->Xocekavani, $z->Xocekavani],
-    ['Rozveden',  $m->Xrozveden, $z->Xrozveden],
-  ];
-  $html= "<table class='stat' style='font-size:12px;height:100%'>
-    <tr><th></th><th width='50%'>Muž</th><th width='50%'>Žena</th></tr>";
-  if ($json_error)
-    $html.= "<tr><th style='color:red'>JSON</th><td colspan=2 align='center'>$json_error</td></tr>";
-  foreach ($udaje as $u) {
-    if ($u[1]||$u[2])
-      $html.= "<tr><th>$u[0]</th><td>$u[1]</td><td>$u[2]</td></tr>";
+  // dodatky pro vyššší verze než minor=2
+  if ($minor > 2) {
   }
-  $html.= "</table>";
-  
+  $html.= "</div>";
+  // citlivé údaje pro tvorbu skupinek
+  if ($x->form->typ??'' == 'M') {
+    $html.= "<b>Pro tvorbu skupinek</b>";
+    $m= $z= (object)array();
+    foreach ($x->cleni as $ido=>$clen) {
+      $role= select('role','tvori',"id_rodina=$idr AND id_osoba=$ido");
+      if ($role=='a') { $m= $clen; $idm= $ido; }
+      if ($role=='b') { $z= $clen; $idz= $ido; }
+    }
+    if ($idpr) {
+      $vars_json= select('vars_json','prihlaska',"id_prihlaska=$idpr");
+      $vars= json_decode($vars_json);
+      if ($vars===null) {
+        $json_error= json_last_error_msg();
+        $m_telefon= $z_telefon= $m_email= $z_email= "";
+      }
+      else {
+        $json_error= '';
+        $get= function ($fld,$ido) use ($vars) {
+          $pair= $vars->cleni->$ido;
+          if (isset($pair->$fld)) {
+  //          $v= trim(is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld);
+            $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? '') : '';
+          }
+          else $v= false;
+          return $v;
+        };
+        $m_telefon= $get('telefon',$idm); $z_telefon= $get('telefon',$idz);
+        $m_email= $get('email',$idm); $z_email= $get('email',$idz);
+      }
+    }
+    $udaje= [
+  //    ['- kontakt', $m_kontakt, $z_kontakt],
+      ['* email',   $m_email, $z_email],
+      ['* telefon', $m_telefon, $z_telefon],
+      ['Povaha',    $m->Xpovaha, $z->Xpovaha],
+      ['Manželství',$m->Xmanzelstvi, $z->Xmanzelstvi],
+      ['Očekávám',  $m->Xocekavani, $z->Xocekavani],
+      ['Rozveden',  $m->Xrozveden, $z->Xrozveden],
+    ];
+    $html.= "<table class='stat' style='font-size:12px;height:50%'>
+      <tr><th></th><th width='50%'>Muž</th><th width='50%'>Žena</th></tr>";
+    if ($json_error)
+      $html.= "<tr><th style='color:red'>JSON</th><td colspan=2 align='center'>$json_error</td></tr>";
+    foreach ($udaje as $u) {
+      if ($u[1]||$u[2])
+        $html.= "<tr><th>$u[0]</th><td>$u[1]</td><td>$u[2]</td></tr>";
+    }
+    $html.= "</table>";
+  }
 end:
   return $html;  
 }

@@ -217,7 +217,7 @@ catch (Throwable $e) {
   else {
     $errpos= "$msg na řádku $tline";
   }
-  append_log("<b style='color:red'>CATCH</b> $errpos");
+  append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
@@ -497,8 +497,8 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
     // jinak zjistíme, zda jej máme v databázi
     $regexp= "REGEXP '(^|[;,\\\\s]+)$vars->email($|[;,\\\\s]+)'";
     list($pocet,$idors)= select_2(
-       "SELECT COUNT(id_osoba),GROUP_CONCAT(CONCAT(id_osoba,'/',IFNULL(id_rodina,0),'/',IFNULL(role,'-')))
-        FROM osoba LEFT JOIN tvori USING (id_osoba)
+       "SELECT COUNT(o.id_osoba),GROUP_CONCAT(CONCAT(o.id_osoba,'/',IFNULL(id_rodina,0),'/',IFNULL(role,'-')))
+        FROM osoba AS o LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND role IN ('a','b')
         WHERE deleted='' AND kontakt=1 AND email $regexp ORDER BY IFNULL(role,'')");
     display("osoba => $pocet: $idors");
     
@@ -1254,6 +1254,7 @@ function form_MO($new) { trace();
     // části a počáteční nastavení formuláře
     $vars->form= (object)[
         'kontrola'=>[], // seznam položek s chybou
+        'typ'=>$akce->p_typ, // M O R J
         'par'=>1,
         'deti'=>$akce->p_deti, // 0=nic, 1=tlačítko, 2=seznam
         'pecouni'=>$akce->p_pecouni, // 0=nejsou povolení
@@ -1344,6 +1345,7 @@ function form_J($new) { trace();
   if ($new) {
     // části a počáteční nastavení formuláře
     $vars->form= (object)[
+        'typ'=>$akce->p_typ, // M O R J
         'kontrola'=>[], // seznam položek s chybou
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
