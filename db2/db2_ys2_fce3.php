@@ -3284,7 +3284,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   $html= "<div style='text-align:right;width:100%'>$full</div>"; 
   $html.= "<div style='font-size:12px'>";
   // strava podle přihlášky
-  if ($x->form->strava??0 > 0) {
+  if (($x->form->strava??0) > 0) {
     $html.= "<b>Strava</b><ul>";
     foreach ($x->cleni as $ido=>$clen) {
       if (!$clen->spolu) continue;
@@ -3295,8 +3295,8 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
       $html.= "<li>$jmeno: ";
       if ($s+$o+$v > 0) {
         $html.= "s=$s, o=$o, v= $v";
-        $html.= ", porce=".($clen->Xporce??1 == 1 ? 'celá' : 'půl');
-        $html.= ", dieta=".($clen->Xdieta??1 == 1 ? 'ne' : 'ano');
+        $html.= ", porce=".(($clen->Xporce??1) == 1 ? 'celá' : 'půl');
+        $html.= ", dieta=".(($clen->Xdieta??1) == 1 ? 'ne' : 'ano');
       }
       else {
         $html.= "bez stravy";
@@ -3323,7 +3323,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   }
   $html.= "</div>";
   // citlivé údaje pro tvorbu skupinek
-  if ($x->form->typ??'' == 'M') {
+  if (($x->form->typ??'') == 'M') {
     $html.= "<b>Pro tvorbu skupinek</b>";
     $m= $z= (object)array();
     foreach ($x->cleni as $ido=>$clen) {

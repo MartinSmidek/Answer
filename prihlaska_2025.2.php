@@ -837,7 +837,7 @@ function prihlasit() { trace();
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
   db_close_pobyt($fld);
   // generování PDF s osobními a citlivými údaji pro Letní kurz
-  if ($akce->p_dokument??0 && $TEST<2) {
+  if (($akce->p_dokument??0) && $TEST<2) {
     $msg= gen_html(1);
     if ($TEST) display($msg);
   }
@@ -2465,20 +2465,21 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
 
     // zapiš, že patří do rodiny -- ale nikoliv pečouny
     // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
-    if ($role!='p'
-        && !select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr")) {
-      $chng= []; 
-      if (!count($errors)) {
-        $chng= array(
-          (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
-          (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
-          (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
-        );
-        $idt= _ezer_qry("INSERT",'tvori',0,$chng);
-        if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
+    if ($role!='p') {
+      $uz_je= select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
+      if ($uz_je==0) { 
+        $chng= []; 
+        if (!count($errors)) {
+          $chng= array(
+            (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
+            (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
+            (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
+          );
+          $idt= _ezer_qry("INSERT",'tvori',0,$chng);
+          if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
+        }
       }
     }
-    
   } // zapojíme do pobytu
 end:
   // konec
@@ -2766,10 +2767,9 @@ function souhrn($ucel) {
 # ucel = kontrola | dopis
   global $akce, $vars, $options;
   // akce
-  $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo ";
+  $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo";
   // účastníci
-  $ucastnici= ''; $del= ''; 
-  $objednavka= "<ul style='text-align:left'>";
+  $ucastnici= ''; $del= ''; $jidlo= $vzkazy= '';
   $emails= [$vars->email]; 
   foreach (array_keys($vars->cleni) as $id) {
     $spolu= get('o','spolu',$id);
@@ -2777,41 +2777,46 @@ function souhrn($ucel) {
     $jmeno= get('o','jmeno',$id);
     $prijmeni= get('o','prijmeni',$id);
     $ucastnici.= "$del$jmeno $prijmeni"; $del= ', ';
-    $vek= get_vek($id);
-    $vek= in_array(get_role($id),['d','p']) ? ' ('.kolik_1_2_5($vek,"rok,roky,roků").')' : '';
-    // jmenovitá objednávka
-    $objednavka.= "<li><b>$jmeno $prijmeni</b>$vek ";
-    // strava
-    $ns= get('o','Xstrava_s',$id); 
-    $no= get('o','Xstrava_o',$id); 
-    $nv= get('o','Xstrava_v',$id); 
-    // readakce stravy
-    if ($ns+$no+$nv==0) {
-      $objednavka.= "bez stravy";
-    }
-    elseif ($ns+$no+$nv==3) {
-      $objednavka.= "snídaně, obědy, večeře: ";
-    }
-    else {
-      $jidlo= $ns ? "snídaně" : '';
-      $jidlo.= ($jidlo && $no ? ', ' : '') . ($no ? "obědy" : '');
-      $jidlo.= ($jidlo ? ', ' : '') . ($nv ? "večeře" : '');
-      $objednavka.= "jen $jidlo:";
-    }
-    if ($ns+$no+$nv > 0) {
-      // dieta
-      $it= get('o','Xdieta',$id); 
-      if ($it<=1) {
-        $objednavka.= " normální";
+    
+    // přehled stravování
+    if ($akce->p_strava) { 
+      $vek= get_vek($id);
+      $vek= in_array(get_role($id),['d','p']) ? ' ('.kolik_1_2_5($vek,"rok,roky,roků").')' : '';
+      // jmenovitá objednávka
+      $jidlo.= "<li><b>$jmeno $prijmeni</b>$vek ";
+      // strava
+      $ns= get('o','Xstrava_s',$id); 
+      $no= get('o','Xstrava_o',$id); 
+      $nv= get('o','Xstrava_v',$id); 
+      // redakce stravy
+      if ($ns+$no+$nv==0) {
+        $jidlo.= "bez stravy";
+      }
+      elseif ($ns+$no+$nv==3) {
+        $jidlo.= "snídaně, obědy, večeře: ";
       }
       else {
-        $objednavka.= ' dieta '.$options['Xdieta'][$it];
+        $jidlo= $ns ? "snídaně" : '';
+        $jidlo.= ($jidlo && $no ? ', ' : '') . ($no ? "obědy" : '');
+        $jidlo.= ($jidlo ? ', ' : '') . ($nv ? "večeře" : '');
+        $jidlo.= "jen $jidlo:";
       }
-      // porce
-      $ip= get('o','Xporce',$id); 
-      $objednavka.= ', porce '.$options['Xporce'][$ip];
-    }
-    $objednavka.= '</li>';
+      if ($ns+$no+$nv > 0) {
+        // dieta
+        $it= get('o','Xdieta',$id); 
+        if ($it<=1) {
+          $jidlo.= " normální";
+        }
+        else {
+          $jidlo.= ' dieta '.$options['Xdieta'][$it];
+        }
+        // porce
+        $ip= get('o','Xporce',$id); 
+        $jidlo.= ', porce '.$options['Xporce'][$ip];
+      }
+      $jidlo.= '</li>';
+    } // strava
+
     // shromáždění mailů
     if (!in_array(get_role($id),['a','b'])) continue;
     $ems= preg_split('/[,;]/',get('o','email',$id));
@@ -2820,26 +2825,39 @@ function souhrn($ucel) {
       if ($email && !in_array($email,$emails)) 
         $emails[]= $email;
     }
+  } 
+  // varianty pro stravu / ne stravu
+  if ($jidlo) {
+    $jidlo= "<ul style='text-align:left'>$jidlo</ul>";
   }
-  $objednavka.= '</ul>';
   // doplnění poznámky a případné žádosti o slevu
   $pozn= get('p','pracovni');
   $me= $ucel=='kontrola'? 'me' : 'te';
-  $objednavka.= $pozn ? "<p>Organizátorům vzkazuje$me: $pozn</p>" : '';
+  $vzkazy.= $pozn ? "<p>Organizátorům vzkazuje$me: $pozn</p>" : '';
   if (get('p','sleva_zada')) {
-    $objednavka.= "<p>Žádá$me o slevu, protože: ".get('p','sleva_duvod').'</p>';
+    $vzkazy.= "<p>Žádá$me o slevu, protože: ".get('p','sleva_duvod').'</p>';
   }
   // redakce
   $html= $ucel=='kontrola'
     // text ke kontrole po vyplnění
-    ? "Přihlašujeme se $na a objednáváme pro $objednavka " 
+    ? "Přihlašujeme se $na"
+      . ( $jidlo 
+        ? " a objednáváme pro $jidlo " 
+        : " jako $ucastnici."
+        )
+      . $vzkazy
     // text zaslaný mailem po přihlášení
-    : "Dobrý den,<p>dostali jsme vaši přihlášku $na, ve které pro účastníky objednáváte $objednavka"
-      . "<br>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď. "
-  . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
-  . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-  . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
-  . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
+    : "Dobrý den,<p>dostali jsme vaši přihlášku $na,"
+      . ( $jidlo
+        ? " ve které pro účastníky objednáváte $jidlo"
+        : " na kterou se přihlašujete jako $ucastnici."
+        )
+      . $vzkazy
+      . "<p>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď.</p>"
+      . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
+      . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
+      . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
+      . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
   // konec: text, maily, úščastníci
   return [$html,$emails,$ucastnici];
 } // souhrn přihlášky pro kontrolu a vložení do mailu
