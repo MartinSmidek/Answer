@@ -1636,7 +1636,7 @@ form _pobyt [,,360,62] {
 panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', type:'popup', css:'dialog'
   func osobni(idpr) { var y:object
     clear(); 
-    panel.title= `osobní údaje k akci z přihlášky No.${idpr}`;
+    panel.title= `Údaje z přihlášky No.${idpr}`;
     h.txt= php.prihl_show(the_pobyt,idpr);
     panel.popup(0,0,0,1);
   }
