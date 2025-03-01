@@ -766,7 +766,7 @@ function prihlasit() { trace();
   foreach (array_keys($vars->cleni) as $id) {
     // přidání člena rodiny
     if (!isset($vars->klient)) { // pokud je to registarce chybí klient
-      if (get('o','email',$id)==$vars->email) 
+      if ($id==$vars->ido) 
         $vars->klient= get('o','jmeno',$id).' '.get('o','prijmeni',$id);
     }
     db_vytvor_nebo_oprav_clena($id);
@@ -1507,7 +1507,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
               ? select1_2("SELECT COUNT(*) FROM tvori "
                   . "WHERE id_rodina=$vars->idr AND id_osoba=$id AND role='d'")
               : 0;
-          if ($je_z_rodiny) { 
+          if (intval($je_z_rodiny)) { 
             $dotazy[]= "$jmeno $prijmeni:hledej:=4,=$id_dite,=$id,=$jmeno,=$prijmeni:"
                 . "<b class='fa-green'>$vek let, sourozenec</b>";
           }
@@ -1539,7 +1539,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       $vars->cleni[$ido]->o_dite= [0,$id_dite];
       if ($faze!=4) $vars->cleni[$ido]->role= [0,'p']; // u pečouna/člena rodiny neměň roli
       if ($faze==4 && !get('o','spolu',$ido)) { // u pečouna/člena rodiny zajisti přítomnost na kurzu
-        set('o','spolu',1,$ido);
+        set('o','spolu',[0,1],$ido);
         $dom_spolu= "o_{$ido}_spolu";
         $DOM->$dom_spolu= [1];
       }
@@ -1770,7 +1770,7 @@ function read_akce() { // ------------------------------------------------------
   $id_akce= $vars->id_akce; //$_GET['akce'];
   // parametry přihlášky a ověření možnosti přihlášení
   list($ok,$web_online)= select_2("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
-  if (!$ok || !$web_online) { 
+  if (!intval($ok) || !$web_online) { 
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
   $akce= json_decode($web_online,false); // JSON objects will be returned as objects
@@ -1789,11 +1789,10 @@ function read_akce() { // ------------------------------------------------------
   $akce->dnu= $dnu+1;
   $akce->strava_oddo= $strava_oddo;
   $MarketaZelinkova= 6849;
-  list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
-      select_2("COUNT(*),CONCAT(jmeno,' ',prijmeni),telefon,email",
+  list($akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
+      select_2("CONCAT(jmeno,' ',prijmeni),telefon,email",
           "osoba LEFT JOIN _cis ON druh='akce_garant' AND data='$garant'",
           "id_osoba=IFNULL(ikona,$MarketaZelinkova)");
-  // Přihlášku bohužel nelze použít - akce nemá definovaného garanta!
   list($akce->garant_mail)= preg_split("/[,;]/",str_replace(' ','',$akce->garant_mail));
   $akce->help_kontakt= "$akce->garant_jmeno <a href='mailto:$akce->garant_mail'>$akce->garant_mail</a>"; 
   $akce->form_pata= "Je možné, že se vám během vyplňování objeví nějaká chyba, 
@@ -2165,14 +2164,14 @@ function byli_na_aktualnim_LK($rodina) { // ----------------------------------- 
        FROM pobyt JOIN akce ON id_akce=id_duakce 
        WHERE akce.druh=1 AND akce.access=$ORG AND YEAR(akce.datum_od)=$rok_LK 
          AND pobyt.i0_rodina='$rodina'");
-  return $byli ? $jako : 0;
+  return intval($byli) ? $jako : 0;
 }
 function je_na_teto_akci($ido) { // ------------------------------------------------ je na této akci
 # zjistí, jestli daná osoba už je an této akci přihlášena
   global $akce;
   $je= select1_2("SELECT COUNT(*) FROM spolu JOIN pobyt USING (id_pobyt)
       WHERE id_osoba=$ido AND id_akce=$akce->id_akce");
-  return $je;
+  return intval($je);
 }
 function nacti_pobyt($idp) { trace();// -------------------------------------------------------- nacti pobyt
   global $vars, $p_fld;
@@ -2374,7 +2373,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     // abychom zamezili duplicitám podle jména a data narození zjistíme, jestli už není v evidenci 
     list($pocet,$idx,$access)= select_2('COUNT(*),id_osoba,access','osoba',
         "deleted='' AND jmeno='$jmeno' AND prijmeni='$prijmeni' AND narozeni='$narozeni' ");
-    if ($pocet==1) {
+    if (intval($pocet)==1) {
       // asi známe - zabráníme opravě jména a narození
       $ido= $idx;
       $vars->cleni[$ido]= $vars->cleni[$id];
@@ -2462,25 +2461,25 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     );
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
+  } // zapojíme do pobytu
 
-    // zapiš, že patří do rodiny -- ale nikoliv pečouny
-    // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
-    if ($role!='p') {
-      $uz_je= select_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
-      if ($uz_je==0) { 
-        $chng= []; 
-        if (!count($errors)) {
-          $chng= array(
-            (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
-            (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
-            (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
-          );
-          $idt= _ezer_qry("INSERT",'tvori',0,$chng);
-          if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
-        }
+  // zapiš, že patří do rodiny -- ale nikoliv pečouny
+  // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
+  if ($role!='p') {
+    $uz_je= select1_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
+    if (!intval($uz_je)) { 
+      $chng= []; 
+      if (!count($errors)) {
+        $chng= array(
+          (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
+          (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
+          (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
+        );
+        $idt= _ezer_qry("INSERT",'tvori',0,$chng);
+        if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
       }
     }
-  } // zapojíme do pobytu
+  } // zapojíme do rodiny
 end:
   // konec
 }
@@ -2769,10 +2768,11 @@ function souhrn($ucel) {
   // akce
   $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo";
   // účastníci
-  $ucastnici= ''; $del= ''; $jidlo= $vzkazy= '';
+  $ucastnici= ''; $del= ''; $jidlo= ''; $vzkazy= ''; $pecovani= ''; $pece= [];
   $emails= [$vars->email]; 
   foreach (array_keys($vars->cleni) as $id) {
     $spolu= get('o','spolu',$id);
+    $role= get_role($id);
     if (!$spolu) continue;
     $jmeno= get('o','jmeno',$id);
     $prijmeni= get('o','prijmeni',$id);
@@ -2796,10 +2796,10 @@ function souhrn($ucel) {
         $jidlo.= "snídaně, obědy, večeře: ";
       }
       else {
-        $jidlo= $ns ? "snídaně" : '';
-        $jidlo.= ($jidlo && $no ? ', ' : '') . ($no ? "obědy" : '');
-        $jidlo.= ($jidlo ? ', ' : '') . ($nv ? "večeře" : '');
-        $jidlo.= "jen $jidlo:";
+        $chod= $ns ? "snídaně" : '';
+        $chod.= ($chod && $no ? ', ' : '') . ($no ? "obědy" : '');
+        $chod.= ($chod && $nv ? ', ' : '') . ($nv ? "večeře" : '');
+        $jidlo.= "jen $chod:";
       }
       if ($ns+$no+$nv > 0) {
         // dieta
@@ -2817,8 +2817,19 @@ function souhrn($ucel) {
       $jidlo.= '</li>';
     } // strava
 
+    // shromáždění osobního pečování
+    if ($role=='d' && typ_akce('MO') && $akce->p_pecouni) {
+      $id_pecoun= get('o','o_pecoun',$id);
+      if ($id_pecoun) {
+        $pecoun= get('o','jmeno',$id_pecoun).' '.get('o','prijmeni',$id_pecoun);
+        if ($role=='d' && $id_pecoun) {
+          $pece[]= "$jmeno bude mít osobního pečovatele: <b>$pecoun</b>";
+        }
+      }
+    }
+
     // shromáždění mailů
-    if (!in_array(get_role($id),['a','b'])) continue;
+    if (!in_array($role,['a','b'])) continue;
     $ems= preg_split('/[,;]/',get('o','email',$id));
     foreach ($ems as $email) {
       $email= trim($email);
@@ -2826,6 +2837,10 @@ function souhrn($ucel) {
         $emails[]= $email;
     }
   } 
+  // osobní pečování
+  if (count($pece)) {
+    $pecovani= '<p>'.implode(',',$pece).'</p>';
+  }
   // varianty pro stravu / ne stravu
   if ($jidlo) {
     $jidlo= "<ul style='text-align:left'>$jidlo</ul>";
@@ -2845,6 +2860,7 @@ function souhrn($ucel) {
         ? " a objednáváme pro $jidlo " 
         : " jako $ucastnici."
         )
+      . $pecovani
       . $vzkazy
     // text zaslaný mailem po přihlášení
     : "Dobrý den,<p>dostali jsme vaši přihlášku $na,"
@@ -2852,6 +2868,7 @@ function souhrn($ucel) {
         ? " ve které pro účastníky objednáváte $jidlo"
         : " na kterou se přihlašujete jako $ucastnici."
         )
+      . $pecovani
       . $vzkazy
       . "<p>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď.</p>"
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
