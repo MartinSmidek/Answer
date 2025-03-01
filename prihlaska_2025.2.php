@@ -1116,7 +1116,7 @@ function form_strava_default($id,$cmd) { trace(); // ---------------- default st
 # cmd=set nastaví stravu na default
 # cmd=not vrátí 1 pokud strava není defaultní
   global $akce;
-  $ji= get_vek($id)>$akce->p_detska_od;
+  $ji= get_vek($id)>$akce->p_detska_od ? 1 : 0;
   switch ($cmd) {
     case 'set':
       set('o','Xstrava_s',$ji,$id);
@@ -1444,7 +1444,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
 #       6 ... zvolena známá osoba která není na kurzu --> (end)
 #       7 ... zvoleno vložení nové osoby --> (end)
 #       8 ... uvolnění dialogu (end)
-  global $DOM, $vars;
+  global $DOM, $vars, $akce;
   $DOM->modalbox= 'show'; $DOM->popup_mask= 'show'; 
   switch ($faze) {
     case 1: // ------------------------ primární dialog
@@ -1546,6 +1546,10 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       if ($faze==7) {
         $vars->cleni[$ido]->jmeno= ['',$jmeno];
         $vars->cleni[$ido]->prijmeni= ['',$prijmeni];
+      }
+      if ($akce->p_strava) {
+        $vars->cleni[$ido]->Xstrava= 0;
+        form_strava_hide(); 
       }
       log_write_changes(); 
       form_pecoun_show($id_dite,form_pecoun($ido));
@@ -2104,7 +2108,7 @@ function vytvor_rodinu() { // --------------------------------------------------
 }
 function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vytvor clena s daným ID
   // inicializace dat pro dospělou osobu, přidáme roli a že je na akci
-  global $vars,$o_fld;
+  global $akce,$vars,$o_fld;
   $vars->cleni[$ido]= (object)[];
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
 //    if ($typ=='x') 
@@ -2115,6 +2119,11 @@ function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vyt
   }
   $vars->cleni[$ido]->role= ['',$role];
   $vars->cleni[$ido]->spolu= [0,$spolu];
+  // pokud je strava tak ji inicializuj
+  if ($akce->p_strava) {
+    $vars->cleni[$ido]->Xstrava= 0;
+    form_strava_hide(); 
+  }
 }
 function vytvor_noveho_clena($role,$spolu) { // -------------------------------- vytvor nového clena
   global $vars;
@@ -2218,7 +2227,7 @@ function nacti_rodinu($idr) { // -----------------------------------------------
 }
 function nacti_clena($ido,$role,$spolu) { // ------------------------------------------- nacti clena
   // přečteme položky dané osoby, přidáme roli a že je na akci
-  global $vars, $o_fld, $sub_options;
+  global $akce, $vars, $o_fld, $sub_options;
   $clen= $vars->cleni[$ido]= (object)[];
   $o= select_object_2('*','osoba',"id_osoba=$ido");
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
@@ -2250,6 +2259,11 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
   }
   $vars->cleni[$ido]->role= $role;
   $vars->cleni[$ido]->spolu= $o->umrti ? 0 : ($spolu ? [0,1] : 0);
+  // pokud je strava tak ji inicializuj
+  if ($akce->p_strava) {
+    $vars->cleni[$ido]->Xstrava= 0;
+    form_strava_hide(); 
+  }
 }
 function db_nacti_cleny_rodiny($idr) { // ------------------------------------ db nacti_cleny_rodiny
 //  global $vars;
@@ -2785,9 +2799,9 @@ function souhrn($ucel) {
       // jmenovitá objednávka
       $jidlo.= "<li><b>$jmeno $prijmeni</b>$vek ";
       // strava
-      $ns= get('o','Xstrava_s',$id); 
-      $no= get('o','Xstrava_o',$id); 
-      $nv= get('o','Xstrava_v',$id); 
+      $ns= get('o','Xstrava_s',$id)?:0; 
+      $no= get('o','Xstrava_o',$id)?:0; 
+      $nv= get('o','Xstrava_v',$id)?:0; 
       // redakce stravy
       if ($ns+$no+$nv==0) {
         $jidlo.= "bez stravy";
@@ -3096,8 +3110,8 @@ function check_datum($d_val,&$neuplne) { // ------------------------------------
     $d= is_array($d_val) ? ($d_val[1] ?? $d_val[0]) : $d_val;
     $datum= str_replace(' ','',$d);
     $dmy= explode('.',$datum);
-    if (count($dmy)!=3) {
-      $neuplne[]= "napište datum ve tvaru den.měsíc.rok ";
+    if (!preg_match('/^\d+\.\d+\.\d+$/',$datum)) {
+      $neuplne[]= "napište datum ve tvaru den.měsíc.rok (měsíc zapište číslem)";
       $ok= 0;
     }
     else {
