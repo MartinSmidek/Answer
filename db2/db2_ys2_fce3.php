@@ -3311,6 +3311,18 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     }
     $html.= "</ul>";
   }
+  // osobní pečování podle přihlášky
+  if (($x->form->pecouni??0) > 0) {
+    $pece= '';
+    foreach ($x->cleni as $ido=>$clen) {
+      if (!$clen->spolu) continue;
+      if (!($clen->o_pecoun??0)) continue;
+      $dite= select1('jmeno','osoba',"id_osoba=$ido");
+      $pecoun= select1("CONCAT(jmeno,' ',prijmeni)",'osoba',"id_osoba=$clen->o_pecoun");
+      $pece.= "<li>o $dite pečuje $pecoun</li>";
+    }
+    $html.= $pece ? "<b>Osobní pečování</b><ul>$pece</ul>" : '';
+  }
   // žádost o slevu
   $pobyt= $x->pobyt->$idp??0;
   if ($pobyt) {

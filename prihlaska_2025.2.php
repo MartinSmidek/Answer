@@ -1116,7 +1116,7 @@ function form_strava_default($id,$cmd) { trace(); // ---------------- default st
 # cmd=set nastaví stravu na default
 # cmd=not vrátí 1 pokud strava není defaultní
   global $akce;
-  $ji= get_vek($id)>$akce->p_detska_od ? 1 : 0;
+  $ji= get_vek($id)>=$akce->p_detska_od ? 1 : 0;
   switch ($cmd) {
     case 'set':
       set('o','Xstrava_s',$ji,$id);
