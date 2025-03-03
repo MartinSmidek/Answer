@@ -3283,6 +3283,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
 //  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
   list($idr,$json,$ida)= select('id_rodina,vars_json,id_akce','prihlaska',"id_prihlaska=$idpr");
   if (!$json || !$idr) goto end;
+  $json= str_replace("\n", "\\n", $json);
   $x= json_decode($json);
   debug($x);
   // údaje z verze minor=2
