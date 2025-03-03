@@ -325,7 +325,7 @@ function polozky() { // --------------------------------------------------------
       'cirkev'    => map_cis_2('ms_akce_cirkev','ikona'),
       'vzdelani'  => map_cis_2('ms_akce_vzdelani','ikona'),
     ];
-  // definice obsahuje:  položka => [ délka , popis , formát, u osob možné role ]
+  // definice obsahuje:  položka => [ délka , popis , formát, u osob možné role, role u kterých je * nepovinná ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
   //        je to ale nutné pro každou položku naprogramovat 
@@ -364,7 +364,7 @@ function polozky() { // --------------------------------------------------------
   $o_fld= array_merge(
     [ // položky tabulky OSOBA
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
-      'jmeno'     =>[ 7,'* jméno','','abdp'],
+      'jmeno'     =>[ 8,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
       'rodne'     =>[10,'rozená','','ab'],
       'narozeni'  =>[10,'* datum narození','date','abdp'],
@@ -372,7 +372,7 @@ function polozky() { // --------------------------------------------------------
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d'],
       'telefon'   =>[15,'telefon','','abp'],
-      'email'     =>[35,'* e-mailová adresa','mail','abp']],
+      'email'     =>[35,'* e-mailová adresa','mail','abp','p']], // pro pecouny je mail nepovinný
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
       ] : [],
@@ -1777,7 +1777,7 @@ function read_akce() { // ------------------------------------------------------
   if (!intval($ok) || !$web_online) { 
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
-  $akce= json_decode($web_online,false); // JSON objects will be returned as objects
+  $akce= json_decode_2($web_online);
   $akce= (object)array_merge($akce_default,(array)$akce);
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
@@ -1970,8 +1970,12 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
   }
   if ($table=='o') {
     $clen= $vars->cleni[$id];
-    foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
-      if (substr($title,0,1)=='*' && strpos($omez,get_role($id))!==false) { // je to povinné?
+    $role= get_role($id);
+    foreach ($o_fld as $f=>$desc) {
+      list(,$title,$typ,$omez,$no_oblig)= array_pad($desc,5,'');
+      if (substr($title,0,1)=='*' 
+          && ($no_oblig ? strpos($no_oblig,$role)===false : 1)
+          && strpos($omez,$role)!==false) { // je to povinné?
         if (is_array($clen->$f)) {
           $v= $clen->$f[1] ?? $clen->$f[0];
           if ($v=='' || (in_array($typ,['check','select','sub_select']) && $v==0)) {
@@ -2002,7 +2006,7 @@ function elem_input($table,$id,$flds,$to_hide='') { // -------------------------
       continue;
     }
     $name= "{$table}_$prfx$fld";
-    list($len,$title,$typ)= $desc[$fld];
+    list($len,$title,$typ,,$no_oblig)= array_pad($desc[$fld],5,'');
     if ($typ=='x') continue;
     // rozpoznání hodnoty příp. změny položky
     $v_chng= false;
@@ -2025,7 +2029,11 @@ function elem_input($table,$id,$flds,$to_hide='') { // -------------------------
     $chng_css= in_array($name,$vars->form->kontrola) ? 'chng' : 'chng_ok';      
     // rozpoznání povinnosti položky
     if (substr($title,0,1)=='*') { //  && ($table!='o' || $pair->spolu)) {
-      $title=  "<b style='color:red'>*</b>".substr($title,1);
+      $role= get_role($id);
+      if ($no_oblig && strpos($no_oblig,$role)!==false) // není výjimečně nepovinné 
+        $title= substr($title,1);
+      else
+        $title=  "<b style='color:red'>*</b>".substr($title,1);
     }
     $oninput= "onchange=\"elem_changed(this);\"";
     $hide= $to_hide ? " style='display:none'" : '';
@@ -2711,7 +2719,7 @@ function log_load_changes() { // -----------------------------------------------
   $idw= $vars->continue;
   $vars_json= select_2('vars_json','prihlaska',"id_prihlaska=$idw");
   if (!$vars_json) goto end;
-  $chngs= json_decode($vars_json,false); // JSON objects will be returned as objects
+  $chngs= json_decode_2($vars_json);
   foreach ($chngs as $name=>$val0) {
     if ($name=='form') {
       $vars->form= $val0;
@@ -3050,8 +3058,18 @@ function do_session_restart() { // ---------------------------------------------
 function json_encode_2($s) { // ------------------------------------------------------ json encode_2
 # korektní json encode
   $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
-  $sbr= str_replace('\r\n','<br>',$s);
+  $sbr= nl2br_2($s);
   return $sbr;
+}
+function json_decode_2($s) {
+  $s= str_replace("\n", "\\n", $s);
+  $json= json_decode($s,false,512,JSON_INVALID_UTF8_IGNORE); // JSON objects will be returned as objects
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    $msg= 'json_decode in line '.(__LINE__ - 2). ':' . json_last_error_msg();
+    log_error($msg);
+    throw new Exception($msg);
+  }
+  return $json;
 }
 function nl2br_2($s) { // ---------------------------------------------------------------- nl 2 br_2
   $sbr= str_replace(["\r\n","\r","\n"], "<br>",$s);
