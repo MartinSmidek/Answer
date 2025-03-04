@@ -83,54 +83,54 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
-          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
-          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
-          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
-          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
-          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
-          func onclick (i:ezer) {
-            clear(); info.display(0,'t'); info.header(i);
-            info.fill('','... probíhá výpočet ...');
-            if (eq(i.par.cmd,'show','save'))
-              info.fill('',php.db2_info(i.par)) 
-            else {
-               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
-            }
-          }
-          item {title:'TEST url', skill:'m'
-            func onclick (i:ezer) {
-              clear(); info.display(1,'t'); info.header(i);
-            }
-          }
+//          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
+//          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
+//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
+//          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
+//          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
+//          func onclick (i:ezer) {
+//            clear(); info.display(0,'t'); info.header(i);
+//            info.fill('','... probíhá výpočet ...');
+//            if (eq(i.par.cmd,'show','save'))
+//              info.fill('',php.db2_info(i.par)) 
+//            else {
+//               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+//            }
+//          }
+//          item {title:'TEST url', skill:'m'
+//            func onclick (i:ezer) {
+//              clear(); info.display(1,'t'); info.header(i);
+//            }
+//          }
         }
-        menu { title:'Import a záloha databáze',type:'group',skill:'m'
-          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
-          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
-          proc onclick(i) {
-            clear; info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            info.append(ask('sys_backup_make',i.par)) 
-          }
-          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
-            proc onclick(i) { var heslo:text
-              clear; info.display(0,'t');
-              info.fill(conc(i.owner.title,' - ',i.title),' ');
-              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
-              confirm('Opravdu mám lokální databázi přepsat?'); 
-              info.append(ask('sys_backup_make',i.par))
-            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
-            }
-          }
-        }
-        menu { title:'Export a import polí',type:'group',skill:'m'
-          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
-          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
-          func onclick(i:ezer) { var own:ezer
-            own= i.owner(); info.display(0,'t');
-            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
-            info.append(php.mapa2_geo_export(i.par)) 
-          }
-        }
+//        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+//          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
+//          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
+//          proc onclick(i) {
+//            clear; info.display(0,'t');
+//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+//            info.append(ask('sys_backup_make',i.par)) 
+//          }
+//          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
+//            proc onclick(i) { var heslo:text
+//              clear; info.display(0,'t');
+//              info.fill(conc(i.owner.title,' - ',i.title),' ');
+//              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+//              confirm('Opravdu mám lokální databázi přepsat?'); 
+//              info.append(ask('sys_backup_make',i.par))
+//            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+//            }
+//          }
+//        }
+//        menu { title:'Export a import polí',type:'group',skill:'m'
+//          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
+//          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
+//          func onclick(i:ezer) { var own:ezer
+//            own= i.owner(); info.display(0,'t');
+//            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
+//            info.append(php.mapa2_geo_export(i.par)) 
+//          }
+//        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {

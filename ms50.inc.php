@@ -52,7 +52,9 @@
   $app_php= array(
     "db2/db2_ys2_fce3.php",
     "db2/db2_tcpdf.php",
-    "db2/db2_fce3.php"
+    "db2/db2_fce3.php",
+    "db2/db2.system.php",
+    "ms50/ms50_fce.php"
   );
   
   $ezer= array(
