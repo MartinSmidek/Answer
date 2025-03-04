@@ -674,6 +674,15 @@ function kontrolovat() { trace();
         $chybi_upozorneni.= "<br>Potvrďte prosím, že berete na vědomí upozornění pro "
             . (get('o','role',$id)=='b' ? 'ženu' : 'muže');
       }
+      // případné doplnění klienta
+      if (!($vars->klient??'') && $id==$vars->ido) {
+        $jmeno= get('o','jmeno',$id);
+        $prijmeni= get('o','prijmeni',$id);
+        if ($jmeno && $prijmeni) {
+          $vars->klient= "$jmeno $prijmeni";
+          $DOM->user= ["show","<i class='fa fa-user'></i> $vars->klient<br>$vars->email"];
+        }
+      }
     }
   }
   // rodinné údaje
