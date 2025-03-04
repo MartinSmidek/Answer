@@ -2664,7 +2664,11 @@ function log_write_changes() { // ----------------------------------------------
             if (is_array($val2) && isset($val2[1])) {
               if (!isset($changes->$name)) $changes->$name= [];
               if (!isset($changes->$name[$id])) $changes->$name[$id]= (object)[];
-              ($changes->$name[$id])->$fld= $val2[1];
+              // u hodnot typu sub_select je třeba předat i původní hodnotu z db u indexu -1
+              if (isset($val2[-1])) 
+                ($changes->$name[$id])->$fld= [$val2[-1],$val2[1]];
+              else // jinak je hodnota skalární
+                ($changes->$name[$id])->$fld= $val2[1];
             }
           }
         }
@@ -2742,9 +2746,16 @@ function log_load_changes() { // -----------------------------------------------
             }
           }
           if (!isset($vars->$name[$id]->$fld)) $vars->$name[$id]->$fld= '';
-          $vars->$name[$id]->$fld= 
-            [is_array($vars->$name[$id]->$fld) ? $vars->$name[$id]->$fld[0] : $vars->$name[$id]->$fld
-            ,$val2];
+          if (is_array($val2)) { 
+            // pouze v případě sub_select je předáno [původní hodnota,změněná hodnota]
+            $vars->$name[$id]->$fld= [-1=>$val2[0],$vars->$name[$id]->$fld[0],$val2[1]];
+          }
+          else {
+            // jindy je vždy předána skalární hodnota
+            $vars->$name[$id]->$fld= 
+              [is_array($vars->$name[$id]->$fld) ? $vars->$name[$id]->$fld[0] : $vars->$name[$id]->$fld
+              ,$val2];
+          }
         }
       }
     }
