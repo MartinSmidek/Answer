@@ -41,43 +41,63 @@ menu ms50 { type:'main', title:'ms50', active:*, _sys:'*'
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'8',cmd:'show'}}
-          item {title:'Ulož ezer_answer.db_osoba', par:{org:'8',cmd:'save'}, skill:'m'}
+//          item {title:'Ulož ezer_answer.db_osoba', par:{org:'8',cmd:'save'}, skill:'m'}
           proc onclick (i) {
             clear; info.display(0,'t');
             info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
             info.fill('',ask('db2_info',i.par)) 
           }
         }
-        menu { title:'Import a záloha databáze',type:'group',skill:'m'
-          item { title:"[fa-question] přehled záloh", par:°{typ:'listing',direct:'1',glob:'ezer_ms*'}}
-          item { title:"[fa-download] stáhnutí záloh",par:°{typ:'download',direct:'1',glob:'ezer_ms*'}}
-          item { title:"[fa-upload] zálohuj teď",     par:°{typ:'special',direct:'0'}}
-          proc onclick(i) {
-            info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            { eq(i.par.typ,'listing','download') | confirm('opravdu uložit databázi do složky special?') };
-            info.append(ask('sys_backup_make',i.par)) 
-          }
-          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1',glob:'ezer_ms*'}
-            proc onclick(i) { var heslo:text
-              info.display(0,'t');
-              info.fill(conc(i.owner.title,' - ',i.title),' ');
-              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
-              confirm('Opravdu mám lokální databázi přepsat?'); 
-              info.append(ask('sys_backup_make',i.par))
-            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+//        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+//          item { title:"[fa-question] přehled záloh", par:°{typ:'listing',direct:'1',glob:'ezer_ms*'}}
+//          item { title:"[fa-download] stáhnutí záloh",par:°{typ:'download',direct:'1',glob:'ezer_ms*'}}
+//          item { title:"[fa-upload] zálohuj teď",     par:°{typ:'special',direct:'0'}}
+//          proc onclick(i) {
+//            info.display(0,'t');
+//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+//            { eq(i.par.typ,'listing','download') | confirm('opravdu uložit databázi do složky special?') };
+//            info.append(ask('sys_backup_make',i.par)) 
+//          }
+//          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1',glob:'ezer_ms*'}
+//            proc onclick(i) { var heslo:text
+//              info.display(0,'t');
+//              info.fill(conc(i.owner.title,' - ',i.title),' ');
+//              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+//              confirm('Opravdu mám lokální databázi přepsat?'); 
+//              info.append(ask('sys_backup_make',i.par))
+//            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+//            }
+//          }
+//        }
+        menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
+          item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
+          item {title:'rodina-tvori-osoba - oprava'       ,par:{opravit:1,vazba:'tvori'}}
+          item {title:'pobyt-spolu-osoba/rodina - test'   ,par:{opravit:0,vazba:'spolu'}}
+          item {title:'pobyt-spolu-osoba/rodina - oprava' ,par:{opravit:1,vazba:'spolu'}}
+          item {title:'akce-pobyt-osoba - test'           ,par:{opravit:0,vazba:'spolu'}, format:'d'}
+          item {title:'akce-pobyt-osoba - oprava'         ,par:{opravit:1,vazba:'spolu'}, format:'d'}
+          func onclick (i:ezer) { var x: text
+            panel.display(2,'i'); info.display(0,'t'); info.header(i);
+            if (!i.par.opravit 
+              || i.par.opravit && confirm('opravdu si troufneš pustit automatickou opravu?')) {
+              info.fill('',' ... probíhá kontrola dat ...');
+              switch (i.par.vazba) {
+                case 'spolu': x= php.db2_kontrola_spolu(i.par); break; 
+                case 'tvori': x= php.db2_kontrola_tvori(i.par); break; 
+              }
+              info.fill('',x);
             }
           }
         }
-        menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
-          item {title:'kontroly databáze'               ,par:°{opravit:0}}
-          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
-          proc onclick (i) {
-            clear; info.display(0,'t');
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
-            info.fill('',ask('db2_kontrola_dat',i.par));
-          }
-        }
+//        menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+//          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+//          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
+//          proc onclick (i) {
+//            clear; info.display(0,'t');
+//            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
+//            info.fill('',ask('db2_kontrola_dat',i.par));
+//          }
+//        }
 //        menu {title:'IMPORT',type:'group', _sys:'*', skill:'m'
 //          item {title:'import tables'                 ,par:{cmd:'insert'}}
 //          item {title:'truncate tables'               ,par:{cmd:'truncate'}}
@@ -175,11 +195,20 @@ form right [,,*,*] {
   label info [0,0,*,*] { title:'' }
   label head [0,0,*,50]  { title:'' }
   label note [0,50,*,*] { title:'' }
+  proc Set(x) {
+    head.set(''); note.set(''); info.set(x)
+  }
   proc fill(x,y) {
+    info.set('');
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    info= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
 }
 
 table akce { key_id:'id_duakce'
