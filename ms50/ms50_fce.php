@@ -25,6 +25,7 @@ function import($tab) {
   foreach ($data as $vs) {
     $vals= ''; $del= '';
     if ($tab=='rodina' && $vs[8]=='VPS') $vs[8]= 1;
+    if ($tab=='osoba') $vs[14]= sql_date1($vs[14],1);
     foreach ($vs as $v) {
       $vals.= "$del'$v'";
       $del= ',';
@@ -59,12 +60,22 @@ function import($tab) {
 }
 # ----------------------------------------------------------------------------------------- complete
 function complete() {
-# doplní spolu podle pobyt.i0_rodina
+  // doplnění spolu podle pobyt.i0_rodina
   $rr= pdo_qry("SELECT id_pobyt,i0_rodina FROM pobyt WHERE i0_rodina!=0");
   while ($rr && (list($idp,$idr)= pdo_fetch_array($rr)) ) {
     $tt= pdo_qry("SELECT id_osoba FROM tvori WHERE id_rodina=$idr");
     while ($tt && (list($ido)= pdo_fetch_array($tt)) ) {
-      query("INSERT INTO spolu (id_pobyt,id_osoba) VALUE ($idp,$ido)");
+      $je= select("COUNT(*)",'spolu',"id_osoba=$ido AND id_pobyt=$idp");
+      if (!$je)
+        query("INSERT INTO spolu (id_pobyt,id_osoba) VALUE ($idp,$ido)");
     }
   }
+  // doplnění VPS do pobytů kurzu roku 2024 podle rodina.r_umi
+  $rr= pdo_qry("SELECT id_pobyt "
+      . "FROM pobyt JOIN rodina ON id_rodina=i0_rodina JOIN akce ON id_akce=id_duakce "
+      . "WHERE r_umi='1' AND YEAR(datum_od)=2024 ");
+  while ($rr && (list($idp)= pdo_fetch_array($rr)) ) {
+    query("UPDATE pobyt SET funkce=1 WHERE id_pobyt=$idp");
+  }
+  
 }
