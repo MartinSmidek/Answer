@@ -649,6 +649,11 @@ function kontrolovat() { trace();
   $chybi= [];
   $chybi_osobni= $chybi_rodinne= $chybi_strava= 0;
   $spolu= 0;
+//  # ------------------------------ testování PDF
+//  global $TEST;
+//  if (($akce->p_dokument??0) && $TEST>1) {
+//    display(gen_html(0));
+//  }
   // ------------------------------ je aspoň jeden dospělý přihlášený?
   foreach (array_keys($vars->cleni) as $id) {
     if (in_array(get_role($id),['a','b']))
@@ -2967,6 +2972,24 @@ function gen_html($to_save=0) {
         break;
     }
   }
+  // zjištění předcozích účastí na MS 
+  $ucasti= ''; $del= ''; $n= 0; $n_max= 3;
+  $idr= $vars->idr??0;
+  if ($idr) {
+    $ru= pdo_query("SELECT YEAR(datum_od) AS _rok 
+      FROM akce JOIN pobyt ON id_akce=id_duakce JOIN _cis ON _cis.druh='ms_akce_funkce' AND data=funkce
+      WHERE i0_rodina=$idr AND akce.druh=1 AND ikona=0 AND zruseno=0 AND datum_od<NOW() AND akce.access=1
+      ORDER BY _rok DESC");
+    while ($ru && (list($rok)= pdo_fetch_array($ru))) {
+      $n++;
+      if ($n<=$n_max) { 
+        $ucasti.= "$del$rok"; $del= ', ';
+      }
+    }
+  }
+  $ucasti= 'Účast na LK YS: ' . ($n>$n_max ? "$ucasti, ... celkem $n x" : ($n ? "$ucasti" : 'ne'))
+      . ' + mimo YS: ' . ($r->r_ms ? "$r->r_ms" : 'ne');
+  display($ucasti);
   // redakce osobních údajů
   $m_roz= $m->rodne??0 ? "roz. $m->rodne" : '';
   $z_roz= $z->rodne??0 ? "roz. $z->rodne" : '';
@@ -3032,7 +3055,7 @@ function gen_html($to_save=0) {
     <td>Datum svatby: $r->datsvatba</td>
     <td>Předchozí manželství? <br>muž: "
       .($m->Xrozveden?:'-').", žena: ".($z->Xrozveden?:'-')."</td>
-    <td>Účast na LK MS mimo YS, YF: $r->r_ms</td></tr>";
+    <td>$ucasti</td></tr>";
   $html.= "</table>";
   if ($akce->p_upozorneni)
     $html.= "<p><i>Souhlas obou manželů s podmínkami účasti na kurzu byl potvrzen $ted.</i></p>";
