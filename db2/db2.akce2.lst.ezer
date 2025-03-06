@@ -908,7 +908,7 @@ form _page [,,275,360] {
     check p_upozorneni [30,420,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
     check p_dokument [30,440,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
   // Zpět a Uložit
-  const prihl_top= has_skill('e') ? 350 : 471
+  const prihl_top= 471
   label  [13,prihl_top,98,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }
