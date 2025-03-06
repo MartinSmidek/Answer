@@ -6,7 +6,14 @@
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
-
+// -------------------------------------------------------------------------------------- pretty log
+// volá se z prihlaska.log.php -- upraví dynamicky HTML
+function pretty_log() {
+  let log= $('#log').html();
+  log= log.replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
+  log= log.replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
+  $('#log').html(log);
+}
 // ------------------------------------------------------------------------------------ elem changed
 // vrátí změněný element s jeho novou hodnotou
 function elem_changed(elem) {
