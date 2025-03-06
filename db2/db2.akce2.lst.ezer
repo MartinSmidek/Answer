@@ -46,7 +46,7 @@ func onfirstfocus() {
   page.inf.onclick();
   switch (the_source) {
     case 'sey': 
-      if (has_skill('y;f;s;crz')) m.g.sey.click();
+      if (has_skill('y;f;s;e;crz')) m.g.sey.click();
       elseif (has_skill('caam')) m.c.m.click();
       elseif (has_skill('caar')) m.c.r.click();
       elseif (has_skill('a'))    m.c.a.click();
@@ -248,7 +248,7 @@ menu m {type:'left', format:'f+'
   # o:  omezeni  org|access
   # a:  rok=akce_roku | akce_vsechny
   # cond
-  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz;s'
+  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz;s;e'
     // jen pro CR
     item m {title:'[MS] program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
     item r {title:'[R] programy Rodina mimo MS',    skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
@@ -259,12 +259,12 @@ menu m {type:'left', format:'f+'
         the_omezeni.set(i.par.omez);
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
-  menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;crz'
+  menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;e;crz'
 //g    item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
 //g      par:{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
       par:{it:'s|r',s:'sey',o:'org',a:'rok'}}
-    item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
+    item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s#e'
       par:{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
   menu d {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'
@@ -283,7 +283,7 @@ menu m {type:'left', format:'f+'
       }
     }
   }
-  menu {title:'Statistika - různé výběry',type:'group',                                        skill:'y;f;c;s'
+  menu {title:'Statistika - různé výběry',type:'group',                                        skill:'y;f;c;e;s'
 //    item sey {title:'[fa-search] ze seznamu všech akcí',    par:{it:'s',cond:'da2.druh!=64 '} }
 //    item  {title:'[fa-search-plus]... opravdové akce',      par:{it:'s',cond:'da2.spec=0 AND da2.druh!=64 ' } }
 //    item  {title:'[fa-search-minus] ... jen různé seznamy', par:{it:'s',cond:'da2.spec=1 AND da2.druh!=64 '} }
@@ -1517,7 +1517,7 @@ form _info [,,*,50] {
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'
       css_cell:'isds,0:,1:ezer_ds', skill:'#e'}
-    show  [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'
+    show  [,,70,] {title:'místo',  data:da2.misto, format:'tsq*'
       skill:'e'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
       css_cell:'web_k,0:,1:azurovy,2:azurovy' }
