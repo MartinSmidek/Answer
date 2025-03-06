@@ -21,7 +21,7 @@ func re_selects_rok(rok) { var sels:text
 func onfirstfocus() {
   echo('------------- lst onfirstfocus begin');
   // zobrazení vazby na objednávky DS
-  if (!has_skill('y')) {
+  if (!has_skill('y') && !has_skill('e')) {
     page.ds_order.set_css('hidden','');
     info.sey.isds.set_attrib('expr'," 0 ");
   }
@@ -46,7 +46,7 @@ func onfirstfocus() {
   page.inf.onclick();
   switch (the_source) {
     case 'sey': 
-      if (has_skill('y;f;s;crz')) m.g.sey.click();
+      if (has_skill('y;f;s;e;crz')) m.g.sey.click();
       elseif (has_skill('caam')) m.c.m.click();
       elseif (has_skill('caar')) m.c.r.click();
       elseif (has_skill('a'))    m.c.a.click();
@@ -248,7 +248,7 @@ menu m {type:'left', format:'f+'
   # o:  omezeni  org|access
   # a:  rok=akce_roku | akce_vsechny
   # cond
-  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz;s'
+  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz;s;e'
     // jen pro CR
     item m {title:'[MS] program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
     item r {title:'[R] programy Rodina mimo MS',    skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
@@ -259,12 +259,12 @@ menu m {type:'left', format:'f+'
         the_omezeni.set(i.par.omez);
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
-  menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;crz'
+  menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;e;crz'
 //g    item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
 //g      par:{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
       par:{it:'s|r',s:'sey',o:'org',a:'rok'}}
-    item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
+    item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s#e'
       par:{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
   menu d {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'
@@ -283,7 +283,7 @@ menu m {type:'left', format:'f+'
       }
     }
   }
-  menu {title:'Statistika - různé výběry',type:'group',                                        skill:'y;f;c;s'
+  menu {title:'Statistika - různé výběry',type:'group',                                        skill:'y;f;c;e;s'
 //    item sey {title:'[fa-search] ze seznamu všech akcí',    par:{it:'s',cond:'da2.druh!=64 '} }
 //    item  {title:'[fa-search-plus]... opravdové akce',      par:{it:'s',cond:'da2.spec=0 AND da2.druh!=64 ' } }
 //    item  {title:'[fa-search-minus] ... jen různé seznamy', par:{it:'s',cond:'da2.spec=1 AND da2.druh!=64 '} }
@@ -305,7 +305,10 @@ menu m {type:'left', format:'f+'
 //      the_omezeni= `da2.druh!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
     if (i.par.o) 
       the_omezeni= `da2.access!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
-    if (i.par.a) akce_roku(info.rok); else akce_vsechny(i.par.cond);
+    if (i.par.a) 
+      akce_roku(info.rok); 
+    else 
+      akce_vsechny(i.par.cond);
   }
 //  proc onclick (i) {
 //    menu_item.set(i);
@@ -415,8 +418,9 @@ form _page [,,275,360] {
   }
   func show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
-    form.load(id_akce); zmena_web= 0; ds_order= 0;
-    if (has_skill('y')) ds_order= php.ds_objednavka(id_akce);
+    form.load(id_akce); zmena_web= 0; 
+    if (!has_skill('e')) ds_order=0;
+    if (has_skill('y#e')) ds_order= php.ds_objednavka(id_akce);
     switch (zalozka) {
       case 'ord': 
         clear(); 
@@ -477,11 +481,12 @@ form _page [,,275,360] {
 ////    echo(id_akce,':',access.get,cen_ver.key);
 //    c_show;
 //  }
-  proc init_page() {
-    page.a_akce.set(0);
+  func init_page() {
+    page.a_akce= 0;
     cen_copy.enable(0); cen_copy.key(0);
-    form.init; zmena_web.set(0); ds_order.set(0);
-    note.set(''); key_akce.set(' ');
+    form.init(); zmena_web= 0; 
+    if (!has_skill('e')) ds_order=0;
+    note= ''; key_akce= ' ';
   }
   # ------------------------==> . informace
   field key_akce [408,19,46,] {format:'or', css:'Label',
@@ -513,7 +518,7 @@ form _page [,,275,360] {
 //  } 
   label [244,73,205,35] { tag:'cor', css:'bily_ram', skill:'y' 
       title:" objednávka Domu setkání" }
-  radio ds_order [247,89,205,19] { tag:'cor,!', title:'objednávka Domu setkání'
+  radio ds_order [247,89,205,19] { tag:'cor,!', title:'objednávka Domu setkání', skill:'#e'
     case [0,0,130,] { title:'akce v Domě setkání', value:'1'  }
     case [124,0,85,] { title:'akce jinde', value:'0' }
     func onchange() { misto= this==1 ? 'Albeřice' : ''; misto.change() }
@@ -637,19 +642,19 @@ form _page [,,275,360] {
     proc onchange() { zmena_web.set(1);
   }}
   select garant [293,355,79,] {tag:'cor', type:'map', title:'garant' , data:akce.poradatel,
-      help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka 
+      help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka, skill:'#e' 
     proc onchanged() { zmena_web.set(1);
   }}
   check [16,362,214,21] { tag:'cor', title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
                         skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
   // online přihlašování přes plugin ve Wordpressu
   check [16,380,243,] { tag:'cor', data:akce.web_wordpress,
-                        title:"ONLINE/WordPress na www.setkani.org", skill:'yaa+|m' }
-  field web_wordpress [241,383,119,] { tag:'cor', data:akce.web_wordpress }
+                        title:"ONLINE/WordPress na www.setkani.org", skill:'yaa+|m#e' }
+  field web_wordpress [241,383,119,] { tag:'cor', data:akce.web_wordpress, skill:'#e' }
   // ------------------------------------- web chlapi.online
   label [10,413,383,70] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
       title:" součinnost s chlapi.online" }
-  radio [16,429,266,54] { tag:'cor', data:akce.web_kalendar, //skill:'yaa|yaaw;faa|faaw'
+  radio [16,429,266,54] { tag:'cor', data:akce.web_kalendar, skill:'#e'
     case [0,0,257,14] { title:"akce není v kalendáři chlapi.cz (default)", value:'0' }
     case [0,17,257,14] { title:"upoutávka v kalendáři <span class='azurovy'>chlapi.cz</span>", value:'1' }
     case [0,34,257,14] { title:"upozornění pro plánování akcí na chlapi.cz", value:'2' }
@@ -713,7 +718,7 @@ form _page [,,275,360] {
       ucast.the_duakce_local= 0; // inicializace Účastníci
       if (zmena_web) alert(php.web_prihlaska(page.a_akce,web_url,web_prihl,garant.key())); 
       if (ida) { // oprava
-        if (ds_order || ds_order.changed()) {
+        if (!has_skill('e') && (ds_order || ds_order.changed())) {
           // doplňky pro Dům setkání: oprava data nebo transformace z akce "jinde" na akci v DS
           upd= {};
           if (ds_order.changed()) upd.ds_order= ds_order; 
@@ -740,7 +745,7 @@ form _page [,,275,360] {
           }
         }
         // založ akci
-        if (ds_order) {
+        if (!has_skill('e') && ds_order) {
           // doplňky pro Dům setkání: vytvoř záznam v tx_gnalberice_order 
           access= my_org; access.change(); // je to akce organizace 
           ida= form.insert(); //form.load();
@@ -903,7 +908,7 @@ form _page [,,275,360] {
     check p_upozorneni [30,420,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
     check p_dokument [30,440,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
   // Zpět a Uložit
-  const prihl_top=471
+  const prihl_top= has_skill('e') ? 350 : 471
   label  [13,prihl_top,98,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }
@@ -1465,7 +1470,7 @@ form _info [,,*,50] {
   view da2: table akce
 //a  view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
 //a  view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
-  view ds2: table ds_order  {join_type:'LEFT',join:'ON ds2.id_akce=da2.id_duakce'}
+  view ds2: table ds_order  {join_type:'LEFT',join:'ON ds2.id_akce=da2.id_duakce', skill:'#e'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
   browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
@@ -1489,10 +1494,10 @@ form _info [,,*,50] {
     show web_p { data:da2.web_prihlasky }
     show web_o { expr:"da2.web_obsazeno OR IF(da2.web_maximum,da2.web_maximum<=SUM((SELECT 1 FROM pobyt WHERE id_pobyt=pa2.id_pobyt AND funkce!=99)),0)" }
     show web_m { expr:"IF(da2.mrop OR da2.firm,1,0)" }
-    show isds { expr:"IF(ISNULL(ds2.id_akce),0,IF(ds2.id_akce>0,1,0))" } // pro #y je expr=" 0 "
+    show isds { expr:"IF(ISNULL(ds2.id_akce),0,IF(ds2.id_akce>0,1,0))", skill:'#e' } // pro #y je expr=" 0 "
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
-      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
+      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*', skill:'#e'  }
 //  show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
     show barva { expr:"IF(da2.zruseno,3,IF(da2.id_hlavni,2,IF(sa2.id_duakce,1,0)))" }
     show kod   [,,36,] {title:'kód účetní', data:da2.ciselnik_akce
@@ -1511,7 +1516,9 @@ form _info [,,*,50] {
     show pecou [,,30,] {title:'pč.', format:'rtsq=', help:'počet pečounů'
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'
-      css_cell:'isds,0:,1:ezer_ds'}
+      css_cell:'isds,0:,1:ezer_ds', skill:'#e'}
+    show  [,,70,] {title:'místo',  data:da2.misto, format:'tsq*'
+      skill:'e'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
       css_cell:'web_k,0:,1:azurovy,2:azurovy' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
@@ -1550,7 +1557,8 @@ form _info [,,*,50] {
     }
     func onstart() { 
       if (!eq(sys('ezer','options','app'),'db2','dbt')) { // kód akce jen pro YS
-        SF.width(0); kod.width(0); nazev.width(140); misto.width(70);
+        /*SF.width(0);*/ kod.width(0); nazev.width(140); 
+//        misto.width(70);
       }
     }
   }
@@ -1584,7 +1592,7 @@ form _info [,,*,50] {
     lst.info.fill(`${the_title} `);
     ucast.call('clear_ucast2');
     if (has_skill('yam;fam;cam')) maia.call('init_ucast');
-    if (!has_skill('crz')) this.call('pece.init_pece'); // CRŽ
+    if (!has_skill('crz;e')) this.call('pece.init_pece'); // CRŽ
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     if (has_skill('f')) page.soubezna= the_soubeh==2;
     // nastavení cookies podle organizace
@@ -1602,7 +1610,7 @@ form _info [,,*,50] {
         set_cookie(`${sys('root')}_akce`,the_duakce);
       }
       ucast.ucast_hnizda();
-      if (!has_skill('T')) pece.pece_hnizda();
+      if (!has_skill('T;e')) pece.pece_hnizda();
       if (has_skill('yam;fam;cam')) maia.mail_hnizda();
       tisk.tisk_hnizda()
     }

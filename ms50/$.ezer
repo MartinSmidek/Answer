@@ -108,6 +108,14 @@ menu ms50 { type:'main', title:'ms50', active:*, _sys:'*'
 //            info.append('',ask('db2_info',i.par))
 //          }
 //        }
+        menu t {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'obnovit testovací db z ostré', par:{db:'ms50'}
+            proc onclick (i) {
+              panel.display(2,'i'); info.display(0,'t'); clear;
+              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
+              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
+        }
       }
       use info: form right [12,4,,] {
       }
