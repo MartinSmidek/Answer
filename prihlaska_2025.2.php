@@ -12,7 +12,7 @@
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok
 $MINOR= '2'; // verze přihlášek: release
-$PATCH= '1'; // verze přihlášek: oprava 
+$PATCH= '2'; // verze přihlášek: oprava JS části
 $MYSELF= "prihlaska_$VERZE.$MINOR"; // $PATCH se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
 // session
@@ -2803,8 +2803,22 @@ function append_log($msg) { // -------------------------------------------------
   $ida= strlen($akce)==6 ? substr($akce,2) : '????';
   $msg= "$x $ida ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
-      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ?><pre>"
-          . "\n<b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n");
+    global $MYSELF,$PATCH;
+    $prefix= 
+<<<__EOS
+<?php if(!isset(\$_GET['itsme'])) exit; ?>
+<html><head><title>přihlášky</title>
+<link rel="shortcut icon" href="img/letter.png">
+<script src="http://answer-test.bean:8080/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="$MYSELF.js?patch=$PATCH" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">window.addEventListener('load', function() { pretty_log();});</script>  
+</script>
+</head><body><pre id="log"
+><b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n
+__EOS;
+      file_put_contents($file, $prefix);
+//      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ? ><pre>"
+//          . "\n<b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n");
   }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }

@@ -257,6 +257,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     }
     panel str {type:'right', title:'Aplikace', _sys:'str', skill:'a;aa'
       menu m {type:'left', format:'f+'
+/*
         menu { title:'GitHub',type:'group',skill:'m'
 //          item { title:'[fa-question] Answer: git status'  par:°{folder:'.',op:'cmd',cmd:'status'}}
 //          item { title:'[fa-gear] Answer: git log'         par:°{folder:'.',op:'cmd',cmd:'log'}}
@@ -291,6 +292,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('git_make',i.par));
           }
         }
+ */ 
         menu m {title:'Struktura modulů a funkcí',type:'group'
           item {title:'Ezer moduly'         proc onclick () { clear; info.Set(ask('doc_ezer')) } }
           item {title:'PHP moduly'          proc onclick () { clear; info.Set(ask('doc_php')) } }
