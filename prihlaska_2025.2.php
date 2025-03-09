@@ -577,6 +577,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
   $idp= 0;
   list($ido,$idr)= explode('/',$idor);
   if ($ido>0) { // známý klient - je přihlášen na akci?
+    $OR= $idr ? "OR i0_rodina=$idr" : '';
     list($jmena,$vars->sex)= 
         select_2("SELECT CONCAT(jmeno,' ',prijmeni),sex FROM osoba WHERE id_osoba=$ido");
     // osobu známe  - zjistíme zda již není přihlášen
@@ -584,7 +585,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
     list($idp,$kdy,$kdo)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
         "pobyt JOIN spolu USING (id_pobyt) "
         . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
-        "(id_osoba={$ido} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
+        "(id_osoba={$ido} $OR) AND id_akce=$akce->id_akce "
         . "ORDER BY id_pobyt DESC LIMIT 1");
     if ($idp) { // ------------------------------- už jsou zapsaní 
       $od_kdy= $kdy ? ' od '.sql_time1($kdy) : '';
@@ -593,6 +594,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
         list($jmeno,$prijmeni)= select_2('forename,surname','_user',"abbr='$kdo'");
         $kym= ". $jmeno $prijmeni";
       } 
+//      display("id_pobyt=$idp");
       log_write('id_pobyt',$idp);
       $DOM->usermail= "hide";
       $DOM->rozlouceni_text= $TEXT->rozlouceni2;
@@ -647,6 +649,7 @@ function kontrolovat() { trace();
 # zkontroluje bezchybnost a úplnost přihlášky
   global $DOM, $akce, $vars;
   $chybi= [];
+  $opravit= [];
   $chybi_osobni= $chybi_rodinne= $chybi_strava= 0;
   $spolu= 0;
 //  # ------------------------------ testování PDF
@@ -707,6 +710,10 @@ function kontrolovat() { trace();
     $chybi_rodinne++;
     $chybi= array_merge($chybi,$miss);  
   }
+  // ------------------------------ jsou opravené chybné údaje?
+  foreach ($vars->form->kontrola??[] as $name) {
+    $opravit[]= $name; $DOM->$name= 'ko'; 
+  }
   // redakce případné výzvy
   if (count($chybi) || $chybi_souhlas || $chybi_upozorneni || $chybi_strava || $chybi_duvod) {
     foreach ($chybi as $name) { $DOM->$name= 'ko'; }
@@ -715,6 +722,7 @@ function kontrolovat() { trace();
         .($chybi_rodinne ? "společné údaje" : '')
         .($chybi_rodinne && $chybi_osobni ? ' a ' : '' )
         .($chybi_osobni ? "osobní údaje (alespoň u těch, kteří pojedou na akci)." : '')
+        .(count($opravit) ? "<br>Opravte chybně vyplněné údaje" : '')
         .($chybi_strava ? "<br>Rozklikněte a případně potom upravte objednávku stravy" : '' )
         .($chybi_souhlas ? "<br>Potvrďte prosím váš souhlas s použitím osobních údajů" : '' )
         .($chybi_duvod ? "<br>Napište prosím, proč žádáte o slevu" : '' )
@@ -722,14 +730,6 @@ function kontrolovat() { trace();
         ;
     hlaska($veta); 
     goto end; 
-  }
-  // ------------------------------ jsou opravené chybné údaje?
-  foreach ($vars->form->kontrola??[] as $name) {
-    $chybi[]= $name; $DOM->$name= 'ko'; 
-  }
-  if (count($chybi)) { 
-    hlaska('opravte označené chybné údaje'); 
-    goto end;   
   }
   // -------------------------------- pokud vše prošlo zobraz shrnutí a vrať se nebo přihlas
   list($text)= souhrn('kontrola');
@@ -1103,6 +1103,7 @@ function form_strava_show() { trace(); // ----------------------------------- se
   global $DOM, $TEXT, $vars;
   // ujistíme se, že jsou zapsána jména a data narození
   $chybi= [];
+  $opravit= [];
   foreach (array_keys($vars->cleni) as $id) {
     if (get('o','spolu',$id)) {
       $miss= elems_missed('o',$id,['Xupozorneni']);
@@ -1116,6 +1117,16 @@ function form_strava_show() { trace(); // ----------------------------------- se
     hlaska('Před zvolením stravy doplňte prosím osobní údaje');
     goto end;
   }
+  // a že jsou opravené chybné údaje?
+  foreach ($vars->form->kontrola??[] as $name) {
+    $opravit[]= $name; $DOM->$name= 'ko'; 
+  }
+  if (count($opravit)) {
+    foreach ($opravit as $name) { $DOM->$name= 'ko'; }
+    hlaska('Před zvolením stravy opravte prosím chybně vyplněné údaje');
+    goto end;
+  }
+  // je-li vše v pořádku dovol upravit stravy
   $strava= "<div>$TEXT->strava</div>"; 
   foreach (array_keys($vars->cleni) as $id) {
     if (get('o','spolu',$id)) {
@@ -2714,7 +2725,8 @@ function log_find_saved($email) { // -------------------------------------------
   // zkusíme najít poslední verzi přihlášky - je ve fázi (c)
   $found= '';
   list($idp,$idw)= select_2("SELECT id_pobyt,id_prihlaska FROM prihlaska "
-      . "WHERE id_pobyt!=0 AND id_akce=$vars->id_akce AND email='$email' "
+      . "WHERE id_akce=$vars->id_akce AND email='$email' "
+//      . "WHERE id_pobyt!=0 AND id_akce=$vars->id_akce AND email='$email' "
       . "ORDER BY id_prihlaska DESC LIMIT 1");
   if ($idp) {
     $vars->idw_old= $idw;
@@ -3492,6 +3504,7 @@ function select_2($expr,$table='',$cond='') { // -------------------------------
   elseif ( strstr($expr,",") ) {
     $result= array();
     $qry= "SELECT $expr FROM $table WHERE $cond";
+//    display($qry);
     $res= pdo_query_2($qry,1);
     if ( $res ) $result= pdo_fetch_row($res);
   }
@@ -3504,6 +3517,7 @@ function select_2($expr,$table='',$cond='') { // -------------------------------
   else {
     $result= '';
     $qry= "SELECT $expr AS _result_ FROM $table WHERE $cond";
+//    display($qry);
     $res= pdo_query_2($qry,1);
     if ( $res ) {
       $o= pdo_fetch_object($res);
