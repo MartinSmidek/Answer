@@ -577,6 +577,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
   $idp= 0;
   list($ido,$idr)= explode('/',$idor);
   if ($ido>0) { // známý klient - je přihlášen na akci?
+    $OR= $idr ? "OR i0_rodina=$idr" : '';
     list($jmena,$vars->sex)= 
         select_2("SELECT CONCAT(jmeno,' ',prijmeni),sex FROM osoba WHERE id_osoba=$ido");
     // osobu známe  - zjistíme zda již není přihlášen
@@ -584,7 +585,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
     list($idp,$kdy,$kdo)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
         "pobyt JOIN spolu USING (id_pobyt) "
         . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
-        "(id_osoba={$ido} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
+        "(id_osoba={$ido} $OR) AND id_akce=$akce->id_akce "
         . "ORDER BY id_pobyt DESC LIMIT 1");
     if ($idp) { // ------------------------------- už jsou zapsaní 
       $od_kdy= $kdy ? ' od '.sql_time1($kdy) : '';
@@ -593,6 +594,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
         list($jmeno,$prijmeni)= select_2('forename,surname','_user',"abbr='$kdo'");
         $kym= ". $jmeno $prijmeni";
       } 
+//      display("id_pobyt=$idp");
       log_write('id_pobyt',$idp);
       $DOM->usermail= "hide";
       $DOM->rozlouceni_text= $TEXT->rozlouceni2;
@@ -3492,6 +3494,7 @@ function select_2($expr,$table='',$cond='') { // -------------------------------
   elseif ( strstr($expr,",") ) {
     $result= array();
     $qry= "SELECT $expr FROM $table WHERE $cond";
+//    display($qry);
     $res= pdo_query_2($qry,1);
     if ( $res ) $result= pdo_fetch_row($res);
   }
@@ -3504,6 +3507,7 @@ function select_2($expr,$table='',$cond='') { // -------------------------------
   else {
     $result= '';
     $qry= "SELECT $expr AS _result_ FROM $table WHERE $cond";
+//    display($qry);
     $res= pdo_query_2($qry,1);
     if ( $res ) {
       $o= pdo_fetch_object($res);
