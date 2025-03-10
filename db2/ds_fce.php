@@ -532,7 +532,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $celkem= $ubyt + $stra + $popl + $prog + $jine;
     $koef= $zaloha ? ($celkem-$zaloha)/$celkem : 1;
     $koef= $zaloha ? $zaloha/$celkem : 1;
-    $koef_dph= $zaloha ? (1-$zaloha/$celkem) : 1;
+//    $koef_dph= $zaloha ? (1-$zaloha/$celkem) : 1;
 //    display("$celkem $zaloha $koef");
     $ds2_cena= dum_cenik($rok);
     // ubytování
@@ -2397,6 +2397,89 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
   return $res;
 }
 # ===========================================================================================> RUZNE
+# --------------------------------------------------------------------------------- ucast clip_paste
+# vloží účastníky seznamu pobytů (zadaných jako seznam id_pobyt do zvolené akce
+# zachová pobyt.funkce a spolu.s_role
+function ucast_clip_paste($idps,$ida) {
+  $radky= "<ol style='overflow-x: auto;height: 250px'>"; 
+  $np= $no= 0;
+  $po= pdo_qry("
+      SELECT id_akce,i0_rodina,IFNULL(nazev,''),
+        GROUP_CONCAT(CONCAT(id_osoba,',',funkce,',',s_role,',',
+          REGEXP_REPLACE(CONCAT(prijmeni,' ',jmeno),'[,;]','.')) SEPARATOR ';')
+      FROM pobyt
+      LEFT JOIN rodina ON id_rodina=i0_rodina
+      JOIN spolu USING (id_pobyt)
+      JOIN osoba USING (id_osoba)
+      WHERE id_pobyt IN ($idps)
+      GROUP BY id_pobyt
+      ORDER BY IF(i0_rodina,nazev,''),prijmeni
+      ");
+  while ($po && (list($akce,$idr,$rodina,$osoby)= pdo_fetch_array($po))) {
+    if ($akce==$ida) {
+      $msg= "POZOR: nebyla vybrána jiná akce, do které mají být zapamatovaní účastníci vloženi.";
+      goto end;
+    }
+    if ($idr) {
+    $jetam= select('COUNT(*)','pobyt',"id_akce=$ida AND i0_rodina=$idr");
+      if ($jetam) {
+        $radky.= "<li><i>$rodina</i>: POZOR vynecháno rodina už na akci je!</li>";
+        continue;
+      }
+    }
+    $np++;
+    $radky.= "<li>"; $idos= [];
+    foreach (explode(';',$osoby) as $osoba) {
+      $no++;
+      list($ido,$fce,$srole,$jm)= explode(',',$osoba);
+      display("$akce,$idr,$ido,$fce,$srole,$jm");
+      $jetam= select('COUNT(*)','pobyt JOIN spolu USING (id_pobyt)',"id_akce=$ida AND id_osoba=$ido");
+      if ($jetam) {
+        $radky.= "<br><i>$jm</i> POZOR vynecháno: už na akci je!<br>";
+        continue;
+      }
+      $idos[]= [$ido,$srole];
+      $radky.= " $jm - vloženo";
+    }    
+    $radky.= "</li>";
+    // pokud je co, vlož to
+    if (count($idos)) {
+      $qry= "INSERT INTO pobyt (id_akce,funkce,i0_rodina) VALUE ($ida,$fce,$idr)";
+      display($qry);
+      $idp= query_track($qry);
+      foreach ($idos as $idrole) {
+        $qry= "INSERT INTO spolu (id_pobyt,id_osoba,s_role) VALUE ($idp,$idrole[0],$idrole[1])";
+        display($qry);
+        query_track($qry);
+      }
+    }
+  } 
+end:
+  return "$msg$radky";
+}
+# ---------------------------------------------------------------------------------- ucast clip_show
+# zobrazí jména účastníků pobytů zadaných jako seznam id_pobyt
+function ucast_clip_show($idps) {
+  $radky= "<ol style='overflow-x: auto;height: 250px'>"; 
+  $n= 0;
+  $po= pdo_qry("
+      SELECT IFNULL(nazev,''),GROUP_CONCAT(CONCAT(prijmeni,' ',jmeno) SEPARATOR ', ') 
+      FROM pobyt
+      LEFT JOIN rodina ON id_rodina=i0_rodina
+      JOIN spolu USING (id_pobyt)
+      JOIN osoba USING (id_osoba)
+      WHERE id_pobyt IN ($idps)
+      GROUP BY id_pobyt
+      ORDER BY IF(i0_rodina,nazev,''),prijmeni
+      ");
+  while ($po && (list($rod,$jmena)= pdo_fetch_array($po))) {
+    $radky.= "<li>".($rod ? "<i>$rod</i>: " : '')."$jmena</li>";
+    $n++;
+  }
+  $radky.= '</ol>'; 
+  $radky= "<div style='text-align:center' class='curr_akce'>Seznam členů $n zapamatovaných pobytů</div>$radky";
+  return $radky;
+}
 # --------------------------------------------------------------------------------- dum pobyt_platby
 # vrátí platby za pobyt jako částku a textový rozklad
 function dum_pobyt_platby($idp) {

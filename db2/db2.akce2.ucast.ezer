@@ -10,6 +10,7 @@
 var the_duakce_local= 0,    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
     virgin= 1,              // 0 - aktivivaný panel
     the_pobyt: number,
+    clip_pobyty= '',        // schránka pro pobyty vybrané clip_copy v kontexovém menu účastnici
     zalozka: text,          // evid | plat | akce
     back: object,
     zmeny: object,          // objekt naplněný požadavkem zobrazení nedávných změn - obecně podle času
@@ -386,6 +387,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
               ",@soubeh:=",the_soubeh.get,
               ",@access:=",my_access.get,
               ",@app:='",sys('ezer','options','app'),"'"));
+    u.b.selected('clear');
 //    set_trace('f',0);
     u.b.browse_focus;
     [ id_pobyt; id_pobyt0.set(id_pobyt) ];
@@ -1049,6 +1051,31 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
           if (ret.err) alert(ret.err);
           elseif (confirm(ret.msg)) {
             php.ucast_kopie_do_akce(the_pobyt,back.ida,1); // provede vložení
+          }
+      } }
+      item clip_copy { title:"=zapamatovat vybrané pobyty", 
+        func onclick () { var n: number
+          n= b.selected('count');
+          if (!n) {
+            alert(`Není vybrán žádný pobyt k zapamatování jeho účastníků. Použij k tomu klávesu Insert nebo Ctrl + klik myší.`);
+            return;
+          }
+          clip_pobyty= b.selected('get');
+          warning(`Byli zapamatováni účastníci ${n} pobytů`);
+      } }
+      item clip_show { title:"zobrazit zapamatované pobyty", 
+        func onclick () { 
+          alert(clip_pobyty 
+            ? php.ucast_clip_show(clip_pobyty)
+            : `Nejsou vybrány žádné zapamatované pobyty.`);
+      } }
+      item clip_paste { title:"vložit zapamatované do akce", 
+        func onclick () { var msg: text
+          msg= `Nejsou vybrány žádné zapamatované pobyty.`;
+          if (clip_pobyty) {
+            msg= php.ucast_clip_paste(clip_pobyty,the_duakce);
+            alert(msg);
+            reload(0);
           }
       } }
     }
