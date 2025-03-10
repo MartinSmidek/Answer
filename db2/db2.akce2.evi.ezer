@@ -51,7 +51,10 @@ proc osoby_show()      { page.oso.show_osoba(2); }     // obnova údajů o osob�
 proc rodina_show()     { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() { firstfocus(1) }
+func onfirstfocus() { 
+  curr_h= sys('screen','height') - min_h; // zamezení úvodního onresize
+  firstfocus(0); 
+}
 proc firstfocus(_click) {
   echo('--- onfirstfocus(',_click,') virgin=',virgin.get);
   virgin.get;
@@ -1615,10 +1618,10 @@ form _cmd [,,706,32] { css:'ae_frame'
   }
   // ==> ... zpět
   label  [0,0,136,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [7,6,,] {tag:'s', type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [7,6,,] {tag:'s', type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data'// , skill:'yaa+|yaa+;faa+|faa+;fae+|fae+;caa+|caa+'
     proc onclick() { reload('curr'); evid_lock('off'); } }
   // ==> ... uložit změny
-  button [64,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [64,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;fae+|fae+;caa+|caa+'
     func onclick() { var depth:text
       switch (mode) {
       case 'newx':  # -------------- vytvoření nové samostatné rodiny
