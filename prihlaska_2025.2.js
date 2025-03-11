@@ -12,7 +12,11 @@ function pretty_log() {
   let log= $('#log').html();
   log= log.replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
   log= log.replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
-  $('#log').html(log);
+  let lines= log.split("\n");
+  let title= lines[0];
+  let reversed= lines.reverse();
+  log= reversed.join("\n");
+  $('#log').html(title+log);
 }
 // ------------------------------------------------------------------------------------ elem changed
 // vrátí změněný element s jeho novou hodnotou
