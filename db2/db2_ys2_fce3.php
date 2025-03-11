@@ -3400,13 +3400,13 @@ function prihl_open($ida,$hotove=1) { trace();
   $n= $nm= 0;  // n, n-mobil
   $HAVING= $hotove
       ? "HAVING _naakci!=0"
-      : "HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0";
+      : "HAVING _naakci=0";
+//      : "HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0";
   $html= $znami= $novi= '';
   $rp= pdo_qry("SELECT LOWER(p.email) AS _email,IFNULL(GROUP_CONCAT(DISTINCT s.id_pobyt),0) AS _naakci
         ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
         ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
         ,DATE_FORMAT(MIN(open),'<b>%d.%m</b> %H:%i') AS _open
-        -- ,stav
         ,GROUP_CONCAT(DISTINCT stav ORDER BY p.id_prihlaska) AS _stavy
         ,TRIM(GROUP_CONCAT(DISTINCT LEFT(browser,4) SEPARATOR ' '))
         ,MAX(p.id_prihlaska) AS _id_prihlaska
@@ -3414,8 +3414,8 @@ function prihl_open($ida,$hotove=1) { trace();
         ,COUNT(*) AS x, MIN(open) AS _open_
       FROM prihlaska AS p
       LEFT JOIN rodina USING (id_rodina)
-      -- LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%')
-      LEFT JOIN osoba AS o ON o.email REGEXP CONCAT('(^|[;,\\\\s]+)',p.email,'($|[;,\\\\s]+)')
+      LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%') 
+        AND o.email REGEXP CONCAT('(^|[;,\\\\s]+)',p.email)
       LEFT JOIN pobyt AS pa ON pa.id_akce=$ida 
       LEFT JOIN spolu AS s ON s.id_osoba=o.id_osoba AND pa.id_pobyt=s.id_pobyt
       WHERE p.id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
@@ -3423,20 +3423,18 @@ function prihl_open($ida,$hotove=1) { trace();
       GROUP BY _email
       $HAVING
       ORDER BY _open_ DESC");
-  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak,$idw,$idp)= pdo_fetch_array($rp))) {
-    $real_idp= select('IFNULL(id_pobyt,0)','pobyt',"id_pobyt=$idp");
+  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak,$idw,$idp)
+      = pdo_fetch_array($rp))) {
+    $real_idp= select('COUNT(*)','pobyt',"id_pobyt=$idp");
     $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
     $_idw= $idw ? tisk2_ukaz_prihlasku($idw,$ida,$real_idp,'','',$idw) : $idw;
-//    $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');
-    $skrt= $real_idp || !$hotove ? '' : ' style=text-decoration:line-through';
+    display("$real_idp || $hotove==0");
+    $skrt= $real_idp || $hotove==0 ? '' : ' style=text-decoration:line-through';
     $row= "<tr$skrt><td title='$stavy' align='right'>$_idw => </td><td>$kdy</td><td title='$jak'>$email</td>"
         . "<td>$osoba $_ido</td><td>$rodina $_idr</td>"
-//        . ( $ido ? '' : "<td title='$stavy'>$pokusy</td>")
         . "<td>$jak</td></tr>";
     if (preg_match("/REG/",$stavy)) $novi.= "\n$row"; else $znami.= "\n$row";
-//    if (!$ido || preg_match("/novi|novacci/",$stavy)) $novi.= "\n$row"; else $znami.= "\n$row";
-//    if ($ido) $znami.= "\n$row"; else $novi.= "\n$row";
     $n++;
     $nm+= preg_match('/^[AI]/',$jak) ? 1 : 0;
   }

@@ -565,9 +565,8 @@ end:
 function registrace($gender) { trace();
 # $ano=1/2 pokračujeme s registrací jako muž nebo žena
 # $ano=0 pokračujeme s žádostí o jiný mail
-  global $DOM, $vars;
+  global $DOM;
   $DOM->usermail= 'hide';
-//  append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
   return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
 } // registrace
 // ------------------------------------------------------------------------------------------ klient
