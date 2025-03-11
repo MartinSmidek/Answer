@@ -567,7 +567,7 @@ function registrace($gender) { trace();
 # $ano=0 pokračujeme s žádostí o jiný mail
   global $DOM, $vars;
   $DOM->usermail= 'hide';
-  append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
+//  append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
   return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
 } // registrace
 // ------------------------------------------------------------------------------------------ klient
@@ -615,12 +615,15 @@ function klient($idor,$nova_prihlaska=1) { trace();
   if ($ido>0) { // přihláška známého
     $vars->klient= $jmena;
     append_log("KLIENT ... $jmena id_osoba=$ido, id_rodina=$idr");
+    log_append_stav('OLD');
     // podle ido,idr nastav počáteční informace o klientovi
     kompletuj_pobyt($vars->idr,$vars->ido);
     return formular($nova_prihlaska);
   }
   else { // přihláška nového
     $vars->klient= '';
+    append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
+    log_append_stav('REG');
     kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
     set('o','email',$vars->email,$vars->ido); 
     return formular(1);
