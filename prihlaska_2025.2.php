@@ -2406,6 +2406,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     }
   };
   // pobyt a rodina už musí být zapsané
+  $novy= 0; // 1 pokud bude nyní vytvořen
   $idp= $vars->pobyt->id_pobyt;
   $idr= key($vars->rodina);
   $clen= $vars->cleni[$id];
@@ -2463,6 +2464,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
     $ido= _ezer_qry("INSERT",'osoba',0,$chng);
     if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+    $novy= 1;
     $vars->cleni[$ido]= $vars->cleni[$id];
     unset($vars->cleni[$id]); 
     // případně vyměníme $id za $ido v _o_dite a o_pecoun
@@ -2512,9 +2514,9 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
   } // zapojíme do pobytu
 
-  // zapiš, že patří do rodiny -- ale nikoliv pečouny
+  // zapiš, že patří do rodiny -- ale nikoliv pečouny kromě nově vytvořených
   // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
-  if ($role!='p') {
+  if ($role!='p' || $novy) {
     $uz_je= select1_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
     if (!intval($uz_je)) { 
       $chng= []; 
