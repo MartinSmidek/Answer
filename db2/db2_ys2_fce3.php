@@ -3397,7 +3397,7 @@ end:
 # --------------------------------------------------------------------------------------- prihl open
 # vrátí seznam otevřených přihlášek dané akce
 function prihl_open($ida,$hotove=1) { trace();
-  $n= $nm= 0;  // n, n-mobil
+  $n= $nm= $nma= $nmi= $nx= 0;  // n, n-mobil
   $HAVING= $hotove
       ? "HAVING _naakci!=0"
       : "HAVING _naakci=0";
@@ -3430,19 +3430,31 @@ function prihl_open($ida,$hotove=1) { trace();
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
     $_idw= $idw ? tisk2_ukaz_prihlasku($idw,$ida,$real_idp,'','',$idw) : $idw;
     display("$real_idp || $hotove==0");
-    $skrt= $real_idp || $hotove==0 ? '' : ' style=text-decoration:line-through';
+    $skrt= '';
+    if (!($real_idp || ($hotove==0 && $idp==0))) {
+      $skrt= ' style=text-decoration:line-through';
+      $nx++;
+    }
     $row= "<tr$skrt><td title='$stavy' align='right'>$_idw => </td><td>$kdy</td><td title='$jak'>$email</td>"
         . "<td>$osoba $_ido</td><td>$rodina $_idr</td>"
         . "<td>$jak</td></tr>";
     if (preg_match("/REG/",$stavy)) $novi.= "\n$row"; else $znami.= "\n$row";
     $n++;
     $nm+= preg_match('/^[AI]/',$jak) ? 1 : 0;
+    $nma+= preg_match('/^[A]/',$jak) ? 1 : 0;
+    $nmi+= preg_match('/^[I]/',$jak) ? 1 : 0;
   }
   $Jake= $hotove ? "Dokončené" : "Nedokončené";
   $mobilem= round(100*$nm/$n);
-  $html.= "<h3>Celkem $mobilem% mobilem</h3>";
+  $android= round(100*$nma/$n);
+  $iphone= round(100*$nmi/$n);
+  $html.= "<p><i>Celkem $mobilem% mobilem (Android $android%, iPhone $iphone%)</i></p>";
   $html.= "<h3>$Jake přihlášky nově registrovaných</h3><table>$novi</table>";
   $html.= "<h3>$Jake přihlášky známých</h3><table>$znami</table>";
+  if ($nx) {
+    $html.= "<p><i>Přeškrtnuté řádky signalizují zásahy do evidence z vyšší moci "
+        . "- například zrušení pobytu nebo úprava v přihlášce</i></p>";
+  }
   return $html;
 }
 
