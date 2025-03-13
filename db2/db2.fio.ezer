@@ -74,6 +74,7 @@ form _ucty [,,640,*] {
     return {id_osoba:id_osoba, id_pobyt:id_pobyt, id_order:id_order}
   }
 # -------------------------------------------------------------------------==> . interní funkce
+  func spinner(on) { js.waiting(on); }
   func load_by_filter() {
     fio.browse_load(filter());
   }
@@ -219,6 +220,7 @@ form _ucty [,,640,*] {
   label [963,0,92,42] { css:'ae_parm' }
   button [973,7,,30] {title:'[fa-bank] načti Fio', func onclick() { 
     var op:text, msg:text, y:object, i:number, hd:text
+    spinner(1);
     msg= ''; i= 0;
     for (op of ['load-ys','join-ys','load-ds','join-ds']) {
       i++;
@@ -228,7 +230,9 @@ form _ucty [,,640,*] {
 //      echo(msg);
       if (y.err) alert(y.err);
     }
+    spinner(0);
     alert(msg);
+    load_by_filter();
   }}
   field id_platba [10,top1+35,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
   field id_osoba { data:platba.id_oso }
