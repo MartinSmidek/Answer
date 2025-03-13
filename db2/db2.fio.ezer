@@ -215,8 +215,21 @@ form _ucty [,,640,*] {
 //      refresh();
 //    }
   }}
-//  button find_kod [814,top1,,] {title:'normální hledání', func onclick() { 
-//  }
+  // refresh z Fio banky
+  label [963,0,92,42] { css:'ae_parm' }
+  button [973,7,,30] {title:'[fa-bank] načti Fio', func onclick() { 
+    var op:text, msg:text, y:object, i:number, hd:text
+    msg= ''; del= ''; i= 0;
+    for (op of ['load-ys','join-ys','load-ds','join-ds']) {
+      i++;
+      y= php.ds2_fio({fce:op,od:'*',do:'*'});
+      hd= cconc(i==1,'<h3>Hlavní účet</h3>',i==3,'<h3>Účet DS</h3>','<hr>');
+      msg= `${msg}${hd}${y.html}`;
+//      echo(msg);
+      if (y.err) alert(y.err);
+    }
+    alert(msg);
+  }}
   field id_platba [10,top1+35,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
   field id_osoba { data:platba.id_oso }
   field id_pobyt { data:platba.id_pob }

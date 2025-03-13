@@ -3027,8 +3027,9 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
 # spolupráce s FIO bankou
 function ds2_fio($cmd) {
   global $api_fio_ds, $api_fio_ys;
-  $y= (object)['html'=>'','err'=>''];
-  $y->html= "$cmd->fce<hr>";
+  $y= (object)['html'=>$cmd->fce,'err'=>''];
+//                                                    debug($cmd,'ds2_fio'); 
+//                                                    return $y;
   $n= 0;
   $token= $api_fio_ds;
   $ucet= 2;
@@ -3112,11 +3113,13 @@ function ds2_fio($cmd) {
     case 'join-ds': // ----------------------------------------------------- přiřazení plateb DS
     case 'join-ys': // ----------------------------------------------------- přiřazení plateb YS
       $na= $nd= $nu= $nv= $nf= 0;
+      $cmd_od= ($cmd->od??'*')=='*' ? date('Y').'-01-01' : $cmd->od;
+      $cmd_do= ($cmd->do??'*')=='*' ? date('Y').'-12-31' : $cmd->do;
       $omezeni= $cmd->platba
           ? "id_platba=$cmd->platba" 
-          : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
-      $back= $cmd->back ?: 0; // návrat k odhadu =  ignoruje id_oso, id_pob, id_ord
-      if ($back && $cmd->platba) {
+          : "datum BETWEEN '$cmd_od' AND '$cmd_do'";
+      $back= ($cmd->back??0) ?: 0; // návrat k odhadu =  ignoruje id_oso, id_pob, id_ord
+      if ($back && ($cmd->platba??0)) {
         query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
           WHERE id_platba=$cmd->platba");
       }

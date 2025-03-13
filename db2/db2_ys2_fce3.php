@@ -3446,9 +3446,9 @@ function prihl_open($ida,$hotove=1) { trace();
   }
   $Jake= $hotove ? "Dokončené" : "Nedokončené";
   $mobilem= round(100*$nm/$n);
-  $android= round(100*$nma/$n);
-  $iphone= round(100*$nmi/$n);
-  $html.= "<p><i>Celkem $mobilem% mobilem (Android $android%, iPhone $iphone%)</i></p>";
+  $android= $mobilem ? round(100*$nma/$nm) : 0;
+  $iphone= $mobilem ? round(100*$nmi/$nm) : 0;
+  $html.= $mobilem ? "<p><i>Celkem $mobilem% mobilem (z toho Android $android%, iPhone $iphone%)</i></p>" : '';
   $html.= "<h3>$Jake přihlášky nově registrovaných</h3><table>$novi</table>";
   $html.= "<h3>$Jake přihlášky známých</h3><table>$znami</table>";
   if ($nx) {
