@@ -219,7 +219,7 @@ form _ucty [,,640,*] {
   label [963,0,92,42] { css:'ae_parm' }
   button [973,7,,30] {title:'[fa-bank] načti Fio', func onclick() { 
     var op:text, msg:text, y:object, i:number, hd:text
-    msg= ''; del= ''; i= 0;
+    msg= ''; i= 0;
     for (op of ['load-ys','join-ys','load-ds','join-ds']) {
       i++;
       y= php.ds2_fio({fce:op,od:'*',do:'*'});
