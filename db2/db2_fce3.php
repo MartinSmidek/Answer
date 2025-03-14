@@ -7902,9 +7902,18 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
   return $result;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_copy
-# ASK
-# přenese skupinky z LK do Obnovy nebo z PO do JO
-function akce2_skup_copy($obnova,$podle='LK') { trace();
+# zruší skupinky dané akce
+function akce2_skup_del($ida) { trace();
+  $n= 0;  
+  $rs= query("UPDATE pobyt SET skupina=0
+    WHERE id_akce=$ida AND skupina!=0");
+  $n+= pdo_affected_rows($rs);
+  return $n ? "Bylo zrušeno $n zařazení do skupinek" : "Na akci nejsou žádné skupinky";
+}
+# ---------------------------------------------------------------------------------- akce2 skup_copy
+# upraví skupinky 
+# podle=LK z posledního letního kurzu, podle=PO přenese z PO do JO, podle=XX zruší skupinky
+function akce2_skup_copy($obnova,$podle) { trace();
   $msg= "Kopii nelze provést";
   // najdeme LK
   list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$obnova");
