@@ -378,6 +378,13 @@ function polozky() { // --------------------------------------------------------
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
       ] : [],
+    $akce->p_oso_adresa ? [
+      'adresa'    =>[ 0,'','','abp'],
+      'ulice'     =>[15,'* ulice a č.or. NEBO č.p.','','abp'],
+      'psc'       =>[ 5,'* PSČ','','abp'],
+      'obec'      =>[20,'* obec/město','','abp'],
+      'stat'      =>[ 0,'stát','','abp'],
+      ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
       'zamest'    =>[35,'* povolání, obor, ve kterém pracujete/budete pracovat','','ab'],
@@ -618,14 +625,20 @@ function klient($idor,$nova_prihlaska=1) { trace();
     append_log("KLIENT ... $jmena id_osoba=$ido, id_rodina=$idr");
     log_append_stav('OLD');
     // podle ido,idr nastav počáteční informace o klientovi
-    kompletuj_pobyt($vars->idr,$vars->ido);
+    if (typ_akce('MO'))
+      kompletuj_pobyt_par($vars->idr,$vars->ido);
+    else
+      kompletuj_pobyt_ucastnik($vars->ido);
     return formular($nova_prihlaska);
   }
   else { // přihláška nového
     $vars->klient= '';
     append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
     log_append_stav('REG');
-    kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
+    if (typ_akce('MO'))
+      kompletuj_pobyt_par(0,0); // manžel má index -1, manželka -2
+    else
+      kompletuj_pobyt_ucastnik($vars->ido);
     set('o','email',$vars->email,$vars->ido); 
     return formular(1);
   } // přihláška nového
@@ -698,11 +711,13 @@ function kontrolovat() { trace();
     }
   }
   // rodinné údaje
-  $idr= key($vars->rodina);
-  $miss= elems_missed('r',$idr);
-  if (count($miss)) {
-    $chybi_rodinne++;
-    $chybi= array_merge($chybi,$miss);
+  if (typ_akce('MOR')) {
+    $idr= key($vars->rodina);
+    $miss= elems_missed('r',$idr);
+    if (count($miss)) {
+      $chybi_rodinne++;
+      $chybi= array_merge($chybi,$miss);
+    }
   }
   // údaje k pobytu
   $miss= elems_missed('p',0,['Xsouhlas','sleva_duvod']);
@@ -777,9 +792,10 @@ function prihlasit() { trace();
     db_open_pobyt();
   }
   // ------------------------------ oprav rodinné údaje případně vytvoř rodinu
-  db_vytvor_nebo_oprav_rodinu();
-  if (count($errors)) goto db_end;
-  
+  if (typ_akce('MOR')) {
+    db_vytvor_nebo_oprav_rodinu();
+    if (count($errors)) goto db_end;
+  }
   // ------------------------------ oprav (případně vytvoř) členy rodiny
   foreach (array_keys($vars->cleni) as $id) {
     // přidání člena rodiny
@@ -1272,6 +1288,7 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
         )
       . elem_input('o',$id,['email','telefon']) 
       . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
+      . ($akce->p_oso_adresa ? '<br>'.elem_input('o',$id,['ulice','psc','obec']) : '')
       . "</div>";
   return $part;
 } // form osoba
@@ -2294,6 +2311,18 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
       }
     }
   }
+  // pokud je rodinná adresa načti ji
+  if (!$o->adresa) { // nemá osobní adresu
+    if ($vars->idr) {
+      list($ulice,$psc,$obec,$stat)= 
+          select_2("SELECT ulice,psc,obec,stat FROM rodina WHERE id_rodina=$vars->idr");
+      $clen->adresa= 0;
+      $clen->ulice= $ulice;
+      $clen->psc= $psc;
+      $clen->obec= $obec;
+      $clen->stat= $stat;
+    }
+  }
   $vars->cleni[$ido]->role= $role;
   $vars->cleni[$ido]->spolu= $o->umrti ? 0 : ($spolu ? [0,1] : 0);
   // pokud je strava tak ji inicializuj
@@ -2325,7 +2354,21 @@ function db_nacti_cleny_rodiny($idr) { // ------------------------------------ d
 //  }
   return [$roles,$ido_a,$ido_b];
 }
-function kompletuj_pobyt($idr,$ido) { // ------------------- kompletuj rodinu a vytvoř prázdný pobyt
+function kompletuj_pobyt_ucastnik($ido) { // ----- kompletuj jednotlivce a vytvoř prázdný pobyt
+# zajisti aby ve vars->cleni byl záznam (byť s prázdnými položkami)
+# pokud $ido<0 tak -1 je muž, -2 je žena
+  if ($ido>0) { // načteme klienta 
+    $sex= select_2('sex','osoba',"id_osoba=$ido");
+    $role= $sex==2 ? 'b' : 'a';
+    nacti_clena($ido,$role,1);
+  }
+  else { // nový klient - vytvoříme rodinu 
+    vytvor_clena($ido,$ido==-1 ? 'a' : 'b',1);
+  } // nový klient
+  // vytvoř pobyt
+  vytvor_pobyt();
+}
+function kompletuj_pobyt_par($idr,$ido) { // ------------------- kompletuj rodinu a vytvoř prázdný pobyt
 # zajisti aby ve vars->rodina a cleni byla úplná rodina (byť s prázdnými položkami)
 # a byl iniciován resp. načten pobyt 
 //  global $vars;
@@ -2515,21 +2558,23 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
   } // zapojíme do pobytu
-
-  // zapiš, že patří do rodiny -- ale nikoliv pečouny kromě nově vytvořených
-  // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
-  if ($role!='p' || $novy) {
-    $uz_je= select1_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
-    if (!intval($uz_je)) { 
-      $chng= []; 
-      if (!count($errors)) {
-        $chng= array(
-          (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
-          (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
-          (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
-        );
-        $idt= _ezer_qry("INSERT",'tvori',0,$chng);
-        if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
+ 
+  if ($idr) {
+    // zapiš, že patří do rodiny -- ale nikoliv pečouny kromě nově vytvořených
+    // - pokud do ní ještě nepatří (vzniká při vytvoření nové rodiny a při přidání člena rodiny 
+    if ($role!='p' || $novy) {
+      $uz_je= select1_2("SELECT COUNT(*) FROM tvori WHERE id_osoba=$ido AND id_rodina=$idr");
+      if (!intval($uz_je)) { 
+        $chng= []; 
+        if (!count($errors)) {
+          $chng= array(
+            (object)array('fld'=>'id_rodina', 'op'=>'i','val'=>$idr),
+            (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
+            (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
+          );
+          $idt= _ezer_qry("INSERT",'tvori',0,$chng);
+          if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
+        }
       }
     }
   } // zapojíme do rodiny
