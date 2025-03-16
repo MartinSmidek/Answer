@@ -366,12 +366,12 @@ function polozky() { // --------------------------------------------------------
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
       'jmeno'     =>[ 8,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
-      'rodne'     =>[10,'rozená','','ab'],
+      'rodne'     =>[10,'* rozená','','ab'],
       'narozeni'  =>[10,'* datum narození','date','abdp'],
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d'],
-      'telefon'   =>[15,'telefon','','abp'],
+      'telefon'   =>[15,'* telefon','','abp'],
       'email'     =>[35,'* e-mailová adresa','mail','abp','p']], // pro pecouny je mail nepovinný
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
