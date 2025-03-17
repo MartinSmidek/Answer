@@ -366,7 +366,7 @@ function polozky() { // --------------------------------------------------------
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
       'jmeno'     =>[ 8,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
-      'rodne'     =>[10,'* rozená','','ab'],
+      'rodne'     =>[10,'rozená','','ab'],
       'narozeni'  =>[10,'* datum narození','date','abdp'],
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
