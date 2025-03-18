@@ -1,4 +1,4 @@
-<?php # Systém An(w)er/Ezer/YMCA Familia a YMCA Setkání, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
+<?php # Systém An(w)er/Ezer/YMCA Familia a YMCA Setkání, (c) 2008-2025 Martin Šmídek <martin@smidek.eu>
 
   # nastavení systému Ans(w)er před voláním AJAX
   #   $app        = kořenová podsložka aplikace ... db2
@@ -76,13 +76,14 @@
 
   // definice modulů specifických pro Answer
   $app_php= array(
+    "ms50/ms50_fce.php",
     "db2/db2_ys2_fce3.php",
     "db2/db2_fce3.php",
     "db2/ds_fce.php",
     "db2/db2_tcpdf.php",
     "db2/db2.system.php",
-    "ezer$ezer_version/server/ezer_ruian.php",
-    "ezer$ezer_version/server/ezer_cms3.php"
+//    "ezer$ezer_version/server/ezer_ruian.php",
+//    "ezer$ezer_version/server/ezer_cms3.php"
   );
   
   $ezer= array(
