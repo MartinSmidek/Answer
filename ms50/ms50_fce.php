@@ -3,6 +3,13 @@
 # transformace DS do Answer
 define('org_ms50',16);
 define ('POZOR',"<span style:'color:red;background:yellow'>POZOR</span>");
+# ----------------------------------------------------------------------------------------- reimport
+function reimport() {
+  foreach (['akce','rodina','osoba','tvori','pobyt','spolu'] as  $tab) {
+    import($tab);
+  }
+  complete();
+}
 # ------------------------------------------------------------------------------------------- import
 function import($tab) {
   // načtení importního souboru $tab.csv z ms50/doc/import
