@@ -12,8 +12,8 @@
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok
 $MINOR= '2'; // verze přihlášek: release
-$PATCH= '2'; // verze přihlášek: oprava JS části
-$MYSELF= "prihlaska_$VERZE.$MINOR"; // $PATCH se používá pro vynucené natažení javascriptu
+$CORR_JS= '3'; // verze přihlášek: oprava JS části pro vynucený reload
+$MYSELF= "prihlaska_$VERZE.$MINOR"; // $CORR_JS se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
 // session
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
@@ -138,7 +138,7 @@ try {
           $call.= "<br>$name=$value";
       }
     }
-    $DOM= (object)['trace'=>'','form'=>''];
+    $DOM= (object)['php_function'=>$fce,'trace'=>'','form'=>''];
     if ( function_exists($fce)) {
       $vars= $_SESSION[$AKCE];
       call_user_func_array($fce,$args); // modifikuje $DOM
@@ -210,9 +210,9 @@ catch (Throwable $e) {
     }
     else break;
   }
-  if (preg_match('/chyba DOM/',$msg)) {
-    global $old_trace; // pouze přes DOM_error
-    $errpos= "$msg after $old_trace";
+  if (preg_match('/unknown DOM/',$msg)) {
+//    global $old_trace; // pouze přes DOM_error
+    $errpos= "$msg<hr>";
   }
   else {
     $errpos= "$msg na řádku $tline";
@@ -220,6 +220,7 @@ catch (Throwable $e) {
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
+  . "<br>$akce->opravit_chybu"
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
       . "<br>$errpos" : '');
   echo $errmsg;
@@ -328,6 +329,7 @@ function polozky() { // --------------------------------------------------------
   // definice obsahuje:  položka => [ délka , popis , formát, u osob možné role, role u kterých je * nepovinná ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
+  //        pokud bude zobrazováno jako text a nebude definováno, zobrazí se jako input
   //        je to ale nutné pro každou položku naprogramovat 
   $p_fld= array_merge( // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt
     [ 'pracovni'    =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, které nebylo možné nikam napsat','area'],
@@ -366,13 +368,13 @@ function polozky() { // --------------------------------------------------------
       'spolu'     =>[ 0,'pojede<br />na akci','check_spolu','abdp'],
       'jmeno'     =>[ 8,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
-      'rodne'     =>[10,'* rozená','','ab'],
+      'rodne'     =>[10,'* rozená','','ab','a'], // u muže nepovinné
       'narozeni'  =>[10,'* datum narození','date','abdp'],
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d'],
       'telefon'   =>[15,'* telefon','','abp'],
-      'email'     =>[35,'* e-mailová adresa','mail','abp','p']], // pro pecouny je mail nepovinný
+      'email'     =>[35,'* e-mailová adresa','mail','abp','p']], // pro pecouny nepovinné
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
       ] : [],
@@ -717,7 +719,8 @@ function kontrolovat() { trace();
     $opravit[]= $name; $DOM->$name= 'ko'; 
   }
   // redakce případné výzvy
-  if (count($chybi) || $chybi_souhlas || $chybi_upozorneni || $chybi_strava || $chybi_duvod) {
+  if (count($chybi) || count($opravit) 
+      || $chybi_souhlas || $chybi_upozorneni || $chybi_strava || $chybi_duvod) {
     foreach ($chybi as $name) { $DOM->$name= 'ko'; }
     $veta= 
          ($chybi_rodinne || $chybi_osobni ? 'Doplňte označené ' : '' )
@@ -940,11 +943,16 @@ function DOM_zmena_slevy($on) { // ---------------------------------------------
   global $DOM;
   $DOM->p_0_sleva_duvod= $on ? 'show' : 'hide';
 } // změna volby slevy
-function DOM_error($msg,$tr) {
-  global $old_trace;
-  $old_trace= $tr;
-  log_error($msg);
-  throw new Exception($msg);
+//function DOM_error($msg,$tr) {
+//  global $old_trace;
+//  $old_trace= $tr;
+//  log_error($msg);
+//  throw new Exception($msg);
+//}
+function DOM_unknown($ids,$in_function) { // chybějící id v DOM
+# pokud je to v kontrolách, tak umožni doplnit položky zobrazené jak jako text 
+# jde o: jmeno, prijmeni, rodne, narozeni
+  throw new Exception("unknown DOM.id in $in_function: ".implode(',',$ids));
 }
 // ================================================================================= prvky formuláře
 function form_manzele() { trace(); // ----------------------------------------------- zobrazení páru
@@ -977,10 +985,9 @@ function form_manzele() { trace(); // ------------------------------------------
               ? ''
                 . elem_input('o',$id,['spolu']) 
                 . '<div><b> '.(get_role($id)=='a' ? "Manžel" : "Manželka").' </b>'
-                . elem_text('o',$id,['jmeno',' ','prijmeni']) 
-                . ($role=='b' ? elem_text('o',$id,[' roz. ','rodne']) : '')
-                . elem_text('o',$id,[', ','narozeni','</div>'])
-//                  . elem_text('o',$id,[' ... TEST: ','vzdelani','|','cirkev'])
+                . elem_text_or_input('o',$id,['jmeno',' ','prijmeni']) 
+                . ($role=='b' ? elem_text_or_input('o',$id,[' roz. ','rodne']) : '')
+                . elem_text_or_input('o',$id,[', ','narozeni','</div>'])
               : 
                 '<b> '.(get_role($id)=='a' ? "Manžel" : "Manželka").' </b>'
                 . elem_input('o',$id,['spolu']) . elem_input('o',$id,['jmeno','prijmeni'])
@@ -1206,7 +1213,7 @@ function form_pecoun($id) { trace(); // --------------------------------- zobraz
   }
   else { // $id>0
     $part.= elem_input('o',$id,['spolu'],'hide')
-        . elem_text('o',$id,['<div>','jmeno',' ','prijmeni',', ','narozeni','</div>'])
+        . elem_text_or_input('o',$id,['<div>','jmeno',' ','prijmeni',', ','narozeni','</div>'])
         . elem_input('o',$id,['obcanka','telefon']);
   }
   // doplň mu stravu
@@ -1262,8 +1269,8 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
   $clen_ID= "c_$id"; 
   $part= "<div id='$clen_ID' class='solo'>"
       . ( $id>0
-          ? elem_text('o',$id,['<div>','jmeno',' ','prijmeni']) 
-            . elem_text('o',$id,[', ','narozeni', ', ','role','</div>'])
+          ? elem_text_or_input('o',$id,['<div>','jmeno',' ','prijmeni']) 
+            . elem_text_or_input('o',$id,[', ','narozeni', ', ','role','</div>'])
           : elem_input('o',$id,['jmeno','prijmeni'])
             . elem_input('o',$id,[',','narozeni'])
             . '<br>'
@@ -1666,7 +1673,7 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 // =============================================================================== zobrazení stránky
 function page() {
-  global $MYSELF, $PATCH, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
+  global $MYSELF, $CORR_JS, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
@@ -1685,7 +1692,7 @@ function page() {
     <link rel="shortcut icon" href="/db2/img/$icon" />
     <link rel="stylesheet" href="/less/akce$_TEST.css?verze=3" type="text/css" media="screen" charset='utf-8'>
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-    <script src="$MYSELF.js?patch=$PATCH" type="text/javascript" charset="utf-8"></script>
+    <script src="$MYSELF.js?patch=$CORR_JS" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <script>
@@ -1727,7 +1734,7 @@ function page() {
         </div>
         <!-- formulář -------------------------------------------------------------------------- -->
         <div $hide id='form' title='form' class='box'></div>
-        <div class='prosba'>$akce->ohlasit_chybu</div>
+        <div class='prosba'>$akce->ohlasit_chybu $akce->opravit_chybu</div>
         <!-- rozloučení ------------------------------------------------------------------------ -->
         <div $hide id='rozlouceni' title='form' class='box'>
           <p id='rozlouceni_text'>$TEXT->rozlouceni1</p>
@@ -1832,11 +1839,11 @@ function read_akce() { // ------------------------------------------------------
       <br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
   // doplnění konstant
   $akce->id_akce= $id_akce;
-  $akce->ohlasit_chybu= "<p>Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
-      . " Abychom jí mohli opravit, napište prosím "
+  $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu.";
+  $akce->opravit_chybu= "<br>Abychom chybu mohli opravit, napište prosím "
       . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška 2025'>autorovi</a> "
       . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
-      . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. </p>";
+      . "Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme.";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
@@ -2103,7 +2110,7 @@ function elem_input($table,$id,$flds,$to_hide='') { // -------------------------
     case 'number':
       $v= $v?: 0;
     default:
-      $x= $v ? "value='$v'" : ''; // "placeholder='$holder'";
+      $x= $v!=='' ? "value='$v'" : ''; // "placeholder='$holder'";
       $c= $v_chng ? " class='$chng_css' " : '';
       $html.= "<label class='upper'$hide>$title"
           . "<input type='text' id='$name' size='$len' $x$c $oninput></label>";
@@ -2819,14 +2826,14 @@ function append_log($msg) { // -------------------------------------------------
   $ida= strlen($akce)==6 ? substr($akce,2) : '????';
   $msg= "$x $ida ".date('Y-m-d H:i:s')." $msg ... akce=$akce, id_prihlaska=$idw, mail=$email";
   if (!file_exists($file)) {
-    global $MYSELF,$PATCH;
+    global $MYSELF,$CORR_JS;
     $prefix= 
 <<<__EOS
 <?php if(!isset(\$_GET['itsme'])) exit; ?>
 <html><head><title>přihlášky</title>
 <link rel="shortcut icon" href="img/letter.png">
 <script src="http://answer-test.bean:8080/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="$MYSELF.js?patch=$PATCH" type="text/javascript" charset="utf-8"></script>
+<script src="$MYSELF.js?corr=$CORR_JS" type="text/javascript" charset="utf-8"></script>
 <script type="text/javascript">window.addEventListener('load', function() { pretty_log();});</script>  
 </script>
 </head><body><pre id="log"

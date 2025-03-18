@@ -1,4 +1,4 @@
-/* global jQuery */
+/* global jQuery, myself_url */
 /*
   (c) 2025 Martin Smidek <martin@smidek.eu>
    
@@ -95,15 +95,16 @@ function php0(name_pars) {
   ask(x,after_php);
 }
 // --------------------------------------------------------------------------------------- after php
-// reakce na návratovou hodnotu PHP funkce
+// reakce na návratovou hodnotu PHP funkce, jejíž jméno je v DOM.php_function
 function after_php(DOM) {
+  let unknowns= [];
   for (const id in DOM) {
+    if (id=='php_function') continue;
     let elem= jQuery(`#${id}`),
         closure= elem.closest('label').length ? elem.closest('label') : elem,
         value= DOM[id];
     if (!elem.length) {
-      error(`chyba DOM - '${id}' je neznámé id`,DOM);
-      break;
+      unknowns.push(id);
     }
     if (value==='') continue;
     if (!Array.isArray(value)) value= [value];
@@ -146,6 +147,10 @@ function after_php(DOM) {
       }
     }
   }
+  if (unknowns.length) {
+    let x= {cmd:'DOM_unknown',args:[unknowns,DOM.php_function]};
+    ask(x);
+  }
 }
 // --------------------------------------------------------------------------------------------- ask
 // ask(x,then): dotaz na server se jménem funkce po dokončení
@@ -168,15 +173,15 @@ function ask(x,then,arg) {
     }
   })
 }
-// ------------------------------------------------------------------------------------------- error
-function error(msg,DOM) {
-  let tr= DOM.trace || '',
-      index= tr.indexOf("<hr>");
-  tr= index !== -1 ? tr.substring(0, index) : tr.substring(0, 24);
-  if (!tr) tr= 'empty trace';
-  let x= {cmd:'DOM_error',args:[msg,tr]};
-  ask(x);
-}
+//// ------------------------------------------------------------------------------------------- error
+//function error(msg,DOM) {
+//  let tr= DOM.trace || '',
+//      index= tr.indexOf("<hr>");
+//  tr= index !== -1 ? tr.substring(0, index) : tr.substring(0, 24);
+//  if (!tr) tr= 'empty trace';
+//  let x= {cmd:'DOM_error',args:[msg,tr]};
+//  ask(x);
+//}
 function errorbox_only(msg) {
   jQuery('#form').hide();
   jQuery('.popup').hide();
