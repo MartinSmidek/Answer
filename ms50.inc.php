@@ -71,5 +71,5 @@
 //  echo("db2.inc.php end<br>");
   // SPECIFICKÉ PARAMETRY
   global $USER;
-  $VPS= 'PPS';
-  $EZER->options->org= 'MS severní Čechy';
+  $VPS= 'VPS';
+  $EZER->options->org= 'Centrum pro rodinu, Vysočina';
