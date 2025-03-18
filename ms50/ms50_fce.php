@@ -5,15 +5,23 @@ define('org_ms50',16);
 define ('POZOR',"<span style:'color:red;background:yellow'>POZOR</span>");
 # ----------------------------------------------------------------------------------------- reimport
 function reimport() {
+  global $errors;
+  $errors= [];
+  query("TRUNCATE TABLE spolu");
   foreach (['akce','rodina','osoba','tvori','pobyt','spolu'] as  $tab) {
     import($tab);
   }
   complete();
+  $msg= count($errors) ? "CHYBY IMPORTU: ".implode(';',$errors) : 'OK';
+  display($msg);
+  return $msg;
 }
 # ------------------------------------------------------------------------------------------- import
 function import($tab) {
   // načtení importního souboru $tab.csv z ms50/doc/import
+  global $errors;
   $data= [];
+  $nline= 1;
   $url= "ms50/doc/import/$tab.csv";
   $fp= fopen($url,'r');
   if (!$fp) { display("$url unknown"); return; }
@@ -30,6 +38,7 @@ function import($tab) {
   // vložení do db
   $flds= implode(',',$fld);
   foreach ($data as $vs) {
+    $nline++;
     $vals= ''; $del= '';
     if ($tab=='rodina' && $vs[8]=='VPS') $vs[8]= 1;
     if ($tab=='osoba') $vs[14]= sql_date1($vs[14],1);
@@ -62,13 +71,20 @@ function import($tab) {
         $qry= "INSERT INTO rodina (access,$flds) VALUE (16,$vals)";
         query($qry);
         break;
+      case 'spolu': // jen sólo pobyty: $vs[0]=id_pobyt a $vs[1]=id_osoba
+        list($je,$ida)= select('COUNT(*),id_akce','pobyt',"id_pobyt=$vs[0]");
+        if (!$je) { $errors[]= "spolu.$nline - id_pobyt=$vs[0] neexistuje"; break; }
+        if (!$ida) { $errors[]= "spolu.$nline - id_pobyt=$vs[0] nemá nastavenou akci"; break; }
+        $qry= "INSERT INTO spolu (id_pobyt,id_osoba) VALUE ($vs[0],$vs[1])";
+        query($qry);
+        break;
     }
   }
 }
 # ----------------------------------------------------------------------------------------- complete
 function complete() {
   // doplnění spolu podle pobyt.i0_rodina
-  $rr= pdo_qry("SELECT id_pobyt,i0_rodina FROM pobyt WHERE i0_rodina!=0");
+  $rr= pdo_qry("SELECT /* complete */ id_pobyt,i0_rodina FROM pobyt WHERE i0_rodina!=0");
   while ($rr && (list($idp,$idr)= pdo_fetch_array($rr)) ) {
     $tt= pdo_qry("SELECT id_osoba FROM tvori WHERE id_rodina=$idr");
     while ($tt && (list($ido)= pdo_fetch_array($tt)) ) {
