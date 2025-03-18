@@ -16496,6 +16496,9 @@ function db2_copy_test_db($db) {  trace();
   );
   $msg.= "<h3>Kopie databáze ezer_{$db} do ezer_{$db}_test</h3>";
   foreach ($tabs as $xtab ) {
+    $je= select('COUNT(*)','information_schema.tables',
+        "table_schema='ezer_{$db}' AND table_name='$xtab' ");
+    if (!$je) continue;
     $tab= $xtab;
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
     query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");

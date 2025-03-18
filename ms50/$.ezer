@@ -40,7 +40,7 @@ menu ms50 { type:'main', title:'ms50', active:*, _sys:'*'
       }
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'
-          item {title:'Záznamy', par:{org:'8',cmd:'show'}}
+          item {title:'Záznamy', par:{org:'16',cmd:'show'}}
 //          item {title:'Ulož ezer_answer.db_osoba', par:{org:'8',cmd:'save'}, skill:'m'}
           proc onclick (i) {
             clear; info.display(0,'t');
