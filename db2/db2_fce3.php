@@ -24,7 +24,7 @@ function db2_rod_show($nazev,$n) {
         . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
         . ",aktivita,note,_kmen,_geo,web_souhlas,prislusnost");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
-          . ",o_umi,prislusnost");
+          . ",o_umi");
   // načtení rodin
   $qr= pdo_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
       telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access AS r_access
@@ -74,6 +74,7 @@ function db2_rod_show($nazev,$n) {
       $cleni.= "$del$ido~$keys~{$o->access}~~{$o->jmeno}~$dup~$vek~{$o->id_tvori}~$idr~{$o->role}";
       $cleni.= '~'.rodcis($o->narozeni,$o->sex);
       $cleni.= "~~" . sql_date1($o->narozeni);
+      $cleni.= "~" . sql_date1($o->web_souhlas);                // souhlas d.m.r
       if ( !$o->adresa ) {
         $o->ulice= "®".$rod[$n]->r_ulice;
         $o->psc=   "®".$rod[$n]->r_psc;
