@@ -232,6 +232,57 @@ end:
 }
 /** ==========================================================================================> AKCE */
 # ---------------------------------------------------------------------------------------- akce roky
+# vytvoří číselník akcí danéo roku jako XLSX a vrátí jeho relativní adresu
+function akce_ciselnik($rok) {
+  // začátek XLSX
+  $dnes= date('j.n.Y');
+  $title= "Číselník akcí YMCA Setkání k $dnes";
+  $file= "ciselnik_YS$rok";
+  $xls= "|open $file";
+  $xls.= "\n|sheet vypis;;L;page";
+  $xls.= "\n|A1 $title::size=13 bold";
+  // hlavička
+  $fields= explode(',','Kód akce:10,Název akce:40,Dům Setkání:12,Od:12,Do:12');
+  $n= 3; $a= 0; $clmns= $del= '';
+  $xls.= "\n";
+  foreach ($fields as $fa) {
+    list($title,$width)= explode(':',$fa);
+    $A= Excel5_n2col($a++);
+    $xls.= "|$A$n $title";
+    if ( $width ) {
+      $clmns.= "$del$A=$width";
+      $del= ',';
+    }
+  }
+  if ( $clmns ) $xls.= "\n|columns $clmns ";
+  $xls.= "\n|A$n:$A$n bcolor=ffc0e2c2 wrap border=+h|A$n:$A$n border=t";
+  $ra= pdo_qry("SELECT IF(ciselnik_akce,ciselnik_akce,'') AS kod, a.nazev, 
+        IFNULL(id_order,'') AS ord, datum_od, datum_do, IFNULL(d.id_akce,0) AS d_akce
+      FROM akce AS a 
+      LEFT JOIN ds_order AS d ON a.id_duakce=d.id_akce
+      WHERE a.access & 65 AND YEAR(datum_od)=$rok 
+      HAVING d_akce OR kod
+      ORDER BY IF(kod,kod,999),ord");
+  while ($ra && (list($kod,$nazev,$ord,$od,$do)= pdo_fetch_array($ra))) {
+    $n++;
+    $od= sql2xls($od);
+    $do= sql2xls($do);
+    $xls.= "\n|A$n $kod|B$n $nazev|C$n $ord|D$n $od::right|E$n $do::right";
+  }
+  $xls.= "\n|close";
+                                      display($xls);
+  require_once "ezer3.2/server/vendor/autoload.php";
+  $inf= Excel2007($xls);
+  if ( $inf ) {
+    $html.= "Číselník se nepovedlo vygenerovat ($inf)";
+  }
+  else {
+    $html.= "Číselník akcí roku $rok lze stáhnout <a href='docs/$file.xlsx' target='xls'>zde</a>";
+  }
+                                      display($html);
+  return $html;
+}
+# ---------------------------------------------------------------------------------------- akce roky
 # vrátí seznam roků všech akcí a objednávek
 function akce_roky() {
 //  ';
@@ -3352,6 +3403,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     }
     if ($idpr) {
       $vars_json= select('vars_json','prihlaska',"id_prihlaska=$idpr");
+      $vars_json= str_replace("\n", "\\n", $vars_json);
       $vars= json_decode($vars_json);
       if ($vars===null) {
         $json_error= json_last_error_msg();

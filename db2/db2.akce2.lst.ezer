@@ -260,8 +260,8 @@ menu m {type:'left', format:'f+'
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
   menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;e;crz'
-//g    item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
-//g      par:{it:'g|r',s:'google',o:'',a:'rok'}}
+    item {title:'[fa-file-excel-o] aktuální číselník akcí',                        skill:'y'
+      par:{s:'ciselnik'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
       par:{it:'s|r',s:'sey',o:'org',a:'rok'}}
     item all {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s#e'
@@ -294,6 +294,10 @@ menu m {type:'left', format:'f+'
     item  {title:'[fa-search-minus] ... jen pobyty Domu setkání', par:{it:'s',cond:'da2.access=64 '} skill:'y'}
   }
   func onclick (i:ezer) {
+    if (i.par.s=='ciselnik') {
+      alert(php.akce_ciselnik(info.rok));
+      return;
+    }
     menu_item= i;
     info.display(2,i.par.it); 
     page.inf.onclick(); page.display(1,'x'); page.ord.display(0); 
