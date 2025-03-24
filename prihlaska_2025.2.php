@@ -212,7 +212,7 @@ catch (Throwable $e) {
   }
   if (preg_match('/unknown DOM/',$msg)) {
 //    global $old_trace; // pouze přes DOM_error
-    $errpos= "$msg<hr>";
+    $errpos= $msg;
   }
   else {
     $errpos= "$msg na řádku $tline";
@@ -377,6 +377,13 @@ function polozky() { // --------------------------------------------------------
       'email'     =>[35,'* e-mailová adresa','mail','abp','p']], // pro pecouny nepovinné
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
+      ] : [],
+    $akce->p_oso_adresa ? [
+      'adresa'    =>[ 0,'','','abp'],
+      'ulice'     =>[15,'* ulice a č.or. NEBO č.p.','','abp'],
+      'psc'       =>[ 5,'* PSČ','','abp'],
+      'obec'      =>[20,'* obec/město','','abp'],
+      'stat'      =>[ 0,'stát','','abp'],
       ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
@@ -1014,7 +1021,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
   $part= '';
   if ($detail==1) {
     $part.= "<br><button onclick=\"php2('form_deti,=2');\" >
-      <i class='fa fa-eye'></i> zobrazit, zapsat naše děti</button>";
+      <i class='fa fa-eye'></i> zobrazit/zapsat všechny naše děti (i ty, které nebereme na kurz)</button>";
     $DOM->form_deti= ['show',$part];
   } // tlačítko
   else { // detail==2
@@ -1277,6 +1284,7 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
         )
       . elem_input('o',$id,['email','telefon']) 
       . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
+      . ($akce->p_oso_adresa ? '<br>'.elem_input('o',$id,['ulice','psc','obec']) : '')
       . "</div>";
   return $part;
 } // form osoba
