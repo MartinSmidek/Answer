@@ -9,11 +9,35 @@
 // -------------------------------------------------------------------------------------- pretty log
 // volá se z prihlaska.log.php -- upraví dynamicky HTML
 function pretty_log() {
-  let log= $('#log').html();
-  log= log.replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
-  log= log.replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
+  // aktuální datum
+  let now = new Date();
+  let year = now.getFullYear();
+  let month = (now.getMonth() + 1).toString().padStart(2, '0'); // +1, protože měsíce jsou indexovány od 0
+  let day = now.getDate().toString().padStart(2, '0');
+  let hours = now.getHours().toString().padStart(2, '0');
+  let minutes = now.getMinutes().toString().padStart(2, '0');
+  let seconds = now.getSeconds().toString().padStart(2, '0');  let log= $('#log').html();
+  let ted= `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  // obrácení a kompatibilita se staršími formáty
   let lines= log.split("\n");
-  let title= lines[0];
+  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u>";
+  lines[0]= title;
+  for (let i= lines.length-2; i>0; i--) {
+    if (lines[i][6]!='/') {
+      if (lines[i][11]=='-') {
+        let match= lines[i].match(/akce=A_(\d+)/);
+        let ida= match ? match[1] : '?'; 
+        lines[i]= lines[i].slice(0,7)+ida.toString().padStart(4,' ')+' '+lines[i].slice(7);
+      }
+      let match= lines[i].match(/id_prihlaska=(\d+)/);
+      let idw= match ? match[1] : '?'; // Číslo je v první zachycené skupině
+      lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
+        + lines[i].substr(31);
+    }
+    lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
+    lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
+    lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
+  }
   let reversed= lines.reverse();
   log= reversed.join("\n");
   $('#log').html(title+log);
@@ -95,15 +119,16 @@ function php0(name_pars) {
   ask(x,after_php);
 }
 // --------------------------------------------------------------------------------------- after php
-// reakce na návratovou hodnotu PHP funkce
+// reakce na návratovou hodnotu PHP funkce, jejíž jméno je v DOM.php_function
 function after_php(DOM) {
+  let unknowns= [];
   for (const id in DOM) {
+    if (id=='php_function') continue;
     let elem= jQuery(`#${id}`),
         closure= elem.closest('label').length ? elem.closest('label') : elem,
         value= DOM[id];
     if (!elem.length) {
-      error(`chyba DOM - '${id}' je neznámé id`,DOM);
-      break;
+      unknowns.push(id);
     }
     if (value==='') continue;
     if (!Array.isArray(value)) value= [value];
@@ -145,6 +170,10 @@ function after_php(DOM) {
               : val)
       }
     }
+  }
+  if (unknowns.length) {
+    let x= {cmd:'DOM_unknown',args:[unknowns,in_function]};
+    ask(x);
   }
 }
 // --------------------------------------------------------------------------------------------- ask
