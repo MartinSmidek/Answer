@@ -16533,7 +16533,7 @@ function db2_copy_test_db($db) {  trace();
     $tabs= explode(',',
       "*_touch,*_todo,_track,"
     . "_help,_cis,"
-    . "ds_cena,ds_osoba,tx_gnalberice_order,tx_gnalberice_room"
+    . "ds_cena,ds_osoba,tx_gnalberice_order,tx_gnalberice_room,tx_gncase,tx_gncase_part"
     );
     foreach ($tabs as $xtab ) {
       $tab= $xtab;

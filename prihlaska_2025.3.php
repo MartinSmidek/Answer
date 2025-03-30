@@ -13,12 +13,12 @@
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
 // debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 $ORG= 1;  // verze pro YMCA Setkání
-$VERZE= '2025'; // verze přihlášek: rok
+$VERZE= '2025'; // verze přihlášek: rok 
 $MINOR= '3'; // verze přihlášek: release
 $CORR_JS= '3'; // verze přihlášek: oprava JS části pro vynucený reload
 $MYSELF= "prihlaska_$VERZE.$MINOR"; // $CORR_JS se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
-error_reporting(E_ALL);
+//error_reporting(E_ALL);
 // session
 $SID= count($_POST) ? ($_POST['sid']??'') : ($_GET['sid']??'');
 if ($SID) {
@@ -1771,7 +1771,8 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 // =============================================================================== zobrazení stránky
 function page() {
-  global $MYSELF, $SID, $CORR_JS, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root;
+  global $MYSELF, $SID, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root,
+      $VERZE, $MINOR, $CORR_JS;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $icon= "akce$_TEST.png";
@@ -1851,8 +1852,9 @@ function page() {
         </div>
       </main>
       <footer>
-        <div class="footer">
-          © YMCA Setkání
+        <div class="footer" style="display: flex;justify-content: space-between">
+          <span>© YMCA Setkání</span>
+          <span>verze $VERZE.$MINOR.$CORR_JS </span>
         </div>
       </footer>
     </div>
