@@ -1,4 +1,4 @@
-/* global jQuery */
+/* global jQuery, myself_sid, myself_url */
 /*
   (c) 2025 Martin Smidek <martin@smidek.eu>
    
@@ -23,7 +23,7 @@ function pretty_log() {
   let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u>";
   lines[0]= title;
   for (let i= lines.length-2; i>0; i--) {
-    if (lines[i][6]!='/') {
+    if (lines[i][6]!='/' && lines[i][5]!='=') {
       if (lines[i][11]=='-') {
         let match= lines[i].match(/akce=A_(\d+)/);
         let ida= match ? match[1] : '?'; 
@@ -172,14 +172,15 @@ function after_php(DOM) {
     }
   }
   if (unknowns.length) {
-    let x= {cmd:'DOM_unknown',args:[unknowns,in_function]};
+    let x= {cmd:'DOM_unknown',args:[unknowns,DOM.php_function]};
     ask(x);
   }
 }
 // --------------------------------------------------------------------------------------------- ask
 // ask(x,then): dotaz na server se jménem funkce po dokončení
 function ask(x,then,arg) {
-  var xx= x;
+  if (myself_sid) 
+    x.sid= myself_sid;
   jQuery.ajax({url:myself_url, data:x, method: 'POST',
     success: function(y) {
       if ( typeof(y)==='string' ) { 

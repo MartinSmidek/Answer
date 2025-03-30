@@ -369,7 +369,8 @@ proc akce_vsechny(cond) {
 }
 # ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
-  var a_akce: number, zmena_web:number
+  var a_akce: number
+//  , zmena_web:number
   # ---------------------------==> . ochrana editace více uživateli
   func onchanged() { akce_lock('on') }
   func akce_lock(on) { var lock:object 
@@ -385,7 +386,7 @@ form _page [,,275,360] {
     akce_lock('off'); 
     form.plain();
     form.load(page.a_akce); 
-    zmena_web= 0; 
+//    zmena_web= 0; 
   }
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
@@ -422,7 +423,9 @@ form _page [,,275,360] {
   }
   func show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
-    form.load(id_akce); zmena_web= 0; 
+    form.load(id_akce); 
+//    zmena_web= 0; 
+    web_url= php.web_prihlaska_url(id_akce);
     if (!has_skill('e')) ds_order=0;
     if (has_skill('y#e')) ds_order= php.ds_objednavka(id_akce);
     switch (zalozka) {
@@ -488,7 +491,9 @@ form _page [,,275,360] {
   func init_page() {
     page.a_akce= 0;
     cen_copy.enable(0); cen_copy.key(0);
-    form.init(); zmena_web= 0; 
+    form.init(); 
+//    zmena_web= 0; 
+    web_url= '';
     if (!has_skill('e')) ds_order=0;
     note= ''; key_akce= ' ';
   }
@@ -628,36 +633,41 @@ form _page [,,275,360] {
       help:'členové týmu akce s právem editace', options:akce_tym.surname }
   // ------------------------------------- web setkani.org 
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
-      title:" součinnost s www.setkani.org" }
+      title:" součinnost s www.setkani.org - od dubna 2025 na kartě Přihlášky" }
   button [381,316,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw'
     help:'pokyny pro přihlašování na www.setkani.org'
     proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
   }}
-  field web_url [82,328,287,] { tag:'cor', title:'url pozvánky', data:akce.web_url, skill:'yaa|yaaw;faa|faaw' 
-    proc onchanged() {
-      match('page=',this.get); 
-      warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
-              "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
-      this.set(''); this.plain;
-    | zmena_web.set(1);
-  }}
-  check web_prihl[16,344,243,] { tag:'cor', data:akce.web_prihlasky,
-                        title:"ONLINE <span class='zluty'>přihlašování</span> na www.setkani.org", skill:'yaa+|yaaw' 
-    proc onchange() { zmena_web.set(1);
-  }}
+  label web_url [19,330,331,] { tag:'cor' }
+//  field web_url [82,328,287,] { tag:'cor', title:'url pozvánky', data:akce.web_url, 
+//      format:'d', skill:'yaa|yaaw;faa|faaw' 
+//    proc onchanged() {
+//      match('page=',this.get); 
+//      warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
+//              "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
+//      this.set(''); this.plain;
+//    | zmena_web.set(1);
+//    }
+//  }
+  check xp_enable [16,344,243,] { tag:'cor', data:akce.web_prihlasky, format:'d', skill:'yaa+|yaaw' 
+                        title:"ONLINE <span class='zluty'>přihlašování</span> na www.setkani.org"
+//    proc onchange() { zmena_web.set(1);}
+  }
   select garant [293,355,79,] {tag:'cor', type:'map', title:'garant' , data:akce.poradatel,
       help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka, skill:'#e' 
-    proc onchanged() { zmena_web.set(1);
-  }}
-  check [16,362,214,21] { tag:'cor', title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
-                        skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
+//    proc onchanged() { zmena_web.set(1); }
+  }
+  check xp_pozde [16,362,214,21] { tag:'cor', format:'d'
+      title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
+      skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" 
+  }
   // online přihlašování přes plugin ve Wordpressu
-  check [16,380,243,] { tag:'cor', data:akce.web_wordpress,
+  check [16,380,243,] { tag:'cor', data:akce.web_wordpress, format:'d'
                         title:"ONLINE/WordPress na www.setkani.org", skill:'yaa+|m#e' }
-  field web_wordpress [241,383,119,] { tag:'cor', data:akce.web_wordpress, skill:'#e' }
+  field web_wordpress [241,383,119,] { tag:'cor', data:akce.web_wordpress, format:'d', skill:'#e' }
   // ------------------------------------- web chlapi.online
   label [10,413,383,70] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
-      title:" součinnost s chlapi.online" }
+      title:" součinnost s chlapi.cz" }
   radio [16,429,266,54] { tag:'cor', data:akce.web_kalendar, skill:'#e'
     case [0,0,257,14] { title:"akce není v kalendáři chlapi.cz (default)", value:'0' }
     case [0,17,257,14] { title:"upoutávka v kalendáři <span class='azurovy'>chlapi.cz</span>", value:'1' }
@@ -720,7 +730,7 @@ form _page [,,275,360] {
       ida= form.key();
       akce_lock('off'); 
       ucast.the_duakce_local= 0; // inicializace Účastníci
-      if (zmena_web) alert(php.web_prihlaska(page.a_akce,web_url,web_prihl,garant.key())); 
+//      if (zmena_web) alert(php.web_prihlaska(page.a_akce,web_url,p_enable,garant.key())); 
       if (ida) { // oprava
         if (!has_skill('e') && (ds_order || ds_order.changed())) {
           // doplňky pro Dům setkání: oprava data nebo transformace z akce "jinde" na akci v DS
@@ -847,7 +857,7 @@ form _page [,,275,360] {
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
-  func p_show() { var ch:ezer, akci:text
+  func p_show() { var ch:ezer, akci:text, tp_default:text
     p_tag= php.select1('barva','_cis',`druh='ms_akce_typ' AND data=${druh.key()}`);
     if (!p_tag) return;
     form.display(1,p_tag);
@@ -859,23 +869,46 @@ form _page [,,275,360] {
     for (ch of form.tagged('pri')) {
       if (js.get_type(ch)=='check') ch.init();
     }
-    tp_pracovni= "sem prosím napište vzkaz organizátorům, zejména informace k pobytu, které nebylo možné nikam napsat";
     akci= '???';
+    p_json.p_kontakt= 1; p_json.p_rod_adresa= 1; 
+    p_json.p_registrace= 1; p_json.p_souhlas= 1; 
+    p_json.p_deti= 1; 
     switch (p_tag) { 
-      case 'O': akci= 'obnovu MS'; break;
-      case 'M': akci= 'Letní kurz MS'; break;
-      case 'O': akci= 'akci pro rodiny'; break;
-      case 'J': akci= 'akci pro jednotlivce'; break;
+      case 'M': akci= 'Letní kurz MS'; 
+        p_json.p_obcanky= 1; p_json.p_pecouni= 1; 
+        p_json.p_upozorneni= 1; p_json.p_dokument= 1; 
+        break;
+      case 'O': akci= 'obnovu MS'; 
+        p_json.p_obcanky= 1; p_json.p_pecouni= 1; p_json.p_obnova= 1; 
+        break;
+      case 'R': akci= 'akci pro rodiny'; 
+        p_json.tp_pracovni= "poznámka pro pořadatele"; 
+        break;
+      case 'J': akci= 'akci pro jednotlivce'; 
+        p_json.tp_pracovni= "poznámka pro pořadatele"; 
+        p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
+        break;
     }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
       web_online= json_encode(p_json); web_online.change();
     }
     p_json= json_decode(web_online);
+    if (!p_json.veta_potvrzeni) {
+      p_json.veta_potvrzeni= eq(p_tag,'M','O')
+        ? "Zaslané údaje zpracujeme a do týdne vám pošleme odpověď." 
+        : "V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.";
+    }
+    if (!p_json.web_prihlaska) {
+      web_prihlaska= 'prihlaska_2025'; web_prihlaska.change();
+      p_json.web_prihlaska= web_prihlaska;
+    }
     copy_by_name(p_json,form);
-//    p_enable= p_json.enable;
     p_href= p_enable ? php.akce_prihlaska(page.a_akce,web_prihlaska,
         conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0')) : '';
+    // součinnost s Úprava
+    p_enable= xp_enable; // = web_prihlasky
+    p_pozde= xp_pozde;  // = web_obsazeno
   }
   label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
       style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
@@ -894,25 +927,27 @@ form _page [,,275,360] {
   label [13,160,131,] { tag:'pri,M,O', title:'<b>rodinné přihlášení</b>'}
   label [13,160,131,] { tag:'pri,R', title:'<b>přihlášení rodiče s dětmi</b>'}
     check p_deti [30,180,78,] { tag:'pri,M,O,R', title:'včetně dětí'} 
-    check p_pecouni [144,180,189,] { tag:'pri,M,O', title:'a jejich osobních pečovatelů '} 
-    check p_rod_adresa [30,200,253,] { tag:'pri,M,O,R', title:'umožnit kontrolu a úpravu rodinné adresy'}
-  label [13,240,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
-  label [13,240,400,] { tag:'pri,J', title:'<b>přihlášení jednotlivce</b>'}
-    check p_obcanky [30,260,200,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
-    check p_kontakt [30,280,151,] { tag:'pri,M,O,R,J', title:'osobní email a telefon'}
-    check p_oso_adresa [200,280,246,] { tag:'pri,R,J', title:'osobní adresa'}
-  label [13,320,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }
-    check p_registrace [30,340,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem'}
-    check p_souhlas [250,340,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}
-  label [13,380,151,20] { tag:'pri,M,O' title:'<b>Nastavení pro akce MS</b>' }
-    check p_strava [30,400,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
-    field p_detska_od [251,402,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
-    field p_detska_do [312,402,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
-    check p_obnova [30,420,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
-    check p_upozorneni [30,420,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
-    check p_dokument [30,440,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
+    check p_deti_but [130,180,247,] { tag:'pri,M,O,R', title:'zobrazit děti až stiskem tlačítka'} 
+    check p_pecouni [30,200,258,] { tag:'pri,M,O', title:'umožnit vložení osobních pečovatelů '} 
+    check p_rod_adresa [30,220,253,] { tag:'pri,M,O,R', title:'umožnit kontrolu a úpravu rodinné adresy'}
+  label [13,250,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
+  label [13,250,400,] { tag:'pri,J', title:'<b>přihlášení jednotlivce</b>'}
+    check p_obcanky [30,270,200,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
+    check p_kontakt [30,290,151,] { tag:'pri,M,O,R,J', title:'osobní email a telefon'}
+    check p_oso_adresa [210,290,246,] { tag:'pri,J', title:'osobní adresa'}
+  label [13,330,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }
+    check p_registrace [30,350,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem'}
+    check p_souhlas [250,350,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}
+  label [13,390,151,20] { tag:'pri,M,O' title:'<b>Nastavení pro akce MS</b>' }
+    check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
+    field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
+    field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+    check p_obnova [30,430,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
+    check p_upozorneni [30,430,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
+    check p_dokument [30,450,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
+  edit veta_potvrzeni [13,500,438,40] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
-  const prihl_top= 471
+  const prihl_top= 551
   label  [13,prihl_top,98,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }
@@ -927,7 +962,7 @@ form _page [,,275,360] {
         return;
       }
       // uložení změn
-      p_json= {p_typ:p_tag}; // základní typ: O,M,R,J
+      p_json= {p_typ:p_tag}; // základní typ: M,O,R,J
       for (elem of form.tagged(p_tag)) {
         typ= js.get_type(elem);
         if (typ=='check' || typ=='field') {
@@ -935,9 +970,12 @@ form _page [,,275,360] {
         }
       }
       p_json.tp_pracovni= tp_pracovni;
+      p_json.veta_potvrzeni= veta_potvrzeni;
       echo(debug(p_json));
       if (form.key()) {
         web_online= json_encode(p_json); web_online.change();
+        if (p_enable.changed()) { xp_enable= p_enable; xp_enable.change(); }
+        if (p_pozde.changed()) { xp_pozde= p_pozde; xp_pozde.change(); }
         form.save(); form.load(); p_show();
       }
   }}
@@ -949,7 +987,7 @@ form _page [,,275,360] {
   }
   // ruční změna JSON
   edit web_online [13,prihl_top+63,438,60] { tag:'pri,M,O,R,J', title:'^JSON popis přihlášky', data:akce.web_online, format:'dt'}
-  field web_prihlaska [338,prihl_top+32,112,18] { tag:'pri,M,O,R,J', title:'PHP přihlášky', data:akce.web_prihlaska, format:'dt'}
+  field web_prihlaska [338,prihl_top+32,112,18] { tag:'pri,M,O,R,J', title:'PHP přihlášky', data:akce.web_prihlaska, format:'d'}
   # ------------------------==> . ceník
   proc c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
     // access: 1,2 pro db2 - nepoužívá cenik.typ,   používá akce.ma_cenik_verze s hodnotou 0|1

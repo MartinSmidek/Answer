@@ -178,36 +178,49 @@ function datum_oddo($x1,$x2) {
 }
 /** =========================================================================================> AKCE2 */
 # ------------------------------------------------------------------------------------ web prihlaska
+# propojení s www.setkani.org - vrátí url článku s popisem akce tzn. s nastaveným id_akce
+function web_prihlaska_url($ida) {  trace();
+  global $web_setkani;
+  $web= explode("//", $web_setkani)[1];
+  $a= "nemá článek na $web";
+  $uid= select("uid","tx_gncase_part","id_akce='$ida' AND !deleted AND !hidden",'setkani');
+  if ($uid) {
+    $path= "akce/nove/$uid";
+    $a= "popis akce <a href='$web_setkani/$path#anchor$uid' target='web'>$web/$path</a>";
+  }
+  return $a;
+}
+# ------------------------------------------------------------------------------------ web prihlaska
 # propojení s www.setkani.org - musí existovat popis akce s daným url
 #     on=1 dovolí přihlašování přes web, on=0 je zruší
-function web_prihlaska($akce,$url,$on,$garant) {  trace();
-  global $answer_db;
-  $html= '';
-  $ok= preg_match("~(nove|akce)/(\d+)$~",$url,$m);
-  if ( $ok ) {
-    $idp= $m[2];
-    $ida= $on ? $akce : 0;
-    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'",$answer_db);
-    if ( !$ido ) {
-      $html.= "<hr>POZOR: chybí garant akce!";
-      goto end;
-    }
-    $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden",'setkani');
-    if ( $ok ) {
-      $ok= query("UPDATE tx_gncase_part SET id_akce=$ida WHERE uid=$idp",'setkani');
-      $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
-    }
-    else {
-      $html.= "url pozvánky není v očekávaném tvaru";
-    }
-  }
-  else {
-    $html.= "url pozvánky není v očekávaném tvaru";
-  }
-end:  
-  $html.= "<hr>DBG: $garant $ido<hr>";
-  return $html;
-}
+//function web_prihlaska($akce,$url,$on,$garant) {  trace();
+//  global $answer_db;
+//  $html= '';
+//  $ok= preg_match("~(nove|akce)/(\d+)$~",$url,$m);
+//  if ( $ok ) {
+//    $idp= $m[2];
+//    $ida= $on ? $akce : 0;
+//    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'",$answer_db);
+//    if ( !$ido ) {
+//      $html.= "<hr>POZOR: chybí garant akce!";
+//      goto end;
+//    }
+//    $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden",'setkani');
+//    if ( $ok ) {
+//      $ok= query("UPDATE tx_gncase_part SET id_akce=$ida WHERE uid=$idp",'setkani');
+//      $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
+//    }
+//    else {
+//      $html.= "url pozvánky není v očekávaném tvaru";
+//    }
+//  }
+//  else {
+//    $html.= "url pozvánky není v očekávaném tvaru";
+//  }
+//end:  
+//  $html.= "<hr>DBG: $garant $ido<hr>";
+//  return $html;
+//}
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
 #  - doit=0 => generování přehledové hlášky o změnách týkající se pobytu
@@ -16520,7 +16533,7 @@ function db2_copy_test_db($db) {  trace();
     $tabs= explode(',',
       "*_touch,*_todo,_track,"
     . "_help,_cis,"
-    . "ds_cena,ds_osoba,tx_gnalberice_order,tx_gnalberice_room"
+    . "ds_cena,ds_osoba,tx_gnalberice_order,tx_gnalberice_room,tx_gncase,tx_gncase_part"
     );
     foreach ($tabs as $xtab ) {
       $tab= $xtab;
