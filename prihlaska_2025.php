@@ -9,8 +9,8 @@
 
 if ($_SERVER['REMOTE_ADDR']??0 == '127.0.0.1') {
 //  $_GET['test']= 2; // NEZAPISOVAT! a trasovat
-  $_GET['test']= 1; // zapisovat a trasovat
-  $_GET['mail']= 0; // NEZASÍLAT!
+//  $_GET['test']= 1; // zapisovat a trasovat
+//  $_GET['mail']= 0; // NEZASÍLAT!
 }
 else {
 //  $_GET['test']= 0; $_GET['mail']= 1; // ZASÍLAT + ZAPISOVAT
