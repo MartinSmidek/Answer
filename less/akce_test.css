@@ -273,6 +273,7 @@ html body #errorbox {
   border-left: 20px solid red;
 }
 html body section.trace {
+  overflow: hidden;
   margin-top: 10px;
   border-top: 3px dashed red;
   background-color: #FDEFF1;

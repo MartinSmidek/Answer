@@ -414,11 +414,11 @@ function polozky() { // --------------------------------------------------------
   foreach ($akce as $key=>$val) {
     if ($key[0]=='t') {
       $fld= substr($key,3);
-      $x_fld= null;
       switch ($key[1]) {
         case 'o': $x_fld= &$o_fld; break;
         case 'r': $x_fld= &$r_fld; break;
         case 'p': $x_fld= &$p_fld; break;
+        default: continue;
       }
       if ($x_fld && isset($x_fld[$fld])) {
         $x_fld[$fld][1]= $val;
@@ -503,6 +503,8 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
         goto end;
       } // nalezena rozepsaná přihláška
     }
+    // jinak zapomeň předchozí vyplňování
+    $vars->continue= 0;
     // jinak zjistíme, zda jej máme v databázi
     $regexp= "REGEXP '(^|[;,\\\\s]+)$vars->email($|[;,\\\\s]+)'";
     list($pocet,$idors)= select_2(
@@ -632,7 +634,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
     $vars->klient= '';
     append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
     log_append_stav('REG');
-    kompletuj_pobyt(0,0); // manžel má index -1, manželka -2
+    kompletuj_pobyt($vars->idr,$vars->ido); // manžel má index -1, manželka -2
     set('o','email',$vars->email,$vars->ido); 
     return formular(1);
   } // přihláška nového
@@ -645,7 +647,7 @@ function formular($nova=1) { trace();
   global $DOM, $vars;
   // nastavení formuláře
   $new= 1;
-  if (($vars->continue??0) && $nova==0) {
+  if (($vars->continue??0) /* && $nova==0*/) {
     log_load_changes();   // z uchované přihlášky
     log_write_changes();  // do současné
     $new= 0;
@@ -935,10 +937,10 @@ function DOM_zmena_spolu($idc) { // --------------------------------------------
     $vars->cleni[$idc]->Xstrava= 0;
     form_strava_hide(); 
   }
-  // zruš nevyplněného člena, který nepojede
+  // zruš nevyplněného člena, který nepojede - neprovede se, pokud má roli a nebo b
   if (!$spolu && $idc<0 
       && get('o','jmeno',$idc)=='' && get('o','prijmeni',$idc)=='') {
-    if (!get_pecoun($idc)) {
+    if (!get_pecoun($idc) && !in_array(get('o','role',$idc),['a','b'])) {
       unset($vars->cleni[$idc]);
       $clen_ID= "c_$idc"; 
       $DOM->$clen_ID= ['hide'];
@@ -950,12 +952,6 @@ function DOM_zmena_slevy($on) { // ---------------------------------------------
   global $DOM;
   $DOM->p_0_sleva_duvod= $on ? 'show' : 'hide';
 } // změna volby slevy
-//function DOM_error($msg,$tr) {
-//  global $old_trace;
-//  $old_trace= $tr;
-//  log_error($msg);
-//  throw new Exception($msg);
-//}
 function DOM_unknown($ids,$in_function) { // chybějící id v DOM
 # pokud je to v kontrolách, tak umožni doplnit položky zobrazené jak jako text 
 # jde o: jmeno, prijmeni, rodne, narozeni
@@ -1603,19 +1599,6 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
   }
 } // popup os. pečounů
 
-function array2object(array $array) {
-  $object = new stdClass();
-  foreach($array as $key => $value) {
-    if(is_array($value)) {
-      $object->$key = array2object($value);
-    }
-    else {
-      $object->$key = $value;
-    }
-  }
-  return $object;
-}
-
 function read_elem($elem_ID,$val,&$errs) { // ------------------------------------------------- read elem
 # načte element změněný uživatelem a poslaný z JS
 # z hodnoty se odstraní levo i pravostranné mezery
@@ -2148,13 +2131,13 @@ function vytvor_pobyt() { // ---------------------------------------------------
 }
 function vytvor_rodinu() { // -------------------------------------------------------- vytvor rodinu
   global $vars, $r_fld;
-  $idr= -1;
-  $vars->rodina= [$idr=>(object)[]];
-  $rodina= $vars->rodina[$idr];
+  $vars->idr= -1;
+  $vars->rodina= [$vars->idr=>(object)[]];
+  $rodina= $vars->rodina[$vars->idr];
   foreach ($r_fld as $f=>list(,$title,$typ)) {
     $rodina->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
-  return $idr;
+  return $vars->idr;
 }
 function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vytvor clena s daným ID
   // inicializace dat pro dospělou osobu, přidáme roli a že je na akci
@@ -2371,7 +2354,7 @@ function kompletuj_pobyt($idr,$ido) { // ------------------- kompletuj rodinu a 
         $copy_adr($ido_b,$idr);
     }
   } // rodina existuje - jen klient
-  elseif ($ido) { // vytvoříme rodinu a načteme klienta a doplníme druhého z manželů a dítě
+  elseif ($ido>0) { // vytvoříme rodinu a načteme klienta a doplníme druhého z manželů a dítě
     $sex= select_2('sex','osoba',"id_osoba=$ido");
     $role= $sex==2 ? 'b' : 'a';
     $idr= vytvor_rodinu();        
@@ -2848,9 +2831,7 @@ function append_log($msg) { // -------------------------------------------------
 ><b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n
 __EOS;
       file_put_contents($file, $prefix);
-//      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ? ><pre>"
-//          . "\n<b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n");
-  }
+ }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
 # ============================================================================= vytváření PDF obrazu
@@ -3142,7 +3123,19 @@ function do_session_restart() { // ---------------------------------------------
   session_write_close();
   session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 }
-# ----------------------------------------------------------------------------------- pomocné funkce
+// <editor-fold defaultstate="collapsed" desc=" ------------------------------------------------------ pomocné funkce + modifikovaná volání Ezer">
+function array2object(array $array) {
+  $object = new stdClass();
+  foreach($array as $key => $value) {
+    if(is_array($value)) {
+      $object->$key = array2object($value);
+    }
+    else {
+      $object->$key = $value;
+    }
+  }
+  return $object;
+}
 function json_encode_2($s) { // ------------------------------------------------------ json encode_2
 # korektní json encode
   $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
@@ -3661,22 +3654,4 @@ function map_cis_2($druh,$val='zkratka',$order='poradi') { // ------------------
   }
   return $cis;
 }
-
-//function getFilenameWithoutExtension($trace) {
-//    if (isset($trace[0]['file'])) {
-//        $filePath = $trace[0]['file'];
-//        $filenameWithPath = pathinfo($filePath, PATHINFO_FILENAME);
-//        return $filenameWithPath;
-//    }
-//    return null;
-//}
-//
-//// Příklad použití
-//try {
-//    // Kód, který může vyvolat výjimku
-//    throw new Exception("Chyba!");
-//} catch (Exception $e) {
-//    $trace = $e->getTrace();
-//    $filenameWithoutExtension = getFilenameWithoutExtension($trace);
-//    echo "Jméno souboru bez cesty a přípony: $filenameWithoutExtension\n";
-//}
+// </editor-fold>
