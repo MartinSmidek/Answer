@@ -2966,9 +2966,10 @@ function append_log($msg) { // -------------------------------------------------
   $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
+  $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
   $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
   $ida= strlen($akce)==6 ? substr($akce,2) : '????';
-  $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email";
+  $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email ip=$ip";
   if (!file_exists($file)) {
     global $MYSELF;
     $prefix= 
