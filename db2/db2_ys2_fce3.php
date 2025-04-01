@@ -3319,6 +3319,9 @@ function prihl_show($idp,$idw) { trace();
     case '2025.2': 
       $html= prihl_show_2025($idp,$idw,2); 
       break;
+    case '2025.3': 
+      $html= prihl_show_2025($idp,$idw,3); 
+      break;
     case '': 
       $html= 'pobyt nevznikl online přihláškou';
       break;
@@ -3389,8 +3392,8 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     }
   }
   // dodatky pro vyššší verze než minor=2
-  if ($minor > 2) {
-  }
+//  if ($minor > 2) {
+//  }
   $html.= "</div>";
   // citlivé údaje pro tvorbu skupinek
   if (($x->form->typ??'') == 'M') {
