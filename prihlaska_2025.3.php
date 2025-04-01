@@ -543,7 +543,6 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
         $DOM->kontrola_pinu= "hide";
         $DOM->pin= "hide";
         $DOM->registrace= "show";
-        
       }
       else {
         $DOM->usermail_nad= $TEXT->usermail_nad3;
@@ -551,7 +550,7 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
         $DOM->kontrola_pinu= "hide";
         $DOM->pin= "hide";
         $DOM->zadost_o_pin= "show";
-        $DOM->usermail_pod= '';
+        $DOM->usermail_pod= 'empty';
         append_log("MAIL? neznámý $vars->email");
       }
     } // neznámý mail
@@ -663,7 +662,7 @@ end:
 function formular(/*$nova=1*/) { trace();
 # připrav prázdný formulář přihlášení osob
 # doplň DOM o položky osob
-  global $DOM, $vars;
+  global $DOM, $vars, $akce;
   // nastavení formuláře
   $new= 1;
   if (($vars->continue??0) /* && $nova==0*/) {
@@ -671,7 +670,24 @@ function formular(/*$nova=1*/) { trace();
     log_write_changes();  // do současné
     $new= 0;
   }
+  // specifická část formuláře 
   $form= typ_akce('MO') ? form_MO($new) : (typ_akce('R') ? form_R($new) : form_J($new));
+  // doplnění spodních tlačítek a souhlasu GDPR
+  $red_x= 'fa fa-times fa-red';
+  $red_h= 'fa fa-hourglass-half fa-red';
+  // -------------------------------------------- souhlas
+  if ($akce->p_souhlas) {
+    $form.= "<p class='souhlas'>"
+      . "<input type='checkbox' id='p_0_Xsouhlas' value='' onchange='elem_changed(this);'"
+        . (get('p','Xsouhlas') ? 'checked' : '') . "><label for='p_0_Xsouhlas' class='souhlas'>"
+      . $akce->form_souhlas
+      . "</label></p>";
+  }
+  // -------------------------------------------- tlačítka ukončení
+  $form.= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
+           zkontrolovat a odeslat přihlášku</button>
+         <button onclick=\"php2('prerusit,=1');\"><i class='$red_h'></i> uložit rozepsanou přihlášku</button>
+         <button onclick=\"php2('zahodit');\"><i class='$red_x'></i> neposílat</button>";
   // změny zobrazení
   $DOM->usermail= 'hide';
   $DOM->form= ['show',$form];
@@ -791,7 +807,7 @@ function prihlasit() { trace();
         $ucast= 13; // přihláška
       }
     } 
-    elseif (typ_akce('O')) {
+    elseif (typ_akce('O') && $akce->p_obnova) {
       if (key($vars->rodina)>0 && byli_na_aktualnim_LK(key($vars->rodina))) {
         $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS nebo účastník
       }
@@ -915,11 +931,32 @@ db_end:
          <br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"];
   }
 } // prihlasit
+// ---------------------------------------------------------------------------------------- přerušit
+function prerusit($step) { trace();
+# přerusit rozepsanou přihlášku
+# step=1 ... jako fakt?
+# step=2 ... pokyn k obnovení
+  global $DOM;
+  switch ($step) {
+    case 1: // dotaz
+      vyber("Chcete přerušit vyplňování a vrátit se k němu později?",
+          ["Ano, chci vyplňování přerušit:prerusit,=2","Ne, chci pokračovat:"]);
+      break;
+    case 2: // info a konec
+      $DOM->form= ['show',"
+        K vyplňování se můžete vrátit kdykoliv později i na jiném počítači či mobilu. 
+        Musíte ale použít stejnou emailovou adresu a potvrdit ji zaslaným pinem.
+        Potom následně zvolte z nabízených možností <b>Pokračovat ve vyplňování přihlášky</b>.
+        "];
+      append_log("  wait ...");
+      break;
+  }
+} // přerušit
 // ------------------------------------------------------------------------------- zahodit rozepsané
 function zahodit() { trace();
 # zrušit rozepsanou přihlášku
   dotaz("Mám smazat rozepsanou přihlášku bez uložení?","start",'');
-} // zahodit-
+} // zahodit
 // ---------------------------------------------------------------------------------- přidání dítěte
 function nove_dite() { trace();
   vytvor_noveho_clena('d',1);
@@ -1042,7 +1079,7 @@ function form_deti($detail) {trace(); // ---------------------------------------
   $part= '';
   if ($detail==1) {
     $part.= "<br><button onclick=\"php2('form_deti,=2');\" >
-      <i class='fa fa-eye'></i> zobrazit/zapsat všechny naše děti (i ty, které nebereme na kurz)</button>";
+      <i class='fa fa-eye'></i> zobrazit/zapsat všechny naše děti (i ty, které nebereme na akci)</button>";
     $DOM->form_deti= ['show',$part];
   } // tlačítko
   else { // detail==2
@@ -1332,9 +1369,6 @@ function form_MO($new) { trace();
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
-  $msg= '';
-  $mis_souhlas= '';
-  $red_x= 'fa fa-times fa-red';
   // -------------------------------------------- úprava rodinné adresy
   $zacatek= '';
   if ($vars->form->rodina) {
@@ -1373,33 +1407,16 @@ function form_MO($new) { trace();
   if ($akce->p_strava) {
     $strava= form_strava_hide(1); // jen tlačítko uvnitř <div id='strava'>
   }
-  // -------------------------------------------- souhlas
-  $souhlas= $akce->p_souhlas
-    ? "<p class='souhlas'>"
-      . "<input type='checkbox' id='p_0_Xsouhlas' value='' onchange='elem_changed(this);'"
-        . (get('p','Xsouhlas') ? 'checked' : '')
-      . " $mis_souhlas><label for='p_0_Xsouhlas' class='souhlas'>"
-      . $akce->form_souhlas
-      . "</label></p>"
-    : '';
-
-  $exit= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
-           zkontrolovat a odeslat přihlášku</button>
-         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
-  $kontrola_txt= '';
-//  $exit= '';
+  // -------------------------------------------- redakce, souhlas a exit později
   $form= <<<__EOF
     <div class='rodina'>
       $zacatek
     </div>
-    <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
+    <p>Poznačte, koho na akci přihlašujete.</p>
     <div id='form_par'></div>
     <div id='form_deti'></div>
     $strava
     <div class='rodina'>$pobyt</div>
-    $souhlas
-    $exit
-    <p id="vyplneni_msg">$msg</p>
 __EOF;
   if ($vars->form->par) form_manzele();
   if ($vars->form->deti) form_deti($vars->form->deti);
@@ -1424,9 +1441,6 @@ function form_R($new) { trace();
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
-  $msg= '';
-  $mis_souhlas= '';
-  $red_x= 'fa fa-times fa-red';
   // -------------------------------------------- úprava rodinné adresy
   $zacatek= '';
   if ($vars->form->rodina) {
@@ -1451,38 +1465,21 @@ function form_R($new) { trace();
   if ($akce->p_strava) {
     $strava= form_strava_hide(1); // jen tlačítko uvnitř <div id='strava'>
   }
-  // -------------------------------------------- souhlas
-  $souhlas= $akce->p_souhlas
-    ? "<p class='souhlas'>"
-      . "<input type='checkbox' id='p_0_Xsouhlas' value='' onchange='elem_changed(this);'"
-        . (get('p','Xsouhlas') ? 'checked' : '')
-      . " $mis_souhlas><label for='p_0_Xsouhlas' class='souhlas'>"
-      . $akce->form_souhlas
-      . "</label></p>"
-    : '';
-
-  $exit= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
-           zkontrolovat a odeslat přihlášku</button>
-         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
-  $kontrola_txt= '';
-//  $exit= '';
+  // -------------------------------------------- redakce, souhlas a exit později
   $form= <<<__EOF
     <div class='rodina'>
       $zacatek
     </div>
-    <p>Poznačte, koho na akci přihlašujete. $kontrola_txt</p>
+    <p>Poznačte, koho na akci přihlašujete.</p>
     <div id='form_par'></div>
     <div id='form_deti'></div>
     $strava
     <div class='rodina'>$pobyt</div>
-    $souhlas
-    $exit
-    <p id="vyplneni_msg">$msg</p>
 __EOF;
   if ($vars->form->par) form_manzele(); 
   if ($vars->form->deti) form_deti($vars->form->deti);
   return $form;
-} // form - základní skeleton pro rodinu
+} // form R - základní skeleton pro rodinu
 
 function form_J($new) { trace();
 # pokud je new=1 nastaví se složky na default
@@ -1499,9 +1496,6 @@ function form_J($new) { trace();
   }
   // -------------------------------------------- účastník
   $osoba= form_solo($vars->ido);
-  $msg= '';
-  $mis_souhlas= '';
-  $red_x= 'fa fa-times fa-red';
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
@@ -1511,32 +1505,14 @@ function form_J($new) { trace();
   if ($akce->p_sleva) {
     $pobyt.= elem_input('p',0,['sleva_zada']) . elem_input('p',0,['sleva_duvod'],1);
   }
-  // -------------------------------------------- souhlas
-  $souhlas= $akce->p_souhlas
-    ? "<p class='souhlas'>"
-      . "<input type='checkbox' id='p_0_Xsouhlas' value='' onchange='elem_changed(this);'"
-        . (get('p','Xsouhlas') ? 'checked' : '')
-      . " $mis_souhlas><label for='p_0_Xsouhlas' class='souhlas'>"
-      . $akce->form_souhlas
-      . "</label></p>"
-    : '';
-
-  $exit= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
-           odeslat přihlášku</button>
-         <button id='zahodit' onclick='php();'><i class='$red_x'></i> neposílat</button>";
-//  $exit= '';
   $form= <<<__EOF
     $osoba
-    <div class='rodina'>
-      $pobyt
-    </div>
-    $souhlas
-    $exit
-    <p id="vyplneni_msg">$msg</p>
+    <div class='rodina'>$pobyt</div>
 __EOF;
   return $form;
-} // form - základní skeleton jednotlivce
+} // form J - základní skeleton jednotlivce
 
+// ============================================================================ interakce s klientem
 function hlaska($text,$continue='') { // --------------------------------- hláška
 # zobrazí hlášku s Ok pro ukončení případně na přechod na $continue
   global $DOM;
@@ -1579,7 +1555,6 @@ function vyber($dotaz,$odpovedi,$back=0) { // -------------- výběr z více mo�
     $DOM->alertbox_butts.= "<button onclick=\"$off;$php2\">$text$subtext</button> &nbsp;";
   }
 } // popup s výběrem z více možností
-
 function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------- hledání osoby
 # $fáze=1 ... vyplnění jména a příjmení --> (3,5)
 #       2 ... čekání na úplné vyplnění --> (3)
@@ -1705,7 +1680,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
       break;
   }
 } // popup os. pečounů
-
+// =============================================================================== zobrazení stránky
 function read_elem($elem_ID,$val,&$errs) { // ------------------------------------------------- read elem
 # načte element změněný uživatelem a poslaný z JS
 # z hodnoty se odstraní levo i pravostranné mezery
@@ -1769,7 +1744,6 @@ function read_elems($elems,&$errs) { // ----------------------------------------
   }
 } // převod do $vars
 
-// =============================================================================== zobrazení stránky
 function page() {
   global $MYSELF, $SID, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root,
       $VERZE, $MINOR, $CORR_JS;
