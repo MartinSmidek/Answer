@@ -686,42 +686,6 @@ form _page [,,275,360] {
   }
   button [245,499,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
-//g    proc onclick() {
-//g      akce_lock('off'); 
-//g      not(hnizda_ok.get); warning("oprav hnízda")
-//g    | form.same
-//g    | // oprava
-//g      ucast.the_duakce_local.set(0); // inicializace Účastníci
-//g      [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get,garant.key)) ]; 
-//g      form.key; form.save; form.load; info.sey.browse_seek
-//g    | // přidání Setkání
-//g      has_skill("yaa+");
-//g      { eq(fdate("Y",datum_od.get),info.rok.get);
-//g        [ form.insert; form.load;
-//g          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
-//g        | alert("Akci se nepovedlo po uložení najít")
-//g        ]
-//g      | alert("akce musí začínat v nastaveném roce")
-//g      }
-//g    | // přidání Familia
-//g      has_skill("faa+");
-//g      { eq(fdate("Y",datum_od.get),info.rok.get);
-//g        [ form.insert; form.load;
-//g          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
-//g        | alert("Akci se nepovedlo po uložení najít")
-//g        ]
-//g      | alert("akce musí začínat v nastaveném roce")
-//g      }
-//g    | // přidání CPR
-//g      has_skill("caa+");
-//g      { eq(fdate("Y",datum_od.get),info.rok.get);
-//g        [ form.insert; form.load;
-//g          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
-//g        | alert("Akci se nepovedlo po uložení najít - není skryta v jiném levém menu?")
-//g        ]
-//g      | alert("akce musí začínat v nastaveném roce")
-//g      }
-//g  } }
     func onclick() { 
       var rok: number, jiny_rok:number, pridat_rok:number, miss:text, ida:number, upd:object
       if (!hnizda_ok) { warning("oprav hnízda"); return }
@@ -948,7 +912,7 @@ form _page [,,275,360] {
   edit veta_potvrzeni [13,500,438,40] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
   const prihl_top= 551
-  label  [13,prihl_top,98,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
+  label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }
   }
@@ -979,10 +943,13 @@ form _page [,,275,360] {
         form.save(); form.load(); p_show();
       }
   }}
-  button [135,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Přehled nedokončených přihlášek', skill:'yo|yo'
+  button [116,prihl_top+6,,] { tag:'pri,M,O,R,J', 
+    title:"[fa-question] <a href='https://lite.evernote.com/note/a7d25a1b-835c-ebb6-d7c3-f655a1a2f9d1'
+      style='text-decoration:none' target='web'>Popis </a>" }
+  button [200,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Přehled nedokončených ...', skill:'yo|yo'
     func onclick() { PRIHLASKY.prehled(0) }
   }
-  button [339,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'... dokončených', skill:'yo|yo'
+  button [360,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'... dokončených', skill:'yo|yo'
     func onclick() { PRIHLASKY.prehled(1) }
   }
   // ruční změna JSON
