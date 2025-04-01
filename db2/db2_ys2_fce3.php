@@ -3319,11 +3319,14 @@ function prihl_show($idp,$idw) { trace();
     case '2025.2': 
       $html= prihl_show_2025($idp,$idw,2); 
       break;
+    case '2025.3': 
+      $html= prihl_show_2025($idp,$idw,3); 
+      break;
     case '': 
       $html= 'pobyt nevznikl online přihláškou';
       break;
     default: 
-      $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw); 
+      $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw,'-'); 
       break;
   }
   return $html;
@@ -3336,7 +3339,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   if (!$json || !$idr) goto end;
   $json= str_replace("\n", "\\n", $json);
   $x= json_decode($json);
-  debug($x);
+//  debug($x);
   // údaje z verze minor=2
   $full= tisk2_ukaz_prihlasku($idpr,$ida,$idp,'','','úplná data');
   $html= "<div style='text-align:right;width:100%'>$full</div>"; 
