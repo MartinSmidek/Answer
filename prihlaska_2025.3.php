@@ -341,7 +341,8 @@ function polozky() { // --------------------------------------------------------
   //        pokud bude zobrazováno jako text a nebude definováno, zobrazí se jako input
   //        je to ale nutné pro každou položku naprogramovat 
   $p_fld= array_merge( // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt
-    [ 'pracovni'    =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, které nebylo možné nikam napsat','area'],
+    [ 'pracovni'    =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, '
+        . 'které nebylo možné nikam napsat','area'], // pro MO pobyt.pracovni, pro RJ pobyt.poznamka
       'funkce'      =>[0,'funkce na akci','select'],
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
@@ -413,12 +414,12 @@ function polozky() { // --------------------------------------------------------
     typ_akce('MO') && ($akce->p_strava??0) ? [
       'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
       'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
-      'Xstrava'     =>[ 0,'','x','abdp'],  // 0 = nedefinovaná, 1 = definovaná
-      'Xstrava_s'   =>[ 0,'snídaně','check','abdp'],
-      'Xstrava_o'   =>[ 0,'obědy','check','abdp'],
-      'Xstrava_v'   =>[ 0,'večeře','check','abdp'],
-      'Xporce'  =>[10,'porce','select','abdp'],
-      'Xdieta'      =>[15,'dieta','select','abdp'],
+      'Xstrava'   =>[ 0,'','x','abdp'],  // 0 = nedefinovaná, 1 = definovaná
+      'Xstrava_s' =>[ 0,'snídaně','check','abdp'],
+      'Xstrava_o' =>[ 0,'obědy','check','abdp'],
+      'Xstrava_v' =>[ 0,'večeře','check','abdp'],
+      'Xporce'    =>[10,'porce','select','abdp'],
+      'Xdieta'    =>[15,'dieta','select','abdp'],
     ] : []
   );
   // případné opravy podle akce
@@ -2727,6 +2728,7 @@ function db_zapis_pecovani($id_dite,$id_pecoun) { // ---------------------------
 }
 function db_close_pobyt($fld_plus) { // --------------------------------------------- db close_pobyt
 # fld_plus ... zápis hodnot mimo těch funkce polozky - např. strava
+# polozka pracovni se pro MO zapisuje do pobyt.pracovni pro RJ do pobyt.poznamka
   global $p_fld, $vars;
   // úschova pobyt
   $idr= key($vars->rodina);
@@ -2742,6 +2744,7 @@ function db_close_pobyt($fld_plus) { // ----------------------------------------
     if (!isset($p_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
     if (in_array($f,['funkce'])) continue; // dávají se vždy
     if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
+      if ($f=='pracovni' && typ_akce('RJ')) $f= 'poznamka';
       $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
     }
   } 
