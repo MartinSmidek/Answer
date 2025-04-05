@@ -425,7 +425,7 @@ form _page [,,275,360] {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
     form.load(id_akce); 
 //    zmena_web= 0; 
-    web_url= php.web_prihlaska_url(id_akce);
+    if (has_skill('y')) web_url= php.web_prihlaska_url(id_akce);
     if (!has_skill('e')) ds_order=0;
     if (has_skill('y#e')) ds_order= php.ds_objednavka(id_akce);
     switch (zalozka) {
