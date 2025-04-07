@@ -997,7 +997,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
     | _jmena.width(190); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
     }
-    func onclick() {
+    func onclick() { // varianty zobrazení seznamu
       if (_docs.width()==49) show_dup(0)
       elseif (platba.width()) { 
         platba.width(0); c_suma.width(0); vratka.width(0); 
