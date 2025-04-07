@@ -2546,6 +2546,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       unset($vars->cleni[$id]);
       // případně vyměníme $id za $ido v _o_dite a o_pecoun
       $rewrite($id,$ido);
+      append_log("  <b style='color:blue'>dupl</b> ... pro $jmeno $prijmeni nalezena id_osoba=$ido");
       log_write('id_osoba',$ido);
     }
   } // asi nový člen ale zkusíme ho najít v databázi jako ido
@@ -2614,7 +2615,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
           $v0= date2sql($v0);
           $v= date2sql($v);
         }
-        elseif ($o_fld[$f][2]=='sub_select') {
+        elseif ($o_fld[$f][2]=='sub_select' && isset($vals[-1])) {
           $v0= $vals[-1];
         }
         if (in_array($f,['ulice','psc','obec','stat']) && ($akce->p_oso_adresa && $clen->adresa==0)) {

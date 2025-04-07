@@ -806,7 +806,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:{ask:'ucast2_browse_ask'}, //css_rows:"dluh,1:yellow,2:blue"
     // klíče
-    show key_pobyt
+    show key_pobyt [,,0,] { title:'idp', format:'rsq*' }
     show _empty         // 1 pokud je rodina na pobytu prázdná
     show key_akce
     show key_spolu
@@ -997,7 +997,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
     | _jmena.width(190); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
     }
-    func onclick() {
+    func onclick() { // varianty zobrazení seznamu
       if (_docs.width()==49) show_dup(0)
       elseif (platba.width()) { 
         platba.width(0); c_suma.width(0); vratka.width(0); 
@@ -1006,7 +1006,9 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         budova.width(0); pokoj.width(0); 
         _docs.width(30); x_umi.width(28); x_ms.width(19); _jmena.width(110) }
       elseif (x_umi.width()) { 
-        x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(190) }
+        key_pobyt.width(39); x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(150) }
+      elseif (key_pobyt.width()) { 
+        key_pobyt.width(0); _jmena.width(190) }
       else { platba.width(35); c_suma.width(35); vratka.width(35); _docs.width(0); _jmena.width(82) }
     }
     proc onrefreshed() { h_change_b }
