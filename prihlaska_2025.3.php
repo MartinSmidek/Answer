@@ -648,7 +648,9 @@ function klient($idor,$nova_prihlaska=1) { trace();
   }
   else { // přihláška nového
     $vars->klient= '';
-    append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
+    append_log(($vars->continue ? str_pad($vars->continue,6,' ',STR_PAD_LEFT) 
+        : "<b style='color:blue'>REGIST</b>") . " ... $vars->email");
+//    append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
     log_append_stav('REG');
     if (typ_akce('MOR'))
       kompletuj_pobyt_par($vars->idr,$vars->ido); // manžel má index -1, manželka -2
