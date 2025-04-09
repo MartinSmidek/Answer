@@ -3314,20 +3314,26 @@ function prihl_add() { trace();
 # --------------------------------------------------------------------------------------- prihl show
 # vrátí tabulku osobních otázek páru
 function prihl_show($idp,$idw) { trace();
-  $verze= select1("IFNULL(verze,'')",'prihlaska',"id_prihlaska=$idw");
-  switch ($verze) {
-    case '2025.2': 
-      $html= prihl_show_2025($idp,$idw,2); 
-      break;
-    case '2025.3': 
-      $html= prihl_show_2025($idp,$idw,3); 
-      break;
-    case '': 
-      $html= 'pobyt nevznikl online přihláškou';
-      break;
-    default: 
-      $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw,'-'); 
-      break;
+  if ($idw) {
+    // Přihlášky od roku 2025
+    $verze= select1("IFNULL(verze,'')",'prihlaska',"id_prihlaska=$idw");
+    switch ($verze) {
+      case '2025.2': 
+        $html= prihl_show_2025($idp,$idw,2); 
+        break;
+      case '2025.3': 
+        $html= prihl_show_2025($idp,$idw,3); 
+        break;
+      case '': 
+        $html= 'pobyt nevznikl online přihláškou';
+        break;
+      default: 
+        $html= sys_db_rec_show('prihlaska','id_prihlaska',$idw,'-'); 
+        break;
+    }
+  }
+  else {
+    // Možná přihláška přes cms3
   }
   return $html;
 }
@@ -3336,7 +3342,8 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   $html= 'pobyt nevznikl online přihláškou';
 //  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
   list($idr,$json,$ida)= select('id_rodina,vars_json,id_akce','prihlaska',"id_prihlaska=$idpr");
-  if (!$json || !$idr) goto end;
+  if (!$ida) goto end;
+//  if (!$json || !$idr) goto end;
   $json= str_replace("\n", "\\n", $json);
   $x= json_decode($json);
 //  debug($x);

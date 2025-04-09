@@ -648,7 +648,9 @@ function klient($idor,$nova_prihlaska=1) { trace();
   }
   else { // přihláška nového
     $vars->klient= '';
-    append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
+    append_log(($vars->continue ? str_pad($vars->continue,6,' ',STR_PAD_LEFT) 
+        : "<b style='color:blue'>REGIST</b>") . " ... $vars->email");
+//    append_log("<b style='color:blue'>REGIST</b> ... $vars->email");
     log_append_stav('REG');
     if (typ_akce('MOR'))
       kompletuj_pobyt_par($vars->idr,$vars->ido); // manžel má index -1, manželka -2
@@ -795,6 +797,8 @@ function prihlasit() { trace();
 # zapíše přihlášku do Answeru
   global $DOM, $vars, $akce, $errors, $TEST;
   // vytvoření pobytu
+  $web_changes= 1;  // 1 pro INS pobyt | 4/8 pro INS/UPD osoba | 16/32 pro INS/UPD rodina a tvoří
+  $fld= []; // pole s hodnotami pro zápis objednané stravy a dalších položek do pobyt
   log_append_stav('zapis');
   // -------------------------------- funkce na kurzu
   $ucast= 9; // náhradník protože pozdě přihlášený
@@ -827,7 +831,7 @@ function prihlasit() { trace();
   }
   // ------------------------------ oprav rodinné údaje případně vytvoř rodinu
   if (typ_akce('MOR')) {
-    db_vytvor_nebo_oprav_rodinu();
+    $web_changes|= db_vytvor_nebo_oprav_rodinu();
     if (count($errors)) goto db_end;
   }
   // ------------------------------ oprav (případně vytvoř) členy rodiny
@@ -837,10 +841,11 @@ function prihlasit() { trace();
       if ($id==$vars->ido) 
         $vars->klient= get('o','jmeno',$id).' '.get('o','prijmeni',$id);
     }
-    db_vytvor_nebo_oprav_clena($id);
+    $web_changes|= db_vytvor_nebo_oprav_clena($id);
     if (count($errors)) goto db_end;
   }
-  
+  // přidání změn k pobytu
+  $fld['web_changes']= $web_changes; 
   // ------------------------------ vyřeš osobní pečovatele
   foreach (array_keys($vars->cleni) as $id_dite) {
     $id_pecoun= get_pecoun($id_dite);
@@ -850,7 +855,6 @@ function prihlasit() { trace();
   }
 
   // ------------------------------ zapiš objednávku stravy do db !!! pouze normální a bezlepkové
-  $fld= []; // pole s hodnotami pro zápis objednané stravy
   if ($akce->p_strava) {
     $strava= [];
     $spec= []; // pro každou dietu zvlášť
@@ -2387,6 +2391,9 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
       $clen->stat= $stat;
     }
   }
+  else {
+    $clen->adresa= 1; // bude mít/má vlastní adresu 
+  }
   $vars->cleni[$ido]->role= $role;
   $vars->cleni[$ido]->spolu= $o->umrti ? 0 : ($spolu ? [0,1] : 0);
   // pokud je strava tak ji inicializuj
@@ -2501,7 +2508,7 @@ function db_open_pobyt() { // --------------------------------------------------
 }
 function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vytvor_nebo_oprav_clena
 # pokud mají roli=p a jsou noví přidáme je do rodiny, pokud nejsou noví do rodiny se nepřidají
-# pokud je oprava v adrese a je adresa=0 realizuj ji v rodině
+# pokud je oprava v adrese a je adresa=0 realizuj ji v rodině (pokud je vars->idr)
   global $o_fld, $akce, $vars; 
   $rewrite= function($old,$new) use ($vars) { // -------------------------- přepíše o_dite, o_pecoun
     foreach (array_keys($vars->cleni) as $id) {
@@ -2518,6 +2525,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     }
   };
   // pobyt a rodina už musí být zapsané
+  $web_changes= 0;  // 4/8 pro INS/UPD osoba
   $novy= 0; // 1 pokud bude nyní vytvořen
   $idp= $vars->pobyt->id_pobyt;
 //  $idr= key($vars->rodina);
@@ -2583,6 +2591,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       }
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
+    $web_changes|= 4;
     $ido= _ezer_qry("INSERT",'osoba',0,$chng);
     $novy= 1;
     $vars->cleni[$ido]= $vars->cleni[$id];
@@ -2618,10 +2627,11 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
         elseif ($o_fld[$f][2]=='sub_select' && isset($vals[-1])) {
           $v0= $vals[-1];
         }
-        if (in_array($f,['ulice','psc','obec','stat']) && ($akce->p_oso_adresa && $clen->adresa==0)) {
+        if (in_array($f,['ulice','psc','obec','stat']) 
+            && ($akce->p_oso_adresa && $clen->adresa==0)) {
           // oprav údaj jako rodinný
           $chngr= [(object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v]];
-//          ezer_qry_2("UPDATE",'rodina',$idr,$chngr,(object)['soft_u'=>1,'quiet'=>0]);
+          $web_changes|= 32;
           _ezer_qry("UPDATE",'rodina',$idr,$chngr);
           continue;
         }
@@ -2632,6 +2642,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
     if (count($chng)) {
+      $web_changes|= 8;
       _ezer_qry("UPDATE",'osoba',$ido,$chng);
     }
   } // našli => opravíme změněné hodnoty položek existující osoby
@@ -2655,16 +2666,18 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
           (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
           (object)array('fld'=>'role',      'op'=>'i','val'=>$role)
         );
+        $web_changes|= 32;
         _ezer_qry("INSERT",'tvori',0,$chng);
       }
     }
   } // zapojíme do rodiny
 end:
-  // konec
+  return $web_changes;
 }
 function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytvor_nebo_oprav_rodinu
 # oprav rodinné údaje resp. vytvoř novou rodinu
   global $akce, $r_fld, $vars;
+  $web_changes= 0;  // 16/32 pro INS/UPD rodina a tvoří
   $id= key($vars->rodina);
   $rodina= $vars->rodina[$id];
   if ($id<0) {
@@ -2682,6 +2695,7 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
         $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$v];
       }
     }
+    $web_changes|= 16;
     $idr= _ezer_qry("INSERT",'rodina',0,$chng);
     $vars->idr= $idr;
     $vars->rodina[$idr]= $rodina;
@@ -2704,9 +2718,11 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
       }
     }
     if (count($chng)) {
+      $web_changes|= 32;
       _ezer_qry("UPDATE",'rodina',$id,$chng);
     }
   }
+  return $web_changes;
 }
 function db_zapis_pecovani($id_dite,$id_pecoun) { // ----------------------------- db zapis_pecovani
 # propoj dítě s pečounem 
@@ -2952,7 +2968,10 @@ function append_log($msg) { // -------------------------------------------------
     global $MYSELF;
     $prefix= 
 <<<__EOS
-<?php if(!isset(\$_GET['itsme'])) exit; ?>
+<?php 
+  session_start(); 
+  if(!(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
+?>
 <html><head><title>přihlášky</title>
 <link rel="shortcut icon" href="img/letter.png">
 <script src="http://answer-test.bean:8080/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
@@ -2965,6 +2984,8 @@ __EOS;
       file_put_contents($file, $prefix);
 //      file_put_contents($file, "<?php if(!isset(\$_GET['itsme'])) exit; ? ><pre>"
 //          . "\n<b>VERZE  AKCE DATUM      ČAS      FUNKCE     KLIENT </b>\n");
+    $ANSWER= $_SESSION['db2']['user_id']??0;
+
   }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }

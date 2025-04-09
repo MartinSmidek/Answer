@@ -16490,10 +16490,10 @@ function db2_stav_kdo($db,$desc,$tit) {
 }
 # --------------------------------------------------------------------------------==> . testovací db
 # --------------------------------------------------------------------------------- db2 copy_test_db
-# zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
+# zkopíruje důležité tabulky a soubory z ezer_$db do ezer_$db_test
 # pro $db=db2 zkopíruje také setkani4 do setkani4_test
 function db2_copy_test_db($db) {  trace();
-  $msg= '';
+  $msg= ''; $del= '';
   query("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
   // tabulka, ze které se kopíruje jen posledních $max záznamů, má před jménem hvězdičku
   $max= 5000;
@@ -16511,24 +16511,37 @@ function db2_copy_test_db($db) {  trace();
   );
   $msg.= "<h3>Kopie databáze ezer_{$db} do ezer_{$db}_test</h3>";
   foreach ($tabs as $xtab ) {
-    $je= select('COUNT(*)','information_schema.tables',
-        "table_schema='ezer_{$db}' AND table_name='$xtab' ");
-    if (!$je) continue;
     $tab= $xtab;
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
+    $je= select('COUNT(*)','information_schema.tables',
+        "table_schema='ezer_{$db}' AND table_name='$tab' ");
+    if (!$je) continue;
     query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
     query("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
-    $LIMIT= '';
+    $LIMIT= $ORDER= '';
     if ( $xtab[0]=='*' ) {
       $count= select('COUNT(*)',$tab);
-      if ($count>$max) $LIMIT= "LIMIT ".($count-$max).", $max";
+//      if ($count>$max) $LIMIT= "LIMIT ".($count-$max).", $max";
+      if ($count>$max) $LIMIT= "LIMIT $max";
+      $ORDER= "ORDER BY id".($tab[0]=='_' ? $tab : "_$tab").' DESC';
     }
-    $MAX= $xtab[0]=='*' ? "WHERE YEAR(kdy)=YEAR(NOW())" : '';
-    $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab $LIMIT");
-    $msg.= "<br>COPY ezer_{$db}_test.$tab ... $n záznamů $LIMIT";
+//    $MAX= $xtab[0]=='*' ? "WHERE YEAR(kdy)=YEAR(NOW())" : '';
+    $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab $ORDER $LIMIT");
+    $msg.= "{$del}COPY ezer_{$db}_test.$tab ... $n záznamů $LIMIT";
+    $del= '<br>';
   }
-  // kopie pro Dům setkání
+
+  // kopie logu přihlášek
+  $log= "prihlaska.log.php";
+  if (file_exists($log)) {
+    $KB= round(filesize($log)/1024); 
+    $ok= copy($log,"../answer-test/$log") ? '' : 'failed';
+    $msg.= "<h3>Kopie logu přihlášek</h3>COPY prihlaska.log.php ... $KB KB $ok";
+  } 
+
+  // kopie pro Dům setkání a přihlášek
   if ($db=='db2') {
+    $del= '';
     $msg.= "<h3>Kopie databáze setkani4 do setkani4_test</h3>";
     // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
     $tabs= explode(',',
@@ -16543,15 +16556,16 @@ function db2_copy_test_db($db) {  trace();
       query("CREATE TABLE setkani4_test.$tab LIKE setkani4.$tab");
       if ( $xtab[0]!='*' ) {
         $n= query("INSERT INTO setkani4_test.$tab SELECT * FROM setkani4.$tab");
-        $msg.= "<br>COPY setkani4_test.$tab ... $n záznamů";
+        $msg.= "{$del}COPY setkani4_test.$tab ... $n záznamů";
       }
       else {
-        $msg.= "<br>INIT setkani4_test.$tab";
+        $msg.= "{$del}INIT setkani4_test.$tab";
       }
+      $del= '<br>';
     }
     // poznámka k VIEW
     $msg.= "<h3>Zůstávají zachovány definice VIEW z databáze ezer_setkani4_test do ezer_db2_test</h3>
-      <br>VIEW ds_order
+      VIEW ds_order
       <br>VIEW objednávka";
   }
   // end

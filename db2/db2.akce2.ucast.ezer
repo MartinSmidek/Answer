@@ -806,7 +806,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:{ask:'ucast2_browse_ask'}, //css_rows:"dluh,1:yellow,2:blue"
     // klíče
-    show key_pobyt [,,0,] { title:'idp', format:'rsq*' }
+    show key_pobyt [,,0,] { title:'idp', format:'rsq*' 
+      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' } // jen do odladění 
     show _empty         // 1 pokud je rodina na pobytu prázdná
     show key_akce
     show key_spolu
