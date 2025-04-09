@@ -463,31 +463,6 @@ form _page [,,275,360] {
     };
     c_show();
   }
-//  proc show_page(id_akce) {
-//    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
-//    form.load(id_akce); zmena_web.set(0); 
-//    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
-//    switch(zalozka.get,
-//    'inf',{ clear; note.set(ask('akce2_info',id_akce));  },
-//    'cor',{ //form.load(id_akce);
-//            { hnizda.get; is_hnizda.set(1); hnizda.display(1)
-//            | is_hnizda.set(0); hnizda.display(0)
-//            };
-//            [ has_skill('faan'); 
-//              form.display(0,'corm|corf'); 
-//              [ mrop.get; form.display(1,'corm') ]; 
-//              [ firm.get; form.display(1,'corf') ]; 
-//            ];
-//            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
-//            cen_ma.onchange;
-//            info.sey.browse_focus },
-//    'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
-//    'doc',{ archiv.ukaz(akce_get('archiv')) },
-//    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
-//    );
-////    echo(id_akce,':',access.get,cen_ver.key);
-//    c_show;
-//  }
   func init_page() {
     page.a_akce= 0;
     cen_copy.enable(0); cen_copy.key(0);
@@ -961,13 +936,7 @@ form _page [,,275,360] {
     //                       lze měnit sloupce od-do za dph
     eq(access.get,1,2);
     c.typ.width(0);
-//    { eq(cen_ver.key,0,1); // verze 2016 i 2017
       c.pol.width(156); c.za_2016.width(38); form.display(eq(zalozka.get,'cen'),'ex0');
-//      c.za_2017.width(0); c.pro_2017.width(0); form.display(0,'ex1');
-//#     | eq(cen_ver.key,1); // verze 2017
-//#       c.pol.width(121); c.pro_2017.width(45); c.za_2017.width(27); form.display(eq(zalozka.get,'cen'),'ex1');
-//#       c.za_2016.width(0); form.display(0,'ex0');
-//    }
     // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
   | eq(access.get,4,8,16);
     c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
@@ -985,13 +954,6 @@ form _page [,,275,360] {
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show pol [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'tuq*s'
       proc onsubmit() { this.save } }
-//     pro y;f verze 2017
-//    show pro_2017 [,,0,] { title:'pro', data:cenik.pro, format:'urq=s',
-//      help:'U=účastník, S=~VPS, D=dítě, d=dítě s chůvou, C=chůva, p=pom.peč., H=host'
-//      proc onsubmit() { this.save } }
-//    show za_2017 [,,0,] { title:'za', data:cenik.za, format:'urq=s',
-//      help:'n=noc, s=snídaně, o=oběd, v=večeře, p=pobyt, a=aktivita'
-//      proc onsubmit() { this.save } }
     // pro c a y;f verze 2016
     show za_2016 [,,0,] { title:'za', data:cenik.za, format:'urq=s',
       help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P, slevy:S'
@@ -1073,141 +1035,10 @@ form _page [,,275,360] {
     else alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
   // výpočet expr
-//  label  [lc+20,bc+230,211,] { tag:'b,cen', title:"+ ceny na web" }
-//  button [lc+20,bc+247,,] { tag:'b,cen', title:'manželský pár',    
-//    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P",99,this.title) }}
-//  button [lc+20,bc+267,,] { tag:'b,cen', title:'dítě nad 6,celá',  
-//    proc onclick() { expr_ceniku("  N*Nl  +N*sc  +O*oc  +N*vc+1*PD",99,this.title) }}
-//  button [lc+20,bc+287,,] { tag:'b,cen', title:'dítě nad 6,dětská', 
-//    proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*PD",99,this.title) }}
-//  button [lc+20,bc+307,,] { tag:'b,cen', title:'dítě od 3 do 6,dětská', 
-//    proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pd",99,this.title) }}
-//  button [lc+20,bc+327,,] { tag:'b,cen', title:'dítě do 3,bez',    
-//    proc onclick() { expr_ceniku("                            1*Pk",99,this.title) }}
-//  button [lc+20,bc+347,,] { tag:'b,cen', title:'VPS se slevou',    
-//    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sv",99,this.title) }}
-//  button [lc+20,bc+367,,] { tag:'b,cen', title:'PPS se slevou',    
-//    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sp",99,this.title) }}
-//#   // výpočet expr - EXPERIMENTÁLNÍ
-//#   label  [lc+20,bc+39,211,] { tag:'b,cen,ex1', title:"+ ceny na web" }
-//#   button [lc+20,bc+56,,] { tag:'b,cen,ex1', title:'manželský pár',    proc onclick() {
-//#     expr_ceniku("2*N*Un +2*N*US+2*O*UO+2*N*UV +2*Up",30,this.title) }}
-//#   button [lc+20,bc+76,,] { tag:'b,cen,ex1', title:'dítě od 10,celá',  proc onclick() {
-//#     expr_ceniku("  N*Dn   +N*DS +O*DO  +N*DV +1*Dp",10,this.title) }}
-//#   button [lc+20,bc+96,,] { tag:'b,cen,ex1', title:'dítě 6-10,dětská', proc onclick() {
-//#     expr_ceniku("  N*Dn   +N*Ds  +O*Do  +N*Dv +1*Dp",6,this.title) }}
-//#   button [lc+20,bc+116,,] { tag:'b,cen,ex1', title:'dítě do 6,dětská' proc onclick() {
-//#     expr_ceniku("          N*Ds  +O*Do  +N*Dv +1*Dp",3,this.title) }}
-//#   button [lc+20,bc+136,,] { tag:'b,cen,ex1', title:'dítě do 3,bez'    proc onclick() {
-//#     expr_ceniku("                            1*Dp",2,this.title) }}
-//#   button [lc+20,bc+156,,] { tag:'b,cen,ex1', title:'VPS ve službě',    proc onclick() {
-//#     expr_ceniku("2*N*Sn +2*N*SS+2*O*SO+2*N*SV +2*Sp + 1*Sa",30,this.title) }}
   func expr_ceniku(expr,vek,tit) { // verze 2016 i verze 2017
     alert(conc('<b>',tit,'</b><br><br>',php.akce2_vzorec_expr(a_akce,hnizdo.key(),expr),
       '<br><br>(N je počet nocí, O je počet obědů)'))
   }
-//  proc expr_ceniku(expr,vek,tit) {
-//    eq(cen_ver.key,0,1); // verze 2016 i verze 2017
-//    alert(conc('<b>',tit,'</b><br><br>',ask('akce2_vzorec_expr',a_akce.get,expr),
-//      '<br><br>(N je počet nocí, O je počet obědů)'))
-//#   | eq(cen_ver.key,1); // verze 2017
-//#     alert(conc(tit,': ',ask('akce2_vzorec_expr_2017',a_akce.get,expr,vek),
-//#       '<br><br>(N je počet nocí, O je počet obědů)'))
-//  }
-/*  
-//  # ------------------------==> . archiv
-//  # tags:   doc_show=pro zobrazení složky, doc_crea=nabídka vytvoření složky
-//  var autorized= 0
-//  var archiv_slozka:object
-//  var cloud:text, folder:text
-//  // výzva k přihlášení do cloudu
-//  button login [15,25,,] { tag:'doc_log', title:'přihlásit k Google Disk (intranet)', format:'n', skill:'y|y'
-//    proc onclick() {
-//      warning("answer@smidek.eu: ",function('caller','return Ezer.Google.authorize(caller);',this));
-//    }
-//    proc onautorize(ok) { autorized.set(ok);
-//      ok; form.display(0,'doc_log'); archiv.ukaz(akce_get('archiv'));
-//      warning("přístup na Goggle Disk povolen")
-//    | warning("přístup na Goggle Disk zamítnut")
-//  }}
-//  // vytvoření archivu
-//  button archiv [15,45,,] { tag:'doc_crea', title:'vytvořit', format:'n',
-//    skill:'faa|faan;caa|caan;yaa|yaan'
-//    const gd = "https://drive.google.com/folderview?id="
-//    proc ukaz(_folder) { // ukáže tlačítko jako vytvořit pokud akce.archiv='' jinak zobrazí folder
-//      has_skill('y'); not(autorized.get);
-//      form.display(1,'doc_log'); form.display(0,'doc_crea|doc_show');
-//      return
-//    | ukaz_syn(_folder)
-//    }
-//    proc ukaz_syn(_folder) { // ukáže tlačítko jako vytvořit pokud akce.archiv='' jinak zobrazí folder
-//      _folder; cloud.set(substr(_folder,0,2)); folder.set(substr(_folder,2));
-//      { eq(cloud.get,'H:');
-//        popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
-//          " je obsažen ve složce <b>",folder.get,"</b> na serveru"));
-//        drop.init(folder.get,'H:','.*');
-//      | eq(cloud.get,'G:');
-//        popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
-//          " je obsažen na <a target='GD' href='",gd.get,folder.get,"'>Google Disku</a>"));
-//        drop.init(folder.get,'G:');
-//      | warning("archiv '",_folder,"' nelze zobrazit");
-//      };
-//      drop.lsdir;
-//      form.display(1,'doc_show'); form.display(0,'doc_crea');
-//    | drop.init('?');
-//      form.display(0,'doc_show'); form.display(1,'doc_crea');
-//    }
-//    proc onclick() { var path: text, _folder:text
-//      [ koren.key | alert("Před vytvořením je nutné zvolit kořen složky"); return ];
-//      path.set(conc(koren.get,'/',path_rok.get,'/',path_kod.get));
-//      confirm("Mám vytvořit složku pro dokumenty akce<br><b>",
-//        akce_get('nazev'),'</b> ve složce<br><b>',path,'</b> ?');
-//      // vytvoření složky na serveru
-//      cloud.set(archiv_slozka.get('hodnota'));
-//      drop.init(archiv_slozka.get('popis'),cloud.get);
-//      _folder.set(drop.mkdir(path_rok.get)); // přepne na vytvořenou složku
-//      _folder.set(drop.mkdir(path_kod.get)); // takže tato je v ní vnořená
-//      akce_set_archiv(cloud.get,_folder); ukaz(conc(cloud.get,_folder))
-//    }
-//  }
-//  select koren [90,45,150,] { tag:'doc_crea', title:'^kořenná složka', type:'map', format:'nt',
-//    options:akce_slozka.zkratka
-//    proc onchanged() {
-//      archiv_slozka.set(ask('select_object','hodnota,ikona,barva,popis','_cis',
-//        conc("druh='akce_slozka' AND data=",this.key)));
-//      path_rok.set(replace(archiv_slozka.get('ikona'),'{rok}',akce_get('rok')));
-//      path_kod.set(replace(archiv_slozka.get('barva'),
-//        '{kod}',akce_get('kod'),'{nazev}',akce_get('nazev')));
-//    }
-//  }
-//  field path_rok [250,45,95,] { tag:'doc_crea', title:'^složka pro rok', format:'dn' }
-//  field path_kod [355,45,95,] { tag:'doc_crea', title:'^podsložka akcí', format:'dn' }
-//  // zobrazení archivu
-//  label popis [15,45,440,] { tag:'doc_show', format:'n' }
-//  label [15,60,455,] { tag:'doc_show', format:'n',
-//    title:'archivované soubory svázané s akcí - lze k nim přidat další přetáhnutím myší, zrušit a stáhnout je lze kontextovým menu' }
-//  label drop [15,95,435,310] { tag:'doc_show', type:'drop', format:'n'
-//    proc ondrop(f) {
-//      gt(f.size,5242880); alert('odmítnuto ',f.name,' má více jak 5MB');
-//      return(0)
-//    | return(1); // return(conc(prefix.get,f.name)) - případné přejmenování
-//    }
-//    proc onload(f) { warning("přeneseno:",f.name) } // po dokončení přenosu
-//    proc onerror(e) { warning(e.msg); return(1) } // vrácení 0 způsobí standardní hlášení chyby
-//    proc onmenu(op,title,ref) { // op=remove|remove-all
-//      eq(cloud.get,'G:');
-//      [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-//      | eq(op,'remove'); [ function('ref',"var request=gapi.client.drive.files.trash({'fileId':ref});request.execute(function(resp){});",ref) ]
-//      | warning('zatím neimplementovaná operace') ]
-//    | eq(cloud.get,'H:');
-//      [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-//      | eq(op,'remove'); [ confirm("Opravdu smazat ",title," ?");
-//                           warning(ask('drop_unlink',folder.get,ref,'H:')) ] // odebrání souboru
-//      | warning('zatím neimplementovaná operace') ];
-//      drop.lsdir;
-//    }
-//  }
-*/  
   # ------------------------==> . dokumenty na Synology
   use folders:  area _folders { tag:'syn' }
   var dcloud='U:',    // U: je třeba nastavit Ezer.options.path_files_u na složku obsahující droot

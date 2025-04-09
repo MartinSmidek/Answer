@@ -8,7 +8,54 @@
  */
 // -------------------------------------------------------------------------------------- pretty log
 // volá se z prihlaska.log.php -- upraví dynamicky HTML
-function pretty_log() {
+// pokud je zadán $patt zobrazí jen řádky, které jej obsahují
+function pretty_log(patt) { 
+  if (!pretty_log.called) {
+    // vložení pole pro dotaz - jen porvé
+    let html= `<label for="inputField" style="font-weight:bold;font-family:monospace">
+        Vyber řádky obsahující:</label>
+      <input type="text" id="inputField" placeholder="Zadejte text" 
+        style="font-family:monospace">`;
+    document.body.insertAdjacentHTML('afterbegin', html);
+    document.getElementById('inputField').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const inputValue = event.target.value; // Získání hodnoty z pole
+        pretty_log(inputValue); // Zavolání funkce find
+      }
+    });
+    // obrácení a kompatibilita se staršími formáty
+    let log= $('#log').html();
+    let lines= log.split("\n");
+    for (let i= lines.length-2; i>0; i--) {
+      if (lines[i][6]!='/' && lines[i][5]!='=') {
+        if (lines[i][11]=='-') {
+          let match= lines[i].match(/akce=A_(\d+)/);
+          let ida= match ? match[1] : '?'; 
+          lines[i]= lines[i].slice(0,7)+ida.toString().padStart(4,' ')+' '+lines[i].slice(7);
+        }
+        let match= lines[i].match(/id_prihlaska=(\d+)/);
+        let idw= match ? match[1] : '?'; // Číslo je v první zachycené skupině
+        lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
+          + lines[i].substr(31);
+      }
+      lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
+      lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
+      lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
+    }
+    pretty_log.called= true;
+    pretty_log.lines= lines;
+  }
+  // zobrazení s filtrem
+  let ted= yms_hms();
+  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
+  let row= title;
+  for (let i= pretty_log.lines.length-2; i>0; i--) {
+    if (patt && !pretty_log.lines[i].includes(patt)) continue;
+    row+= '\n'+pretty_log.lines[i];
+  }
+  $('#log').html(row);
+}
+function yms_hms() {
   // aktuální datum
   let now = new Date();
   let year = now.getFullYear();
@@ -16,31 +63,8 @@ function pretty_log() {
   let day = now.getDate().toString().padStart(2, '0');
   let hours = now.getHours().toString().padStart(2, '0');
   let minutes = now.getMinutes().toString().padStart(2, '0');
-  let seconds = now.getSeconds().toString().padStart(2, '0');  let log= $('#log').html();
-  let ted= `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  // obrácení a kompatibilita se staršími formáty
-  let lines= log.split("\n");
-  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u>";
-  lines[0]= title;
-  for (let i= lines.length-2; i>0; i--) {
-    if (lines[i][6]!='/' && lines[i][5]!='=') {
-      if (lines[i][11]=='-') {
-        let match= lines[i].match(/akce=A_(\d+)/);
-        let ida= match ? match[1] : '?'; 
-        lines[i]= lines[i].slice(0,7)+ida.toString().padStart(4,' ')+' '+lines[i].slice(7);
-      }
-      let match= lines[i].match(/id_prihlaska=(\d+)/);
-      let idw= match ? match[1] : '?'; // Číslo je v první zachycené skupině
-      lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
-        + lines[i].substr(31);
-    }
-    lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
-    lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
-    lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
-  }
-  let reversed= lines.reverse();
-  log= reversed.join("\n");
-  $('#log').html(title+log);
+  let seconds = now.getSeconds().toString().padStart(2, '0');  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 // ------------------------------------------------------------------------------------ elem changed
 // vrátí změněný element s jeho novou hodnotou
