@@ -2303,26 +2303,6 @@ function je_na_teto_akci($ido) { // --------------------------------------------
       WHERE id_osoba=$ido AND id_akce=$akce->id_akce");
   return intval($je);
 }
-function nacti_pobyt($idp) { trace();// -------------------------------------------------------- nacti pobyt
-  global $vars, $p_fld;
-  $vars->pobyt= (object)['id_pobyt'=>$idp];
-  $p= select_object_2('*','pobyt',"id_pobyt=$idp");
-  foreach ($p_fld as $f=>list(,$title,$typ)) {
-    // nedatabázové položky inicializuj
-    if (substr($f,0,1)=='X') 
-      $vars->pobyt->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
-    // resp. ignoruj
-    elseif (!isset($p->$f)) 
-      continue;
-    // databázové načti s případnou konverzí
-    else {
-      $v= $p->$f;
-      if ($typ=='date') 
-        $v= sql2date($v);
-      $vars->pobyt->$f= substr($title,0,1)=='*' ? [$v] : $v;
-    }
-  }
-}
 function nacti_rodinu($idr) { // ------------------------------------------------------ nacti rodinu
   global $vars, $r_fld;
   $vars->rodina= [$idr=>(object)[]];
@@ -2558,7 +2538,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       log_write('id_osoba',$ido);
     }
   } // asi nový člen ale zkusíme ho najít v databázi jako ido
-  else { // nenašli
+  else { // $id>0
     $ido= $id;
   } // nenašli ido=id
   if ($ido==0) { // nenašli => zapíšeme novou osobu a připojíme ji do rodiny
@@ -2606,10 +2586,12 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
   else { // našli => opravíme změněné hodnoty položek existující osoby - adresu možná do rodiny
     $chng= [];
     $kontakt= 0;
-    $access= intval(select_2("SELECT access FROM osoba WHERE id_osoba=$ido"));
-    // pokud je to potřeba, rozšíříme povolení
-    if (!($access & intval($akce->org))) {
-      $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|intval($akce->org));
+    if ($spolu) {
+      // pokud je na akci a je to potřeba, rozšíříme povolení
+      $access= intval(select1_2("SELECT access FROM osoba WHERE id_osoba=$ido"));
+      if (!($access & intval($akce->org))) {
+        $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|intval($akce->org));
+      }
     }
     foreach ((array)$clen as $f=>$vals) {
       if (!isset($o_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
@@ -2704,6 +2686,11 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
   }
   else {
     $chng= [];
+    $access= intval(select1_2("SELECT access FROM rodina WHERE id_rodina=$id"));
+    // pokud je to potřeba, rozšíříme povolení
+    if (!($access & intval($akce->org))) {
+      $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|intval($akce->org));
+    }
     foreach ($rodina as $f=>$vals) {
       if (!isset($r_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
       if ($r_fld[$f][2]=='number' && isset($vals[1])) $vals[1]= $vals[1]?:0;
