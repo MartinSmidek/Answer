@@ -5880,10 +5880,10 @@ function ds_ceny_group() { //debug($par);
   return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
 }
 # ------------------------------------------------------------------------------------ ds objednavka
-# vrátí 1 pokud k této akci existuje objednávka, jinak 0
+# vrátí 1 pokud k této akci existuje objednávka, jinak 2
 function ds_objednavka($ida) {
   global $answer_db;
-  $order= select('id_order','ds_order',"id_akce=$ida") ? 1 : 0;
+  $order= select('id_order','ds_order',"id_akce=$ida") ? 1 : 2;
 //g  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida",$answer_db);
 //  list($rok,$kod)= select('YEAR(datum_od),ciselnik_akce','akce',"id_duakce=$ida",$answer_db);
 //  if ( $kod ) {
