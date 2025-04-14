@@ -1167,7 +1167,8 @@ form _info [,,*,50] {
   select rok [4,5,52,] { tag:'r', format:'t', 
     func onchanged() { 
       the_rok= this; akce_roku(the_rok);
-      page.opakuj= `Opakuj akci v roce ${rok+1}`;
+      if (has_skill('caan;yaan;faan'))
+        page.opakuj= `Opakuj akci v roce ${rok+1}`;
   }}
   func nazev_akce(id_akce) {
     return id_akce ? ` ${sey.nazev}, ${fdate('Y',sey.od)}` : '';
