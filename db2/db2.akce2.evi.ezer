@@ -81,7 +81,7 @@ proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shi
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0,                // běžný item
-    menu_par=0,                 // ... jeho parametry
+    menu_par= {},               // ... jeho parametry
     menu_title=''               // ... a browse rodin: r/f a osob: o/h a mail-listů: m
 menu m {type:'left', format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
@@ -166,7 +166,7 @@ menu m {type:'left', format:'f-'
               help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
   }
   func onclick (i:ezer) { menu_click (i,0,0) }
-  func menu_click(i:ezer,_ido,_idr) { var ret:object, cnd:text
+  func menu_click(i:ezer,_ido,_idr) { var ret:object, cnd:text, sel: text
     menu_item= i; menu_par= i.par; menu_title= i.title;
     if (i.par.lst) { // podmenu s browse
       echo('--- menu_item virgin=',virgin);
@@ -175,7 +175,11 @@ menu m {type:'left', format:'f-'
       cnd= i.par.cnd;
       panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
       page.oso.set_mode(0,'E');
-      if (i.par.tit=='MAILIST') page.mapa.onclick();
+      if (i.par.tit=='MAILIST') {
+        sel= php.mail2_mailist(has_access,menu_par);
+        if (!sel) return;
+        page.mapa.onclick();
+      }
       if (i.par.tip) { 
         page.oso.chain.display(1);
         ret= php.evid2_elim_tips(i.par.tip);
@@ -202,41 +206,6 @@ menu m {type:'left', format:'f-'
       }
     }
   }
-//  proc onclick (i) { menu_click (i,0,0) }
-//  proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
-//    menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
-//    { // podmenu s browse
-//      echo('--- menu_item virgin=',virgin.get);
-//      lst.brow_mapa_clear;
-//      i.par.lst;
-//      lst.prijmeni_jmeno.display(eq(i.par.lst,'o')); // řazení na žádost podle příjmení+jméno 
-//      cnd.set(i.par.cnd);
-//      panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
-//      page.oso.set_mode(0,'E');
-//      [ eq(i.par.tit,'MAILIST'); page.mapa.onclick ];
-//      [ i.par.tip; page.oso.chain.display(1);
-//        ret.set(ask('evid2_elim_tips',i.par.tip));
-//        lst.bo.tips.set_attrib('expr',ret.tip);
-//        cnd.set(ret.ids);
-//      ];
-//      lst.tit.set(i.par.tit); lst._reload(i.par.lst,cnd,_ido,_idr)
-//    | // podmenu pro členství - bez browse
-//      not(i.par.lst);
-//      panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
-//      info.fill(replace_fa(menu_title.get),' '); info.msg.set('');
-//      menu_title.set(replace_fa(menu_title.get,1));
-//      ret.set(ask('evid2_ymca_sprava',my_org.get,i.par,menu_title.get));
-//      { ret.err; alert(ret.err)
-//      | info.fill('',ret.html);
-//        // pokračování podmenu pro recyklaci pečounů
-//        [ eq(i.par.op,'zmeny');
-//          confirm("Provést navržené změny?");
-//          ret.set(ask('evid2_recyklace_pecounu',my_org.get,i.par,the_title.get,1));
-//          alert("Hotovo");
-//        ]
-//      }
-//    }
-//  }
 }
 # proc reaccess() { #== > reaccess - změna
 #   menu_item.get;
@@ -344,14 +313,16 @@ form _lst [,,370,*] {
     //init_mailist;
   ] }
   // zobraz mailist podle access
-  proc init_mailist() { var sel:text
+  func init_mailist() { var sel:text
     page.map.mapa_clear(1);
-    sel.set(ask('mail2_mailist',has_access.get,menu_par.get));
-    sel;
-    bm_vyber.selects(sel);
-    bm_vyber.key(function('select',"for (var key in select.Items) return key; return 0;",bm_vyber));
-    bm_vyber.change;
-  | alert("Mailist pro ",cconc(eq(menu_par.get('komu'),'r'),'rodiny','osoby')," nebyl ještě vytvořen");
+    sel= php.mail2_mailist(has_access,menu_par);
+    if (sel) {
+      bm_vyber.selects(sel);
+      bm_vyber.key(function('select',"for (var key in select.Items) return key; return 0;",&bm_vyber));
+      bm_vyber.change();
+    }
+    else 
+     alert("Mailist pro ",menu_par.komu=='r' ? 'rodiny' : 'osoby'," nebyl ještě vytvořen");
   }
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
@@ -560,12 +531,14 @@ form _lst [,,370,*] {
   }
   # ==============================================> M - MAILIST
   var bm_having= 1, bm_komu= -1
-  proc bm_reload(cnd) {
-    [ virgin.get; start ];
-    [ eq(bm_komu.get,menu_par.get('komu')) | bm_komu.set(menu_par.get('komu')); init_mailist ];
+  func bm_reload(cnd) {
+    if (virgin) start();
+    if (bm_komu!=menu_par.komu) {
+      bm_komu= menu_par.komu; 
+      init_mailist(); 
+    }
     page.map.mapa_clear(1);
-    bm.browse_load(bm_vyber.key);
-  | page.page_init
+    if (!bm.browse_load(bm_vyber.key())) page.page_init();
   }
   label [15,9,,] { tag:'m', title:'mail-list:' }
   select bm_vyber [62,5,289,] { tag:'m', format:'t', help:'komu|výběr mail-listu'
