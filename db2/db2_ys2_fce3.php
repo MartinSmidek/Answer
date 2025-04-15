@@ -3125,7 +3125,7 @@ function tut_ma_archiv ($table,$idkey,$keys,$root) {
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$slozka,$podslozka='') {  trace();
-  $base= "{$root}Akce/$rok";
+  $base= "{$root}Agenda MS/Akce MS/$rok";
   if ( !$podslozka ) { 
     // základní složka archivu - odstraň zakázané znaky (Win,Mac,Linux)
     $slozka= strtr($slozka,'\/:*"<>|?%',"----'()---");
@@ -3163,27 +3163,28 @@ end:
 // nalezne adresář akce
 function tut_dir_find ($root,$rok,$kod) {  
   $y= (object)array('ok'=>1);
-  $patt= "{$root}Akce/$rok/$kod*";
+  $patt= "{$root}Agenda MS/Akce MS/$rok/$kod*";
   $fs= simple_glob($patt);
-  if (!$fs) return $y;
+                                                debug($fs,$patt);
+  if (!$fs) { $y->ok= 0; goto end; }
   $file= $fs[0];
-//                                                debug($fs,$patt);
   if ( count($fs)==1 ) {
     if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
       $file= iconv("Windows-1250","UTF-8",$file);  
-    $y->aroot= "{$root}Akce/$rok/";
+    $y->aroot= "{$root}Agenda MS/Akce MS/$rok/";
     $y->droot= mb_substr(strrchr($file,'/'),1);
   }
   else {
     $y->ok= count($fs);
   }
 //                                                debug($y,strrchr($fs[0],'/'));
+end:
   return $y;
 }
 # ---------------------------------------------------------------------------------------- tut files
 // vrátí soubory adresáře
 function tut_files ($root,$rel_path) {  trace();
-  global $ezer_path_root, $rel_root;
+  global $ezer_root;
   $abs_path= "$root/$rel_path";
   $html= '';
   if ( $rel_path && is_dir($abs_path) ) {
@@ -3201,7 +3202,7 @@ function tut_files ($root,$rel_path) {  trace();
             if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
               $file= iconv("Windows-1250","UTF-8",$file);  
 //            $afile= "<a href='$rel_path/$file' target='doc'>$file</a>";
-            $cmd= "Ezer.run.$._call(0,'db2.akce2.lst.page.files.Menu','viewer','$file','$abs_path');";
+            $cmd= "Ezer.run.$._call(0,'$ezer_root.akce2.lst.page.files.Menu','viewer','$file','$abs_path');";
             $onclick= "onclick=\"$cmd; return false;\"";
             $onright= "oncontextmenu=\"Ezer.fce.contextmenu([
               ['stáhnout',function(el){ $cmd }]
