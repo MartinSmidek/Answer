@@ -3165,9 +3165,9 @@ function tut_dir_find ($root,$rok,$kod) {
   $y= (object)array('ok'=>1);
   $patt= "{$root}Akce/$rok/$kod*";
   $fs= simple_glob($patt);
-  if (!$fs) return $y;
+                                                debug($fs,$patt);
+  if (!$fs) { $y->ok= 0; goto end; };
   $file= $fs[0];
-//                                                debug($fs,$patt);
   if ( count($fs)==1 ) {
     if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
       $file= iconv("Windows-1250","UTF-8",$file);  
@@ -3178,6 +3178,7 @@ function tut_dir_find ($root,$rok,$kod) {
     $y->ok= count($fs);
   }
 //                                                debug($y,strrchr($fs[0],'/'));
+end:
   return $y;
 }
 # ---------------------------------------------------------------------------------------- tut files

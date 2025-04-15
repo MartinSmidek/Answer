@@ -145,10 +145,10 @@ proc reaccess() { #==> . reaccess - změna
   info.sey.pracovni
 }
 # -----------------------------------------------------------------------------==> lokální procedury
-# vrátí hodnotu položky z google resp. sey
-func akce_get(_fld) { 
-  return info.sey.part(_fld)
-}
+//# vrátí hodnotu položky z google resp. sey
+//func akce_get(_fld) { 
+//  return info.sey.part(_fld)
+//}
 # zapíše hodnotu akce.archiv (a zapíše ji i do google resp. sey)
 proc akce_set_archiv(cloud,folder) { var path:text
   path.set(conc(cloud,folder));
@@ -363,7 +363,9 @@ form _page [,,275,360] {
         }
         c.Load();
         break;
-      case 'syn': if (has_skill('yas')) DocShow(akce_get('rok'),akce_get('kod')); break;
+      case 'syn': if (has_skill('yas')) 
+        DocShow(info.sey.rok,info.sey.kod)
+      break;
     };
     c_show();
     echo(`the_order=${the_order}`);
@@ -903,40 +905,46 @@ form _page [,,275,360] {
       dfold='docs'    // zobrazená podsložka droot (bez koncového /)
   label [18,25,300,40] {tag:'syn' title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky, kliknutím stáhnout nebo zobrazit (sdílet a mazat lze jen z prostředí Synology)" }
   button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv' 
-    proc onclick() { var kod:number
-      kod.set(akce_get('kod'));
-      kod;
-      ask('tut_mkdir',abase.get,akce_get('rok'),kod,akce_get('nazev'));
-      DocRefresh; DocBrowse
-    | not(kod); alert("akce musí mít definovaný číselný kód tzn. účetní symbol")
-  }}
+    func onclick() { var kod:number
+      if (info.sey.kod) {
+        php.tut_mkdir(abase,info.sey.rok,info.sey.kod,info.sey.nazev);
+        DocRefresh(); DocBrowse()
+      }
+      else 
+        alert("akce musí mít definovaný číselný kód tzn. účetní symbol")
+    }
+  }
   button [424,42,,] {tag:'syn' title:'[fa-question]' 
-    proc onclick() {
-      DocBrowse
+    func onclick() {
+      DocBrowse()
   }}
-  proc DocInit() { 
-    abase.set(function("return Ezer.options.path_akce;"))
+  func DocInit() { 
+    abase= function("return Ezer.options.path_akce;")
   }
-  proc DocBrowse() { 
-    fdrop.off;
-    info.sey.ma_archiv.load('tut_ma_archiv','akce','id_duakce',abase.get);
+  func DocBrowse() { 
+    fdrop.off();
+    // Show.load (php_funkce,table,table_id,...) zavolá php_funkci(table,table_id,seznam klíčů,...) 
+    // funkce vrátí pole klíč->hodnota hodnoty budou zapsány jako hodnoty tohoto sloupce
+    info.sey.ma_archiv.load('tut_ma_archiv','akce','id_duakce',abase);
   }
-  proc DocRefresh() {
-    DocShow(akce_get('rok'),akce_get('kod'))
+  func DocRefresh() {
+    DocShow(info.sey.rok,info.sey.kod)
   }
-  proc DocShow(_rok,_kod) { var y:object
-    _rok; _kod;
-    y.set(ask('tut_dir_find',abase.get,_rok,_kod));
-    y.ok; 
-    aroot.set(function('aroot',"return Ezer.options.path_files_u=aroot;",y.aroot)); 
-    droot.set(y.droot); 
-    dfold.set(droot.get);
-    folders.Load(aroot.get,droot.get); 
-    files.Load;
-    fdrop.Init;
-    fdrop.on;
-  | folders.Init;
-    files.Init;
+  func DocShow(_rok,_kod) { var y:object
+    y= php.tut_dir_find(abase,_rok,_kod);
+    if (y.ok) {
+      aroot= function('aroot',"return Ezer.options.path_files_u=aroot;",y.aroot); 
+      droot= y.droot; 
+      dfold= droot;
+      folders.Load(aroot,droot); 
+      files.Load();
+      fdrop.Init();
+      fdrop.on();
+    }
+    else {
+      folders.Init();
+      files.Init();
+    }
   }
   # složky - tree area
   area _folders { title:"<div id='files' style='left:530px;top:112px;width:160px;height:370px;border-right:1px solid grey;position:absolute;z-index:1'></div>"
@@ -951,11 +959,18 @@ form _page [,,275,360] {
       echo('tree:',click_path.get);
     }
     menu { type:'context'
-      item { title:'vložit podsložku', proc onclick() { var folder:text
-        folder.set(prompt2('název podsložky:'));
-        ask('tut_mkdir',page.abase.get,akce_get('rok'),0,click_path.get,folder);
-        page.DocRefresh
-      }}
+      item { title:'vložit podsložku', 
+        func onclick() { var folder:text
+          folder= prompt2('název podsložky:');
+          php.tut_mkdir(page.abase,info.sey.rok,0,click_path,folder);
+          page.DocRefresh()
+        }
+//        proc onclick() { var folder:text
+//          folder.set(prompt2('název podsložky:'));
+//          ask('tut_mkdir',page.abase.get,akce_get('rok'),0,click_path.get,folder);
+//          page.DocRefresh
+//        }
+      }
     }
     proc Load(_a,_b) { 
       this.tree_show(ask('tut_dir',_a,_b),'files',0,°{mode:'folders',theme:'mootree.gif'}); 
@@ -1167,7 +1182,8 @@ form _info [,,*,50] {
   select rok [4,5,52,] { tag:'r', format:'t', 
     func onchanged() { 
       the_rok= this; akce_roku(the_rok);
-      page.opakuj= `Opakuj akci v roce ${rok+1}`;
+      if (has_skill('caan;yaan;faan'))
+        page.opakuj= `Opakuj akci v roce ${rok+1}`;
   }}
   func nazev_akce(id_akce) {
     return id_akce ? ` ${sey.nazev}, ${fdate('Y',sey.od)}` : '';
