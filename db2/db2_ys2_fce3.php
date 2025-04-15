@@ -3125,7 +3125,7 @@ function tut_ma_archiv ($table,$idkey,$keys,$root) {
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$slozka,$podslozka='') {  trace();
-  $base= "{$root}Akce/$rok";
+  $base= "{$root}Agenda MS/Akce MS/$rok";
   if ( !$podslozka ) { 
     // základní složka archivu - odstraň zakázané znaky (Win,Mac,Linux)
     $slozka= strtr($slozka,'\/:*"<>|?%',"----'()---");
@@ -3163,15 +3163,15 @@ end:
 // nalezne adresář akce
 function tut_dir_find ($root,$rok,$kod) {  
   $y= (object)array('ok'=>1);
-  $patt= "{$root}Akce/$rok/$kod*";
+  $patt= "{$root}Agenda MS/Akce MS/$rok/$kod*";
   $fs= simple_glob($patt);
                                                 debug($fs,$patt);
-  if (!$fs) { $y->ok= 0; goto end; };
+  if (!$fs) { $y->ok= 0; goto end; }
   $file= $fs[0];
   if ( count($fs)==1 ) {
     if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
       $file= iconv("Windows-1250","UTF-8",$file);  
-    $y->aroot= "{$root}Akce/$rok/";
+    $y->aroot= "{$root}Agenda MS/Akce MS/$rok/";
     $y->droot= mb_substr(strrchr($file,'/'),1);
   }
   else {
