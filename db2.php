@@ -98,25 +98,6 @@
     die("parametr <b>db_test</b> byl dne 4.1.2019 nahrazen aplikaci dbt ...");
   }
 
-  // cesty
-  $abs_roots= array(
-      "C:/Ezer/beans/answer",
-      "/volume1/web/www/answer",
-      "/volume1/web/www/answer"
-    );
-  $rel_roots= array(
-      "http://answer.bean:8080",
-      "http://answer.doma",
-      "https://answer.setkani.org"
-    );
-  $rel_root= $rel_roots[$ezer_server];
-  $path_foto= "{$abs_roots[$ezer_server]}/fotky";
-  $path_akce= array(
-      "D:/MS/",
-      "/volume1/YS/",
-      "/volume1/YS/"
-    )[$ezer_server];
-  
   // upozornění na testovací verzi
   $demo= '';
 //  if ( $ezer_server==2 ) {
