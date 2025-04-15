@@ -1,7 +1,7 @@
 <?php # (c) 2008 Martin Smidek <martin@smidek.eu>
   error_reporting(E_ALL & ~E_NOTICE);
   session_start();
-  $ezer_root= 'db2';
+  $ezer_root= 'dbt';
   # -------------------------------------------------------------------------------------- show file
   $title= $_GET['title'];
   // test přihlášení

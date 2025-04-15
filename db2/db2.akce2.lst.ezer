@@ -985,8 +985,10 @@ form _page [,,275,360] {
     proc Load() { fdrop.off; this.set(ask('tut_files',aroot.get,dfold.get)); echo(this.self)}
     proc Init() { this.set(''); }
     proc Test() { alert('au')}
-    proc Menu(op,name,ref) { 
-      eq(op,'viewer'); function('url',"window.open(url,'viewer')",ask('tut_file_url',ref,name))
+    func Menu(op,name,ref) { 
+      if (op=='viewer') {
+        function('url',"window.open(url,'viewer')",php.tut_file_url(ref,name))
+      }
     }
   }
   # soubory - drop area
