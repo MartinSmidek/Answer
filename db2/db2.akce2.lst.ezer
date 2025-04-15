@@ -903,8 +903,11 @@ form _page [,,275,360] {
       aroot:text,     // absolutní adresa Ezer.options.path_files_u (má / na konci)
       droot='docs',   // kořen pro filebrowser 
       dfold='docs'    // zobrazená podsložka droot (bez koncového /)
-  label [18,25,300,40] {tag:'syn' title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky, kliknutím stáhnout nebo zobrazit (sdílet a mazat lze jen z prostředí Synology)" }
-  button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv' 
+//  label [18,25,300,40] {tag:'syn' 
+//    title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky, kliknutím stáhnout nebo zobrazit (sdílet a mazat lze jen z prostředí Synology)" }
+  label [18,25,306,40] {tag:'syn' 
+    title:"Zde jsou zobrazeny soubory přiřazené k akci na Google disku (a synchronizované na Synology)" }
+  button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv', skill:'mmm'
     func onclick() { var kod:number
       if (info.sey.kod) {
         php.tut_mkdir(abase,info.sey.rok,info.sey.kod,info.sey.nazev);
@@ -914,7 +917,7 @@ form _page [,,275,360] {
         alert("akce musí mít definovaný číselný kód tzn. účetní symbol")
     }
   }
-  button [424,42,,] {tag:'syn' title:'[fa-question]' 
+  button [424,42,,] {tag:'syn' title:'[fa-question]', skill:'mmm' 
     func onclick() {
       DocBrowse()
   }}
@@ -965,11 +968,6 @@ form _page [,,275,360] {
           php.tut_mkdir(page.abase,info.sey.rok,0,click_path,folder);
           page.DocRefresh()
         }
-//        proc onclick() { var folder:text
-//          folder.set(prompt2('název podsložky:'));
-//          ask('tut_mkdir',page.abase.get,akce_get('rok'),0,click_path.get,folder);
-//          page.DocRefresh
-//        }
       }
     }
     proc Load(_a,_b) { 
@@ -982,9 +980,8 @@ form _page [,,275,360] {
   }
   # soubory - seznam
   label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;padding:5px"
-    proc Load() { fdrop.off; this.set(ask('tut_files',aroot.get,dfold.get)); echo(this.self)}
-    proc Init() { this.set(''); }
-    proc Test() { alert('au')}
+    func Load() { fdrop.off(); this.set(php.tut_files(aroot,dfold)); }
+    func Init() { this.set(''); }
     func Menu(op,name,ref) { 
       if (op=='viewer') {
         function('url',"window.open(url,'viewer')",php.tut_file_url(ref,name))
@@ -993,22 +990,24 @@ form _page [,,275,360] {
   }
   # soubory - drop area
   label fdrop [192,90,241,50] {tag:'syn' type:'drop' title:'vlož soubor sem' css:'drop' style:"z-index:2"
-    proc Init() { // podsložka {root} s lomítkem jen na konci
-      fdrop.init(dfold.get,dcloud.get); 
+    func Init() { // podsložka {root} s lomítkem jen na konci
+      fdrop.init(dfold,dcloud); 
     }
-    proc onload(f) { // po dokončení přenosu, jméno bude ASCII
-      files.Load;
-      off;
+    func onload(f) { // po dokončení přenosu, jméno bude ASCII
+      files.Load();
+      off();
     } 
-    proc onerror(e) { // funkce onerror nesmí obsahovat asynchronní kód a lokální proměnné, ale přes call lze zavolat už cokoliv
+    func onerror(e:object) { // funkce onerror nesmí obsahovat asynchronní kód a lokální proměnné, ale přes call lze zavolat už cokoliv
       warning(e.msg); return(1) // vrácení 0 způsobí standardní hlášení chyby
     }
-    proc on() {
-      function('f',
-        "jQuery('div.files').on({dragover: evt => { jQuery('div.drop').css({zIndex:4});return false; }})",
-        page.files);
+    func on() {
+      if (has_skill('mmm'))
+        function('f',
+          "jQuery('div.files').on({dragover: evt => { jQuery('div.drop').css({zIndex:4});return false; }})",
+          page.files);
     }
-    proc off() {
+    func off() {
+      if (has_skill('mmm'))
       function('f',
         "jQuery('div.drop').css({zIndex:2});",
         page.files);
