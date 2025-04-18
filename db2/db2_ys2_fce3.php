@@ -3342,15 +3342,29 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
 # minor je subverze uvedená 
   $html= 'pobyt nevznikl online přihláškou';
 //  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
-  list($idr,$json,$ida)= select('id_rodina,vars_json,id_akce','prihlaska',"id_prihlaska=$idpr");
+  list($idr,$json,$ida,$stav)= select('id_rodina,vars_json,id_akce,stav','prihlaska',
+      "id_prihlaska=$idpr");
   if (!$ida) goto end;
 //  if (!$json || !$idr) goto end;
   $json= str_replace("\n", "\\n", $json);
   $x= json_decode($json);
 //  debug($x);
-  // údaje z verze minor=2
+  $olds= '';
+  // dodatky pro vyššší verze než minor=1
+  if ($minor >= 1) {
+    $m= null;
+    display($stav);
+    while (preg_match("/(\d)+/", $stav, $m)) {
+      debug($m);
+      $older= $m[0];
+      $olds.= ' < '.tisk2_ukaz_prihlasku($older,$ida,$idp,'','',$older);
+      // načteme další
+      $stav= select('stav','prihlaska',"id_prihlaska=$older");
+    }
+  }
+  // údaje z verze minor=2,3
   $full= tisk2_ukaz_prihlasku($idpr,$ida,$idp,'','','úplná data');
-  $html= "<div style='text-align:right;width:100%'>$full</div>"; 
+  $html= "<div style='text-align:right;width:100%;padding-right:30px'>$full$olds &nbsp; </div>"; 
   $html.= "<div style='font-size:12px'>";
   // strava podle přihlášky
   if (($x->form->strava??0) > 0) {
@@ -3398,9 +3412,6 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     if ($pobyt->Xvps??0) {
       $html.= "<p><b>Služba VPS: </b>".($pobyt->Xvps==1 ? 'ano' : 'odpočinek').'</p>';
     }
-  }
-  // dodatky pro vyššší verze než minor=2
-  if ($minor > 2) {
   }
   $html.= "</div>";
   // citlivé údaje pro tvorbu skupinek
