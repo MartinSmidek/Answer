@@ -3504,7 +3504,7 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
   );
   $tokenPathPrefix = $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
   $tokenPathSuffix = '.json';
-  $gmail_api_library = $_SERVER['DOCUMENT_ROOT'].'/ezer3.1/server/licensed/google_api/vendor/autoload.php';
+  $gmail_api_library = $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
 
   $filePath = $tokenPathPrefix . $gmail_sender_mail . $tokenPathSuffix;
   if (!is_file($filePath) || !is_readable($filePath)) {
@@ -3555,7 +3555,7 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
 // $gmail_message:: Google_Service_Gmail_Message instance
 function prepare_message_with_mailer($gmail_message, $reply_to, $recipient_address, $subject, $body,
                                      $gmail_sender_name, $gmail_sender_mail, $cc, $cc_name, $cc2, $cc2_name) {
-  $phpmailer_path = $_SERVER['DOCUMENT_ROOT']."/ezer3.1/server/licensed/phpmailer";
+  $phpmailer_path = $_SERVER['DOCUMENT_ROOT']."/ezer3.2/server/licensed/phpmailer";
   require_once("$phpmailer_path/class.phpmailer.php");
   require_once("$phpmailer_path/class.smtp.php");
 
