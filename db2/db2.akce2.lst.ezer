@@ -21,12 +21,12 @@ func re_selects_rok(rok) { var sels:text
 }
 func onfirstfocus() {
   echo('------------- lst onfirstfocus begin');
-  // zobrazení vazby na objednávky DS
-  if (!has_skill('y') /*&& !has_skill('e')*/) {
-    page.ds_order.set_css('hidden','');
-    info.sey.isds.set_attrib('expr'," 0 ");
-    info.sey.idd.set_attrib('expr'," 0 ");
-  }
+//  // zobrazení vazby na objednávky DS ---- přesunuto do sey.onstart
+//  if (!has_skill('y') /*&& !has_skill('e')*/) {
+//    page.ds_order.set_css('hidden','');
+//    info.sey.isds.set_attrib('expr'," 0 ");
+//    info.sey.idd.set_attrib('expr'," 0 ");
+//  }
   akce_onstart(); // zavolá akce_work
   // detekce rozměrů
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
@@ -1176,6 +1176,12 @@ form _info [,,*,50] {
     func onstart() { 
       if (!eq(sys('ezer','options','app'),'db2','dbt')) { // kód akce jen pro YS
         /*SF.width(0);*/ kod.width(0); nazev.width(140); 
+      }
+      // zobrazení vazby na objednávky DS
+      if (!has_skill('y') /*&& !has_skill('e')*/) {
+        page.ds_order.set_css('hidden','');
+        info.sey.isds.set_attrib('expr'," 0 ");
+        info.sey.idd.set_attrib('expr'," 0 ");
       }
     }
   }

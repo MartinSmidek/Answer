@@ -2240,6 +2240,7 @@ function vytvor_clena($ido,$role,$spolu) { // ------------------------------ vyt
   }
   $vars->cleni[$ido]->role= ['',$role];
   $vars->cleni[$ido]->spolu= [0,$spolu];
+  $vars->cleni[$ido]->adresa= $akce->p_oso_adresa ? 1 : 0;
   // pokud je strava tak ji inicializuj
   if ($akce->p_strava) {
     $vars->cleni[$ido]->Xstrava= 0;
@@ -2553,6 +2554,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       $sex= $sex==1 || $sex==2 ? $sex : 0;
     }
     $kontakt= 0;
+    $adresa= 0;
     $chng= array(
       (object)['fld'=>'sex',      'op'=>'i','val'=>$sex],
       (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org]
@@ -2565,12 +2567,17 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
         if (in_array($f,['telefon','email','nomail'])) {
           $kontakt= 1;
         }
-        if ($o_fld[$f][2]=='date') 
+        elseif (in_array($f,['ulice','psc','obec','stat']) ) {
+          $adresa= 1;
+        }
+        elseif ($o_fld[$f][2]=='date') {
           $v= date2sql($v);
+        }
         $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$v];
       }
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
+    if ($adresa) $chng[]= (object)['fld'=>'adresa', 'op'=>'i','val'=>1];
     $web_changes|= 4;
     $ido= _ezer_qry("INSERT",'osoba',0,$chng);
     $novy= 1;
@@ -2586,6 +2593,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
   else { // našli => opravíme změněné hodnoty položek existující osoby - adresu možná do rodiny
     $chng= [];
     $kontakt= 0;
+    $adresa= 0;
     if ($spolu) {
       // pokud je na akci a je to potřeba, rozšíříme povolení
       $access= intval(select1_2("SELECT access FROM osoba WHERE id_osoba=$ido"));
@@ -2609,20 +2617,26 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
         elseif ($o_fld[$f][2]=='sub_select' && isset($vals[-1])) {
           $v0= $vals[-1];
         }
-        if (in_array($f,['ulice','psc','obec','stat']) 
-            && ($akce->p_oso_adresa && $clen->adresa==0)) {
-          // oprav údaj jako rodinný
-          $chngr= [(object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v]];
-          $web_changes|= 32;
-          _ezer_qry("UPDATE",'rodina',$idr,$chngr);
-          continue;
+        elseif (in_array($f,['ulice','psc','obec','stat']) ) {
+          if ($akce->p_oso_adresa && $clen->adresa==0 && $idr) {
+            // oprav údaj jako rodinný
+            $chngr= [(object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v]];
+            $web_changes|= 32;
+            _ezer_qry("UPDATE",'rodina',$idr,$chngr);
+            continue;
+          }
+          else { // jinak jako osobní
+            $adresa= 1;
+            $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
+          }
         }
-        else { // jinak jako osobní
+        else {
           $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
         }
       }
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
+    if ($adresa) $chng[]= (object)['fld'=>'adresa', 'op'=>'i','val'=>1];
     if (count($chng)) {
       $web_changes|= 8;
       _ezer_qry("UPDATE",'osoba',$ido,$chng);
