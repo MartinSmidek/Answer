@@ -180,6 +180,7 @@
 
   // (re)definice Ezer.options
   $add_pars= array(
+    'login_interval' => 120, // minuty povolené nečinosti
     'favicon' => $favicon,
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
     'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
