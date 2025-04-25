@@ -3487,7 +3487,7 @@ function try_mail() {
 # OAuth2
 /**
  * @param $reply_to - address to reply to
- * @param $recipient_address - string sender address
+ * @param $recipient_address - string recipient address OR array of them
  * @param $subject - mail subject
  * @param $body - mail body
  * @param $gmail_sender_name - name as seen by recipient
@@ -3589,7 +3589,13 @@ function prepare_message_with_mailer($gmail_message, $reply_to, $recipient_addre
   $mail->ClearAttachments();
   $mail->ClearAddresses();
   $mail->ClearCCs();
-  $mail->AddAddress($recipient_address);
+  if (is_array($recipient_address)) {
+    foreach ($recipient_address as $adr) {
+      $mail->AddAddress($adr);   
+    }
+  }
+  else $mail->AddAddress($recipient_address);   
+//  $mail->AddAddress($recipient_address);
   if ($cc != '') $mail->AddCC($cc, $cc_name);
   if ($cc2 != '') $mail->AddCC($cc2, $cc2_name);
 
