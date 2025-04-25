@@ -479,8 +479,9 @@ function poslat_pin() { trace();
   $msg= simple_mail($akce->garant_mail, $vars->email, "PIN ($pin) pro prihlášení na akci",
       "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
   if ( $msg!='ok' ) {
-    $DOM->usermail_pod= zvyraznit("<>Litujeme, mail s PINem se nepovedlo odeslat, "
-        . "přihlaste se prosím na akci jiným způsobem.<br>($msg)</p>");
+    $DOM->usermail_pod= zvyraznit("Litujeme, mail s PINem se nepovedlo odeslat, "
+        . "přihlaste se prosím na akci jiným způsobem.</p>");
+    if ($TEST) $DOM->usermail_pod.= "<p>$msg</p>";
   }
   else { // simple-mail může doplnit DOM->mailbox
     $vars->pin= $pin;
@@ -3473,6 +3474,11 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
 end:
   return $msg;
 }
+function oauth_simple_mail($replyto,$address,$subject,$body,$cc='') {
+  global $api_gmail_name, $api_gmail_user;
+  $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
+  return $msg;
+}
 function try_mail() {
   global $api_gmail_user;
   oauth_send_mail('martin@smidek.eu', 'martin@smidek.eu', "SUBJ","TEXT", "NAME", $api_gmail_user);
@@ -3508,7 +3514,8 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
 
   $filePath = $tokenPathPrefix . $gmail_sender_mail . $tokenPathSuffix;
   if (!is_file($filePath) || !is_readable($filePath)) {
-    return "Email nebylo možné odeslat. Za potíže se omlouváme.";
+    $msg= "CHYBA při odesílání mailu došlo k chybě: nepřístupný token token";
+    goto end;
   }
 
   try {
@@ -3529,8 +3536,10 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
       $refreshToken = $client->getRefreshToken();
       if ($refreshToken) {
         $client->fetchAccessTokenWithRefreshToken($refreshToken);
-      } else {
-        return "Email nebylo možné jej odeslat. Prosíme, kontaktujte administrátora a ohlaste mu nefunkční email. Děkujeme za pochopení.";
+      } 
+      else {
+        $msg= "CHYBA při odesílání mailu došlo k chybě: nelze obnovit token";
+        goto end;
       }
     }
 
@@ -3541,15 +3550,23 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
     $service = new Google_Service_Gmail($client);
     try {
       $service->users_messages->send('me', $message);
-      return null;
-    } catch (Exception $e) {
+      $msg= "ok";
+    } 
+    catch (Google_Service_Exception $e) {
       file_put_contents("email-logs.txt", $e, FILE_APPEND);
-      return "Něco se pokazilo. Děkujeme za pochopení.";
+      $msg= "CHYBA při odesílání mailu došlo k chybě služby Gmail: $e->getCode() = $e->getMessage()";
+    } 
+    catch (Exception $e) {
+      file_put_contents("email-logs.txt", $e, FILE_APPEND);
+      $msg= "CHYBA při odesílání mailu došlo k chybě: $e->getMessage()";
     }
-  } catch (Exception $e) {
+  } 
+  catch (Exception $e) {
     file_put_contents("email-logs.txt", $e, FILE_APPEND);
-    return "Něco se pokazilo. Děkujeme za pochopení.";
+    $msg= "CHYBA při přípravě mailu došlo k chybě: $e->getMessage()";
   }
+end:
+  return $msg;
 }
 
 // $gmail_message:: Google_Service_Gmail_Message instance
