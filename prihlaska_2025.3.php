@@ -3549,7 +3549,8 @@ function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_
 
     $service = new Google_Service_Gmail($client);
     try {
-      $service->users_messages->send('me', $message);
+      $result= $service->users_messages->send('me', $message);
+      file_put_contents("email-logs.txt", $result, FILE_APPEND);
       $msg= "ok";
     } 
     catch (Google_Service_Exception $e) {
