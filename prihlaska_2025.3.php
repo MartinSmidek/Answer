@@ -3403,7 +3403,7 @@ function zvyraznit($msg,$ok=0) { // --------------------------------------------
   $color= $ok ? 'green' : 'red';
   return "<b style='color:$color'>$msg</b>";
 }
-function simple_mail($replyto,$address,$subject,$body,$cc='') { // --------------------- simple mail
+function OLDIES_simple_mail($replyto,$address,$subject,$body,$cc='') { // --------------------- simple mail
 # odeslání mailu
 # $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
 # $_TEST zabrání posílání na garanta přes replyTo 
@@ -3474,7 +3474,7 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
 end:
   return $msg;
 }
-function oauth_simple_mail($replyto,$address,$subject,$body,$cc='') {
+function simple_mail($replyto,$address,$subject,$body,$cc='') {
   global $api_gmail_name, $api_gmail_user;
   $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
   return $msg;
