@@ -67,11 +67,15 @@ class Ezer_PHPMailer extends PHPMailer {
     } 
     else {
       // Klasické SMTP přihlašování
-//      $credentials_path= __DIR__.'/../../files/setkani4/credential.json';
-//      if (!is_file($credentials_path) || !is_readable($credentials_path)) {
-//        throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
-//      }
-//      display(file_get_contents($credentials_path));
+      
+      
+      $credentials_path= __DIR__.'/../../files/setkani4/credential.json';
+      if (!is_file($credentials_path) || !is_readable($credentials_path)) {
+        throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
+      }
+      display(file_get_contents($credentials_path));
+      
+      
       $this->Username= $serverConfig->Username;
       $this->Password= $serverConfig->Password;
       $this->From= $serverConfig->Username;

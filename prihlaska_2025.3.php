@@ -63,14 +63,14 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
 //  global $api_gmail_name, $api_gmail_user;
   $msg= 'ok';
   $serverConfig= json_decode( 
-<<<__EOD
-   {"Host":"smtp.gmail.com","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
-    "Username":"answer@setkani.org","Password":"MameKrasnyDumSetkani"}
-__EOD
 //<<<__EOD
-//     {"Host":"smtp.seznam.cz","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
-//      "Username":"erop@chlapi.cz","Password":"Spolecne*Do*Nesmere","SMTPOptions":"-"}
+//   {"Host":"smtp.gmail.com","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
+//    "Username":"answer@setkani.org","Password":"MameKrasnyDumSetkani"}
 //__EOD
+<<<__EOD
+     {"Host":"smtp.seznam.cz","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
+      "Username":"erop@chlapi.cz","Password":"Spolecne*Do*Nesmere","SMTPOptions":"-"}
+__EOD
       );
   require_once __DIR__ . '/db2/db2.mailer.php';
   $mail= new Ezer_PHPMailer($serverConfig);
