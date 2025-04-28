@@ -58,6 +58,194 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //$TEST_mail= 'balous.petr@gmail.com';          // bez evidované manželky ale s rodinou
 //$TEST_mail= 'cahat@post.cz';                  // bez rodiny
 
+# -------------------------------------------------------------------------------------- simple mail
+function simple_mail($replyto,$address,$subject,$body,$cc='') { 
+//  global $api_gmail_name, $api_gmail_user;
+  $msg= 'ok';
+  $serverConfig= json_decode( 
+<<<__EOD
+   {"Host":"smtp.gmail.com","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
+    "Username":"answer@setkani.org","Password":"MameKrasnyDumSetkani"}
+__EOD
+//<<<__EOD
+//     {"Host":"smtp.seznam.cz","Port":465,"SMTPAuth":1,"SMTPSecure":"ssl",
+//      "Username":"erop@chlapi.cz","Password":"Spolecne*Do*Nesmere","SMTPOptions":"-"}
+//__EOD
+      );
+  $mail= new Ezer_PHPMailer($serverConfig);
+  $mail->CharSet = "utf-8";
+  $mail->AddReplyTo($replyto);
+  if (is_array($address)) {
+    foreach ($address as $adr) {
+      $mail->AddAddress($adr);   
+    }
+  }
+  else $mail->AddAddress($address);   
+  if ($cc != '') $mail->AddCC($cc);
+  $mail->Subject= $subject;
+  $mail->Body= $body;
+  try { 
+    $mail->Send(); 
+  } 
+  catch(Exception $e) { 
+    $msg= $e->getMessage(); 
+  }
+//  $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
+  return $msg;
+}
+# ----------------------------------------------------------------------------------- Ezer PHPMailer
+# OAuth2 - řešení přes třídu zamezující opakované autorizaci 
+$phpmailer_path= $_SERVER['DOCUMENT_ROOT']."/ezer3.2/server/licensed/phpmailer";
+require_once("$phpmailer_path/class.phpmailer.php");
+require_once("$phpmailer_path/class.smtp.php");
+
+class Ezer_PHPMailer extends PHPMailer {
+  protected $serverConfig;
+  protected $oauthClient;
+  // Cache pro autorizace jednotlivých serverů
+  protected static $oauthClientsCache= [];
+  // konstruktor
+  public function __construct($serverConfig) {
+    parent::__construct(true); // true = umožní výjimky
+    $this->serverConfig= $serverConfig;
+    // Nastavení serveru
+    $this->isSMTP();
+    $this->Host= $serverConfig->Host;
+    $this->Port= $serverConfig->Port;
+    $this->SMTPAuth= $serverConfig->SMTPAuth;
+    // Řešení pro gmail
+    if ($this->Host === 'smtp.gmail.com') {
+      // Klíč pro cache - může být třeba hostname serveru
+      $cacheKey= $this->Host;
+      if (!isset(self::$oauthClientsCache[$cacheKey])) {
+        try {
+          self::$oauthClientsCache[$cacheKey]= $this->createOAuthClient($serverConfig);
+        } 
+        catch (Exception $e) {
+          throw new Exception('Selhání při vytváření OAuth2 klienta: ' . $e->getMessage());
+        }
+      }      
+      // Použít existujícího klienta
+      $this->oauthClient= self::$oauthClientsCache[$cacheKey];
+      // Nastavit OAuth2 přihlašování do PHPMaileru
+      $this->AuthType = 'XOAUTH2';
+      $this->setOAuth(
+          new \PHPMailer\PHPMailer\OAuth([
+              'provider' => new \League\OAuth2\Client\Provider\Google([
+                  'clientId' => $serverConfig->clientId,
+                  'clientSecret' => $serverConfig->clientSecret,
+              ]),
+              'clientId' => $serverConfig->clientId,
+              'clientSecret' => $serverConfig->clientSecret,
+              'refreshToken' => $serverConfig->refreshToken,
+              'userName' => $serverConfig->email,
+          ])
+      );
+    } 
+    else {
+      // Klasické SMTP přihlašování
+      $this->Username= $serverConfig->Username;
+      $this->Password= $serverConfig->Password;
+      $this->From= $serverConfig->Username;
+      $this->IsHTML(true);  
+      $this->Mailer= "smtp";
+      foreach ($serverConfig as $part=>$value) {
+        if ($part=="SMTPOptions" && $value=="-")
+          $this->SMTPOptions= array('ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true));
+        else
+          $this->$part= $value;
+      }
+    }
+  }
+  // Vytvoří a nastaví nový Google_Client pro OAuth2.
+  protected function createOAuthClient_JH($serverConfig) {
+    // verze JH: GMAIL API CONSTANTS
+    $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
+    $required_privileges= array("https://mail.google.com/"); //global privilege
+    $tokenPathPrefix= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
+    $tokenPathSuffix= '.json';
+    $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
+    // test přístupnosti komponent
+    $filePath= $tokenPathPrefix . $serverConfig->Username . $tokenPathSuffix;
+    if (!is_file($filePath) || !is_readable($filePath)) {
+      throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token token");
+    }
+    // nová (2025) služba Gmail
+    require_once $gmail_api_library;
+    $client= new Google_Client();
+    $client->setAuthConfig($credentials_path);
+    $client->setPrompt("consent");
+    $client->setScopes($required_privileges);
+    $client->setAccessType('offline');
+    $client->setIncludeGrantedScopes(true);
+    //access token
+    $accessToken= json_decode(file_get_contents($filePath), true);
+    $client->setAccessToken($accessToken);
+    // refresh token automatically if necessary
+    if ($client->isAccessTokenExpired()) {
+      $refreshToken= $client->getRefreshToken();
+      if ($refreshToken) {
+        $client->fetchAccessTokenWithRefreshToken($refreshToken);
+      } 
+      else {
+        throw new Exception("CHYBA při odesílání mailu došlo k chybě: nelze obnovit token");
+      }
+    }
+    return $client;
+  }
+    // Vytvoří a nastaví nový Google_Client pro OAuth2.
+  protected function createOAuthClient($serverConfig) {
+    $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
+    require_once $gmail_api_library;
+    $client = new Google_Client();
+    // získání údajů pro autentizaci
+    $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
+//    $required_privileges= array("https://mail.google.com/"); //global privilege
+    $tokenPathPrefix= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
+    $tokenPathSuffix= '.json';
+//    $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
+    // test přístupnosti komponent
+    $filePath= $tokenPathPrefix . $serverConfig->Username . $tokenPathSuffix;
+    if (!is_file($filePath) || !is_readable($filePath)) {
+      throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token");
+    }
+    $serverConfig->refreshToken= json_decode(file_get_contents($filePath), true);
+    if (!is_file($credentials_path) || !is_readable($credentials_path)) {
+      throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
+    }
+    $creditals= json_decode(file_get_contents($credentials_path), true);
+    $serverConfig->clientId= $creditals['web']['client_id'];
+    $serverConfig->clientSecret= $creditals['web']['client_secret'];
+    //
+    $client->setClientId($serverConfig->clientId);
+    $client->setClientSecret($serverConfig->clientSecret);
+    $client->setAccessType('offline');
+    $client->setRedirectUri('urn:ietf:wg:oauth:2.0:oob');
+
+    if (empty($serverConfig->refreshToken)) {
+        throw new Exception('Refresh token není zadán.');
+    }
+
+    try {
+        $client->refreshToken($serverConfig->refreshToken);
+    } catch (Google_Service_Exception $e) {
+        throw new Exception('Chyba při obnovování tokenu: ' . $e->getMessage());
+    } catch (Exception $e) {
+        throw new Exception('Obecná chyba při obnovování tokenu: ' . $e->getMessage());
+    }
+
+    // Je client validní?
+    if (!$client->getAccessToken() || $client->isAccessTokenExpired()) {
+        throw new Exception('Neplatný nebo expirovaný access token.');
+    }
+
+    return $client;
+  }
+
+}
 // </editor-fold>
 
 // ========================================================================== parametrizace aplikace
@@ -3283,8 +3471,8 @@ function do_session_restart() { // ---------------------------------------------
 //  session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 }
 // <editor-fold defaultstate="collapsed" desc=" --------------------------------------------------------------------- posílání mailů přes OAuth2">
-# -------------------------------------------------------------------------------------- simple mail
-function simple_mail($replyto,$address,$subject,$body,$cc='') { 
+
+function simple_mail2($replyto,$address,$subject,$body,$cc='') { 
   global $api_gmail_name, $api_gmail_user;
   $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
   return $msg;
