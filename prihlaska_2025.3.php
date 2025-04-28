@@ -72,6 +72,7 @@ __EOD
 //      "Username":"erop@chlapi.cz","Password":"Spolecne*Do*Nesmere","SMTPOptions":"-"}
 //__EOD
       );
+  require_once __DIR__ . '/db2/db2.mailer.php';
   $mail= new Ezer_PHPMailer($serverConfig);
   $mail->CharSet = "utf-8";
   $mail->AddReplyTo($replyto);
@@ -99,7 +100,7 @@ $phpmailer_path= $_SERVER['DOCUMENT_ROOT']."/ezer3.2/server/licensed/phpmailer";
 require_once("$phpmailer_path/class.phpmailer.php");
 require_once("$phpmailer_path/class.smtp.php");
 
-class Ezer_PHPMailer extends PHPMailer {
+class xxxEzer_PHPMailer extends PHPMailer {
   protected $serverConfig;
   protected $oauthClient;
   // Cache pro autorizace jednotlivých serverů
@@ -160,7 +161,7 @@ class Ezer_PHPMailer extends PHPMailer {
       }
     }
   }
-  // Vytvoří a nastaví nový Google_Client pro OAuth2.
+  /* // Vytvoří a nastaví nový Google_Client pro OAuth2.
   protected function createOAuthClient_JH($serverConfig) {
     // verze JH: GMAIL API CONSTANTS
     $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
@@ -195,7 +196,7 @@ class Ezer_PHPMailer extends PHPMailer {
       }
     }
     return $client;
-  }
+  }*/
     // Vytvoří a nastaví nový Google_Client pro OAuth2.
   protected function createOAuthClient($serverConfig) {
     $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
@@ -203,16 +204,17 @@ class Ezer_PHPMailer extends PHPMailer {
     $client = new Google_Client();
     // získání údajů pro autentizaci
     $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
-//    $required_privileges= array("https://mail.google.com/"); //global privilege
-    $tokenPathPrefix= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
-    $tokenPathSuffix= '.json';
-//    $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
-    // test přístupnosti komponent
-    $filePath= $tokenPathPrefix . $serverConfig->Username . $tokenPathSuffix;
-    if (!is_file($filePath) || !is_readable($filePath)) {
+////    $required_privileges= array("https://mail.google.com/"); //global privilege
+//    $tokenPathPrefix= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
+//    $tokenPathSuffix= '.json';
+////    $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
+//    // test přístupnosti komponent
+//    $filePath= $tokenPathPrefix . $serverConfig->Username . $tokenPathSuffix;
+    $tokenPath= $_SERVER['DOCUMENT_ROOT']."/../files/setkani4/token_$serverConfig->Username.json";
+    if (!is_file($tokenPath) || !is_readable($tokenPath)) {
       throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token");
     }
-    $serverConfig->refreshToken= json_decode(file_get_contents($filePath), true);
+    $serverConfig->refreshToken= json_decode(file_get_contents($tokenPath), true);
     if (!is_file($credentials_path) || !is_readable($credentials_path)) {
       throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
     }
