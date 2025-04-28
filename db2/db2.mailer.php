@@ -67,6 +67,11 @@ class Ezer_PHPMailer extends PHPMailer {
     } 
     else {
       // Klasické SMTP přihlašování
+//      $credentials_path= __DIR__.'/../../files/setkani4/credential.json';
+//      if (!is_file($credentials_path) || !is_readable($credentials_path)) {
+//        throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
+//      }
+//      display(file_get_contents($credentials_path));
       $this->Username= $serverConfig->Username;
       $this->Password= $serverConfig->Password;
       $this->From= $serverConfig->Username;
@@ -89,8 +94,10 @@ class Ezer_PHPMailer extends PHPMailer {
     require_once $gmail_api_library;
     $client = new Google_Client();
     // získání údajů pro autentizaci
-    $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
-    $tokenPath= $_SERVER['DOCUMENT_ROOT']."/../files/setkani4/token_$serverConfig->Username.json";
+    $credentials_path= __DIR__.'/../../files/setkani4/credential.json';
+    $tokenPath= __DIR__.'/../../files/setkani4/token_$serverConfig->Username.json';
+//    $credentials_path= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
+//    $tokenPath= $_SERVER['DOCUMENT_ROOT']."/../files/setkani4/token_$serverConfig->Username.json";
     if (!is_file($tokenPath) || !is_readable($tokenPath)) {
       throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token");
     }
