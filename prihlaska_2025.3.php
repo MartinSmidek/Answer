@@ -60,10 +60,12 @@ set_error_handler(function ($severity, $message, $file, $line) {
 
 # -------------------------------------------------------------------------------------- simple mail
 function simple_mail($replyto,$address,$subject,$body,$cc='') { 
-//  global $api_gmail_name, $api_gmail_user;
   $msg= 'ok';
-  $serverConfig= json_decode( 
-      );
+
+  require_once "../files/answer/dbt.dbs.php";
+  global $test_smtp;
+  $serverConfig= json_decode($test_smtp->seznam);
+
   require_once __DIR__ . '/db2/db2.mailer.php';
   $mail= new Ezer_PHPMailer($serverConfig);
   $mail->CharSet = "utf-8";
