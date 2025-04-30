@@ -15149,7 +15149,8 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
 # nastavení parametrů pro SMTP server podle user.options.smtp
 # nebo přímo zadáním parametrů
 function mail2_new_PHPMailer($smtp=null) {  
-  global $ezer_path_serv, $ezer_root;
+//  global $ezer_path_serv;
+  global $ezer_root;
   $mail= null;
   if (!$smtp) {
     // získání parametrizace SMTP
@@ -15161,26 +15162,33 @@ function mail2_new_PHPMailer($smtp=null) {
       fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
       goto end;
     }
+    $smtp->files_path= __DIR__.'/../../files/setkani4';
+    debug($smtp,"mailer config");
   }
-  // inicializace phpMailer
-  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
-  require_once("$phpmailer_path/class.phpmailer.php");
-  require_once("$phpmailer_path/class.smtp.php");
-  $mail= new PHPMailer;
-  $mail->SetLanguage('cs',"$phpmailer_path/language/");
-  $mail->IsSMTP();
-  $mail->CharSet = "UTF-8";
-  $mail->IsHTML(true);
-  $mail->Mailer= "smtp";
-  foreach ($smtp as $part=>$value) {
-  	if ($part=="SMTPOptions" && $value=="-")
-      $mail->SMTPOptions= array('ssl' => array(
-        'verify_peer' => false,
-        'verify_peer_name' => false,
-        'allow_self_signed' => true));
-  	else
-      $mail->$part= $value;
-  }
+  // inicializace Ezer_PHPMailer
+  global $abs_root;
+  $server= "$abs_root/ezer3.2/server";
+  require_once "$server/ezer_mailer.php";
+  $mail= new Ezer_PHPMailer($smtp);
+//  // inicializace phpMailer
+//  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+//  require_once("$phpmailer_path/class.phpmailer.php");
+//  require_once("$phpmailer_path/class.smtp.php");
+//  $mail= new PHPMailer;
+//  $mail->SetLanguage('cs',"$phpmailer_path/language/");
+//  $mail->IsSMTP();
+//  $mail->CharSet = "UTF-8";
+//  $mail->IsHTML(true);
+//  $mail->Mailer= "smtp";
+//  foreach ($smtp as $part=>$value) {
+//  	if ($part=="SMTPOptions" && $value=="-")
+//      $mail->SMTPOptions= array('ssl' => array(
+//        'verify_peer' => false,
+//        'verify_peer_name' => false,
+//        'allow_self_signed' => true));
+//  	else
+//      $mail->$part= $value;
+//  }
 end:  
   return $mail;
 }
@@ -15326,7 +15334,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     }
     else {
       // zkus poslat mail
-      try { $ok= $mail->Send(); } 
+      try { $ok= $mail->Ezer_Send(); } 
       catch(Exception $e) { 
         $ok= false; 
       }
