@@ -13632,29 +13632,27 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$varianta,$p
   if ( $poslat ) {
     // poslání mailu - při úspěchu zápis o potvrzení
     $mail= mail2_new_PHPMailer();
-    if ( !$mail ) { 
+    if ( $mail->Ezer_error ) { 
       $ze= isset($mail->Username) ? $mail->Username : '?';
-      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: odesílací adresa nelze použít (SMTP)";
+      $ret->err= "CHYBA při odesílání mailu z '$ze' - odesílací adresa nelze použít ($mail->Ezer_error)";
       goto end;
     }
-    // test odesílací adresy -- pro maily pod seznam.cz musí být stejná jako přihlašovací
-    $mail->From= preg_match("/@chlapi.cz|@seznam.cz/",$mail->Username) ? $mail->Username : $from;
     $mail->AddReplyTo($from);
-    $mail->FromName= $vyrizuje;
+    $mail->SetFrom($mail->From,$vyrizuje);
     foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
       $mail->AddAddress($adresa);   // pošli na 1. adresu
     }
     $mail->Subject= $nazev;
     $mail->Body= $obsah;
-    $ok= $mail->Send();
-    if ( $ok  ) {
+    $ok= $mail->Ezer_Send();
+    if ( $ok=='ok' ) {
       // zápis o potvrzení
       $ret->msg= "Byl odeslán mail$report";
       query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
     }
     else {
       $ze= isset($mail->Username) ? $mail->Username : '?';
-      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: $mail->ErrorInfo";
+      $ret->err= "CHYBA při odesílání mailu z '$ze' $ok";
       goto end;
     }
   }
