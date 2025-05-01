@@ -60,15 +60,16 @@ set_error_handler(function ($severity, $message, $file, $line) {
 
 # -------------------------------------------------------------------------------------- simple mail
 function simple_mail($replyto,$address,$subject,$body,$cc='') { 
+  global $abs_root;
   $msg= 'ok';
-
-  require_once "../files/answer/dbt.dbs.php";
-  global $test_smtp;
-  $serverConfig= json_decode($test_smtp->seznam);
-
-  require_once __DIR__ . '/db2/db2.mailer.php';
+  require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
+  $serverConfig= (object)[
+      'Host'       => 'smtp.gmail.com',
+      'Username'   => 'answer@setkani.org',
+      'files_path' => __DIR__.'/../files/setkani4'
+    ];
   $mail= new Ezer_PHPMailer($serverConfig);
-  $mail->CharSet = "utf-8";
+  $mail->SetFrom($mail->From,'YMCA Setkání');
   $mail->AddReplyTo($replyto);
   if (is_array($address)) {
     foreach ($address as $adr) {
@@ -80,12 +81,11 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
   $mail->Subject= $subject;
   $mail->Body= $body;
   try { 
-    $mail->Send(); 
+    $mail->Ezer_Send(); 
   } 
   catch(Exception $e) { 
     $msg= $e->getMessage(); 
   }
-//  $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
   return $msg;
 }
 // </editor-fold>
