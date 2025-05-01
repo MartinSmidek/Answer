@@ -15264,8 +15264,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $fname= trim($fname);
         $has_dir= strrpos($fname,'/');
         $fpath= $has_dir ? $fname : "docs/$ezer_root/$fname";
-//        if ($has_dir) $fname= substr($fname,$has_dir+1);
-//        $fpath= "docs/$ezer_root/".trim($fname);
         $mail->AddAttachment($fpath);
   } } };
   //
@@ -15277,30 +15275,18 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $d= pdo_fetch_object($res);
   // napojení na mailer
   $html= '';
-  $martin= "martin@smidek.eu";
   // poslání mailů
   $mail= mail2_new_PHPMailer();
   if ( !$mail ) { 
-    $result->_html.= "<br><b style='color:#700'>odesílací adresa nelze použít (SMTP)</b>";
+    $result->_html.= "<br><b style='color:#700'>tato odesílací adresa nelze použít</b>";
     $result->_error= 1;
     goto end;
   }
-  // test odesílací adresy -- pro maily pod seznam.cz musí být stejná jako přihlašovací
-  $mail->From= preg_match("/@chlapi.cz|@seznam.cz/",$mail->Username) ? $mail->Username : $from;
   $mail->AddReplyTo($from);
-//   $mail->ConfirmReadingTo= $jarda;
-  $mail->FromName= "$fromname";
+  $mail->SetFrom($mail->From,$fromname);
   $mail->Subject= $d->nazev;
-//                                         display($mail->Subject);
   $attach($mail,$d->prilohy);
-//   if ( $d->prilohy ) {
-//     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
-//       list($fname,$bytes)= explode(':',$fnamesb);
-//       $fpath= "docs/$ezer_root/".trim($fname);
-//       $mail->AddAttachment($fpath);
-//     }
-//   }
-  if ( $kolik==0 ) {
+  if ( $kolik==0 ) { // ---------------------- testovací mail
     // testovací poslání sobě
     if ( $id_mail ) {
       // přečtení personifikace rozesílaného mailu
@@ -15320,14 +15306,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     }
     $mail->Body= $obsah . $foot;
     $mail->AddAddress($test);   // pošli sám sobě
-//    // pseudo dump 
-//    $mail->SMTPDebug= 3;
-//    $mail->Debugoutput = function($str, $level) { display("debug level $level; message: $str");};
-//    $pars= (object)array();
-//    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName,SMTPOptions") as $p) {
-//      $pars->$p= $mail->$p;
-//    }
-//    debug($pars,"nastavení PHPMAILER");
     // pošli
     if ( $TEST ) {
       $ok= 1;
@@ -15339,19 +15317,17 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $ok= false; 
       }
     }
-    if ( $ok  )
+    if ( $ok=='ok'  )
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
     else {
-      $err= $mail->ErrorInfo;
       $ze= isset($mail->Username) ? $mail->Username : '?';
-      $html.= "<br><b style='color:#700'>Při odesílání mailu přes '$ze' došlo k chybě: $err</b>";
-      display("Send failed: $err<br>from={$mail->From} username={$mail->Username} SMTPserver=$ze");
+      $html.= "<br><b style='color:#700'>Při odesílání mailu přes '$ze' $ok</b>";
+      display("Send failed: $ok<br>username={$mail->Username}");
       $result->_error= 1;
     }
 //                                                 display($html);
   }
-  else {
-    // poslání dávky $kolik mailů
+  else { // ---------------------------------- poslání dávky $kolik mailů
     $n= $nko= 0;
     $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav IN (0,3) ORDER BY email";
     $res= pdo_qry($qry);
@@ -15383,19 +15359,17 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         else                            // na další jako kopie
           $mail->AddCC($adresa);
       }
-//       $mail->AddBCC($klub);
        if ( $TEST ) {
-         $ok= 1;
-                                          display("jako odeslaný mail pro $adresa");
+         $ok= 'ok';
+                                          display("jakože odeslaný mail pro $adresa");
        }
        else {
         // zkus poslat mail
-        try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+        try { $ok= $mail->Ezer_Send(); } catch(Exception $e) { $ok= 'CHYBA nezachycená'; }
       }
-      if ( !$ok  ) {
+      if ( $ok!='ok' ) {
         $ident= $z->id_clen ? $z->id_clen : $adresa;
-        $err= $mail->ErrorInfo;
-        $html.= "<br><b style='color:#700'>Při odesílání mailu pro $ident došlo k chybě: $err</b>";
+        $html.= "<br><b style='color:#700'>neodeslání mailu pro $ident - $ok</b>";
         $result->_error= 1;
         $nko++;
       }
@@ -15403,17 +15377,17 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $n++;
       }
       // zapiš výsledek do tabulky
-      $stav= $ok ? 4 : 5;
-      $msg= $ok ? '' : $mail->ErrorInfo;
-      if (preg_match("/Daily user sending quota exceeded/",$msg)) {
+      $stav= $ok=='ok' ? 4 : 5;
+      $msg= $ok=='ok' ? '' : $ok;
+      if ($msg && preg_match("/Daily user sending quota exceeded/",$msg)) {
         $result->_over_quota= 1;
       }
       else {
         $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
-        $res1= pdo_qry($qry1);
+        pdo_qry($qry1);
       }
       // po chybě přeruš odesílání
-      if ( !$ok ) break;
+      if ( $ok!='ok' ) break;
     }
     $result->_sent= $n;
     $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";
