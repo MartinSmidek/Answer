@@ -15276,16 +15276,25 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   // napojení na mailer
   $html= '';
   // poslání mailů
-  $mail= mail2_new_PHPMailer();
-  if ( !$mail ) { 
-    $result->_html.= "<br><b style='color:#700'>tato odesílací adresa nelze použít</b>";
+  try {
+    $mail= mail2_new_PHPMailer();
+    display("mail2_new_PHPMailer() ok");
+  
+    if ( $mail->Ezer_error ) { 
+      $result->_html.= "<br><b style='color:#700'>tato odesílací adresa nelze použít ($mail->Ezer_error)</b>";
+      $result->_error= 1;
+      goto end;
+    }
+    $mail->AddReplyTo($from);
+    $mail->SetFrom($mail->From,$fromname);
+    $mail->Subject= $d->nazev;
+    $attach($mail,$d->prilohy);
+  }
+  catch (Exception $e) {
+    $result->_html.= "<br><b style='color:#700'>tato odesílací adresa nelze použít (".$e->getMessage().")</b>";
     $result->_error= 1;
     goto end;
   }
-  $mail->AddReplyTo($from);
-  $mail->SetFrom($mail->From,$fromname);
-  $mail->Subject= $d->nazev;
-  $attach($mail,$d->prilohy);
   if ( $kolik==0 ) { // ---------------------- testovací mail
     // testovací poslání sobě
     if ( $id_mail ) {
