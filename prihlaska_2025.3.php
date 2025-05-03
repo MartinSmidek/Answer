@@ -3282,137 +3282,44 @@ function do_session_restart() { // ---------------------------------------------
   session_start();
 //  session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 }
-// <editor-fold defaultstate="collapsed" desc=" --------------------------------------------------------------------- posílání mailů přes OAuth2">
 # -------------------------------------------------------------------------------------- simple mail
 function simple_mail($replyto,$address,$subject,$body,$cc='') { 
-  global $api_gmail_name, $api_gmail_user;
-  $msg= oauth_send_mail($replyto, $address, $subject, $body, $api_gmail_name, $api_gmail_user,$cc); 
-  return $msg;
-}
-# ---------------------------------------------------------------------------------- oauth send mail
-# OAuth2
-/**
- * @param $reply_to - address to reply to
- * @param $recipient_address - string recipient address OR array of them
- * @param $subject - mail subject
- * @param $body - mail body
- * @param $gmail_sender_name - name as seen by recipient
- * @param $gmail_sender_mail - email used to send the mail, must be authenticated to using GMAIL OAuth
- * @param $cc - mail to forward the email to or empty string if do not forward
- * @param $cc_name - name of the first forward recipient
- * @param $cc2 - second mail to forward to
- * @param $cc2_name - second forward recipient
- * @return string|null - error description or null in case of success
- */
-function oauth_send_mail($reply_to, $recipient_address, $subject, $body, $gmail_sender_name, $gmail_sender_mail,
-                   $cc='', $cc_name='', $cc2='', $cc2_name='') {
-  //GMAIL API CONSTANTS
-  $credentials_path = $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/credential.json';
-  $required_privileges = array(
-    //"https://www.googleapis.com/auth/gmail.settings.basic", //to view email metadata
-    //"https://www.googleapis.com/auth/gmail.send" //to send emails
-    // OR
-      "https://mail.google.com/" //global privilege
-  );
-  $tokenPathPrefix= $_SERVER['DOCUMENT_ROOT'].'/../files/setkani4/token_';
-  $tokenPathSuffix= '.json';
-  $gmail_api_library= $_SERVER['DOCUMENT_ROOT'].'/ezer3.2/server/licensed/google_api/vendor/autoload.php';
-  // test přístupnosti komponent
-  $filePath= $tokenPathPrefix . $gmail_sender_mail . $tokenPathSuffix;
-  if (!is_file($filePath) || !is_readable($filePath)) {
-    $msg= "CHYBA při odesílání mailu došlo k chybě: nepřístupný token token";
+  global $abs_root;
+  $msg= 'ok';
+  require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
+  $serverConfig= (object)[
+      'Host'       => 'smtp.gmail.com',
+      'Username'   => 'answer@setkani.org',
+      'files_path' => __DIR__.'/../files/setkani4'
+    ];
+  $mail= new Ezer_PHPMailer($serverConfig);
+  if ( $mail->Ezer_error ) { 
+    $msg= $mail->Ezer_error;
     goto end;
   }
-  // nová (2025) služba Gmail
-  try {
-    require_once $gmail_api_library;
-    $client= new Google_Client();
-    $client->setAuthConfig($credentials_path);
-    $client->setPrompt("consent");
-    $client->setScopes($required_privileges);
-    $client->setAccessType('offline');
-    $client->setIncludeGrantedScopes(true);
-    //access token
-    $accessToken= json_decode(file_get_contents($filePath), true);
-    $client->setAccessToken($accessToken);
-    // refresh token automatically if necessary
-    if ($client->isAccessTokenExpired()) {
-      $refreshToken= $client->getRefreshToken();
-      if ($refreshToken) {
-        $client->fetchAccessTokenWithRefreshToken($refreshToken);
-      } 
-      else {
-        $msg= "CHYBA při odesílání mailu došlo k chybě: nelze obnovit token";
-        goto end;
-      }
-    }
-    // připav mail k odeslání
-    $message= new Google_Service_Gmail_Message();
-    prepare_message_with_mailer($message, $reply_to, $recipient_address, $subject, $body, 
-        $gmail_sender_name, $gmail_sender_mail, $cc, $cc_name, $cc2, $cc2_name);
-    // zkus odeslat mail
-    $service= new Google_Service_Gmail($client);
-    try {
-      $result= $service->users_messages->send('me', $message);
-      file_put_contents("email-logs.txt", $result, FILE_APPEND);
-      $msg= "ok";
-    } 
-    catch (Google_Service_Exception $e) {
-      file_put_contents("email-logs.txt", $e, FILE_APPEND);
-      $msg= "CHYBA při odesílání mailu došlo k chybě služby Gmail: $e->getCode() = $e->getMessage()";
-    } 
-    catch (Exception $e) {
-      file_put_contents("email-logs.txt", $e, FILE_APPEND);
-      $msg= "CHYBA při odesílání mailu došlo k chybě: $e->getMessage()";
-    }
-  } 
-  catch (Exception $e) {
-    file_put_contents("email-logs.txt", $e, FILE_APPEND);
-    $msg= "CHYBA při přípravě mailu došlo k chybě: $e->getMessage()";
-  }
-end:
-  return $msg;
-}
-// --------------------------------------------------------------------- prepare_message_with_mailer
-function prepare_message_with_mailer($gmail_message, $reply_to, $recipient_address, $subject, $body,
-                                     $gmail_sender_name, $gmail_sender_mail, $cc, $cc_name, $cc2, $cc2_name) {
-  // $gmail_message:: Google_Service_Gmail_Message instance
-  $phpmailer_path= $_SERVER['DOCUMENT_ROOT']."/ezer3.2/server/licensed/phpmailer";
-  require_once("$phpmailer_path/class.phpmailer.php");
-  require_once("$phpmailer_path/class.smtp.php");
-  // redakce mailu
-  $mail= new PHPMailer(true);
-  $mail->SetLanguage('cs',"$phpmailer_path/language/");
-  $mail->CharSet= "UTF-8";
-  $mail->IsHTML(true);
-  $mail->ClearReplyTos();
-  $mail->AddReplyTo($reply_to);
-  $mail->SetFrom($gmail_sender_mail, $gmail_sender_name);
-  $mail->Subject= $subject;
-  $mail->Body= $body;
-  $mail->ClearAttachments();
-  $mail->ClearAddresses();
-  $mail->ClearCCs();
-  if (is_array($recipient_address)) {
-    foreach ($recipient_address as $adr) {
+  $mail->SetFrom($mail->From,'YMCA Setkání');
+  $mail->AddReplyTo($replyto);
+  if (is_array($address)) {
+    foreach ($address as $adr) {
       $mail->AddAddress($adr);   
     }
   }
-  else $mail->AddAddress($recipient_address);   
-  if ($cc != '') $mail->AddCC($cc, $cc_name);
-  if ($cc2 != '') $mail->AddCC($cc2, $cc2_name);
-  // don't send, but pre-send and get data
-  if ($mail->preSend()) {
-    $mime= $mail->getSentMIMEMessage();
-    $data= base64_encode($mime);
-    $data= str_replace(array('+','/','='),array('-','_',''),$data); // url safe
-    $gmail_message->setRaw($data);
+  else 
+    $mail->AddAddress($address);   
+  if ($cc!='') $mail->AddCC($cc);
+  $mail->Subject= $subject;
+  $mail->Body= $body;
+  try { 
+    $msg= $mail->Ezer_Send(); // vrací 'ok' nebo chybovou hlášku
   } 
-  else {
-    throw new Exception("Unable to create mail with PHPMailer: " . $mail->ErrorInfo);
+  catch(Exception $e) { 
+    $msg= "CHYBA při odesílání mailu:" . $e->getMessage(); 
   }
+end:  
+  if ($msg!='ok') 
+    log_error($msg);
+  return $msg;
 }
-// </editor-fold>
 // <editor-fold defaultstate="collapsed" desc=" ------------------------------------------------------ pomocné funkce + modifikovaná volání Ezer">
 function x($msg) {
   global $TEST;
