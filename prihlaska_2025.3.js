@@ -50,7 +50,7 @@ function pretty_log(patt) {
   let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
   let row= title;
   for (let i= pretty_log.lines.length-2; i>0; i--) {
-    if (patt && !pretty_log.lines[i].includes(patt)) continue;
+    if (patt && !pretty_log.lines[i].match(patt)) continue;
     row+= '\n'+pretty_log.lines[i];
   }
   $('#log').html(row);
