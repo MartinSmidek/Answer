@@ -181,7 +181,7 @@ menu m {type:'left', format:'f+', active:*
       ,par:{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
       ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
-    item {title:' ... letošní kulatiny VPS/PPS (jednotlivci)'                        skill:'yae;fae;cae#crz'
+    item {title:' ... letošní (půl)kulatiny VPS/PPS'                        skill:'yae;fae;cae#crz'
       ,par:{typ:'slouzici',podtyp:'kulatiny',xls:'Excel',parm_tit:'roky zpět:'
       ,dsc:"Tabulka obsahuje letošní kulatiny sloužících párů, <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}

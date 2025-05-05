@@ -5790,7 +5790,7 @@ function kasa_send($whos,$to_send=0) {
     $txt_par= str_replace('{poznamka}',$par,$txt);
     if ($to_send) {
       $ok= kasa_send_mail("Měsíční připomenutí zápisu zůstatků pokladen",$txt_par,
-          $replyto,$adresy[$who],'','mail',$replyto);
+          $replyto,$adresy[$who],'YMCA Setkání','mail');
       if (!$ok) break;
       $n++;
     }
@@ -5821,45 +5821,81 @@ function kasa_send_log($typ,$subj='') {
 # pošle systémový mail, pokud není určen adresát či odesílatel jde o mail správci aplikace
 # $to může být seznam adres oddělený čárkou
 function kasa_send_mail($subject,$html,$from='',$to='',$fromname='',$typ='',$replyto='',$lognote='') { //trace();
-  global $ezer_path_serv, $EZER, $api_gmail_user, $api_gmail_pass;
-  $to= $to ? $to : $EZER->options->mail;
-  // poslání mailu
-  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
-  require_once("$phpmailer_path/class.smtp.php");
-  require_once("$phpmailer_path/class.phpmailer.php");
-  // napojení na mailer
-  $mail= new PHPMailer;
-  $mail->SetLanguage('cs',"$phpmailer_path/language/");
   
-  $mail->IsSMTP();
-  $mail->Mailer= 'smtp';
-  $mail->Host= "smtp.gmail.com";
-  $mail->Port= 465;
-  $mail->SMTPAuth= 1;
-  $mail->SMTPSecure= "ssl";
-  $mail->Username= $api_gmail_user;
-  $mail->Password= $api_gmail_pass;
-  $mail->CharSet = "utf-8";
-  $mail->From= $from;
-  $mail->AddReplyTo($replyto?:$from);
-  $mail->FromName= $fromname;
-  foreach (explode(',',$to) as $to1) {
-    $mail->AddAddress($to1);
+  global $abs_root;
+  $msg= 'ok';
+  $smtp= (object)[
+    'Host'       => 'smtp.gmail.com',
+    'Username'   => 'answer@setkani.org',
+    'files_path' => __DIR__.'/../../files/setkani4'
+  ];
+  require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
+  $mail= new Ezer_PHPMailer($smtp);
+  if ( $mail->Ezer_error ) { 
+    $msg= $mail->Ezer_error;
   }
-  $mail->Subject= $subject;
-  $mail->Body= $html;
-  $mail->IsHTML(true);
-  // pošli
-  $ok= $mail->Send();
-  if ( !$ok )
-    fce_warning("Selhalo odeslání mailu: $mail->ErrorInfo");
   else {
-    // zápis do stamp
-    $dt= date('Y-m-d H:i:s');
-    if ($lognote) $subject.= " ... $lognote";
-    query("INSERT INTO stamp (typ,kdy,pozn) VALUES ('$typ','$dt','$subject')");
+    $mail->SetFrom($mail->From,$fromname);
+    $mail->AddReplyTo($from);
+    foreach (explode(',',$to) as $to1) {
+      $mail->AddAddress($to1);
+    }
+    $mail->Subject= $subject;
+    $mail->Body= $html;
+    // pošli mail
+    try { 
+      $msg= $mail->Ezer_Send();     
+    } 
+    catch(Exception $e) { 
+      $msg= "CHYBA odesílání mailu:" . $e->getMessage(); 
+    }
   }
-  return $ok;
+  // zápis do stamp
+  $dt= date('Y-m-d H:i:s');
+  $msg= strtr($msg,["'"=>"&spos;"]);
+  if ($lognote) $subject.= " ... $lognote";
+  query("INSERT INTO stamp (typ,kdy,pozn) VALUES ('$typ','$dt','$subject - $msg')");
+  return $msg=='ok';
+  
+//  global $ezer_path_serv, $EZER, $api_gmail_user, $api_gmail_pass;
+//  $to= $to ? $to : $EZER->options->mail;
+//  // poslání mailu
+//  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+//  require_once("$phpmailer_path/class.smtp.php");
+//  require_once("$phpmailer_path/class.phpmailer.php");
+//  // napojení na mailer
+//  $mail= new PHPMailer;
+//  $mail->SetLanguage('cs',"$phpmailer_path/language/");
+//  
+//  $mail->IsSMTP();
+//  $mail->Mailer= 'smtp';
+//  $mail->Host= "smtp.gmail.com";
+//  $mail->Port= 465;
+//  $mail->SMTPAuth= 1;
+//  $mail->SMTPSecure= "ssl";
+//  $mail->Username= $api_gmail_user;
+//  $mail->Password= $api_gmail_pass;
+//  $mail->CharSet = "utf-8";
+//  $mail->From= $from;
+//  $mail->AddReplyTo($replyto?:$from);
+//  $mail->FromName= $fromname;
+//  foreach (explode(',',$to) as $to1) {
+//    $mail->AddAddress($to1);
+//  }
+//  $mail->Subject= $subject;
+//  $mail->Body= $html;
+//  $mail->IsHTML(true);
+//  // pošli
+//  $ok= $mail->Send();
+//  if ( !$ok )
+//    fce_warning("Selhalo odeslání mailu: $mail->ErrorInfo");
+//  else {
+//    // zápis do stamp
+//    $dt= date('Y-m-d H:i:s');
+//    if ($lognote) $subject.= " ... $lognote";
+//    query("INSERT INTO stamp (typ,kdy,pozn) VALUES ('$typ','$dt','$subject')");
+//  }
+//  return $ok;
 }
 /** ===========================================================================================> DŮM **/
 function rodcis($nar,$sex) {
