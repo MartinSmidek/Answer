@@ -3244,6 +3244,7 @@ function gen_html($to_save=0) {
   if ($akce->p_upozorneni)
     $html.= "<p><i>Souhlas obou manželů s podmínkami účasti na kurzu byl potvrzen $ted.</i></p>";
   // vložit přihlášku jako PDF do záložky Dokumenty daného pobytu
+  $html= strtr($html,['&quot;'=>'"',"&apos;"=>"'"]);
   if ($to_save) {
     global $path_files_h;
     $foot= '';
