@@ -12763,7 +12763,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
             '^id_osoba'=>$x->id_m
           );
         }
-        if (substr($x->narozeni_z,3,1)==$kulate && !$x->umrti_z) {
+        if ($x->narozeni!='0000-00-00' && in_array(substr($x->narozeni_z,3,1),[$kulate,$pulkulate]) && !$x->umrti_z) {
           $roku= $letos - substr($x->narozeni_z,0,4);
           $kdy= sql_date1($x->narozeni_z);
           $order= substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2);
@@ -12773,7 +12773,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
             '^id_osoba'=>$x->id_z
           );
         }
-        if (substr($x->datsvatba,3,1)==$pulkulate && !$x->rozvod && !$x->umrti_m && !$x->umrti_z ) {
+        if ($x->datsvatba!='0000-00-00' && in_array(substr($x->datsvatba,3,1),[$kulate,$pulkulate]) && !$x->rozvod && !$x->umrti_m && !$x->umrti_z ) {
           $tel= $muz->telefon==$zena->telefon ? $muz->telefon
               : "{$muz->telefon}, {$zena->telefon}";
           $mai= $muz->email==$zena->email ? $muz->email
