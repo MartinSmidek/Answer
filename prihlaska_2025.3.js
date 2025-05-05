@@ -13,8 +13,8 @@ function pretty_log(patt) {
   if (!pretty_log.called) {
     // vložení pole pro dotaz - jen porvé
     let html= `<label for="inputField" style="font-weight:bold;font-family:monospace">
-        Vyber řádky obsahující:</label>
-      <input type="text" id="inputField" placeholder="Zadejte text" 
+        Vyber řádky vyhovující regulárnímu výrazu:</label>
+      <input type="text" id="inputField" placeholder="například ID.*POBYT" 
         style="font-family:monospace">`;
     document.body.insertAdjacentHTML('afterbegin', html);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
