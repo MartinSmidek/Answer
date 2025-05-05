@@ -2864,7 +2864,6 @@ function log_write_changes() { // ----------------------------------------------
     // přidej aktuální skeleton formuláře
     $changes->form= $vars->form;
     $val= json_encode_2($changes);
-    $val= strtr($val,["'"=>"\\'"]);
     $res= pdo_query_2("UPDATE prihlaska SET save=NOW(),vars_json='$val' WHERE id_prihlaska=$idw",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE_CHANGES fail");
@@ -3357,7 +3356,8 @@ function array2object(array $array) {
 }
 function json_encode_2($s) { // ------------------------------------------------------ json encode_2
 # korektní json encode
-  $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
+  $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_APOS);
+  $s= strtr($s,['u0022'=>'&quot;','u0027'=>"&apos;"]);
   $sbr= nl2br_2($s);
   return $sbr;
 }
