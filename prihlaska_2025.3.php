@@ -2864,6 +2864,7 @@ function log_write_changes() { // ----------------------------------------------
     // přidej aktuální skeleton formuláře
     $changes->form= $vars->form;
     $val= json_encode_2($changes);
+    $val= strtr($val,["'"=>"\\'"]);
     $res= pdo_query_2("UPDATE prihlaska SET save=NOW(),vars_json='$val' WHERE id_prihlaska=$idw",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE_CHANGES fail");
@@ -3284,36 +3285,53 @@ function do_session_restart() { // ---------------------------------------------
 }
 # -------------------------------------------------------------------------------------- simple mail
 function simple_mail($replyto,$address,$subject,$body,$cc='') { 
-  global $abs_root;
+# odeslání mailu
+# $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
+# $_TEST zabrání posílání na garanta přes replyTo 
+  global $abs_root, $MAIL, $TEST, $_TEST, $DOM;
   $msg= 'ok';
-  require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
   $serverConfig= (object)[
       'Host'       => 'smtp.gmail.com',
       'Username'   => 'answer@setkani.org',
-      'files_path' => __DIR__.'/../files/setkani4'
+      'files_path' => __DIR__.'/../files/setkani4',
+      'FromName'   => 'YMCA Setkání'
     ];
-  $mail= new Ezer_PHPMailer($serverConfig);
-  if ( $mail->Ezer_error ) { 
-    $msg= $mail->Ezer_error;
-    goto end;
+  if ($TEST>1 || !$MAIL) {
+    $DOM->mailbox= ['show',
+        "<h3>Simulace odeslání mailu z adresy $serverConfig->Username &lt;$serverConfig->FromName&gt;</h3>"
+        . "<b>pro:</b>  "
+        . (is_array($address) ? implode(', ',$address) : $address)
+        . "<br><b>předmět:</b> $subject"
+        . "<p><b>text:</b> $body</p>"];
+    $msg= 'ok'; // TEST bez odeslání
   }
-  $mail->SetFrom($mail->From,'YMCA Setkání');
-  $mail->AddReplyTo($replyto);
-  if (is_array($address)) {
-    foreach ($address as $adr) {
-      $mail->AddAddress($adr);   
+  else {
+    require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
+    $mail= new Ezer_PHPMailer($serverConfig);
+    if ( $mail->Ezer_error ) { 
+      $msg= $mail->Ezer_error;
+      goto end;
     }
-  }
-  else 
-    $mail->AddAddress($address);   
-  if ($cc!='') $mail->AddCC($cc);
-  $mail->Subject= $subject;
-  $mail->Body= $body;
-  try { 
-    $msg= $mail->Ezer_Send(); // vrací 'ok' nebo chybovou hlášku
-  } 
-  catch(Exception $e) { 
-    $msg= "CHYBA při odesílání mailu:" . $e->getMessage(); 
+    $mail->SetFrom($mail->From,$serverConfig->FromName);
+    if (!$_TEST) {
+      $mail->addReplyTo($replyto);
+    }
+    if (is_array($address)) {
+      foreach ($address as $adr) {
+        $mail->AddAddress($adr);   
+      }
+    }
+    else 
+      $mail->AddAddress($address);   
+    if ($cc!='') $mail->AddCC($cc);
+    $mail->Subject= $subject;
+    $mail->Body= $body;
+    try { 
+      $msg= $mail->Ezer_Send(); // vrací 'ok' nebo chybovou hlášku
+    } 
+    catch(Exception $e) { 
+      $msg= "CHYBA při odesílání mailu:" . $e->getMessage(); 
+    }
   }
 end:  
   if ($msg!='ok') 
