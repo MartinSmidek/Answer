@@ -15161,32 +15161,13 @@ function mail2_new_PHPMailer($smtp=null) {
       goto end;
     }
     $smtp->files_path= __DIR__.'/../../files/setkani4';
-    debug($smtp,"mailer config");
+//    debug($smtp,"mailer config");
   }
   // inicializace Ezer_PHPMailer
   global $abs_root;
   $server= "$abs_root/ezer3.2/server";
   require_once "$server/ezer_mailer.php";
   $mail= new Ezer_PHPMailer($smtp);
-//  // inicializace phpMailer
-//  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
-//  require_once("$phpmailer_path/class.phpmailer.php");
-//  require_once("$phpmailer_path/class.smtp.php");
-//  $mail= new PHPMailer;
-//  $mail->SetLanguage('cs',"$phpmailer_path/language/");
-//  $mail->IsSMTP();
-//  $mail->CharSet = "UTF-8";
-//  $mail->IsHTML(true);
-//  $mail->Mailer= "smtp";
-//  foreach ($smtp as $part=>$value) {
-//  	if ($part=="SMTPOptions" && $value=="-")
-//      $mail->SMTPOptions= array('ssl' => array(
-//        'verify_peer' => false,
-//        'verify_peer_name' => false,
-//        'allow_self_signed' => true));
-//  	else
-//      $mail->$part= $value;
-//  }
 end:  
   return $mail;
 }
