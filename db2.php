@@ -68,6 +68,10 @@
           $html.= "\n$note: $y->html"; 
         }
         break;
+      case 'kasa-mail':
+        $html= kasa_send('*',1);
+        echo "<hr><h2>Odeslání připomenutí</h2><br>$html";
+        break;
       }
     } 
     catch (Throwable $e) { 
