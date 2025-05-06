@@ -656,7 +656,7 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
     rok= letos;
     js.highcharts_load();
     chart.Init();
-    if (has_skill('a')) m.d.i.enable(1);
+    if (has_skill('m')) m.d.i.enable(1);
     m.d.title= `Dotazník LK YS roku ${rok}`; 
     kurz= {rok:rok};
     back= 0;
