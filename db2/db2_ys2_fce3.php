@@ -320,7 +320,7 @@ function akce_clone($ida,$rok,$save=0) {
   else { // založ akci
     $od= $rok.substr($old->datum_od,4);
     $do= $rok.substr($old->datum_do,4);
-    $same= "access,id_hlavni,ma_cenik,ma_cenik_verze,ma_cenu,cena,spec,mrop,firm,nazev,misto,"
+    $same= "access,ma_cenik,ma_cenik_verze,ma_cenu,cena,spec,mrop,firm,nazev,misto,"
         . "druh,statistika,poradatel,tym,strava_oddo,ciselnik_akce";
     query("INSERT INTO akce (datum_od,datum_do,$same) "
         . "SELECT '$od','$do',$same FROM akce WHERE id_duakce=$ida ");
