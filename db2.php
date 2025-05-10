@@ -208,32 +208,6 @@
       }
     }"
   );
-  if ( isset($_GET['batch']) && $_GET['batch'] ) {
-    // batch - verze
-    error_reporting(E_ALL & ~E_NOTICE);
-    session_start();
-    echo($_SERVER["SERVER_NAME"].'<br>');
-    $ezer_root= 'db2';
-    // nastavení cest
-    $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
-    $_SESSION[$ezer_root]['ezer_server']= $ezer_server;
-    $_SESSION[$ezer_root]['ezer']= "3.1";
-    $_SESSION[$ezer_root]['abs_root']= $abs_root; 
-    $_SESSION[$ezer_root]['rel_root']= $rel_root; 
-    $_SESSION[$ezer_root]['pdo']= 2;
-    $_POST['root']= $ezer_root;
-    // inicializace Answeru
-    require_once("db2.inc.php");
-    switch ($_GET['batch']) {
-    case 'kasa-mail':
-      $stamp= kasa_send('*',1);
-      echo "<hr><h2>Odeslání připomenutí</h2><br>$html";
-      break;
-    }
-  }
-  else {
-    // je to standardní aplikace se startem v kořenu
-    require_once("ezer$ezer_version/ezer_main.php");
-  }
-
+  // je to standardní aplikace se startem v kořenu
+  require_once("ezer$ezer_version/ezer_main.php");
 ?>
