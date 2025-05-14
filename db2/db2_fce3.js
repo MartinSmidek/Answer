@@ -360,7 +360,7 @@ function personify(access,test) {
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
   var tits= ['',`Answer${test}${v} Setkání`,`Answer${test}${v} Familia`,`Answer${test}${v} (společný)`];
-  var sk=   test ? ['','tt','default','default'] : ['','ck','ch','db'];
+  var sk=   test ? ['','tt','tt','tt'] : ['','ck','ch','db'];
   var off= function(e) {
     menu.css('display','none');
     body.off({click:off,contextmenu:off});

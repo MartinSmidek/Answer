@@ -3697,10 +3697,12 @@ function ucast2_browse_ask($x,$tisk=false) {
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "keys_rodina='',id_prihlaska,prijata,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,"
-           . "funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
+           . "funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_color");
+//           . "funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes,web_color");
 //           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");
     $fakce= ucast2_flds("dnu,datum_od");
-    $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
+    $frod=  ucast2_flds("fotka,r_access=access,p_access,r_spz=spz,"
+//    $frod=  ucast2_flds("fotka,r_access=access,p_access_web,r_access_web=access_web,r_spz=spz,"
           . "r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,"
           . "r_ulice=ulice,r_psc=psc,r_obec=obec,r_stat=stat,r_geo_ok,"
           . "r_telefony=telefony,r_emaily=emaily,r_ms,r_umi,r_note=note");
@@ -3762,7 +3764,8 @@ function ucast2_browse_ask($x,$tisk=false) {
     $zz= array();
     foreach ($pobyt as $idp=>$p) {
       $p_access= 0;
-      $p_access_web= $p->web_zmena=='0000-00-00' || $p->prijata>=0 ? 0 : 16;
+//      $p-access_web= $p->web_zmena=='0000-00-00' || $p->prijata>=0 ? 0 : 16;
+//      $p_access_web= 0;
       $idr= $p->i0_rodina ?: 0;
       $p->access= 5;
       $z= (object)array();
@@ -3807,7 +3810,8 @@ function ucast2_browse_ask($x,$tisk=false) {
               $s->_barva= isset($s->id_tvori) && $s->id_tvori ? 1 : 2; // barva: 1=člen rodiny, 2=nečlen
             # barva nerodinného pobytu
             $p_access|= (int)$o->access;
-            $p_access_web|= (int)$o->access_web;
+//            $p_access_web|= (int)$o->access; //(int)$o->access_web;
+//            display("$o->id_osoba: $p-access_web|= (int)$o->access_web");
             if (!$p->xstat && $o->stat!='CZ') $p->xstat= $o->prislusnost;
           }
           else {
@@ -3896,8 +3900,11 @@ function ucast2_browse_ask($x,$tisk=false) {
           ));
       // ezer_cms3: web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
       // prihlaska: web_changes= 1/2 pro INS/UPD pobyt+spolu | 4/8 pro INS/UPD osoba | 16/32 pro INS/UPD rodina,tvori
-      $p->web_changes= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
-//                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
+      $p->web_color= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
+//      $p->web_color= $p-web_changes;
+      $p->web_changes= 0;
+      if ($p->prijata==0) $p->web_color+= 4;
+//                                   if ($idp==69706) { debug($p); }
       # pobyt I
       foreach($fpob1 as $fz=>$fp) { $z->$fz= isset($p->$fp) ? $p->$fp : ''; }
       # akce
@@ -3942,9 +3949,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       # ... oprava obarvení
       if ( $p_access )
         $z->r_access|= (int)$p_access;
-      $z->r_access_web= !$idr ? 0
-          : (int)$rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
-      $z->p_access_web= (int)$p_access_web | (int)$z->r_access_web;
+//      $z->r _access_web= !$idr ? 0 
+//          : (int)$rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
+      $z->p_access= $p_access | (!$idr ? 0 : (int)$rodina[$idr]->access);
+//      $z->p_access= (int)$p_access_web | (int)$z_r_access_web;
+//      display("$z->r _access_web= !$idr ? 0 : (int){$rodina[$idr]->access} ; $z->p_access_web= (int)$p-access_web | (int)$z->r _access_web");
       # členové
       $z->r_cleni= $cleni;
       # pobyt II

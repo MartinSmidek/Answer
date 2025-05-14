@@ -293,12 +293,13 @@ func akce_back() {
 }
 # -----------------------------------------------------------------------------------==> USE
 # 1. zobrazení normální nebo hlavní akce
+const posun=0 // 40
 use header:form _header   [  4,  0,,]
 use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam účastníků
 # záložka evidence
-use evid:  form _evidence [400, 10,,]      { tag:'akce1,evid', format:'n' }
-use pob:   form _pobyt    [404,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
-use os1:   form _osoba2x [772,30,,] { tag:'akce1,evid', format:'n', 
+use evid:  form _evidence [400+posun, 10,,]      { tag:'akce1,evid', format:'n' }
+use pob:   form _pobyt    [404+posun,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
+use os1:   form _osoba2x [772+posun,30,,] { tag:'akce1,evid', format:'n', 
     par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
@@ -306,34 +307,34 @@ use os1:   form _osoba2x [772,30,,] { tag:'akce1,evid', format:'n',
   proc see_new_osoba() { cmd.see_new_osoba }
   proc see_old_osoba() { cmd.see_old_osoba() }
 }
-use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1,evid', format:'n', 
+use os2:   form _osoba2x [1023+posun,30,,] {tag:'2,akce1,evid', format:'n', 
     par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
   proc elim_kopie() { elim_kopie_osob(form) }
 }
-use rod:   form _rodina2  [404,30,,]       { tag:'akce1,evid', format:'n',  }
-use sp1:   form _spolu  [772,min_h-185,,]  { tag:'akce1,evid',   format:'n' }
-use sp2:   form _spolu  [1023,min_h-185,,] { tag:'2,akce1,evid', format:'n' }
+use rod:   form _rodina2  [404+posun,30,,]       { tag:'akce1,evid', format:'n',  }
+use sp1:   form _spolu  [772+posun,min_h-185,,]  { tag:'akce1,evid',   format:'n' }
+use sp2:   form _spolu  [1023+posun,min_h-185,,] { tag:'2,akce1,evid', format:'n' }
 
-use cmd:   form _cmd      [400,min_h-120,,]  { tag:'akce1,cmd', format:'n' }
-use alb:   form foto._alb [410, 32,,]  { tag:'akce0,alb', format:'n' }
-use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0,alb', format:'n' }
+use cmd:   form _cmd      [400+posun,min_h-120,,]  { tag:'akce1,cmd', format:'n' }
+use alb:   form foto._alb [410+posun, 32,,]  { tag:'akce0,alb', format:'n' }
+use alb0:  form _aktivity0 [400+posun, 10,,]  { tag:'akce0,alb', format:'n' }
 # záložka plateb
-use pla:   form _platba   [400, 10,,]  { tag:'akce0,pla', format:'n' }
-use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0,cmdp', format:'n' }
-use pla_ds: form dum._vyuctovani [400,29,,] { tag:'akce0,ds', format:'n' 
+use pla:   form _platba   [400+posun, 10,,]  { tag:'akce0,pla', format:'n' }
+use cmdp:  form _cmd_p    [400+posun,min_h-120,,]  { tag:'akce0,cmdp', format:'n' }
+use pla_ds: form dum._vyuctovani [400+posun,29,,] { tag:'akce0,ds', format:'n' 
     label frame [0,0,873,min_h-152] { css:'ae_work'} 
 }
 # záložka aktivity
-use act1:  form _aktivity [420, 10,,]  { tag:'akce0,act', format:'n' }
-use act2:  form _aktivity [700, 10,,]  { tag:'akce0,act', format:'n' }
-use act0:  form _aktivity0 [400, 10,,]  { tag:'akce0,act', format:'n' }
+use act1:  form _aktivity [420+posun, 10,,]  { tag:'akce0,act', format:'n' }
+use act2:  form _aktivity [700+posun, 10,,]  { tag:'akce0,act', format:'n' }
+use act0:  form _aktivity0 [400+posun, 10,,]  { tag:'akce0,act', format:'n' }
 # záložka dokumenty
-use docu:  form _documents [400, 10,,]  { tag:'akce0,docu', format:'n' }
+use docu:  form _documents [400+posun, 10,,]  { tag:'akce0,docu', format:'n' }
 # 2. zobrazení dětí
 use u2:    form _ucast2  [   6, 20,,]  { tag:'akce2', format:'n' }   // seznam dětí
-use page:  form _page     [400, 10,,]  { tag:'akce1' }
+use page:  form _page     [400+posun, 10,,]  { tag:'akce1' }
 
 proc elim_kopie_osob(os) { var zmena:number, ido:number, idos:text
   { idos.set(os.part('keys_osoba').get);
@@ -806,8 +807,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:{ask:'ucast2_browse_ask'}, //css_rows:"dluh,1:yellow,2:blue"
     // klíče
-    show key_pobyt [,,0,] { title:'idp', format:'rsq*' 
-      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' } // jen do odladění 
+    show key_pobyt [,,0,] { title:'idp', format:'rsq*'} 
+//      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' } // jen do odladění 
     show _empty         // 1 pokud je rodina na pobytu prázdná
     show key_akce
     show key_spolu
@@ -818,11 +819,13 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show prijata
     // zobrazení - předpokládá že org_ds=64
     show _nazev [,,100,] { title:'příjmení', format:'s+q*'
-      css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
+      css_cell:'p_access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds' 
+//      css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
     }
     # --- varianta A plná jména
     show _jmena [,,190,] { title:'jméno/a', format:'tsq%' 
-      css_cell:'prijata,-1:,0:zmeneny,1:' }
+      css_cell:'web_color,0:,1:ezer_web1,2:ezer_web2,5:ezer_web1 zmeneny,6:ezer_web2 zmeneny' }
+//      css_cell:'prijata,-1:,0:zmeneny,1:' }
 //      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' }
     # varianta B na úkor _jmena
     show _docs   [,,0,] { title:'dokumenty', format:"tsq", css_cell:'_dupl,0:,1:ezer_db',
@@ -849,10 +852,12 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       help:'pořadí hnízda nebo 0' css_cell:"hnizdo,0:,1:oranzovy,2:zluty,3:zeleny,4:modry,5:azurovy,6:fialovy"}
     show xstat [,,0,] { title:'stát' format:'qs' }
     // barvení
-    show dluh, show web_changes, show _ms
+    show dluh, 
+//    show web_changes, 
+    show _ms
     show r_access 
-    show p_access_web // pobyt.access + 16 pokud došlo ke změně přes web (pobyt, rodina, spolu, osoba)
-    show r_access_web // access + 16 pokud došlo ke změně přes web (rodina)
+    show p_access  // pobyt.access + 16 pokud došlo ke změně přes web (pobyt, rodina, spolu, osoba)
+    show web_color // 1 - online změny, 2 - online založení | 4 - ještě nepřijaté => 0,1,2,5,6 
     // údaje rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat, show r_geo_ok,
@@ -1992,7 +1997,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
   }}
   button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence', skill:'#T'
     func onclick() { evi.evid_rodina(key_rodina) } }
-  field r_access   [304,0,10,] {tag:'f', format:'or', css:'Label', data:r.access, tabindex:0  }
+  field r_access   [304,0,15,] {tag:'f', format:'or', css:'Label', data:r.access, tabindex:0  }
   field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0  }
   field keys_rodina // seznam pravděpodobných kopií
   # ------------------------==> . kontextové_menu
@@ -2155,7 +2160,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     show access
     show access_web // access + 16 pokud došlo ke změně přes web + 64 pro DS
     show jmeno [,,110,] {title:'jméno'
-      css_cell:'access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds' 
+//      css_cell:'access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys ezer_ds,66:ezer_fa ezer_ds,67:ezer_db ezer_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
     }
     show _dup  [,,0,] { title:'duplicita', help:'n-narození, k-kontakty, b-bydliště', format:"t" }
     show vek   [,,30,] {title:'věk', format:'r' }
