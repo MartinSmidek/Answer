@@ -426,6 +426,8 @@ table pobyt { key_id:'id_pobyt'
   text pokoj
   number ubytovani      // číselník ms_akce_ubytovan
   number luzka
+  number luzka2
+  number luzka3
   number entry_id 
 
   // stravy a diety

@@ -868,7 +868,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show p_poznamka, show p_pracovni, show funkce, show hnizdo, 
     show prednasi, show skup,
     // platby
-    show luzka, show pristylky, show kocarek, show pocetdnu,
+    show luzka, show luzka2, show luzka3, show pristylky, show kocarek, show pocetdnu,
     show strava_cel, show strava_cel_bm, show strava_cel_bl,
     show strava_pol, show strava_pol_bm, show strava_pol_bl,
     show c_nocleh, show c_strava, show c_program, show c_sleva, 
@@ -2406,6 +2406,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   }
   // parametry pro tvorbu ceny
   field luzka       [10,Td+15,11,] {tag:'b', data:pobyt.luzka}
+  field luzka2      [10,Td+35,11,] {tag:'b', data:pobyt.luzka2, title:'-  lůžek 2.kat'}
+  field luzka3      [10,Td+55,11,] {tag:'b', data:pobyt.luzka3, title:'-  lůžek 3.kat'}
   field pristylky   [30,Td+15,11,] {tag:'b', data:pobyt.pristylky}
   field pocetdnu    [51,Td+15,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
   field kocarek     [71,Td+15,11,] {tag:'b', data:pobyt.kocarek}

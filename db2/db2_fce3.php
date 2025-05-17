@@ -2238,6 +2238,8 @@ function akce2_vzorec($id_pobyt) {  //trace();
   if ( $rp && ($p= pdo_fetch_object($rp)) ) {
     $id_akce= $p->id_akce;
     $x->nocoluzka+= $p->luzka * $p->pocetdnu;
+    $x->nocoluzka2+= $p->luzka2 * $p->pocetdnu;
+    $x->nocoluzka3+= $p->luzka3 * $p->pocetdnu;
     $x->nocoprist+= $p->pristylky * $p->pocetdnu;
     $ucastniku= $p->pouze ? 1 : 2;
     $vzorec= $p->vzorec;
@@ -2363,7 +2365,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
   }
   // výpočty
   if ( $ok ) {
-    $nl= $x->nocoluzka;
+//    $nl= $x->nocoluzka;
     $np= $x->nocoprist;
     $u= $ucastniku;
     $cena= 0;
@@ -2381,10 +2383,25 @@ function akce2_vzorec($id_pobyt) {  //trace();
       foreach ($cenik as $a) {
       switch ($a->za) {
         case 'Nl':
-          $cc= $nl * $a->c;
+          $cc= $x->nocoluzka * $a->c;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
-          $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
+          if ($x->nocoluzka)
+            $html.= "<tr><td>{$a->txt} ($x->nocoluzka*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        case 'N2':
+          $cc= $x->nocoluzka2 * $a->c;
+          $cena+= $cc;
+          $ret->c_nocleh+= $cc;
+          if ($x->nocoluzka2)
+            $html.= "<tr><td>{$a->txt} ($x->nocoluzka2*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        case 'N3':
+          $cc= $x->nocoluzka3 * $a->c;
+          $cena+= $cc;
+          $ret->c_nocleh+= $cc;
+          if ($x->nocoluzka3)
+            $html.= "<tr><td>{$a->txt} ($x->nocoluzka3*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         case 'Np':
           $cc= $np * $a->c;
@@ -2543,6 +2560,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
 end:  
   return $ret;
 }//akce2_vzorec
+/*
 # -------------------------------------------------------------------------------- akce2 vzorec_2017
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
@@ -3067,7 +3085,7 @@ function __akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
 //  if ( $ret->err ) $ret->navrh= $ret->err;
 //  return $ret;
 //}//akce2_vzorec_2017_0 EXPERIMENT
-
+*/
 /** ========================================================================================> UCAST2 */
 # --------------------------------------------------------------------------------- ucast2 clipboard
 # vrácení mailů dospělých členů rodiny
@@ -3706,7 +3724,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,"
           . "r_ulice=ulice,r_psc=psc,r_obec=obec,r_stat=stat,r_geo_ok,"
           . "r_telefony=telefony,r_emaily=emaily,r_ms,r_umi,r_note=note");
-    $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
+//    $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
+    $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,pokoj,budova,prednasi,luzka,luzka2,luzka3,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
           . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,"
           . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4," /*datplatby,*/
@@ -9049,8 +9068,8 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   // definice sloupců
   $result= (object)array();
-  $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,dětí 3-6:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
-  $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=deti_3_6,=luzkonoci,pristylky,=pristylkonoci";
+  $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,lůžko nocí:5:r:s,2.kat:5:r:s,2.kat nocí:5:r:s,3.kat:5:r:s,3.kat nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s,dětí 3-6:5:r:s";
+  $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=luzkonoci,luzka2,=luzkonoci2,luzka3,=luzkonoci3,pristylky,=pristylkonoci,=deti_3_6";
   $ord= isset($par->ord) ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $cnd= $par->cnd;
   $html= '';
@@ -9077,7 +9096,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "SELECT
             ( SELECT GROUP_CONCAT(o.narozeni) FROM spolu JOIN osoba USING (id_osoba)
               WHERE id_pobyt=p.id_pobyt GROUP BY id_pobyt ) AS _naroz,
-            pokoj,luzka,pristylky,pocetdnu,
+            pokoj,luzka,luzka2,luzka3,pristylky,pocetdnu,
             r.id_rodina,prijmeni,jmeno,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -9115,6 +9134,10 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 //         case '=noci':         $val= max(0,$x->pocetdnu-1);
 //                               $exp= "=max(0,[pocetdnu,0]-1)"; break;
         case '=luzkonoci':    $val= ($x->pocetdnu)*$x->luzka;
+                              $exp= "=[=noci,0]*[luzka,0]"; break;
+        case '=luzkonoci2':   $val= ($x->pocetdnu)*$x->luzka2;
+                              $exp= "=[=noci,0]*[luzka,0]"; break;
+        case '=luzkonoci3':   $val= ($x->pocetdnu)*$x->luzka3;
                               $exp= "=[=noci,0]*[luzka,0]"; break;
         case '=pristylkonoci':$val= ($x->pocetdnu)*$x->pristylky;
                               $exp= "=[=noci,0]*[pristylky,0]"; break;
