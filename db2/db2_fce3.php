@@ -2319,7 +2319,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
     }
   }
   // redakce
-  debug($cena);
+//  debug($cena);
   $celkem= 0;
   $celkem2= 0;
   $cast= 0;
@@ -2352,7 +2352,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
         display("tzn. $blok SLEVY");
         $cast= -1;
         $kc= -$sleva;
-        $osoba[$i]['Kc']+= $kc;
+//        $osoba[$i]['Kc']+= $kc;
         $pocet= 1;
         $celkem+= $pocet*$kc;
         $podnadpis= "<tr><td>individuální sleva</td><td align='right'>$sleva</td><td></td></tr>";
@@ -2377,7 +2377,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
       }
     }
   }
-//  debug($osoba,"tabulka poplatků za osoby");
+  debug($osoba,"tabulka poplatků za osoby");
   $tab= '';
   $tab= "<style>"
       . ".tab_ceny_osob {table-layout:fixed; width:295px;}"
