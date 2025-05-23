@@ -2313,12 +2313,13 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
           case 'xO': $cena[$pol][$i][0]+= $o->xO; break;
           case 'xV': $cena[$pol][$i][0]+= $o->xV; break;
           case 'P':  $cena[$pol][$i][0]++;        break;
+          case 'S':  isset($slevy->ubytovani) ? 0 : $cena[$pol][$i][0]++; break;
         }
       }
     }
   }
   // redakce
-//  debug($cena);
+  debug($cena);
   $celkem= 0;
   $celkem2= 0;
   $cast= 0;
@@ -2339,27 +2340,31 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
       if ($cast>0) {
         $html.= "<tr><td></td><td></td><th align='right'>$cast</th></tr>";
       }
-//      $blok= utf2ascii($pol);
-//      $sleva= $slevy->$blok??'';
-//      display("$blok sleva=$sleva");
-//      if ($sleva===0) {
-//        display("tzn. $blok vynechat");
-//        $podnadpis= "<tr><td>zdarma</td><td align='right'>0</td><td></td></tr>";
-//        $cast= -1;
-//      }
-//      elseif ($sleva>0) {
-//        display("tzn. $blok SLEVY");
-//        $cast= -1;
-//        $podnadpis= "<tr><th>sleva</th><td></td><td align='right'>$sleva</td></tr>";
-//      }
-//      else {
-//        $cast= 0;
-//        $podnadpis= '';
-//      }
-//      $nadpis= "<tr><th>$pol</th><td></td><td align='right'></td></tr>$podnadpis";
-      $nadpis= "<tr><th>$pol</th><td></td><td align='right'></td></tr>";
+      $blok= utf2ascii($pol);
+      $sleva= $slevy->$blok??'';
+      display("$blok sleva=$sleva");
+      if ($sleva===0) {
+        display("tzn. $blok vynechat");
+        $podnadpis= "<tr><td>zdarma</td><td align='right'>0</td><td></td></tr>";
+        $cast= -1;
+      }
+      elseif ($sleva>0) {
+        display("tzn. $blok SLEVY");
+        $cast= -1;
+        $kc= -$sleva;
+        $osoba[$i]['Kc']+= $kc;
+        $pocet= 1;
+        $celkem+= $pocet*$kc;
+        $podnadpis= "<tr><td>individuální sleva</td><td align='right'>$sleva</td><td></td></tr>";
+      }
+      else {
+        $cast= 0;
+        $podnadpis= '';
+      }
+      $nadpis= "<tr><th>$pol</th><td></td><td align='right'></td></tr>$podnadpis";
+//      $nadpis= "<tr><th>$pol</th><td></td><td align='right'></td></tr>";
     }
-    elseif ($pocet) {
+    if ($pocet) {
       if ($nadpis) {
         $html.= $nadpis;
         $nadpis= '';
