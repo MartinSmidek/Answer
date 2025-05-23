@@ -250,7 +250,7 @@ menu m {type:'left', //active:*
 //                                        ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
 //                                        ,fld:'prijmeni,jmeno,_ar_note,platba'}}
     item {title:'Účastníci akce pro ubytování'                                              skill:'y;f'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99) AND (luzka+luzka2+luzka3)>0",hav:"1"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99) AND luzka>0",hav:"1"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat'}}
     item {title:'Účastníci akce pro ubytování'                                              skill:'c'
@@ -270,7 +270,7 @@ menu m {type:'left', //active:*
                                         ,tit:'příjmení:15,jméno:12,telefon:25'
                                         ,fld:'prijmeni,jmeno,telefony'}}
     item {title:'Dospělí úč. akce pro ubytování'                                            skill:'y;f'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99) AND (luzka+luzka2+luzka3)>0"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99) AND luzka>0"
                                         ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,obec,psc,ulice,stat'}}
@@ -461,7 +461,7 @@ menu m {type:'left', //active:*
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
     item {title:'Seznam změn - ubytování'                                              skill:'y;f;c'
                                         ,par:{typ:'cz',cnd:'1',tab:'pobyt',zmeny:'0'
-                                        ,fld:'luzka,luzka2,luzka3,kocarek,pokoj,budova,pristylky,pocetdnu'}}
+                                        ,fld:'luzka,kocarek,pokoj,budova,pristylky,pocetdnu'}}
     item {title:'Seznam změn - ostatní'                                                    skill:'m'
                                         ,par:{typ:'cz',cnd:'1',zmeny:'0'
                                         ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
@@ -553,11 +553,11 @@ menu m {type:'left', //active:*
                                         ,tit:'příjmení:15,jména dospělých:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,rodice,obec,psc,ulice,stat'}}
     item {title:'Štítky na obálku účastníka' ,par:{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99"
-                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,2.kat:7,3.kat.:7,přistýlky:7,kočárek:7,strava vyjímky:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
-                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,luzka2,luzka3,pristylky,kocarek,_vyjimky,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
+                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
     item {title:' ... snídaně jako celé' par:{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99",snidane:'c'
-                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,2.kat:7,3.kat.:7,přistýlky:7,kočárek:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
-                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,luzka2,luzka3,pristylky,kocarek,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
+                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
     item {title:'Stravenky - rodiny'    ,par:{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"},  skill:'#crz'}
     item {title:' ... snídaně jako celé',par:{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99",snidane:'c'},  skill:'#crz'}
     item {title:'Stravenky - pečouni'   ,par:{typ:'vjp',exp:'PDF-stravenky',cnd:"1"},          skill:'#crz'}
@@ -650,8 +650,8 @@ menu m {type:'left', //active:*
   # ---------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce NOT IN (9,10,13,14,15,99)"
-                                        ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,2.kat.:5,3.kat.:5,přistýlka:5,kočárek:5,hnízdo:7,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
-                                        ,fld:'prijmeni,jmena,obec,vek_deti,luzka,luzka2,luzka3,pristylky,kocarek,hnizdo,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,přistýlka:5,kočárek:5,hnízdo:7,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
+                                        ,fld:'prijmeni,jmena,obec,vek_deti,luzka,pristylky,kocarek,hnizdo,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
     item {title:'Návrh skupinek'                                                             
                                         ,par:{typ:'skpl',exp:'Excel-plachta',cnd:'1'}} // fce:'plachta'
     item {title:'Štítky pro návrh skupinek' ,par:{typ:'ss',exp:'PDF-plachta'

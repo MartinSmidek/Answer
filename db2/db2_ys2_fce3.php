@@ -3368,17 +3368,26 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   $html.= "<div style='font-size:12px'>";
   // strava podle přihlášky
   if (($x->form->strava??0) > 0) {
+    // získání definice přihlášky kvůli stravě
+    list($json,$a_od)= select('web_online,datum_od','akce',"id_duakce=$ida");
+    $json= str_replace("\n", "\\n", $json);
+    $akce= json_decode($json); // definice přihlášky
+    $p_od= $akce->p_detska_od??3;
+    $p_do= $akce->p_detska_do??12;
+    // zjisti defaultní porci
     $html.= "<b>Strava</b><ul>";
     foreach ($x->cleni as $ido=>$clen) {
       if (!$clen->spolu) continue;
-      $jmeno= select('jmeno','osoba',"id_osoba=$ido");
-      $s= $clen->Xstrava_s??1;
-      $o= $clen->Xstrava_o??1;
-      $v= $clen->Xstrava_v??1;
+      list($jmeno,$vek)= select("jmeno,TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba',"id_osoba=$ido");
+      $porce= $clen->Xporce ?? ($vek<$p_od ? 0 : ($vek<$p_do ? 2 : 1));
+      display("$jmeno $vek $p_od $p_do $porce $clen->Xstrava_s");
+      $s= $clen->Xstrava_s??($porce?1:0);
+      $o= $clen->Xstrava_o??($porce?1:0);
+      $v= $clen->Xstrava_v??($porce?1:0);
       $html.= "<li>$jmeno: ";
       if ($s+$o+$v > 0) {
         $html.= "s=$s, o=$o, v= $v";
-        $html.= ", porce=".(($clen->Xporce??1) == 1 ? 'celá' : 'půl');
+        $html.= ", porce=".($porce==1 ? 'celá' : ($porce==2 ? 'půl' : 'nic'));
         $html.= ", dieta=".(($clen->Xdieta??1) == 1 ? 'ne' : 'ano');
       }
       else {

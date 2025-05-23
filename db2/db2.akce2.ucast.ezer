@@ -115,6 +115,11 @@ func ucast_pobyt_akce_platba(_idp,_ida)  {
   page.plt.onclick();
   ucast_pobyt(_idp);
 }
+# ukázání rozkladu ceny za účastníka pobytu
+func ucast_cena_osoba(_ids)  { var cena: object
+  cena= php.akce2_vzorec2_pobyt(0,_ids);
+  alert(cena.navrh);
+}
 # zobrazení osob - nastavených účastníků
 func osoby_show() {                             // obnova údajů o osobách
   if (os1.key()) os1.show_osoba(u.dup); else os1.init_osoba();
@@ -868,7 +873,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show p_poznamka, show p_pracovni, show funkce, show hnizdo, 
     show prednasi, show skup,
     // platby
-    show luzka, show luzka2, show luzka3, show pristylky, show kocarek, show pocetdnu,
+    show luzka, show pristylky, show kocarek, show pocetdnu,
     show strava_cel, show strava_cel_bm, show strava_cel_bl,
     show strava_pol, show strava_pol_bm, show strava_pol_bl,
     show c_nocleh, show c_strava, show c_program, show c_sleva, 
@@ -1617,6 +1622,10 @@ form _pobyt [,,360,62] {
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('pobyt',the_pobyt),&this,'onclick_')}
       func onclick_() {}
     }
+    item { title:'ukázat skladbu ceny', skill:'m', 
+      func onclick() { var cena:object 
+        clear(); cena= php.akce2_vzorec2_pobyt(the_pobyt,0); alert(cena.navrh); }
+    }
   } 
 
   // t = pracovní poznámka
@@ -1687,7 +1696,7 @@ panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', t
   }
 }
 # -----------------------------------------------------------------------------------------==> SPOLU
-panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
+panel spolu_config [,,200,90] {type:'popup', title:"Podrobnosti údajů"
   var grp='Z'
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_spolu'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
@@ -1695,11 +1704,12 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   proc tune() { _old.set(grp.get); evid.z_change('o'); panel.modal }
   use cnfg: form _cnfg
   form _cnfg {
-    check z [ 0, 0,200,] { title:"základní údaje",       format:'d', value:'1'}
-    check p [ 0,20,200,] { title:"poznámka k účasti",    format:'t', proc onchange() { _tuned }}
-    button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
+    check z [ 0, 0,200,] { title:"základní údaje",    format:'d', value:'1'}
+    check u [ 0,20,200,] { title:"údaje k platbě",    format:'d', value:'1', proc onchange() { _tuned }}
+    check p [ 0,40,200,] { title:"poznámka k účasti", format:'t', proc onchange() { _tuned }}
+    button  [ 0,70,,] { type:'submit', title:'Nastav', proc onclick() {
       set_cookie(conc(sys('root'),'_conf_spolu'),grp.get); panel.hide(1) }}
-    button  [85,40,,] { title:'Zpět', proc onclick() {
+    button  [85,70,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.spolu_show; panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P',1,'Z')); ucast.spolu_show }
     proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); }
@@ -1711,29 +1721,57 @@ form _spolu [,,0,270] {
   proc onchanged() { evid.d_change }
   proc onclick() { Onclick }
   proc Onclick() { evid.z_change('p') } // nutné aby přímým voláním onclick nedošlo k zacyklení
-  proc show_spolu() { var height:number, tags:text, tit:text
+  func show_spolu() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
-    { key_spolu.get;
-      # je na akci
-      tit.set('účastník akce ...'); tags.set('S');
-      [ /*s_role.key;*/ contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
-      switch(s_role.key,
-      0, { tit.set('jako host') },
-      1, { tit.set('účastník akce') },
-      2, { tags.set(conc(tags,',d'));   tit.set('dítě na akci') },
-      3, { tags.set(conc(tags,',o,d')); tit.set('dítě s osobním pečovatelem') },
-      4, { tags.set(conc(tags,',d'));   tit.set('dítě jako pomocný pečovatel') },
-      5, { tags.set(conc(tags,',c'));   tit.set('osobní pečovatel'); pece_sel.set(pece_val.get) }
-      );
-      tags.set(conc(tags,',r'));
-    | # není na akci
-      tit.set('- - -'); tags.set('a');
+    if (key_spolu) { // je na akci
+      tit= 'účastník akce ...'; tags= 'S';
+      if (contains('P',spolu_config.grp)) 
+        tags= conc(tags,',p');
+      switch(s_role.key()) {
+        case 0: tit= 'jako host'; break;
+        case 1: tit= 'účastník akce'; break;
+        case 2: tags= conc(tags,',d'); tit= 'dítě na akci'; break;
+        case 3: tags= conc(tags,',o,d'); tit= 'dítě s osobním pečovatelem'; break;
+        case 4: tags= conc(tags,',d'); tit= 'dítě jako pomocný pečovatel'; break;
+        case 5: tags= conc(tags,',c'); tit= 'osobní pečovatel'; pece_sel= pece_val; break;
+      };
+      if (the_cenik_verze==2) {
+        tags= conc(tags,',u'); 
+      }
+      tags= conc(tags,',r');
+    }
+    else { // není na akci
+      tit= '- - -'; tags= 'a';
     };
-    frame.set(tit);
-    height.set(sum(stack_forms(form,tags,10,'up'),0));
-  //height.set(sum(form.stacks(tags,'up',10),0));
-    frame.property(object('top',minus(265,height),'height',sum(height,10)));
+    frame= tit;
+    height= sum(stack_forms(form,tags,10,'up'),0);
+    if (the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
+    frame.property({top: 265-height, height: height+10});
   }
+//  proc show_spolu() { var height:number, tags:text, tit:text
+//    form.display(0,'[^f]');
+//    { key_spolu.get;
+//      # je na akci
+//      tit.set('účastník akce ...'); tags.set('S');
+//      [ /*s_role.key;*/ contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
+//      switch(s_role.key,
+//      0, { tit.set('jako host') },
+//      1, { tit.set('účastník akce') },
+//      2, { tags.set(conc(tags,',d'));   tit.set('dítě na akci') },
+//      3, { tags.set(conc(tags,',o,d')); tit.set('dítě s osobním pečovatelem') },
+//      4, { tags.set(conc(tags,',d'));   tit.set('dítě jako pomocný pečovatel') },
+//      5, { tags.set(conc(tags,',c'));   tit.set('osobní pečovatel'); pece_sel.set(pece_val.get) }
+//      );
+////      if (the_cenik_verze==2) tags.set(conc(tags,',u'));
+//      tags.set(conc(tags,',r'));
+//    | # není na akci
+//      tit.set('- - -'); tags.set('a');
+//    };
+//    frame.set(tit);
+//    height.set(sum(stack_forms(form,tags,10,'up'),0));
+//  //height.set(sum(form.stacks(tags,'up',10),0));
+//    frame.property(object('top',minus(265,height),'height',sum(height,10)));
+//  }
   // globální procedury
   proc new_spolu() {
     form.init; show_spolu; vyradit.display(0);
@@ -1760,8 +1798,18 @@ form _spolu [,,0,270] {
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('spolu',key_spolu),&this,'onclick_')}
       func onclick_() {}
     }
+    item { title:'ukázat skladbu ceny', skill:'m', 
+      func onclick() { var cena:object 
+        clear(); cena= php.akce2_vzorec2_pobyt(0,key_spolu); alert(cena.navrh); }
+    }
   }
 
+  // TESTOVANI
+      field kat_n [25,0,20,] { tag:'u', title:'noc', data:'s.kat_nocleh'}
+      field kat_j [79,0,35,] { tag:'u', title:'SOV', data:'s.kat_jidla'}
+      field kat_p [154,0,20,] { tag:'u', title:'porce', data:'s.kat_porce'}
+      field kat_d [210,0,20,] { tag:'u', title:'dieta', data:'s.kat_dieta'}
+  // TESTOVANI
   // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
@@ -2182,6 +2230,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     show s_dite_kat, show s_poznamka, show pece_key /*pecovane*/, show pfunkce,
     show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi, show prisl, 
     show skupinka
+    show kat_n, show kat_j, show kat_p, show kat_d,
     // metody
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() { _dup.width; show_dup(0) | show_dup(1) }
@@ -2351,13 +2400,23 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   // zdůvodnění ceny podle vzorce nebo textem
   func rozpis_ceny() {
     if (duvod_typ) { // vlastní text
-      navrh.display(0); duvod_text.display(1)
+      navrh.display(0); duvod_text.display(1);
+      rozklad= '';
     }
     else { // podle ceníku
       navrh.display(1); duvod_text.display(0);
-      cena= the_soubeh
-        ? php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna)
-        : php.akce2_vzorec(the_pobyt);
+      if (the_cenik_verze==2) {
+        cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        rozklad= cena.tabulka;
+      }
+      elseif (the_soubeh) {
+        cena= php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna);
+        rozklad= '';
+      }
+      else {
+        cena= php.akce2_vzorec(the_pobyt);        
+        rozklad= '';
+      }
       navrh= cena.navrh;
     }
   }
@@ -2406,8 +2465,6 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   }
   // parametry pro tvorbu ceny
   field luzka       [10,Td+15,11,] {tag:'b', data:pobyt.luzka}
-  field luzka2      [10,Td+35,11,] {tag:'b', data:pobyt.luzka2, title:'-  lůžek 2.kat'}
-  field luzka3      [10,Td+55,11,] {tag:'b', data:pobyt.luzka3, title:'-  lůžek 3.kat'}
   field pristylky   [30,Td+15,11,] {tag:'b', data:pobyt.pristylky}
   field pocetdnu    [51,Td+15,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
   field kocarek     [71,Td+15,11,] {tag:'b', data:pobyt.kocarek}
@@ -2532,6 +2589,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
   }
+  // t = pracovní poznámka
+  label rozklad [308,Td-136,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto" }
   // t = pracovní poznámka
   edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }

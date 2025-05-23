@@ -2649,6 +2649,10 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
       (object)['fld'=>'s_role',    'op'=>'i','val'=>$role=='d'?2:1]
     );
+//    if ($akce->p_strava) {
+//      $chng[]= (object)['fld'=>'kat_porce',  'op'=>'i','val'=>get('o','Xdieta',$ido)];
+//      $chng[]= (object)['fld'=>'kat_dieta',  'op'=>'i','val'=>get('o','Xporce',$ido)];
+//    }
     _ezer_qry("INSERT",'spolu',0,$chng);
   } // zapojíme do pobytu
  
@@ -2741,7 +2745,7 @@ function db_zapis_pecovani($id_dite,$id_pecoun) { // ---------------------------
     log_error("Nastal problém s navázáním osobního pečovatele");
   }
   else {
-    query_track_2("UPDATE spolu SET s_role=2 WHERE id_spolu=$s_dite");
+    query_track_2("UPDATE spolu SET s_role=3 WHERE id_spolu=$s_dite");
     query_track_2("UPDATE spolu SET s_role=5,pecovane=$id_dite WHERE id_spolu=$s_pecoun");
   }
 }

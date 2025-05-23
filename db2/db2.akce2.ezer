@@ -48,7 +48,7 @@ var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavn
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
 var the_order: number           // 0=normální akce, jinak ID objednávky
 var the_cenik: text             // pracovní akce: 1=má ceník, 2=ceník Domu setkání
-var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
+var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017, 2=2025
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 var the_datum_od: text, the_datum_do: text, 
     the_strava_oddo: text       // pracovní akce: doba akce (pro pečouny)
@@ -488,6 +488,10 @@ table spolu { key_id:'id_spolu'
   number id_osoba
   number s_hnizdo
   number s_role   // #ms_akce_s_role -- role osoby na akci
+  number kat_nocleh
+  number kat_jidla
+  number kat_porce
+  number kat_dieta
   number skupinka
   text poznamka
   number s_rodici
@@ -637,12 +641,15 @@ table cenik { key_id:'id_cenik'
   number hnizdo // 0 nebo pořadí hnízda
   number poradi
   text   polozka
-  text   pro
-  text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
-  number typ            // index typu ubytování
+  number cena
+  text   krat       // verze2: koeficient P=1, xN počet nocí, xS xO xV počet jídel
+  text   za         // verze2 - seznam závislosti
+  text   t          // verze2  t: typ u-účastník, v-vps, d-dítě
+  text   n          // verze2  n: 0-bez, 1-normal, 2-spacák na lůžku, 3-spacák bez lůžka
+  text   p          // verze2  p: 0-nic, 1-celá, 2-půl
   number od
   number do
-  number cena
+  number typ        // index typu ubytování
   number dph
 }
 # -------------------------------------------------------------------------- webform
