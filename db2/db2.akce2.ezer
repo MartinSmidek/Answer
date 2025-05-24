@@ -489,7 +489,7 @@ table spolu { key_id:'id_spolu'
   number s_hnizdo
   number s_role   // #ms_akce_s_role -- role osoby na akci
   number kat_nocleh
-  number kat_jidla
+  number kat_dny // kat_jidla se počítá dynamicky
   number kat_porce
   number kat_dieta
   number skupinka

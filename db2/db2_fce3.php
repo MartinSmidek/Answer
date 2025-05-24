@@ -2409,6 +2409,48 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
   $ret->tabulka= $tab;
   return $ret;
 }
+# ------------------------------------------------------------------------------------- akce sov2dny
+# vytvoří kat_dny podle SOV
+function akce_sov2dny($idp,$ido) {
+  $dny= '';
+  list($sov,$noci,$oddo)= select('kat_jidla,DATEDIFF(datum_do,datum_od),strava_oddo',
+      'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
+      "id_pobyt=$idp AND id_osoba=$ido");
+  if ($oddo[0]=='o') $dny.= "00".($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1");
+  $dny.= str_repeat("1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
+  if ($oddo[1]=='o') $dny.= "1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
+  display($dny);
+  return $dny;
+}
+# ------------------------------------------------------------------------------------- akce dny2sov
+# vytvoří podle kat_dny,kat_noc textovou hodnotu L|S|B a SOV ... částečné hodnoty malým písmenem
+function akce_dny2sov($ids,$dny) {
+  $ret= (object)['n'=>'L','sov'=>'SOV'];
+  // zjisti default nocí a strav
+  list($kn,$noci,$oddo)= select('kat_nocleh,DATEDIFF(datum_do,datum_od),strava_oddo',
+      'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
+      "id_spolu=$ids");
+  $xs_def= $xv_def= $noci;
+  $xo_def= $oddo[0]=='o' ? $noci+1 : $noci;
+  // přepočítej noci a stravy
+  $xn= $xs= $xo= $xv= 0;
+  for ($d= 0; $d<strlen($dny); $d+=4) {
+    $xn+= $dny[$d];
+    $xs+= $dny[$d+1];
+    $xo+= $dny[$d+2];
+    $xv+= $dny[$d+3];
+  }
+  // redakce SOV
+  $n= $xn==0 ? '-' : ($xn==$noci ? $kn : strtolower($kn));
+  $s= $xs==0 ? '-' : ($xs==$xs_def ? 'S' : 's');
+  $o= $xo==0 ? '-' : ($xo==$xo_def ? 'O' : 'o');
+  $v= $xv==0 ? '-' : ($xv==$xv_def ? 'V' : 'v');
+  display("$n $s$o$v ... $xn, $xs, $xo, $xv <= $dny");
+//  query("UPDATE spolu SET kat_dny='$dny' WHERE id_spolu=$ids");
+  $ret->n= "$n";
+  $ret->sov= "$s$o$v";
+  return $ret;
+}
 # ------------------------------------------------------------------------------ akce prihlaska_load
 # načte data z přihlášek pro cenu podle číselníku verze 2
 function akce_prihlaska_load($ida=3094) {
@@ -2425,7 +2467,7 @@ function akce_prihlaska_load($ida=3094) {
       FROM prihlaska
       LEFT JOIN rodina USING (id_rodina)
       WHERE id_akce=$ida AND id_pobyt!=0
-      --  AND id_rodina=6806
+      -- AND id_rodina=4493 -- Ryzovi
       ORDER BY id_prihlaska DESC
       -- LIMIT 1");
   while ($rw && (list($idw,$idp,$ido,$idr,$nazev,$stav,$prijata,$json)= pdo_fetch_row($rw))) {
@@ -2442,9 +2484,11 @@ function akce_prihlaska_load($ida=3094) {
       $o= $clen->Xstrava_o??($porce?1:0);
       $v= $clen->Xstrava_v??($porce?1:0);
       $kp= $porce==1 ? 'C' : ($porce==2 ? 'P' : '-');
-      $kj= ($s?'S':'-').($o?'O':'-').($v?'V':'-');
+//      $kj= ($s?'S':'-').($o?'O':'-').($v?'V':'-');
       $kd= ($clen->Xdieta??1) ? '-' : 'BL';
-      $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_jidla='$kj',kat_dieta='$kd' "
+      $dny= akce_sov2dny($idp,$ido);
+      // kat_jidla='$kj', se dopočítává dynamicky
+      $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
           . "WHERE id_pobyt=$idp AND id_osoba=$ido /* $jmeno */ ";
       query($qry);
     }
@@ -3964,7 +4008,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",aktivita,note,_kmen,_geo");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
           . ",o_umi,prislusnost,skupinka,"
-        . "kat_nocleh,kat_jidla,kat_porce,kat_dieta");
+        . "kat_nocleh,kat_dny,kat_porce,kat_dieta");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
