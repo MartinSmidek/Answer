@@ -2209,12 +2209,12 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 }
 # ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
 # výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
-function akce2_vzorec2_pobyt($idp,$ids=0) {  trace();
+function akce2_vzorec2_pobyt($idp,$ids=0) { // trace();
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $sleva= 0;
   $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
   $rs= pdo_qry("
     SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,IF(funkce=1,'V','U'),c1.ikona AS _dite,
-      kat_nocleh,kat_jidla,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
+      kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
     FROM spolu
     JOIN _cis c1 ON c1.druh='ms_akce_s_role' AND c1.data=s_role
@@ -2226,7 +2226,7 @@ function akce2_vzorec2_pobyt($idp,$ids=0) {  trace();
     WHERE $cond
     ORDER BY IFNULL(role,'e'),_vek DESC
   ");
-  while ($rs && (list($jmeno,$_vzorec,$_sleva,$ids,$t1,$t2,$n,$sov,$p,$d,$v,$_ida,$noci,$strava_oddo)
+  while ($rs && (list($jmeno,$_vzorec,$_sleva,$ids,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     $osoba[$i]= (object)['jmeno'=>$jmeno,'ids'=>$ids,'t'=>$t2=='U' ? $t1 : $t2,
         'n'=>$n,'p'=>$p,'d'=>$d,'v'=>$v];
@@ -2234,18 +2234,19 @@ function akce2_vzorec2_pobyt($idp,$ids=0) {  trace();
     if (!$vzorec) $vzorec= $_vzorec;
     if (!$sleva) $sleva= $_sleva;
     // doplnění plného počtu nocí a strav
-    $osoba[$i]->xN= $noci;
-    // meze strav jsou zatím jen oo nebo vo
-    $osoba[$i]->sov= $sov;
-    $osoba[$i]->xS= $sov[0]=='S' ? $noci : 0;
-    $osoba[$i]->xO= $sov[1]=='O' ? $noci + ($strava_oddo=='oo' ? 1 : 0): 0;
-    $osoba[$i]->xV= $sov[2]=='V' ? $noci : 0;
+    $nsov= akce_dny2sov($ids,$dny);
+    $osoba[$i]->xN= $nsov->xN;
+    $osoba[$i]->xS= $nsov->xS;
+    $osoba[$i]->xO= $nsov->xO;
+    $osoba[$i]->xV= $nsov->xV;
+    $osoba[$i]->sov= $nsov->sov;
+    $osoba[$i]->n= $nsov->n;
     $i++;
   }
 //  debug($osoba,"podklady");
   $slevy= json_decode($vzorec);
   $slevy->slevy= $sleva;
-  debug($slevy,$vzorec);
+//  debug($slevy,$vzorec);
   return akce2_vzorec2($ida,$osoba,$slevy);
 }
 # ------------------------------------------------------------------------------- akce2 vzorec2_test
@@ -2262,6 +2263,7 @@ function akce2_vzorec2_test($ida,$idc) {  trace();
     // meze strav jsou zatím jen oo nebo vo
     $osoba[$i]->xS= $osoba[$i]->xO= $osoba[$i]->xV= $noci;
     if ($strava_oddo=='oo') $osoba[$i]->xO++;
+    $osoba[$i]->sov= 'SOV';
   }
   return akce2_vzorec2($ida,$osoba);
 }
@@ -2301,7 +2303,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
       $ok= true;
 //      $osoba[$i]['jmeno']= $o->jmeno;
       if ($t) $ok&= strpos(",$t,",",$o->t,")!==false; // $t je seznam oddělený čárkami
-      if ($n) $ok&= $n==$o->n; 
+      if ($n) $ok&= $n== strtoupper($o->n); 
       if ($p) $ok&= $p==$o->p; 
       if ($do) $ok&= $o->v>=$od && $o->v<$do; 
       
@@ -2335,7 +2337,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
       $osoba[$i]['Kc']+= $poceti*$kci;
       $celkem2+= $poceti*$kci;
     }
-    if ($pol[0]=='-') { // napis
+    if ($pol[0]=='-') { // nadpis
       $pol= trim(substr($pol,1));
       if ($cast>0) {
         $html.= "<tr><td></td><td></td><th align='right'>$cast</th></tr>";
@@ -2386,23 +2388,26 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
   $tab.= "<table class='tab_ceny_osob'>$header";
   foreach ($osoba as $i=>$o) {
     $tab.= "<tr>";
+    $ids= $osoby[$i]->ids;
     foreach ($hd as $hid=>$hname) {
       if ($hid=='Kc') {
         $kc= $o[$hid];
-        $ids= $osoby[$i]->ids;
         $tab.= !isset($o[$hid]) ? ''
           : "<td><a href='ezer://akce2.ucast.ucast_cena_osoba/$ids'>$kc</a></td>";
       }
+      elseif ($hid=='jmeno') {
+        $tab.= "<td style='text-align:left'>"
+            . "<a href='ezer://akce2.ucast.ucast_cena_dny/$ids'>$o[$hid]</a></td>";
+      }
       else {
-        $align= $hid=='jmeno' ? " style='text-align:left'" : '';
-        $tab.= isset($o[$hid]) ? "<td$align>$o[$hid]</td>" : '';        
+        $tab.= isset($o[$hid]) ? "<td>$o[$hid]</td>" : '';        
       }
     }
     $tab.= "</tr>";
   }
   $tab.= str_replace("<td></td></tr>","<th>$celkem2</th></tr>",$footer);
   $tab.= "</table>";
-//  display($tab);
+  display($tab);
   $html.= "<tr><td><b>Celkem</b></td><td></td><th>$celkem</th></tr>";
   $html.= "</table>";
   $ret->navrh= $html;
@@ -2411,21 +2416,19 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
 # vytvoří kat_dny podle SOV
-function akce_sov2dny($idp,$ido) {
+function akce_sov2dny($sov,$ida) { // trace();
   $dny= '';
-  list($sov,$noci,$oddo)= select('kat_jidla,DATEDIFF(datum_do,datum_od),strava_oddo',
-      'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
-      "id_pobyt=$idp AND id_osoba=$ido");
+  list($noci,$oddo)= select('DATEDIFF(datum_do,datum_od),strava_oddo','akce',"id_duakce=$ida");
   if ($oddo[0]=='o') $dny.= "00".($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1");
   $dny.= str_repeat("1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
   if ($oddo[1]=='o') $dny.= "1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
-  display($dny);
+//  display($dny);
   return $dny;
 }
 # ------------------------------------------------------------------------------------- akce dny2sov
 # vytvoří podle kat_dny,kat_noc textovou hodnotu L|S|B a SOV ... částečné hodnoty malým písmenem
-function akce_dny2sov($ids,$dny) {
-  $ret= (object)['n'=>'L','sov'=>'SOV'];
+function akce_dny2sov($ids,$dny) { //trace();
+  $ret= (object)['n'=>'L','sov'=>'SOV','xN'=>0,'xS'=>0,'xO'=>0,'xV'=>0];
   // zjisti default nocí a strav
   list($kn,$noci,$oddo)= select('kat_nocleh,DATEDIFF(datum_do,datum_od),strava_oddo',
       'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
@@ -2445,10 +2448,15 @@ function akce_dny2sov($ids,$dny) {
   $s= $xs==0 ? '-' : ($xs==$xs_def ? 'S' : 's');
   $o= $xo==0 ? '-' : ($xo==$xo_def ? 'O' : 'o');
   $v= $xv==0 ? '-' : ($xv==$xv_def ? 'V' : 'v');
-  display("$n $s$o$v ... $xn, $xs, $xo, $xv <= $dny");
+//  display("$n $s$o$v ... $xn, $xs, $xo, $xv <= $dny");
 //  query("UPDATE spolu SET kat_dny='$dny' WHERE id_spolu=$ids");
   $ret->n= "$n";
   $ret->sov= "$s$o$v";
+  $ret->xN= $xn;
+  $ret->xS= $xs;
+  $ret->xO= $xo;
+  $ret->xV= $xv;
+//  debug($ret,"akce_dny2sov($ids,$dny)");
   return $ret;
 }
 # ------------------------------------------------------------------------------ akce prihlaska_load
@@ -2468,6 +2476,7 @@ function akce_prihlaska_load($ida=3094) {
       LEFT JOIN rodina USING (id_rodina)
       WHERE id_akce=$ida AND id_pobyt!=0
       -- AND id_rodina=4493 -- Ryzovi
+      -- AND id_rodina=2473 -- Palátovi
       ORDER BY id_prihlaska DESC
       -- LIMIT 1");
   while ($rw && (list($idw,$idp,$ido,$idr,$nazev,$stav,$prijata,$json)= pdo_fetch_row($rw))) {
@@ -2480,13 +2489,13 @@ function akce_prihlaska_load($ida=3094) {
       list($jmeno,$vek)= select("jmeno,TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba',"id_osoba=$ido");
       $kn= $vek<3 ? '-' : 'L';
       $porce= $clen->Xporce ?? ($vek<$p_od ? 0 : ($vek<$p_do ? 2 : 1));
-      $s= $clen->Xstrava_s??($porce?1:0);
-      $o= $clen->Xstrava_o??($porce?1:0);
-      $v= $clen->Xstrava_v??($porce?1:0);
+      $s= $clen->Xstrava_s??($porce?1:0) ? 'S' : '-';
+      $o= $clen->Xstrava_o??($porce?1:0) ? 'O' : '-';
+      $v= $clen->Xstrava_v??($porce?1:0) ? 'V' : '-';
       $kp= $porce==1 ? 'C' : ($porce==2 ? 'P' : '-');
 //      $kj= ($s?'S':'-').($o?'O':'-').($v?'V':'-');
       $kd= ($clen->Xdieta??1) ? '-' : 'BL';
-      $dny= akce_sov2dny($idp,$ido);
+      $dny= akce_sov2dny("$s$o$v",$ida);
       // kat_jidla='$kj', se dopočítává dynamicky
       $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
           . "WHERE id_pobyt=$idp AND id_osoba=$ido /* $jmeno */ ";
