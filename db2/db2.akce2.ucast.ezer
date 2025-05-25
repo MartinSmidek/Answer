@@ -121,13 +121,8 @@ func ucast_cena_osoba(_ids)  { var cena: object
   alert(cena.navrh);
 }
 # ukázání dnů účastníka pobytu
-func ucast_cena_dny(_ids) { var ulozit:number
-  ulozit= DnySpolu.ukaz(_ids);
-  echo(`ulozit=${ulozit}`);
-  if (ulozit) {
-    php.query_track(`UPDATE spolu SET kat_dny='${DnySpolu.dny}' WHERE id_spolu=${_ids}`);
-    reload(the_pobyt);
-  }
+func ucast_cena_dny(_ids) { 
+  DnySpolu.ukaz(_ids);
 }
 # zobrazení osob - nastavených účastníků
 func osoby_show() {                             // obnova údajů o osobách
@@ -1745,12 +1740,12 @@ form _spolu [,,0,270] {
         case 4: tags= conc(tags,',d'); tit= 'dítě jako pomocný pečovatel'; break;
         case 5: tags= conc(tags,',c'); tit= 'osobní pečovatel'; pece_sel= pece_val; break;
       };
-      if (the_cenik_verze==2) {
-        tags= conc(tags,',u'); 
-        dny= php.akce_dny2sov(key_spolu,rod.cleni.kat_j);
-        kat_n= dny.n;
-        kat_j= dny.sov;
-      }
+//      if (the_cenik_verze==2) {
+//        tags= conc(tags,',u'); 
+//        dny= php.akce_dny2sov(key_spolu,rod.cleni.kat_j);
+//        kat_n= dny.n;
+//        kat_j= dny.sov;
+//      }
       tags= conc(tags,',r');
     }
     else { // není na akci
@@ -1792,13 +1787,12 @@ form _spolu [,,0,270] {
         clear(); cena= php.akce2_vzorec2_pobyt(0,key_spolu); alert(cena.navrh); }
     }
   }
-# u - individuální ubytování a stravování
-  field kat_n [21,2,14,] { tag:'u', title:'noc', data:'s.kat_nocleh' }
-  field kat_j [70,2,30,] { tag:'u', title:'jídla', format:'o' }
-  field kat_p [136,2,14,] { tag:'u', title:'porce', data:'s.kat_porce'}
-  field kat_d [184,2,16,] { tag:'u', title:'dieta', data:'s.kat_dieta'}
-//  field kat_x [194,0,16,] { data:'s.kat_dny'}
-  button [216,2,,] { title:'[fa-edit]', tag:'u'  proc onclick() { ucast_cena_dny(key_spolu) }}
+//# u - individuální ubytování a stravování
+//  field kat_n [21,2,14,] { tag:'u', title:'noc', data:'s.kat_nocleh' }
+//  field kat_j [70,2,30,] { tag:'u', title:'jídla', format:'o' }
+//  field kat_p [136,2,14,] { tag:'u', title:'porce', data:'s.kat_porce'}
+//  field kat_d [184,2,16,] { tag:'u', title:'dieta', data:'s.kat_dieta'}
+//  button [216,2,,] { title:'[fa-edit]', tag:'u'  func onclick() { ucast_cena_dny(key_spolu) }}
   // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
@@ -2786,27 +2780,39 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
   }
 }
 # ==========================================================================================> STRAVA
-panel DnySpolu [,,215,200] { type:'popup', title:'Nestandardní počty'
+panel DnySpolu [,,235,200] { type:'popup', title:'Nestandardní počty'
 # nastaví položku spolu.kat_dny
-  var ids:number, stav:object, dny:text
+  var ids:number, stav:object
   use u: form {
+    func onstart() { 
+      kat_n.selects('L,S,Z,-'); 
+      kat_p.selects('C,P'); 
+      kat_d.selects('-,BL'); 
+    }
     label matrix [5,5,160,*] { style:'font-size:13px' }
     button [165,22,,] { title:'[fa-save] Uložit' 
-      func onclick() { 
+      func onclick() { var old:text
         clear();
-        dny= js.dny_precti();
-        stav= php.akce_dny2sov(ids,dny);
-        echo(debug(stav,dny));
+        old= kat_dny;
+        kat_dny= js.dny_precti();
+        if (kat_dny!=old) kat_dny.change();
+        stav= php.akce_dny2sov(ids,kat_dny);
+        echo(debug(stav,kat_dny));
+        form.save();
+        reload(the_pobyt);
         panel.hide(1);
     }}
-    button [165,44,,] { title:'[fa-undo] Zpět' 
-      func onclick() { panel.hide(0); }
-    }
+    button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
+    field kat_dny { data:'spolu.kat_dny' }
+    select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
+    select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
+    select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
   }
   func ukaz(_ids) { var dny:text
     ids= _ids;
-    dny= php.select1('kat_dny','spolu',`id_spolu=${ids}`);
-    js.dny_zobraz(&u.matrix,dny,the_datum_od,the_datum_do,the_strava_oddo);
+    u.load(ids);
+//    dny= php.select1('kat_dny','spolu',`id_spolu=${ids}`);
+    js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
     return(panel.modal());
   }
 }
