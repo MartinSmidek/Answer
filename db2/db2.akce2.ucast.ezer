@@ -121,8 +121,10 @@ func ucast_cena_osoba(_ids)  { var cena: object
   alert(cena.navrh);
 }
 # ukázání dnů účastníka pobytu
-func ucast_cena_dny(_ids)  { var cena: object
-  if (DnySpolu.ukaz(_ids)) {
+func ucast_cena_dny(_ids) { var ulozit:number
+  ulozit= DnySpolu.ukaz(_ids);
+  echo(`ulozit=${ulozit}`);
+  if (ulozit) {
     php.query_track(`UPDATE spolu SET kat_dny='${DnySpolu.dny}' WHERE id_spolu=${_ids}`);
     reload(the_pobyt);
   }
@@ -1177,6 +1179,7 @@ form _page  [,,623,20] {
         pla.display(gt(the_cenik,0),'cenik'); // omezení výpisu pokud není definován ceník
         pla.display(eq(the_soubeh,1),'deti'); // platby za děti
       }
+      pla.display(the_cenik_verze!=2,'2');
       if (last!=the_pobyt) {
         u.b.load_zalozka(); 
         last= the_pobyt;
@@ -1795,13 +1798,7 @@ form _spolu [,,0,270] {
   field kat_p [136,2,14,] { tag:'u', title:'porce', data:'s.kat_porce'}
   field kat_d [184,2,16,] { tag:'u', title:'dieta', data:'s.kat_dieta'}
 //  field kat_x [194,0,16,] { data:'s.kat_dny'}
-  button [216,2,,] { title:'[fa-edit]', tag:'u' 
-    func onclick() {
-      if (DnySpolu.ukaz(key_spolu)) {
-        php.query_track(`UPDATE spolu SET kat_dny='${DnySpolu.dny}' WHERE id_spolu=${key_spolu}`);
-        reload(the_pobyt);
-      }
-  }}
+  button [216,2,,] { title:'[fa-edit]', tag:'u'  proc onclick() { ucast_cena_dny(key_spolu) }}
   // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
@@ -2399,6 +2396,10 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
       navrh.display(1); duvod_text.display(0);
       if (the_cenik_verze==2) {
         cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        c_nocleh= cena.rozpis.u;
+        c_strava= cena.rozpis.s;
+        c_program= cena.rozpis.p;
+        c_sleva= cena.rozpis.d;
         rozklad= cena.tabulka;
       }
       elseif (the_soubeh) {
@@ -2445,7 +2446,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   button stravy     [89,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('','normalnich'); }
   }
-  button stravy_bm  [140,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+  button stravy_bm  [140,Td+-5,37,] {tag:'b,2', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('_bm','bezmasých'); }
   }
   button stravy_bl  [190,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
@@ -2456,24 +2457,24 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     navrh.set(''); doslo.set('');
   }
   // parametry pro tvorbu ceny
-  field luzka       [10,Td+15,11,] {tag:'b', data:pobyt.luzka}
-  field pristylky   [30,Td+15,11,] {tag:'b', data:pobyt.pristylky}
-  field pocetdnu    [51,Td+15,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
-  field kocarek     [71,Td+15,11,] {tag:'b', data:pobyt.kocarek}
+  field luzka       [10,Td+15,11,] {tag:'b,2', data:pobyt.luzka}
+  field pristylky   [30,Td+15,11,] {tag:'b,2', data:pobyt.pristylky}
+  field pocetdnu    [51,Td+15,11,] {tag:'b,2', data:pobyt.pocetdnu}                  // sémantika: počet nocí
+  field kocarek     [71,Td+15,11,] {tag:'b,2', data:pobyt.kocarek}
   // normální strava
   label [55,Td+-18,,] { tag:'b', title:'strava nomální' }
-  field strava_cel  [94,Td+15,11,] {tag:'b', data:pobyt.strava_cel}
-  field strava_pol  [112,Td+15,11,] {tag:'b', data:pobyt.strava_pol}
+  field strava_cel  [94,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel}
+  field strava_pol  [112,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol}
   // bezmasá
-  label [139,Td+-18,,] { tag:'b', title:'bezmasá' }
-  field strava_cel_bm  [144,Td+15,11,] {tag:'b', data:pobyt.strava_cel_bm}
-  field strava_pol_bm  [162,Td+15,11,] {tag:'b', data:pobyt.strava_pol_bm}
+  label [139,Td+-18,,] { tag:'b,2', title:'bezmasá' }
+  field strava_cel_bm  [144,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bm}
+  field strava_pol_bm  [162,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bm}
   // bezlepková
   label [190,Td+-18,,] { tag:'b', title:'bezlepková' }
-  field strava_cel_bl  [194,Td+15,11,] {tag:'b', data:pobyt.strava_cel_bl}
-  field strava_pol_bl  [212,Td+15,11,] {tag:'b', data:pobyt.strava_pol_bl}
+  field strava_cel_bl  [194,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bl}
+  field strava_pol_bl  [212,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bl}
   // vlastní pečovatelé
-  field svp         [240,Td+15,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
+  field svp         [240,Td+15,11,] {tag:'b,2', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
   // pouze u hlavní akce - platba za souběžnou
 //  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
 //  check potvrzeno_d   [421,Td+22,73,] {tag:'b,deti', title:"potvrzeno", data:pobyt.potvrzeno_d, format:'rd'}
@@ -2513,8 +2514,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,Td+158,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
-  label [3,Td+0,100,] {tag:'b', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
-  label [238,Td+0,27,] {tag:'b', title:'SVP'}
+  label [3,Td+0,100,] {tag:'b,2', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
+  label [238,Td+0,27,] {tag:'b,2', title:'SVP'}
   label [298,Td+75,52,] {tag:'b', title:'rozpočet'}
 //  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
   label [180,Td+40,302,21] {tag:'b,deti', css:'karta', style:"z-index:0"}
@@ -2806,7 +2807,7 @@ panel DnySpolu [,,215,200] { type:'popup', title:'Nestandardní počty'
     ids= _ids;
     dny= php.select1('kat_dny','spolu',`id_spolu=${ids}`);
     js.dny_zobraz(&u.matrix,dny,the_datum_od,the_datum_do,the_strava_oddo);
-    panel.modal();
+    return(panel.modal());
   }
 }
 panel Strava [,,330,290] {type:'popup', title:'Nestandardní počet strav - xxx'

@@ -640,6 +640,7 @@ table cenik { key_id:'id_cenik'
   number id_akce
   number hnizdo // 0 nebo pořadí hnízda
   number poradi
+  text   druh
   text   polozka
   number cena
   text   krat       // verze2: koeficient P=1, xN počet nocí, xS xO xV počet jídel

@@ -2276,9 +2276,10 @@ function akce2_vzorec2_test($ida,$idc) {  trace();
 #     v=věk
 # slevy jsou dány jako objekt s nepovinnými položkami
 #   ubytovani=>0, strava=>0, program=>0, sleva=>x
-# kde x je inidividuální sleva
-function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
-  $ret= (object)['navrh'=>'','tabulka'=>''];
+#   kde x je inidividuální sleva
+#   sleva na ubytovaní, stravu či program ruší slevu pro VPS
+function akce2_vzorec2($ida,$osoby,$slevy=null) {  // trace();
+  $ret= (object)['navrh'=>'','tabulka'=>'','rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0]];
   $hd= ['jmeno'=>'jméno &nbsp; &nbsp; :50','t'=>'jako','n'=>'noc','sov'=>'jídla','p'=>'porce',
       'd'=>'dieta','v'=>'věk','Kc'=>'cena:35'];
   $osoba= []; // i => [id=>val,...]
@@ -2296,9 +2297,11 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
   $header.= "</tr>";
   $footer.= "</tr>";
   $cena= []; // polozka => iosoba => [pocet,cena]
-  $rc= pdo_qry("SELECT polozka,cena,krat,za,t,n,p,od,do "
+  $druhy= []; // položka =>druh
+  $rc= pdo_qry("SELECT druh,polozka,cena,krat,za,t,n,p,od,do "
       . "FROM cenik WHERE id_akce=$ida ORDER BY poradi");
-  while ($rc && (list($pol,$kc,$co,$za,$t,$n,$p,$od,$do)= pdo_fetch_row($rc))) {
+  while ($rc && (list($druh,$pol,$kc,$co,$za,$t,$n,$p,$od,$do)= pdo_fetch_row($rc))) {
+    $druhy[$pol]= $druh;
     foreach ($osoby as $i=>$o) {
       $ok= true;
 //      $osoba[$i]['jmeno']= $o->jmeno;
@@ -2376,6 +2379,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
         $html.= "<tr><td>$pol $nx</td><td align='right'>".$pocet*$kc."</td><td></td></tr>";
         $cast+= $pocet*$kc;
         $celkem+= $pocet*$kc;
+        $ret->rozpis[$druhy[$pol]]+= $pocet*$kc;
       }
     }
   }
@@ -2412,6 +2416,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null) {  trace();
   $html.= "</table>";
   $ret->navrh= $html;
   $ret->tabulka= $tab;
+  debug($ret);
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce sov2dny

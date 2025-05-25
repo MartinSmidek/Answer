@@ -796,15 +796,16 @@ form _page [,,275,360] {
     if (the_cenik_verze==2) {
       // nový univerzální ceník 
       c.typ.width(0); c.za_2016.width(0); 
+      c.druh.width(10);
       c.co_2025.width(35); c.pro_2025.width(35); c.noc_2025.width(35); c.porce_2025.width(35); 
-      c.pol.width(156); 
+      c.pol.width(146); 
       c_testy.key(1);
       form.display(0,'ex0');
     }
     elseif (eq(access,1,2)) {
       // access: 1,2 pro db2 - nepoužívá cenik.typ,   používá akce.ma_cenik_verze s hodnotou 0|1
       c.typ.width(0);
-      c.pol.width(156); c.za_2016.width(38); form.display(zalozka=='cen','ex0');
+      c.druh.width(0); c.pol.width(156); c.za_2016.width(38); form.display(zalozka=='cen','ex0');
     }
     elseif (eq(access,4,8,16)) {
       // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
@@ -818,6 +819,8 @@ form _page [,,275,360] {
     show id_akce  { data:cenik.id_akce }
     show polozka  { data:cenik.polozka }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
+      proc onsubmit() { this.save } }
+    show druh [,,0,] { title:'.', help:'druh položky: u|s|p|d', data:cenik.druh, format:'ruq*s'
       proc onsubmit() { this.save } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show pol [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'tuq*s'
