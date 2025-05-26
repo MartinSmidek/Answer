@@ -69,7 +69,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           join_platba:"id_join_platba>*,id_platba>platba,id_faktura>faktura,spec",
           faktura:"id_faktura>*,id_order>ds_order,id_pobyt>pobyt,rok,num,typ,castka",
           ds_order:"id_order>*,id_akce>akce,kod_akce,od,do,nazev,jmeno,prijmeni,note",
-          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
+          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,pecovane>osoba,web_zmena",
           osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
           tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",

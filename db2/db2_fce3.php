@@ -2212,8 +2212,9 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
   $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
+  $pozn= []; // poznámky pod čarou
   $rs= pdo_qry("
-    SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,IF(funkce=1,'V','U'),c1.ikona AS _dite,
+    SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),c1.ikona AS _dite,
       kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
     FROM spolu
@@ -2226,7 +2227,24 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
     WHERE $cond
     ORDER BY IFNULL(role,'e'),_vek DESC
   ");
-  while ($rs && (list($jmeno,$vzorec,$sleva,$ids,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
+//  $rs= pdo_qry("
+//    SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),c1.ikona AS _dite,
+//      kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
+//      id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
+//    FROM spolu AS s
+//    JOIN _cis c1 ON c1.druh='ms_akce_s_role' AND c1.data=s_role
+//    JOIN osoba AS o USING (id_osoba) 
+//    JOIN pobyt AS p USING (id_pobyt)
+//    LEFT JOIN _cis c2 ON c2.druh='ms_cena_vzorec' AND c2.data=vzorec
+//    LEFT JOIN tvori ON o.id_osoba=tvori.id_osoba AND id_rodina=i0_rodina
+//    JOIN akce ON id_akce=id_duakce
+//    LEFT JOIN spolu AS chs ON chs.pecovane=o.id_osoba
+//    LEFT JOIN pobyt AS chp ON chp.id_pobyt=chs.id_pobyt AND chp.id_akce=p.id_akce
+//    LEFT JOIN osoba AS cho ON cho.id_osoba=chs.id_osoba
+//    WHERE $cond
+//    ORDER BY IFNULL(role,'e'),_vek DESC
+//  ");
+  while ($rs && (list($jmeno,$vzorec,$sleva,$ids,$pecovane,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
     if (!$slevy) {
@@ -2254,10 +2272,30 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
     else { // nejsou definovány dny
       $osoba[$i]->undefined= 1;
     }
+    // je to pečující chůva
+    if ($pecovane) {
+      $pd= pdo_qry("SELECT COUNT(*),id_pobyt,id_spolu,nazev,jmeno
+          FROM spolu
+          JOIN pobyt USING (id_pobyt)
+          LEFT JOIN rodina ON id_rodina=i0_rodina
+          LEFT JOIN osoba USING (id_osoba)
+          WHERE id_osoba=$pecovane AND id_akce=$ida
+        ");
+      list($ok,$d_idp,$d_ids,$rodina,$dite)= pdo_fetch_row($pd);
+      if ($d_idp!=$idp) {
+        $osoba[$i]->chuva= 1;
+        $pozn[]= "$jmeno pečuje o $dite, platí to $rodina";
+      }
+      display("list($ok,$d_idp,$d_ids,$rodina,$dite) => $pozn");
+    }
     $i++;
   }
 //  debug($osoba,"podklady");
-  return akce2_vzorec2($ida,$osoba,$slevy,$spec_slevy);
+  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec_slevy);
+  if ($pozn) {
+    $res->navrh.= "<br>Poznámka k ceně: ".implode('<br>',$pozn);
+  }
+  return $res;
 }
 # ------------------------------------------------------------------------------- akce2 vzorec2_test
 # testovací výpočet platby za akci
@@ -2316,6 +2354,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) {  trace();
     if (!isset($blok[$_druh])) $blok[$_druh]= 0;
     foreach ($osoby as $i=>$o) {
       if (isset($o->undefined)) continue; // nejsou definované dny
+      if (isset($o->chuva)) continue; // pečuje o dítě jiné rodiny
       $ok= true;
 //      $osoba[$i]['jmeno']= $o->jmeno;
       if ($t) $ok&= strpos(",$t,",",$o->t,")!==false; // $t je seznam oddělený čárkami
@@ -2339,7 +2378,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) {  trace();
     }
   }
   // záznam blokových slev
-  debug($blok,"blok 1");
+//  debug($blok,"blok 1");
   if ($spec_slevy) {
     foreach ($slevy as $nazev=>$nula) {
       if ($nula==0) {
@@ -2355,7 +2394,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) {  trace();
     }
   }
   // redakce
-  debug($blok,"blok 2");
+//  debug($blok,"blok 2");
   $celkem= 0;
   $celkem2= 0;
   $nadpis= [];
@@ -2400,7 +2439,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) {  trace();
   $html.= "<tr><th>celkem</th><td></td><th>$celkem</th></tr>";
 //  $html.= "<tr><td><b>celkem</b></td><td></td><th>$celkem</th></tr>";
   $html.= "</table>";
-  debug($osoba,"tabulka poplatků za osoby");
+//  debug($osoba,"tabulka poplatků za osoby");
   $tab= '';
   $tab= "<style>"
       . ".tab_ceny_osob {table-layout:fixed; width:295px;}"
@@ -2433,7 +2472,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) {  trace();
 //  $html.= "</table>";
   $ret->navrh= $html;
   $ret->tabulka= $tab;
-  debug($ret);
+//  debug($ret);
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
