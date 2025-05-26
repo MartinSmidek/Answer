@@ -115,9 +115,9 @@ func ucast_pobyt_akce_platba(_idp,_ida)  {
   page.plt.onclick();
   ucast_pobyt(_idp);
 }
-# ukázání rozkladu ceny za účastníka pobytu
+# ukázání rozkladu ceny za účastníka pobytu - bez speciálních slev
 func ucast_cena_osoba(_ids)  { var cena: object
-  cena= php.akce2_vzorec2_pobyt(0,_ids);
+  cena= php.akce2_vzorec2_pobyt(0,_ids,0);
   alert(cena.navrh);
 }
 # ukázání dnů účastníka pobytu
@@ -1627,10 +1627,6 @@ form _pobyt [,,360,62] {
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('pobyt',the_pobyt),&this,'onclick_')}
       func onclick_() {}
     }
-    item { title:'ukázat skladbu ceny', skill:'m', 
-      func onclick() { var cena:object 
-        clear(); cena= php.akce2_vzorec2_pobyt(the_pobyt,0); alert(cena.navrh); }
-    }
   } 
 
   // t = pracovní poznámka
@@ -1781,10 +1777,6 @@ form _spolu [,,0,270] {
     item { title:'-ukázat data', skill:'m', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('spolu',key_spolu),&this,'onclick_')}
       func onclick_() {}
-    }
-    item { title:'ukázat skladbu ceny', skill:'m', 
-      func onclick() { var cena:object 
-        clear(); cena= php.akce2_vzorec2_pobyt(0,key_spolu); alert(cena.navrh); }
     }
   }
 //# u - individuální ubytování a stravování
@@ -2429,6 +2421,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   // nestandardní strava
   func nestandard(zkratka,nazev) { var zmena:number
       has_skill("yaa+;faa+;caa+");
+      if (the_cenik_verze==2) alert("V nové verzi ceníku jsou tyto úpravy ignorovány ;-) ");
       Strava.dnu= u.b.dnu; // pokud jsou definovány výjimky z pravidelné stravy
       if (Strava.dnu<15) {       // 15 je maximálně možný počet řádků vyjímek ze stravy
         Strava.x= zkratka; 
@@ -2797,7 +2790,7 @@ panel DnySpolu [,,235,200] { type:'popup', title:'Nestandardní počty'
         kat_dny= js.dny_precti();
         if (kat_dny!=old) kat_dny.change();
         stav= php.akce_dny2sov(ids,kat_dny);
-        echo(debug(stav,kat_dny));
+//        echo(debug(stav,kat_dny));
         form.save();
         reload(the_pobyt);
         panel.hide(1);
@@ -2807,11 +2800,17 @@ panel DnySpolu [,,235,200] { type:'popup', title:'Nestandardní počty'
     select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
     select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
     select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
+    label warn [165,160,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
   }
   func ukaz(_ids) { var dny:text
     ids= _ids;
     u.load(ids);
-//    dny= php.select1('kat_dny','spolu',`id_spolu=${ids}`);
+    u.warn.display(0);
+    if (!u.kat_dny) { // doplnění defaultních hodnot
+      php.akce_dny_default(the_duakce,ids);
+      u.load(ids);
+      u.warn.display(1);
+    }
     js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
     return(panel.modal());
   }
