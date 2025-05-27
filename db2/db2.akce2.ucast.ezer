@@ -2374,21 +2374,26 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     else { // podle ceníku
       navrh.display(1); duvod_text.display(0);
       if (the_cenik_verze==2) {
-        // zjisti cenu
-        cena= php.akce2_vzorec2_pobyt(the_pobyt);
-        if (c_nocleh!=cena.rozpis.u) { c_nocleh= cena.rozpis.u; c_nocleh.change() }
-        if (c_strava!=cena.rozpis.s) { c_strava= cena.rozpis.s; c_strava.change() }
-        if (c_program!=cena.rozpis.p) { c_program= cena.rozpis.p; c_program.change() }
-        if (c_sleva!=cena.rozpis.d) { c_sleva= cena.rozpis.d; c_sleva.change() }
-//        c_nocleh= cena.rozpis.n;
-//        c_strava= cena.rozpis.s;
-//        c_program= cena.rozpis.p;
-//        c_sleva= cena.rozpis.d;
-        rozklad= cena.tabulka;
-        navrh= cena.navrh;
-        // kontrola slevy pro VPS
-        if (vzorec.key()==0 && u.b.funkce==1) { alert('slouží jako VPS ale bez slevy'); };
-        if (vzorec.key()==1 && u.b.funkce==0) { alert('neslouží jako VPS přitom mají nastavenou slevu'); };
+        if (u.b.funkce==9) { // náhradník? ... zatím nic
+          
+        }
+        else {
+          // zjisti cenu
+          cena= php.akce2_vzorec2_pobyt(the_pobyt);
+          if (c_nocleh!=cena.rozpis.u) { c_nocleh= cena.rozpis.u; c_nocleh.change() }
+          if (c_strava!=cena.rozpis.s) { c_strava= cena.rozpis.s; c_strava.change() }
+          if (c_program!=cena.rozpis.p) { c_program= cena.rozpis.p; c_program.change() }
+          if (c_sleva!=cena.rozpis.d) { c_sleva= cena.rozpis.d; c_sleva.change() }
+  //        c_nocleh= cena.rozpis.n;
+  //        c_strava= cena.rozpis.s;
+  //        c_program= cena.rozpis.p;
+  //        c_sleva= cena.rozpis.d;
+          rozklad= cena.tabulka;
+          navrh= cena.navrh;
+          // kontrola slevy pro VPS
+          if (vzorec.key()==0 && u.b.funkce==1) { alert('slouží jako VPS ale bez slevy'); };
+          if (vzorec.key()==1 && u.b.funkce==0) { alert('neslouží jako VPS přitom mají nastavenou slevu'); };
+        }
       }
       elseif (the_soubeh) {
         cena= php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna);

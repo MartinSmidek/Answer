@@ -2538,15 +2538,16 @@ function akce_prihlaska_load($ida=3094) {
   $p_od= $akce->p_detska_od??3;
   $p_do= $akce->p_detska_do??12;
   // procházení přihlášek
-  $rw= pdo_qry("SELECT id_prihlaska,id_pobyt,id_osoba,id_rodina,nazev,stav,prijata,vars_json
-      FROM prihlaska
+  $rw= pdo_qry("SELECT id_prihlaska,id_pobyt,id_osoba,id_rodina,nazev,stav,prijata,vars_json,funkce,vzorec
+      FROM prihlaska AS w
       LEFT JOIN rodina USING (id_rodina)
-      WHERE id_akce=$ida AND id_pobyt!=0
+      JOIN pobyt USING (id_pobyt)
+      WHERE w.id_akce=$ida AND id_pobyt!=0
       -- AND id_rodina=4493 -- Ryzovi
       -- AND id_rodina=2473 -- Palátovi
       ORDER BY id_prihlaska DESC
       -- LIMIT 1");
-  while ($rw && (list($idw,$idp,$ido,$idr,$nazev,$stav,$prijata,$json)= pdo_fetch_row($rw))) {
+  while ($rw && (list($idw,$idp,$ido,$idr,$nazev,$stav,$prijata,$json,$funkce,$vzorec)= pdo_fetch_row($rw))) {
     $json= str_replace("\n", "\\n", $json);
     $x= json_decode($json);
     if ($x===null) { fce_error("$idw - $json".json_last_error_msg()); return 'ERROR'; }
@@ -2563,6 +2564,10 @@ function akce_prihlaska_load($ida=3094) {
 //      $kj= ($s?'S':'-').($o?'O':'-').($v?'V':'-');
       $kd= ($clen->Xdieta??1) ? '-' : 'BL';
       $dny= akce_sov2dny("$s$o$v",$ida);
+      // pokud není definován pobyt.vzorec=sleva ceny a je to VPS tak dej 1
+      if ($funkce==1 && $vzorec==0) {
+        query("UPDATE pobyt SET vzorec=1 WHERE id_pobyt=$idp");
+      }
       // kat_jidla='$kj', se dopočítává dynamicky
       $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
           . "WHERE id_pobyt=$idp AND id_osoba=$ido /* $jmeno */ ";
