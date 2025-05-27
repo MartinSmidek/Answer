@@ -2318,7 +2318,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 //    | stravy_bl.set_css('cerna','cervena') ];
 //  }
   // ==> . rozpis a zápis ceny
-  button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
+  button [10,47,,] { tag:'cenik,2', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     func onclick() { var ret: object
       ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
       if (ret.warn) warning(ret.warn);
@@ -2339,7 +2339,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 //        <br>2. dát <b>Zapsat cenu</b> <br>3. uložit");
 //    }
   }
-  button [10,72,,] { tag:'cenik', title:"Zapsat cenu"
+  button [10,72,,] { tag:'cenik,2', title:"Zapsat cenu"
     func onclick() {
       if (!form.same()) { alert(`napřed ulož změny`); return; }
       if ((u.b.cstrava_cel || u.b.cstrava_pol) 
@@ -2351,22 +2351,15 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
       c_nocleh.change(); c_strava.change(); c_program.change(); c_sleva.change();
       poplatek_d.change(); naklad_d.change(); ini()
     } 
-//    proc onclick() {
-//      { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
-//      | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
-//        confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
-//      };
-//      { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-//      | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
-//      copy_by_name(cena.get,form);
-//      c_nocleh.change; c_strava.change; c_program.change; c_sleva.change;
-//      poplatek_d.change; naklad_d.change; ini
-//    } 
   }
   // parametry ceny
   label [93,53,,] { tag:'cenik', title:"cena pro:" }
-  select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
-    options:ms_cena_vzorec.zkratka }
+  select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, 
+      help:"výběr vzorce pro organizátory", options:ms_cena_vzorec.zkratka 
+    func onchanged() {
+      if (vzorec.key()==1 && u.b.funkce!=1) { alert('nastav napřed funkci VPS'); vzorec.plain() };
+      if (vzorec.key()==0 && u.b.funkce==1) { alert('zruš napřed funkci VPS'); vzorec.plain() };
+  }}
   label [110,77,,] { tag:'cenik', title:"sleva:" }
   field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
   // žádost o slevu z online přihlášky
@@ -2381,22 +2374,32 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     else { // podle ceníku
       navrh.display(1); duvod_text.display(0);
       if (the_cenik_verze==2) {
+        // zjisti cenu
         cena= php.akce2_vzorec2_pobyt(the_pobyt);
-        c_nocleh= cena.rozpis.u;
-        c_strava= cena.rozpis.s;
-        c_program= cena.rozpis.p;
-        c_sleva= cena.rozpis.d;
+        if (c_nocleh!=cena.rozpis.u) { c_nocleh= cena.rozpis.u; c_nocleh.change() }
+        if (c_strava!=cena.rozpis.s) { c_strava= cena.rozpis.s; c_strava.change() }
+        if (c_program!=cena.rozpis.p) { c_program= cena.rozpis.p; c_program.change() }
+        if (c_sleva!=cena.rozpis.d) { c_sleva= cena.rozpis.d; c_sleva.change() }
+//        c_nocleh= cena.rozpis.n;
+//        c_strava= cena.rozpis.s;
+//        c_program= cena.rozpis.p;
+//        c_sleva= cena.rozpis.d;
         rozklad= cena.tabulka;
+        navrh= cena.navrh;
+        // kontrola slevy pro VPS
+        if (vzorec.key()==0 && u.b.funkce==1) { alert('slouží jako VPS ale bez slevy'); };
+        if (vzorec.key()==1 && u.b.funkce==0) { alert('neslouží jako VPS přitom mají nastavenou slevu'); };
       }
       elseif (the_soubeh) {
         cena= php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna);
+        navrh= cena.navrh;
         rozklad= '';
       }
       else {
         cena= php.akce2_vzorec(the_pobyt);        
+        navrh= cena.navrh;
         rozklad= '';
       }
-      navrh= cena.navrh;
     }
   }
 //  proc rozpis_ceny() {

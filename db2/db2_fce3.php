@@ -1494,7 +1494,7 @@ function akce2_select_cenik($id_akce) {  trace();
   $options= 'neměnit:0';
   if ( $id_akce ) {
     $qa= "SELECT id_duakce, nazev, YEAR(datum_od) AS _rok FROM akce
-          WHERE id_duakce!=$id_akce AND access=$org AND ma_cenik>0 ORDER BY datum_od DESC";
+          WHERE id_duakce!=$id_akce AND access=$org AND ma_cenik=1 ORDER BY datum_od DESC";
     $ra= pdo_qry($qa);
     while ($ra && $a= pdo_fetch_object($ra) ) {
       $nazev= "{$a->_rok} - ";
