@@ -1,6 +1,92 @@
 // uživatelské funkce aplikace Ans(w)er - varianta s jQuery
 /* global Ezer, Form, Var, Field, FieldList, Edit, Select, View, Label, Highcharts */ // pro práci s Netbeans
 "use strict";
+// ======================================================================================> dny spolu
+// -------------------------------------------------------------------------------------- dny zobraz
+  const dny_headers = ['den', 'N', 'S', 'O', 'V'];
+  var dny_matrix = "";
+
+  function dny_formatDatum(date) {
+    const dnyTydne = ['ne', 'po', 'út', 'st', 'čt', 'pá', 'so'];
+    const den = date.getDate();
+    const mesic = date.getMonth() + 1;
+    const nazevDne = dnyTydne[date.getDay()];
+    return `${den}.${mesic} ${nazevDne}`;
+  }
+
+  function dny_zobraz(params, data, od, do_, oddo) {
+    const cols = 4;
+    dny_matrix = data;
+    const elem = params.DOM_Block;
+    const table = jQuery('<table class="dny"></table>');
+    const startDate = new Date(od);
+    const endDate = new Date(do_);
+    elem.empty();
+
+    // Výpočet počtu dní
+    const timeDiff = endDate - startDate;
+    const dny = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+
+    // Výpočet n1 a n2 podle režimu oddo
+    let n1 = 0, n2 = 0;
+    if (oddo === 'oo') {
+      n1 = 2;
+      n2 = 1;
+    } else if (oddo === 'vo') {
+      n1 = 3;
+      n2 = 1;
+    }
+
+    // Hlavička
+    const thead = jQuery('<tr></tr>');
+    dny_headers.forEach(header => {
+      thead.append(jQuery('<th></th>').text(header));
+    });
+    table.append(thead);
+
+    for (let i = 0; i < dny; i++) {
+      const tr = jQuery('<tr></tr>');
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      const dateCell = jQuery('<th class="date-cell"></th>').text(dny_formatDatum(currentDate));
+      tr.append(dateCell);
+
+      for (let j = 0; j < cols; j++) {
+        const index = i * cols + j;
+        let obsah = data.charAt(index) === '1' ? 'x' : ' ';
+        const td = jQuery('<td></td>');
+
+        let jeNeaktivni = false;
+        if (i === 0 && j < n1) jeNeaktivni = true;
+        if (i === dny - 1 && j >= cols - n2) jeNeaktivni = true;
+
+        if (jeNeaktivni) {
+          td.text('-').addClass('disabled');
+        } else {
+          td.text(obsah).data('index', index);
+          td.on('click', function () {
+            const idx = jQuery(this).data('index');
+            const current = dny_matrix.charAt(idx);
+            const updated = current === '0' ? '1' : '0';
+            dny_matrix = dny_matrix.substring(0, idx) + updated + dny_matrix.substring(idx + 1);
+            jQuery(this).text(updated === '1' ? 'x' : ' ');
+            jQuery('#stav').text(dny_matrix);
+          });
+        }
+
+        tr.append(td);
+      }
+
+      table.append(tr);
+    }
+
+    elem.append(table);
+    jQuery('#stav').text(dny_matrix);
+  }
+// -------------------------------------------------------------------------------------- dny precti
+function dny_precti() {
+  return dny_matrix;
+}
 // ====================================================================================> highcharts
 // --------------------------------------------------------------------------------- highcharts load
 // zavede dynamicky potřebné moduly highcharts

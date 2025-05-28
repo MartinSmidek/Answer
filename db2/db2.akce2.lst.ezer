@@ -191,7 +191,9 @@ func h_change_b() { var r:number, h:number
   if (r!=info.sey.rows) {
     info.sey.set_attrib('rows',r);
     info.dum.set_attrib('rows',r+1);
-    page.c.set_attrib('rows',r-2);
+    page.c.set_attrib('rows',r-4);
+//    page.cenik_xls.property({down:r*17+40});
+    page.property({down:r*17},'b');
   }
 }
 
@@ -788,18 +790,28 @@ form _page [,,275,360] {
   edit web_online [13,prihl_top+63,438,60] { tag:'pri,M,O,R,J', title:'^JSON popis přihlášky', data:akce.web_online, format:'dt'}
   field web_prihlaska [338,prihl_top+32,112,18] { tag:'pri,M,O,R,J', title:'PHP přihlášky', data:akce.web_prihlaska, format:'d'}
   # ------------------------==> . ceník
-  proc c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
-    // access: 1,2 pro db2 - nepoužívá cenik.typ,   používá akce.ma_cenik_verze s hodnotou 0|1
+  func c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
     //                       lze měnit sloupce od-do za dph
-    eq(access.get,1,2);
-    c.typ.width(0);
-      c.pol.width(156); c.za_2016.width(38); form.display(eq(zalozka.get,'cen'),'ex0');
-    // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
-  | eq(access.get,4,8,16);
-    c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
-    form.display(0,'ex');
-  | ge(access.get,org_ds.get);
-  | warning("chybně definovaný ceník");
+    c.pro_2025.width(0); c.noc_2025.width(0); c.porce_2025.width(0); 
+    if (the_cenik_verze==2) {
+      // nový univerzální ceník 
+      c.typ.width(0); c.za_2016.width(0); 
+      c.druh.width(10);
+      c.co_2025.width(35); c.pro_2025.width(35); c.noc_2025.width(35); c.porce_2025.width(35); 
+      c.pol.width(146); 
+      c_testy.key(1);
+      form.display(0,'ex0');
+    }
+    elseif (eq(access,1,2)) {
+      // access: 1,2 pro db2 - nepoužívá cenik.typ,   používá akce.ma_cenik_verze s hodnotou 0|1
+      c.typ.width(0);
+      c.druh.width(0); c.pol.width(156); c.za_2016.width(38); form.display(zalozka=='cen','ex0');
+    }
+    elseif (eq(access,4,8,16)) {
+      // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
+      c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
+      form.display(0,'ex');
+    }
   }
   browse c [10,25,,] { tag:'cen', rows:26, qry_rows:1, css_rows:"barva,1:sedy"
     // pro y;f;c
@@ -807,6 +819,8 @@ form _page [,,275,360] {
     show id_akce  { data:cenik.id_akce }
     show polozka  { data:cenik.polozka }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
+      proc onsubmit() { this.save } }
+    show druh [,,0,] { title:'.', help:'druh položky: u|s|p|d', data:cenik.druh, format:'ruq*s'
       proc onsubmit() { this.save } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show pol [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'tuq*s'
@@ -821,6 +835,19 @@ form _page [,,275,360] {
       proc onsubmit() { this.save } }
     // pro y;f;c
     show cena [,,43,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s:e'
+      proc onsubmit() { this.save } }
+    // pro y verze 2025
+    show co_2025 [,,0,] { title:'x', data:cenik.krat, format:'urq=s',
+      help:'kolikrát se platí ...'
+      proc onsubmit() { this.save } }
+    show pro_2025 [,,0,] { title:'t', data:cenik.t, format:'urq=s',
+      help:'typ účasti'
+      proc onsubmit() { this.save } }
+    show noc_2025 [,,0,] { title:'n', data:cenik.n, format:'urq=s',
+      help:'kategorie noclehu'
+      proc onsubmit() { this.save } }
+    show porce_2025 [,,0,] { title:'p', data:cenik.p, format:'urq=s',
+      help:'kategorie porce'
       proc onsubmit() { this.save } }
     // jen y;f
     show dph [,,0,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s:e'
@@ -859,43 +886,50 @@ form _page [,,275,360] {
   }
   // export ceníku a výběr hnízda
   const bc=40, lc=335
-  label  [lc+19,24,102,57] { tag:'b,cen', css:'ae_parm', style:'z-index:1' }
-  select hnizdo [lc+28,31,86,] { tag:'b,cen', title:'' format:'t' type:'map' 
+//  label  [lc+19,24,102,57] { tag:'b,cen', css:'ae_parm', style:'z-index:1' }
+  select hnizdo [300,20,86,] { tag:'b,cen', title:'' format:'t' type:'map' 
     func onchanged() { 
       c.Load(); 
     }
   }
-  button [lc+28,bc+16,,] { tag:'b,cen', title:'Export ceníku', format:'c'
+  button cenik_xls [10,20,,20] { tag:'b,cen', title:'Export ceníku', format:'c'
     proc onclick() {
-      var ret: object
-      ret.set(ask('akce2_platby_xls',a_akce.get));
-      ret.ok; alert(ret.xhref);
-    | warning(ret.msg);
+//      var ret: object
+//      ret.set(ask('akce2_platby_xls',a_akce.get));
+//      ret.ok; alert(ret.xhref);
+//    | warning(ret.msg);
   } }
-  label  [lc+20,bc+52,211,] { tag:'b,cen,ex0', title:"příklady poplatků" }
-  button [lc+20,bc+68,,] { tag:'b,cen,ex0', title:'pár', proc onclick() { test_ceniku(2,0,0,0,0) }}
-  button [lc+20,bc+95,,] { tag:'b,cen,ex0', title:'pár+dítě', proc onclick() { test_ceniku(2,1,0,0,0) }}
-  button [lc+20,bc+123,,] { tag:'b,cen,ex0', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,0,1,0) }}
-  button [lc+20,bc+150,,] { tag:'b,cen,ex0', title:'dítě do 6 let', proc onclick() { test_ceniku(0,0,1,0,0) }}
-  button [lc+20,bc+177,,] { tag:'b,cen,ex0', title:'kojenec', proc onclick() { test_ceniku(0,0,0,1,0) }}
-  button [lc+20,bc+204,,] { tag:'b,cen,ex0', title:'pečovatel', skill:'y|y', proc onclick() { test_ceniku(0,0,0,0,1) }}
-  func test_ceniku(dosp,Deti,deti,koje,peco) { var cena:object
-    if (the_duakce==a_akce) {
-      if (the_soubeh==1)
-        cena= php.akce2_vzorec_soubeh(0,the_duakce,the_soubezna,hnizdo.key(),dosp,Deti+deti,koje,peco);
-      elseif (the_soubeh==2)
-        cena= php.akce2_vzorec_soubeh(0,the_hlavni,the_duakce,hnizdo.key(),dosp,Deti+deti,koje,peco);
-      else
-        cena= php.akce2_vzorec_test(a_akce,hnizdo.key(),dosp,Deti,deti,koje,peco);
-      alert(cena.navrh)
-    }
-    else alert("pro testování ceníku musí být akce nastavena jako pracovní")
-  }
+  button [140,20,,20] { tag:'b,cen', title:'test pro' 
+    func onclick() { var ret: object
+      clear();
+      ret= php.akce2_vzorec2_test(the_duakce,c_testy.key());
+      alert(`<b>${c_testy}</b><br><br>${ret.navrh}`);
+  }}
+  select c_testy [200,20,250,] { tag:'b,cen', type:'map', options:ms_cenik_testy.zkratka, format:'tu' }
+//  label  [lc+20,bc+52,211,] { tag:'b,cen,ex0', title:"příklady poplatků" }
+//  button [lc+20,bc+68,,] { tag:'b,cen,ex0', title:'pár', proc onclick() { test_ceniku(2,0,0,0,0) }}
+//  button [lc+20,bc+95,,] { tag:'b,cen,ex0', title:'pár+dítě', proc onclick() { test_ceniku(2,1,0,0,0) }}
+//  button [lc+20,bc+123,,] { tag:'b,cen,ex0', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,0,1,0) }}
+//  button [lc+20,bc+150,,] { tag:'b,cen,ex0', title:'dítě do 6 let', proc onclick() { test_ceniku(0,0,1,0,0) }}
+//  button [lc+20,bc+177,,] { tag:'b,cen,ex0', title:'kojenec', proc onclick() { test_ceniku(0,0,0,1,0) }}
+//  button [lc+20,bc+204,,] { tag:'b,cen,ex0', title:'pečovatel', skill:'y|y', proc onclick() { test_ceniku(0,0,0,0,1) }}
+//  func test_ceniku(dosp,Deti,deti,koje,peco) { var cena:object
+//    if (the_duakce==a_akce) {
+//      if (the_soubeh==1)
+//        cena= php.akce2_vzorec_soubeh(0,the_duakce,the_soubezna,hnizdo.key(),dosp,Deti+deti,koje,peco);
+//      elseif (the_soubeh==2)
+//        cena= php.akce2_vzorec_soubeh(0,the_hlavni,the_duakce,hnizdo.key(),dosp,Deti+deti,koje,peco);
+//      else
+//        cena= php.akce2_vzorec_test(a_akce,hnizdo.key(),dosp,Deti,deti,koje,peco);
+//      alert(cena.navrh)
+//    }
+//    else alert("pro testování ceníku musí být akce nastavena jako pracovní")
+//  }
   // výpočet expr
-  func expr_ceniku(expr,vek,tit) { // verze 2016 i verze 2017
-    alert(conc('<b>',tit,'</b><br><br>',php.akce2_vzorec_expr(a_akce,hnizdo.key(),expr),
-      '<br><br>(N je počet nocí, O je počet obědů)'))
-  }
+//  func expr_ceniku(expr,vek,tit) { // verze 2016 i verze 2017
+//    alert(conc('<b>',tit,'</b><br><br>',php.akce2_vzorec_expr(a_akce,hnizdo.key(),expr),
+//      '<br><br>(N je počet nocí, O je počet obědů)'))
+//  }
   # ------------------------==> . dokumenty na Synology
   use folders:  area _folders { tag:'syn' }
   var dcloud='U:',    // U: je třeba nastavit Ezer.options.path_files_u na složku obsahující droot
@@ -1329,6 +1363,7 @@ panel PRIHLASKY [0,0,640,520] { title:' ', type:'popup', css:'dialog',
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}
 map akce_slozka: table _cis {where:"druh='akce_slozka'", order:'poradi', key_id:'data'}
 map ms_cenik_verze: table _cis {where:"druh='ms_cenik_verze'", order:'poradi', key_id:'data'}
+map ms_cenik_testy: table _cis {where:"druh='ms_cenik_testy'", order:'poradi', key_id:'data'}
 map ms_akce_stat:   table _cis {where:"druh='ms_akce_stat'", order:'poradi', key_id:'data'}
 map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}
 map akce_tym:      table _user {where:"skills REGEXP '(\\s|^)(t|T)(\\s|$)'", order:'surname', key_id:'id_user'}

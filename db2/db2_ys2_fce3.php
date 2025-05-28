@@ -326,11 +326,17 @@ function akce_clone($ida,$rok,$save=0) {
         . "SELECT '$od','$do',$same FROM akce WHERE id_duakce=$ida ");
     $id_new= pdo_insert_id();
     $ret->msg= "Byla vytvořena kopie akce '{$old->nazev}' v roce $rok";
-    // pokud byla v Domě setkání vytvoř i objednávku
-    $idd= select('id_order','ds_order',"id_akce=$ida");
-    if ($idd) {
-       dum_objednavka_make($id_new,$idd);
-       $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
+    // zjistíme, zda existuje pohled 
+    global $answer_db;
+    $existuje= select('COUNT(*)','information_schema.VIEWS',
+        "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+    if ($existuje) {
+      // pokud byla v Domě setkání vytvoř i objednávku
+      $idd= select('id_order','ds_order',"id_akce=$ida");
+      if ($idd) {
+         dum_objednavka_make($id_new,$idd);
+         $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
+      }
     }
     $ret->msg.= ". <hr><b>Nezapomeň upravit datum, vyměnil jsem jen rok.</b>";
   }
@@ -3368,17 +3374,26 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   $html.= "<div style='font-size:12px'>";
   // strava podle přihlášky
   if (($x->form->strava??0) > 0) {
+    // získání definice přihlášky kvůli stravě
+    list($json,$a_od)= select('web_online,datum_od','akce',"id_duakce=$ida");
+    $json= str_replace("\n", "\\n", $json);
+    $akce= json_decode($json); // definice přihlášky
+    $p_od= $akce->p_detska_od??3;
+    $p_do= $akce->p_detska_do??12;
+    // zjisti defaultní porci
     $html.= "<b>Strava</b><ul>";
     foreach ($x->cleni as $ido=>$clen) {
       if (!$clen->spolu) continue;
-      $jmeno= select('jmeno','osoba',"id_osoba=$ido");
-      $s= $clen->Xstrava_s??1;
-      $o= $clen->Xstrava_o??1;
-      $v= $clen->Xstrava_v??1;
+      list($jmeno,$vek)= select("jmeno,TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba',"id_osoba=$ido");
+      $porce= $clen->Xporce ?? ($vek<$p_od ? 0 : ($vek<$p_do ? 2 : 1));
+      display("$jmeno $vek $p_od $p_do $porce $clen->Xstrava_s");
+      $s= $clen->Xstrava_s??($porce?1:0);
+      $o= $clen->Xstrava_o??($porce?1:0);
+      $v= $clen->Xstrava_v??($porce?1:0);
       $html.= "<li>$jmeno: ";
       if ($s+$o+$v > 0) {
         $html.= "s=$s, o=$o, v= $v";
-        $html.= ", porce=".(($clen->Xporce??1) == 1 ? 'celá' : 'půl');
+        $html.= ", porce=".($porce==1 ? 'celá' : ($porce==2 ? 'půl' : 'nic'));
         $html.= ", dieta=".(($clen->Xdieta??1) == 1 ? 'ne' : 'ano');
       }
       else {

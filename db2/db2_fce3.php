@@ -93,7 +93,7 @@ function db2_rod_show($nazev,$n) {
       foreach($fspo as $f=>$filler) {
         $cleni.= "~{$o->$f}";
       }
-      $cleni.= "~";
+      $cleni.= "~~~~~"; // korekce pro přidání kat_*
     }
     $ret->cleni= $cleni;
     $ret->_docs.= count_chars($_dups,3);
@@ -1029,8 +1029,14 @@ function akce2_delete_confirm($id_akce) {  trace();
   $ret->ucastnici= $ucastnici
     ? "Tato akce má již zapsáno $ucastnici účastníků$p. Mám akci označit jako zrušenou?"
     : '';
-  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
-  if ($idd) $ret->zrusit.= "<br>Současně bude zrušena i objednávka č.$idd v Domě setkání.";
+  // zjistíme, zda existuje pohled 
+  global $answer_db;
+  $existuje= select('COUNT(*)','information_schema.VIEWS',
+      "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+  if ($existuje) {
+    $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+    if ($idd) $ret->zrusit.= "<br>Současně bude zrušena i objednávka č.$idd v Domě setkání.";
+  }
 end:
   return $ret;
 }
@@ -1038,10 +1044,16 @@ end:
 # zrušení akce
 function akce2_delete($id_akce,$ret,$jen_zrušit=0) {  trace();
   $msg2= '.';
-  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
-  if ($idd) {
-    query("UPDATE ds_order SET deleted=1,id_akce=0 WHERE id_akce=$id_akce");
-    $msg2= ", objednávka č.$idd byla zrušena.";
+  // zjistíme, zda existuje pohled 
+  global $answer_db;
+  $existuje= select('COUNT(*)','information_schema.VIEWS',
+      "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+  if ($existuje) {
+    $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+    if ($idd) {
+      query("UPDATE ds_order SET deleted=1,id_akce=0 WHERE id_akce=$id_akce");
+      $msg2= ", objednávka č.$idd byla zrušena.";
+    }
   }
   $nazev= select("nazev",'akce',"id_duakce=$id_akce");
   if ($jen_zrušit) {
@@ -1494,7 +1506,7 @@ function akce2_select_cenik($id_akce) {  trace();
   $options= 'neměnit:0';
   if ( $id_akce ) {
     $qa= "SELECT id_duakce, nazev, YEAR(datum_od) AS _rok FROM akce
-          WHERE id_duakce!=$id_akce AND access=$org AND ma_cenik>0 ORDER BY datum_od DESC";
+          WHERE id_duakce!=$id_akce AND access=$org AND ma_cenik=1 ORDER BY datum_od DESC";
     $ra= pdo_qry($qa);
     while ($ra && $a= pdo_fetch_object($ra) ) {
       $nazev= "{$a->_rok} - ";
@@ -2206,6 +2218,417 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
     }
 //                                                        debug($cenik,"ceník pro $id_akce");
   }
+}
+# ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
+# výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
+function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
+  $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
+  $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
+  $OR_chuvy= '';
+  $pozn= []; // poznámky pod čarou
+  // zjištění případných chův z jiných pobytů tedy účtovaných tímto pobytem
+  if ($idp) {
+    $chuvy= [];
+    $rch= pdo_qry("SELECT chs.id_spolu
+      FROM spolu AS s
+      JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN spolu AS chs ON chs.pecovane=s.id_osoba
+      LEFT JOIN pobyt AS chp ON chp.id_pobyt=chs.id_pobyt
+      JOIN akce ON p.id_akce=id_duakce
+      WHERE chs.pecovane!=0 AND chp.id_akce=p.id_akce AND chp.id_pobyt!=p.id_pobyt
+        AND p.id_pobyt=$idp");
+    while ($rch && list($ch_spolu)= pdo_fetch_row($rch)) {
+      $chuvy[]= $ch_spolu;
+    }
+    if (count($chuvy)) {
+      $OR_chuvy= "OR id_spolu IN (".implode(',',$chuvy).")";
+      $pozn[]= "obsahuje cenu pobytu osobního pečovatele ";
+    }
+  }
+  $rs= pdo_qry("
+    SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),c1.ikona AS _dite,
+      kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
+      id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
+    FROM spolu
+    JOIN _cis c1 ON c1.druh='ms_akce_s_role' AND c1.data=s_role
+    JOIN osoba USING (id_osoba)
+    JOIN pobyt USING (id_pobyt)
+    LEFT JOIN _cis c2 ON c2.druh='ms_cena_vzorec' AND c2.data=vzorec
+    LEFT JOIN tvori ON osoba.id_osoba=tvori.id_osoba AND id_rodina=i0_rodina
+    JOIN akce ON id_akce=id_duakce
+    WHERE ($cond) $OR_chuvy
+    ORDER BY IFNULL(role,'e'),_vek DESC
+  ");
+  while ($rs && (list($jmeno,$vzorec,$sleva,$ids,$pecovane,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
+      = pdo_fetch_row($rs))) {
+    if (!$ida) $ida= $_ida;
+    if (!$slevy) {
+      $slevy= json_decode($vzorec);
+      $slevy->individualni= $sleva;
+//      debug($slevy,$vzorec);
+    }
+    if ($t1=='V' && ($slevy->za??'')!='Sv') { 
+      // pokud je to VPS a není sleva za sloužící VPS zaměň 'V' za 'U'
+      $t1= 'U';
+    }
+    $osoba[$i]= (object)['jmeno'=>$jmeno,'ids'=>$ids,
+        't'=>$t2=='U' ? $t1 : $t2,
+        'n'=>$n,'p'=>$p,'d'=>$d,'v'=>$v];
+    if ($dny) {
+      // doplnění počtu nocí a strav
+      $nsov= akce_dny2sov($ids,$dny);
+      $osoba[$i]->xN= $nsov->xN;
+      $osoba[$i]->xS= $nsov->xS;
+      $osoba[$i]->xO= $nsov->xO;
+      $osoba[$i]->xV= $nsov->xV;
+      $osoba[$i]->sov= $nsov->sov;
+      $osoba[$i]->n= $nsov->n;
+    }
+    else { // nejsou definovány dny
+      $osoba[$i]->undefined= 1;
+    }
+    // je to pečující chůva
+    if ($pecovane) {
+      $pd= pdo_qry("SELECT COUNT(*),id_pobyt,id_spolu,nazev,jmeno
+          FROM spolu
+          JOIN pobyt USING (id_pobyt)
+          LEFT JOIN rodina ON id_rodina=i0_rodina
+          LEFT JOIN osoba USING (id_osoba)
+          WHERE id_osoba=$pecovane AND id_akce=$ida
+        ");
+      list($ok,$d_idp,$d_ids,$rodina,$dite)= pdo_fetch_row($pd);
+      if ($d_idp!=$idp) {
+        $osoba[$i]->chuva= 1;
+        $pozn[]= "$jmeno pečuje o $dite, platí to $rodina";
+      }
+//      display("list($ok,$d_idp,$d_ids,$rodina,$dite) => $pozn");
+    }
+    $i++;
+  }
+//  debug($osoba,"podklady");
+  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec_slevy);
+  if ($pozn) {
+    $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
+  }
+  return $res;
+}
+# ------------------------------------------------------------------------------- akce2 vzorec2_test
+# testovací výpočet platby za akci
+function akce2_vzorec2_test($ida,$idc) { // trace();
+  list($noci,$strava_oddo)= select('DATEDIFF(datum_do,datum_od),strava_oddo','akce',"id_duakce=$ida");
+  $test= select('hodnota','_cis',"druh='ms_ceník_testy' AND data=$idc");
+  $osoba= [];
+  foreach (explode(';',$test) as $i=>$tnpv) {
+    $p= explode(',',$tnpv);
+    $osoba[$i]= (object)['t'=>$p[0],'n'=>$p[1],'p'=>$p[2],'v'=>$p[3]];
+    // doplnění plného počtu nocí a strav
+    $osoba[$i]->xN= $noci;
+    // meze strav jsou zatím jen oo nebo vo
+    $osoba[$i]->xS= $osoba[$i]->xO= $osoba[$i]->xV= $noci;
+    if ($strava_oddo=='oo') $osoba[$i]->xO++;
+    $osoba[$i]->sov= 'SOV';
+  }
+  return akce2_vzorec2($ida,$osoba);
+}
+# ------------------------------------------------------------------------------------- akce2 vzorec
+# výpočet platby za osoby na akci
+# číselník ms_ceník_testy.hodnota= t,n,p,v;... 
+# kde t=u|v|d ... účastník, vps, dítě
+#     n=L,S,- ... lůžko, spacák, na zemi
+#     p=C,P,- ... dospělá, poloviční, bez
+#     v=věk
+# pokud je do ceny zahrnuto něco s druh=x ohlásí se jako chybná kombinace
+# slevy jsou dány jako objekt s nepovinnými položkami
+#   ubytovani=>0, strava=>0, program=>0 jsou speciální slevy pokud $spec_slevy=1
+#   sleva=>x kde x je inidividuální sleva
+#   sleva na ubytovaní, stravu či program ruší slevu pro VPS
+function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
+  $ret= (object)['navrh'=>'','tabulka'=>'','rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
+  $hd= ['jmeno'=>'jméno &nbsp; &nbsp; :50',
+      't'=>'jako?::U-účastník, V-VPS, H-host, p-pomocný pečovatel, D-dítě ve skupince, C-chůva, d-chované dítě',
+      'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk','Kc'=>'cena:35'];
+  $osoba= []; // i => [id=>val,...]
+  $header= $footer= "<tr>";
+  foreach ($hd as $hid=>$hname) {
+    list($id,$w,$h)= explode(':',$hname);
+    $w= $w ? " style='width:{$w}px'" : '';
+    $h= $h ? " title='$h'" : '';
+    $header.= "<th$w$h>$id</th>";
+    $footer.= "<td></td>";
+    foreach ($osoby as $i=>$o) {
+      $osoba[$i][$hid]= $o->$hid??'';
+    }
+  }
+//  debug($osoby,'osoby');
+  $header.= "</tr>";
+  $footer.= "</tr>";
+  $cena= []; // polozka => iosoba => [pocet,cena]
+  $druh= []; // položka =>druh
+  $blok= []; // druh => 0=zdarma/1
+  $rc= pdo_qry("SELECT druh,polozka,cena,krat,za,t,n,p,od,do "
+      . "FROM cenik WHERE id_akce=$ida ORDER BY poradi");
+  while ($rc && (list($_druh,$pol,$kc,$co,$za,$t,$n,$p,$od,$do)= pdo_fetch_row($rc))) {
+    $druh[$pol]= $_druh;
+    if (!isset($blok[$_druh])) $blok[$_druh]= 0;
+    foreach ($osoby as $i=>$o) {
+      if (isset($o->undefined)) continue; // nejsou definované dny
+      if (isset($o->chuva)) continue; // pečuje o dítě jiné rodiny
+      $ok= true;
+//      $osoba[$i]['jmeno']= $o->jmeno;
+      if ($t) $ok&= strpos(",$t,",",$o->t,")!==false; // $t je seznam oddělený čárkami
+      if ($n) $ok&= $n== strtoupper($o->n); 
+      if ($p) $ok&= $p==$o->p; 
+      if ($do) $ok&= $o->v>=$od && $o->v<$do; 
+      
+      if ($ok) {
+        if (!isset($cena[$pol][$i])) $cena[$pol][$i]= [0,$kc];
+        switch ($co) {
+          case 'xN': $cena[$pol][$i][0]+= $o->xN; break;
+          case 'xS': $cena[$pol][$i][0]+= $o->xS; break;
+          case 'xO': $cena[$pol][$i][0]+= $o->xO; break;
+          case 'xV': $cena[$pol][$i][0]+= $o->xV; break;
+          case 'P':  $cena[$pol][$i][0]++;        break;
+          case 'S':  $cena[$pol][$i][0]++;        break;
+//          case 'S':  isset($slevy->ubytovani) ? 0 : $cena[$pol][$i][0]++; break;
+        }
+        if ($cena[$pol][$i][0]) $blok[$_druh]++;
+      }
+    }
+  }
+  // záznam blokových slev
+//  debug($blok,"blok 1");
+  if ($spec_slevy) {
+    foreach ($slevy as $nazev=>$nula) {
+      if ($nula==0) {
+        switch ($nazev) {
+          case 'ubytovani': $blok['u']= -1; break;
+          case 'strava':    $blok['s']= -1; break;
+          case 'program':   $blok['p']= -1; break;
+        }
+      }
+    }
+    if ($slevy->individualni??0>0) {
+      $blok['d']++;
+    }
+  }
+  // redakce
+//  debug($blok,"blok 2");
+  $celkem= 0;
+  $celkem2= 0;
+  $nadpis= [];
+  foreach ($cena as $pol=>$za_osoby) {
+    if ($pol[0]!='-') continue;
+    $nadpis[$druh[$pol]]= trim(substr($pol,1));
+  }
+  $html= "<table>";
+  foreach ($blok as $d=>$je) {
+    $za_blok= 0;
+    if ($je>0) {
+      foreach ($cena as $pol=>$za_osoby) {
+        if ($pol[0]=='-') continue;
+        $pocet= 0;
+        $kc= 0;
+        if ($druh[$pol]!=$d) continue;
+        foreach ($za_osoby as $i=>list($poceti,$kci)) {
+          $pocet+= $poceti;
+          $kc= $kci;
+          $osoba[$i]['Kc']+= $poceti*$kci;
+          // pohlídáme chybné kombinace
+          if ($d=='x') {
+            $za_blok++;
+            $osoba[$i]['bad']= 1;
+            display("NELZE: $pol");
+            $ret->bad.= "$pol ";
+          }
+        }
+        if ($pocet) {
+          $nx= $pocet==1 ? '' : "($kc*$pocet)";
+          $kc= $pocet*$kc;
+          $ret->rozpis[$d]+= $kc;
+          $za_blok+= $kc;
+          $celkem+= $kc;
+          $celkem2+= $kc;
+          if ($d=='x') {
+            $kc= $nx= '';
+          }
+          $html.= "<tr><td>$pol $nx</td><td align='right'>$kc</td><td></td></tr>";
+        }
+      }    
+      if ($d=='d' && $spec_slevy && $slevy->individualni??0>0) {
+        $kc= -$slevy->individualni;
+        $ret->rozpis[$d]+= $kc;
+        $za_blok+= $kc;
+        $celkem+= $kc;
+        $html.= "<tr><td>individuální sleva</td><td align='right'>$kc</td><td></td></tr>";
+      }
+      $kc_blok= $d=='x' ? "$za_blok x" : $za_blok;
+      $html.= "<tr><th>$nadpis[$d]</th><td></td><th align='right'>$kc_blok<br></th></tr>";
+    }
+  }
+  $html.= "<tr><th>celkem</th><td></td><th>$celkem</th></tr>";
+//  $html.= "<tr><td><b>celkem</b></td><td></td><th>$celkem</th></tr>";
+  $html.= "</table>";
+//  debug($osoba,"tabulka poplatků za osoby");
+  $tab= '';
+  $tab= "<style>"
+      . ".tab_ceny_osob {table-layout:fixed; width:295px;}"
+      . ".tab_ceny_osob td,th {overflow:hidden;white-space:nowrap;text-align:right}"
+      . "</style>";
+  $tab.= "<table class='tab_ceny_osob'>$header";
+  foreach ($osoba as $i=>$o) {
+    $tab.= "<tr>";
+    $ids= $osoby[$i]->ids;
+    foreach ($hd as $hid=>$hname) {
+      if ($hid=='Kc') {
+        $kc= $o[$hid]?:0;
+        $tab.= isset($osoby[$i]->undefined) ? "<td style='background:yellow'>???</td>"
+          : "<td><a href='ezer://akce2.ucast.ucast_cena_osoba/$ids'>$kc</a></td>";
+      }
+      elseif ($hid=='jmeno') {
+        $bad= isset($o['bad']) ? ";background:yellow" : '';
+        $tab.= "<td style='text-align:left$bad'>"
+            . "<a href='ezer://akce2.ucast.ucast_cena_dny/$ids'>$o[$hid]</a></td>";
+      }
+      else {
+        $tab.= isset($o[$hid]) ? "<td>$o[$hid]</td>" : '';        
+      }
+    }
+    $tab.= "</tr>";
+  }
+  $tab.= str_replace("<td></td></tr>","<th>$celkem2</th></tr>",$footer);
+  $tab.= "</table>";
+//  display($tab);
+//  $html.= "<tr><td><b>Celkem</b></td><td></td><th>$celkem</th></tr>";
+//  $html.= "</table>";
+  $ret->navrh= $html;
+  $ret->tabulka= $tab;
+//  debug($ret);
+  return $ret;
+}
+# ------------------------------------------------------------------------------------- akce sov2dny
+# vytvoří kat_dny podle SOV
+function akce_sov2dny($sov,$ida) { // trace();
+  $dny= '';
+  list($noci,$oddo)= select('DATEDIFF(datum_do,datum_od),strava_oddo','akce',"id_duakce=$ida");
+  if ($oddo[0]=='o') $dny.= "00".($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1");
+  $dny.= str_repeat("1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
+  if ($oddo[1]=='o') $dny.= "1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
+//  display($dny);
+  return $dny;
+}
+# ------------------------------------------------------------------------------------- akce dny2sov
+# vytvoří podle kat_dny,kat_noc textovou hodnotu L|S|B a SOV ... částečné hodnoty malým písmenem
+function akce_dny2sov($ids,$dny) { //trace();
+  $ret= (object)['n'=>'L','sov'=>'SOV','xN'=>0,'xS'=>0,'xO'=>0,'xV'=>0];
+  // zjisti default nocí a strav
+  list($kn,$noci,$oddo)= select('kat_nocleh,DATEDIFF(datum_do,datum_od),strava_oddo',
+      'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
+      "id_spolu=$ids");
+  $xs_def= $xv_def= $noci;
+  $xo_def= $oddo[0]=='o' ? $noci+1 : $noci;
+  // přepočítej noci a stravy
+  $xn= $xs= $xo= $xv= 0;
+  for ($d= 0; $d<strlen($dny); $d+=4) {
+    $xn+= $dny[$d];
+    $xs+= $dny[$d+1];
+    $xo+= $dny[$d+2];
+    $xv+= $dny[$d+3];
+  }
+  // redakce SOV
+  $n= $xn==0 ? '-' : ($xn==$noci ? $kn : strtolower($kn));
+  $s= $xs==0 ? '-' : ($xs==$xs_def ? 'S' : 's');
+  $o= $xo==0 ? '-' : ($xo==$xo_def ? 'O' : 'o');
+  $v= $xv==0 ? '-' : ($xv==$xv_def ? 'V' : 'v');
+//  display("$n $s$o$v ... $xn, $xs, $xo, $xv <= $dny");
+//  query("UPDATE spolu SET kat_dny='$dny' WHERE id_spolu=$ids");
+  $ret->n= "$n";
+  $ret->sov= "$s$o$v";
+  $ret->xN= $xn;
+  $ret->xS= $xs;
+  $ret->xO= $xo;
+  $ret->xV= $xv;
+//  debug($ret,"akce_dny2sov($ids,$dny)");
+  return $ret;
+}
+# ------------------------------------------------------------------------------ akce prihlaska_load
+# načte data z přihlášek pro cenu podle číselníku verze 2
+# pro pobyty nevzniklé online přihláškou doplní defaultní hodnoty 
+function akce_prihlaska_load($ida=3094) {
+  $verze= select('ma_cenik_verze','akce',"id_duakce=$ida");
+  if ($verze!=2) fce_error("akce_prihlaska_load jen pro verzi 2 - $ida má $verze");
+  // získání definice přihlášky kvůli stravě
+  list($json,$a_od)= select('web_online,datum_od','akce',"id_duakce=$ida");
+  $json= str_replace("\n", "\\n", $json);
+  $akce= json_decode($json); // definice přihlášky
+  $p_od= $akce->p_detska_od??3;
+  $p_do= $akce->p_detska_do??12;
+  // procházení přihlášek
+  $rw= pdo_qry("SELECT id_prihlaska,id_pobyt,id_osoba,id_rodina,nazev,stav,prijata,vars_json,funkce,vzorec
+      FROM prihlaska AS w
+      LEFT JOIN rodina USING (id_rodina)
+      JOIN pobyt USING (id_pobyt)
+      WHERE w.id_akce=$ida AND id_pobyt!=0
+      -- AND id_rodina=4493 -- Ryzovi
+      -- AND id_rodina=2473 -- Palátovi
+      ORDER BY id_prihlaska DESC
+      -- LIMIT 1");
+  while ($rw && (list($idw,$idp,$ido,$idr,$nazev,$stav,$prijata,$json,$funkce,$vzorec)= pdo_fetch_row($rw))) {
+    $json= str_replace("\n", "\\n", $json);
+    $x= json_decode($json);
+    if ($x===null) { fce_error("$idw - $json".json_last_error_msg()); return 'ERROR'; }
+    display("$idw pro $nazev - ok");
+    foreach ($x->cleni as $ido=>$clen) {
+      if (!$clen->spolu) continue;
+      list($jmeno,$vek)= select("jmeno,TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba',"id_osoba=$ido");
+      $kn= $vek<3 ? '-' : 'L';
+      $porce= $clen->Xporce ?? ($vek<$p_od ? 0 : ($vek<$p_do ? 2 : 1));
+      $s= $clen->Xstrava_s??($porce?1:0) ? 'S' : '-';
+      $o= $clen->Xstrava_o??($porce?1:0) ? 'O' : '-';
+      $v= $clen->Xstrava_v??($porce?1:0) ? 'V' : '-';
+      $kp= $porce==1 ? 'C' : ($porce==2 ? 'P' : '-');
+//      $kj= ($s?'S':'-').($o?'O':'-').($v?'V':'-');
+      $kd= ($clen->Xdieta??1) ? '-' : 'BL';
+      $dny= akce_sov2dny("$s$o$v",$ida);
+      // pokud není definován pobyt.vzorec=sleva ceny a je to VPS tak dej 1
+      if ($funkce==1 && $vzorec==0) {
+        query("UPDATE pobyt SET vzorec=1 WHERE id_pobyt=$idp");
+      }
+      // kat_jidla='$kj', se dopočítává dynamicky
+      $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
+          . "WHERE id_pobyt=$idp AND id_osoba=$ido /* $jmeno */ ";
+      query($qry);
+    }
+  }
+  // doplnění defaultu pro nepřihlášené online
+  $rp= pdo_qry("SELECT id_pobyt,id_spolu
+      FROM pobyt AS p
+      JOIN spolu USING (id_pobyt)
+      LEFT JOIN prihlaska AS w USING (id_pobyt)
+      WHERE p.id_akce=$ida AND funkce!=99 AND ISNULL(id_prihlaska)");
+  while ($rp && (list($idp,$ids)= pdo_fetch_row($rp))) {
+    display("bez online pro id_pobyt $idp - ok");
+    akce_dny_default($ida,$ids);
+  }
+}
+# ------------------------------------------------------------------------------ akce prihlaska_load
+# pro spolu nastaví defaultní hodnoty pobytu podle online přihlášky akce a věku
+function akce_dny_default($ida,$ids) {
+  // získání definice přihlášky kvůli stravě
+  list($json,$a_od)= select('web_online,datum_od','akce',"id_duakce=$ida");
+  $json= str_replace("\n", "\\n", $json);
+  $akce= json_decode($json); // definice přihlášky
+  $p_od= $akce->p_detska_od??3;
+  $p_do= $akce->p_detska_do??12;
+  // získání věku
+  $vek= select1("TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba JOIN spolu USING (id_osoba)',"id_spolu=$ids");
+  $kn= $vek<3 ? '-' : 'L';
+  $porce= $vek<$p_od ? 0 : ($vek<$p_do ? 2 : 1);
+  $kp= $porce==1 ? 'C' : ($porce==2 ? 'P' : '-');
+  $kd= "-";
+  $dny= akce_sov2dny("SOV",$ida);
+  $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
+      . "WHERE id_spolu=$ids";
+  query($qry);
 }
 # ------------------------------------------------------------------------------------- akce2 vzorec
 # výpočet platby za pobyt na akci
@@ -3720,7 +4143,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen,_geo");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
-          . ",o_umi,prislusnost,skupinka");
+          . ",o_umi,prislusnost,skupinka,"
+        . "kat_nocleh,kat_dny,kat_porce,kat_dieta");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();

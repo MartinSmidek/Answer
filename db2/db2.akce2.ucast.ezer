@@ -115,6 +115,15 @@ func ucast_pobyt_akce_platba(_idp,_ida)  {
   page.plt.onclick();
   ucast_pobyt(_idp);
 }
+# ukázání rozkladu ceny za účastníka pobytu - bez speciálních slev
+func ucast_cena_osoba(_ids)  { var cena: object
+  cena= php.akce2_vzorec2_pobyt(0,_ids,0);
+  alert(cena.navrh);
+}
+# ukázání dnů účastníka pobytu
+func ucast_cena_dny(_ids) { 
+  DnySpolu.ukaz(_ids);
+}
 # zobrazení osob - nastavených účastníků
 func osoby_show() {                             // obnova údajů o osobách
   if (os1.key()) os1.show_osoba(u.dup); else os1.init_osoba();
@@ -1165,6 +1174,7 @@ form _page  [,,623,20] {
         pla.display(gt(the_cenik,0),'cenik'); // omezení výpisu pokud není definován ceník
         pla.display(eq(the_soubeh,1),'deti'); // platby za děti
       }
+      pla.display(the_cenik_verze!=2,'2');
       if (last!=the_pobyt) {
         u.b.load_zalozka(); 
         last= the_pobyt;
@@ -1687,7 +1697,7 @@ panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', t
   }
 }
 # -----------------------------------------------------------------------------------------==> SPOLU
-panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
+panel spolu_config [,,200,90] {type:'popup', title:"Podrobnosti údajů"
   var grp='Z'
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_spolu'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
@@ -1695,11 +1705,12 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   proc tune() { _old.set(grp.get); evid.z_change('o'); panel.modal }
   use cnfg: form _cnfg
   form _cnfg {
-    check z [ 0, 0,200,] { title:"základní údaje",       format:'d', value:'1'}
-    check p [ 0,20,200,] { title:"poznámka k účasti",    format:'t', proc onchange() { _tuned }}
-    button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
+    check z [ 0, 0,200,] { title:"základní údaje",    format:'d', value:'1'}
+    check u [ 0,20,200,] { title:"údaje k platbě",    format:'d', value:'1', proc onchange() { _tuned }}
+    check p [ 0,40,200,] { title:"poznámka k účasti", format:'t', proc onchange() { _tuned }}
+    button  [ 0,70,,] { type:'submit', title:'Nastav', proc onclick() {
       set_cookie(conc(sys('root'),'_conf_spolu'),grp.get); panel.hide(1) }}
-    button  [85,40,,] { title:'Zpět', proc onclick() {
+    button  [85,70,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.spolu_show; panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P',1,'Z')); ucast.spolu_show }
     proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); }
@@ -1711,28 +1722,35 @@ form _spolu [,,0,270] {
   proc onchanged() { evid.d_change }
   proc onclick() { Onclick }
   proc Onclick() { evid.z_change('p') } // nutné aby přímým voláním onclick nedošlo k zacyklení
-  proc show_spolu() { var height:number, tags:text, tit:text
+  func show_spolu() { var height:number, tags:text, tit:text, dny:object
     form.display(0,'[^f]');
-    { key_spolu.get;
-      # je na akci
-      tit.set('účastník akce ...'); tags.set('S');
-      [ /*s_role.key;*/ contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
-      switch(s_role.key,
-      0, { tit.set('jako host') },
-      1, { tit.set('účastník akce') },
-      2, { tags.set(conc(tags,',d'));   tit.set('dítě na akci') },
-      3, { tags.set(conc(tags,',o,d')); tit.set('dítě s osobním pečovatelem') },
-      4, { tags.set(conc(tags,',d'));   tit.set('dítě jako pomocný pečovatel') },
-      5, { tags.set(conc(tags,',c'));   tit.set('osobní pečovatel'); pece_sel.set(pece_val.get) }
-      );
-      tags.set(conc(tags,',r'));
-    | # není na akci
-      tit.set('- - -'); tags.set('a');
+    if (key_spolu) { // je na akci
+      tit= 'účastník akce ...'; tags= 'S';
+      if (contains('P',spolu_config.grp)) 
+        tags= conc(tags,',p');
+      switch(s_role.key()) {
+        case 0: tit= 'jako host'; break;
+        case 1: tit= 'účastník akce'; break;
+        case 2: tags= conc(tags,',d'); tit= 'dítě na akci'; break;
+        case 3: tags= conc(tags,',o,d'); tit= 'dítě s osobním pečovatelem'; break;
+        case 4: tags= conc(tags,',d'); tit= 'dítě jako pomocný pečovatel'; break;
+        case 5: tags= conc(tags,',c'); tit= 'osobní pečovatel'; pece_sel= pece_val; break;
+      };
+//      if (the_cenik_verze==2) {
+//        tags= conc(tags,',u'); 
+//        dny= php.akce_dny2sov(key_spolu,rod.cleni.kat_j);
+//        kat_n= dny.n;
+//        kat_j= dny.sov;
+//      }
+      tags= conc(tags,',r');
+    }
+    else { // není na akci
+      tit= '- - -'; tags= 'a';
     };
-    frame.set(tit);
-    height.set(sum(stack_forms(form,tags,10,'up'),0));
-  //height.set(sum(form.stacks(tags,'up',10),0));
-    frame.property(object('top',minus(265,height),'height',sum(height,10)));
+    frame= tit;
+    height= sum(stack_forms(form,tags,10,'up'),0);
+    if (the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
+    frame.property({top: 265-height, height: height+10});
   }
   // globální procedury
   proc new_spolu() {
@@ -1761,7 +1779,12 @@ form _spolu [,,0,270] {
       func onclick_() {}
     }
   }
-
+//# u - individuální ubytování a stravování
+//  field kat_n [21,2,14,] { tag:'u', title:'noc', data:'s.kat_nocleh' }
+//  field kat_j [70,2,30,] { tag:'u', title:'jídla', format:'o' }
+//  field kat_p [136,2,14,] { tag:'u', title:'porce', data:'s.kat_porce'}
+//  field kat_d [184,2,16,] { tag:'u', title:'dieta', data:'s.kat_dieta'}
+//  button [216,2,,] { title:'[fa-edit]', tag:'u'  func onclick() { ucast_cena_dny(key_spolu) }}
   // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
@@ -1827,7 +1850,7 @@ form _spolu [,,0,270] {
     u.b.reload_evid;
     rod.cleni.raise('onrowclick',ido);
   }
-  button vyradit [150,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', skill:'yaa|yaa+;faa|faa+;caa|caa+'
+  button vyradit [152,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() {
       pece_val.get;
       alert("před vyřazením je třeba vyjmout z osobní péče")
@@ -2182,6 +2205,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     show s_dite_kat, show s_poznamka, show pece_key /*pecovane*/, show pfunkce,
     show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi, show prisl, 
     show skupinka
+    show kat_n, show kat_j, show kat_p, show kat_d,
     // metody
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() { _dup.width; show_dup(0) | show_dup(1) }
@@ -2294,7 +2318,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 //    | stravy_bl.set_css('cerna','cervena') ];
 //  }
   // ==> . rozpis a zápis ceny
-  button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
+  button [10,47,,] { tag:'cenik,2', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     func onclick() { var ret: object
       ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
       if (ret.warn) warning(ret.warn);
@@ -2315,7 +2339,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 //        <br>2. dát <b>Zapsat cenu</b> <br>3. uložit");
 //    }
   }
-  button [10,72,,] { tag:'cenik', title:"Zapsat cenu"
+  button [10,72,,] { tag:'cenik,2', title:"Zapsat cenu"
     func onclick() {
       if (!form.same()) { alert(`napřed ulož změny`); return; }
       if ((u.b.cstrava_cel || u.b.cstrava_pol) 
@@ -2327,22 +2351,15 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
       c_nocleh.change(); c_strava.change(); c_program.change(); c_sleva.change();
       poplatek_d.change(); naklad_d.change(); ini()
     } 
-//    proc onclick() {
-//      { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
-//      | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
-//        confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
-//      };
-//      { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-//      | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
-//      copy_by_name(cena.get,form);
-//      c_nocleh.change; c_strava.change; c_program.change; c_sleva.change;
-//      poplatek_d.change; naklad_d.change; ini
-//    } 
   }
   // parametry ceny
   label [93,53,,] { tag:'cenik', title:"cena pro:" }
-  select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
-    options:ms_cena_vzorec.zkratka }
+  select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, 
+      help:"výběr vzorce pro organizátory", options:ms_cena_vzorec.zkratka 
+    func onchanged() {
+      if (vzorec.key()==1 && u.b.funkce!=1) { alert('nastav napřed funkci VPS'); vzorec.plain() };
+      if (vzorec.key()==0 && u.b.funkce==1) { alert('zruš napřed funkci VPS'); vzorec.plain() };
+  }}
   label [110,77,,] { tag:'cenik', title:"sleva:" }
   field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
   // žádost o slevu z online přihlášky
@@ -2351,14 +2368,38 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   // zdůvodnění ceny podle vzorce nebo textem
   func rozpis_ceny() {
     if (duvod_typ) { // vlastní text
-      navrh.display(0); duvod_text.display(1)
+      navrh.display(0); duvod_text.display(1);
+      rozklad= '';
     }
     else { // podle ceníku
       navrh.display(1); duvod_text.display(0);
-      cena= the_soubeh
-        ? php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna)
-        : php.akce2_vzorec(the_pobyt);
-      navrh= cena.navrh;
+      if (the_cenik_verze==2) {
+        // zjisti cenu
+        cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        navrh= cena.navrh;
+        rozklad= cena.tabulka;
+        if (!eq(u.b.funkce,9,13)) { // přihláška,náhradník ... ukázat, nezapisovat
+          if (c_nocleh!=cena.rozpis.u) { c_nocleh= cena.rozpis.u; c_nocleh.change() }
+          if (c_strava!=cena.rozpis.s) { c_strava= cena.rozpis.s; c_strava.change() }
+          if (c_program!=cena.rozpis.p) { c_program= cena.rozpis.p; c_program.change() }
+          if (c_sleva!=cena.rozpis.d) { c_sleva= cena.rozpis.d; c_sleva.change() }
+          // kontrola slevy pro VPS
+          if (vzorec.key()==0 && u.b.funkce==1) { alert('slouží jako VPS ale bez slevy'); };
+          if (vzorec.key()==1 && u.b.funkce==0) { alert('neslouží jako VPS přitom mají nastavenou slevu'); };
+        }
+        // kontrola zakázaných kombinací
+        if (cena.bad) alert(`V parametrech pobytu je zakázaná varianta: ${cena.bad}`);
+      }
+      elseif (the_soubeh) {
+        cena= php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna);
+        navrh= cena.navrh;
+        rozklad= '';
+      }
+      else {
+        cena= php.akce2_vzorec(the_pobyt);        
+        navrh= cena.navrh;
+        rozklad= '';
+      }
     }
   }
 //  proc rozpis_ceny() {
@@ -2383,6 +2424,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   // nestandardní strava
   func nestandard(zkratka,nazev) { var zmena:number
       has_skill("yaa+;faa+;caa+");
+      if (the_cenik_verze==2) alert("V nové verzi ceníku jsou tyto úpravy ignorovány ;-) ");
       Strava.dnu= u.b.dnu; // pokud jsou definovány výjimky z pravidelné stravy
       if (Strava.dnu<15) {       // 15 je maximálně možný počet řádků vyjímek ze stravy
         Strava.x= zkratka; 
@@ -2394,7 +2436,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   button stravy     [89,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('','normalnich'); }
   }
-  button stravy_bm  [140,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+  button stravy_bm  [140,Td+-5,37,] {tag:'b,2', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('_bm','bezmasých'); }
   }
   button stravy_bl  [190,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
@@ -2405,24 +2447,24 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     navrh.set(''); doslo.set('');
   }
   // parametry pro tvorbu ceny
-  field luzka       [10,Td+15,11,] {tag:'b', data:pobyt.luzka}
-  field pristylky   [30,Td+15,11,] {tag:'b', data:pobyt.pristylky}
-  field pocetdnu    [51,Td+15,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
-  field kocarek     [71,Td+15,11,] {tag:'b', data:pobyt.kocarek}
+  field luzka       [10,Td+15,11,] {tag:'b,2', data:pobyt.luzka}
+  field pristylky   [30,Td+15,11,] {tag:'b,2', data:pobyt.pristylky}
+  field pocetdnu    [51,Td+15,11,] {tag:'b,2', data:pobyt.pocetdnu}                  // sémantika: počet nocí
+  field kocarek     [71,Td+15,11,] {tag:'b,2', data:pobyt.kocarek}
   // normální strava
   label [55,Td+-18,,] { tag:'b', title:'strava nomální' }
-  field strava_cel  [94,Td+15,11,] {tag:'b', data:pobyt.strava_cel}
-  field strava_pol  [112,Td+15,11,] {tag:'b', data:pobyt.strava_pol}
+  field strava_cel  [94,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel}
+  field strava_pol  [112,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol}
   // bezmasá
-  label [139,Td+-18,,] { tag:'b', title:'bezmasá' }
-  field strava_cel_bm  [144,Td+15,11,] {tag:'b', data:pobyt.strava_cel_bm}
-  field strava_pol_bm  [162,Td+15,11,] {tag:'b', data:pobyt.strava_pol_bm}
+  label [139,Td+-18,,] { tag:'b,2', title:'bezmasá' }
+  field strava_cel_bm  [144,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bm}
+  field strava_pol_bm  [162,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bm}
   // bezlepková
   label [190,Td+-18,,] { tag:'b', title:'bezlepková' }
-  field strava_cel_bl  [194,Td+15,11,] {tag:'b', data:pobyt.strava_cel_bl}
-  field strava_pol_bl  [212,Td+15,11,] {tag:'b', data:pobyt.strava_pol_bl}
+  field strava_cel_bl  [194,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bl}
+  field strava_pol_bl  [212,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bl}
   // vlastní pečovatelé
-  field svp         [240,Td+15,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
+  field svp         [240,Td+15,11,] {tag:'b,2', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
   // pouze u hlavní akce - platba za souběžnou
 //  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
 //  check potvrzeno_d   [421,Td+22,73,] {tag:'b,deti', title:"potvrzeno", data:pobyt.potvrzeno_d, format:'rd'}
@@ -2462,8 +2504,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,Td+158,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
-  label [3,Td+0,100,] {tag:'b', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
-  label [238,Td+0,27,] {tag:'b', title:'SVP'}
+  label [3,Td+0,100,] {tag:'b,2', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
+  label [238,Td+0,27,] {tag:'b,2', title:'SVP'}
   label [298,Td+75,52,] {tag:'b', title:'rozpočet'}
 //  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
   label [180,Td+40,302,21] {tag:'b,deti', css:'karta', style:"z-index:0"}
@@ -2530,6 +2572,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
   }
+  // t = pracovní poznámka
+  label rozklad [308,Td-136,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto" }
   // t = pracovní poznámka
   edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
@@ -2732,8 +2776,51 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
   }
 }
 # ==========================================================================================> STRAVA
-# nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
+panel DnySpolu [,,235,200] { type:'popup', title:'Rozpis noclehů a stravy'
+# nastaví položku spolu.kat_dny
+  var ids:number, stav:object
+  use u: form {
+    func onstart() { 
+      kat_n.selects('L,S,Z,-'); 
+      kat_p.selects('C,P'); 
+      kat_d.selects('-,BL'); 
+    }
+    label matrix [5,5,160,*] { style:'font-size:13px' }
+    button [165,22,,] { title:'[fa-save] Uložit' 
+      func onclick() { var old:text
+        clear();
+        old= kat_dny;
+        kat_dny= js.dny_precti();
+        if (kat_dny!=old) kat_dny.change();
+        stav= php.akce_dny2sov(ids,kat_dny);
+//        echo(debug(stav,kat_dny));
+        form.save();
+        reload(the_pobyt);
+        panel.hide(1);
+    }}
+    button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
+    field kat_dny { data:'spolu.kat_dny' }
+    select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
+    select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
+    select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
+    label warn [165,160,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
+  }
+  func ukaz(_ids) { var dny:text
+    ids= _ids;
+    u.load(ids);
+    u.warn.display(0);
+    if (!u.kat_dny) { // doplnění defaultních hodnot
+      php.akce_dny_default(the_duakce,ids);
+      u.load(ids);
+      u.warn.display(1);
+    }
+    js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
+    return(panel.modal(730,220,'',0,0,1));
+//    return(panel.modal());
+  }
+}
 panel Strava [,,330,290] {type:'popup', title:'Nestandardní počet strav - xxx'
+# nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
   var x='',             // postfix položek cstrava_cel,cstrava_pol,strava_cel,strava_pol
       strava_cel_x: number,
       strava_pol_x: number,
