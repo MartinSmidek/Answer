@@ -2374,26 +2374,21 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     else { // podle ceníku
       navrh.display(1); duvod_text.display(0);
       if (the_cenik_verze==2) {
-        if (u.b.funkce==9) { // náhradník? ... zatím nic
-          
-        }
-        else {
-          // zjisti cenu
-          cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        // zjisti cenu
+        cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        navrh= cena.navrh;
+        rozklad= cena.tabulka;
+        if (!eq(u.b.funkce,9,13)) { // přihláška,náhradník ... ukázat, nezapisovat
           if (c_nocleh!=cena.rozpis.u) { c_nocleh= cena.rozpis.u; c_nocleh.change() }
           if (c_strava!=cena.rozpis.s) { c_strava= cena.rozpis.s; c_strava.change() }
           if (c_program!=cena.rozpis.p) { c_program= cena.rozpis.p; c_program.change() }
           if (c_sleva!=cena.rozpis.d) { c_sleva= cena.rozpis.d; c_sleva.change() }
-  //        c_nocleh= cena.rozpis.n;
-  //        c_strava= cena.rozpis.s;
-  //        c_program= cena.rozpis.p;
-  //        c_sleva= cena.rozpis.d;
-          rozklad= cena.tabulka;
-          navrh= cena.navrh;
           // kontrola slevy pro VPS
           if (vzorec.key()==0 && u.b.funkce==1) { alert('slouží jako VPS ale bez slevy'); };
           if (vzorec.key()==1 && u.b.funkce==0) { alert('neslouží jako VPS přitom mají nastavenou slevu'); };
         }
+        // kontrola zakázaných kombinací
+        if (cena.bad) alert(`V parametrech pobytu je zakázaná varianta: ${cena.bad}`);
       }
       elseif (the_soubeh) {
         cena= php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna);
@@ -2781,7 +2776,7 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
   }
 }
 # ==========================================================================================> STRAVA
-panel DnySpolu [,,235,200] { type:'popup', title:'Nestandardní počty'
+panel DnySpolu [,,235,200] { type:'popup', title:'Rozpis noclehů a stravy'
 # nastaví položku spolu.kat_dny
   var ids:number, stav:object
   use u: form {
@@ -2820,7 +2815,8 @@ panel DnySpolu [,,235,200] { type:'popup', title:'Nestandardní počty'
       u.warn.display(1);
     }
     js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
-    return(panel.modal());
+    return(panel.modal(730,220,'',0,0,1));
+//    return(panel.modal());
   }
 }
 panel Strava [,,330,290] {type:'popup', title:'Nestandardní počet strav - xxx'

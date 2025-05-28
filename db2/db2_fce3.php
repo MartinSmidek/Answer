@@ -2325,12 +2325,13 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
 #     n=L,S,- ... lůžko, spacák, na zemi
 #     p=C,P,- ... dospělá, poloviční, bez
 #     v=věk
+# pokud je do ceny zahrnuto něco s druh=x ohlásí se jako chybná kombinace
 # slevy jsou dány jako objekt s nepovinnými položkami
 #   ubytovani=>0, strava=>0, program=>0 jsou speciální slevy pokud $spec_slevy=1
 #   sleva=>x kde x je inidividuální sleva
 #   sleva na ubytovaní, stravu či program ruší slevu pro VPS
 function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
-  $ret= (object)['navrh'=>'','tabulka'=>'','rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0]];
+  $ret= (object)['navrh'=>'','tabulka'=>'','rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
   $hd= ['jmeno'=>'jméno &nbsp; &nbsp; :50',
       't'=>'jako?::U-účastník, V-VPS, H-host, p-pomocný pečovatel, D-dítě ve skupince, C-chůva, d-chované dítě',
       'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk','Kc'=>'cena:35'];
@@ -2420,6 +2421,13 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
           $pocet+= $poceti;
           $kc= $kci;
           $osoba[$i]['Kc']+= $poceti*$kci;
+          // pohlídáme chybné kombinace
+          if ($d=='x') {
+            $za_blok++;
+            $osoba[$i]['bad']= 1;
+            display("NELZE: $pol");
+            $ret->bad.= "$pol ";
+          }
         }
         if ($pocet) {
           $nx= $pocet==1 ? '' : "($kc*$pocet)";
@@ -2428,7 +2436,10 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
           $za_blok+= $kc;
           $celkem+= $kc;
           $celkem2+= $kc;
-          $html.= "<tr><td>$pol $nx</td><td align='right'>".$kc."</td><td></td></tr>";
+          if ($d=='x') {
+            $kc= $nx= '';
+          }
+          $html.= "<tr><td>$pol $nx</td><td align='right'>$kc</td><td></td></tr>";
         }
       }    
       if ($d=='d' && $spec_slevy && $slevy->individualni??0>0) {
@@ -2438,7 +2449,8 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
         $celkem+= $kc;
         $html.= "<tr><td>individuální sleva</td><td align='right'>$kc</td><td></td></tr>";
       }
-      $html.= "<tr><th>$nadpis[$d]</th><td></td><th align='right'>$za_blok<br></th></tr>";
+      $kc_blok= $d=='x' ? "$za_blok x" : $za_blok;
+      $html.= "<tr><th>$nadpis[$d]</th><td></td><th align='right'>$kc_blok<br></th></tr>";
     }
   }
   $html.= "<tr><th>celkem</th><td></td><th>$celkem</th></tr>";
@@ -2461,7 +2473,8 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
           : "<td><a href='ezer://akce2.ucast.ucast_cena_osoba/$ids'>$kc</a></td>";
       }
       elseif ($hid=='jmeno') {
-        $tab.= "<td style='text-align:left'>"
+        $bad= isset($o['bad']) ? ";background:yellow" : '';
+        $tab.= "<td style='text-align:left$bad'>"
             . "<a href='ezer://akce2.ucast.ucast_cena_dny/$ids'>$o[$hid]</a></td>";
       }
       else {

@@ -1255,7 +1255,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   }
   label vek      [210,52,24,] {tag:'i', format:'nr'}
   field narozeni [120,66,85,] {tag:'i,I', type:'date', data:o.narozeni, format:'nrR:e',title:'^narození'}
-  field umrti    [208,66,28,] {tag:'i', data:o.umrti, format:'nr:e',title:'^rok úmrtí'}
+  field umrti    [208,66,28,] {tag:'i', data:o.umrti, format:'nr:e',title:'Γrok úmrtí'}
   label [0,0,,3] {tag:'ii,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . kontakt: j,k  (rodinný=0, osobní=1)
