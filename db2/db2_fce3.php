@@ -1029,8 +1029,14 @@ function akce2_delete_confirm($id_akce) {  trace();
   $ret->ucastnici= $ucastnici
     ? "Tato akce má již zapsáno $ucastnici účastníků$p. Mám akci označit jako zrušenou?"
     : '';
-  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
-  if ($idd) $ret->zrusit.= "<br>Současně bude zrušena i objednávka č.$idd v Domě setkání.";
+  // zjistíme, zda existuje pohled 
+  global $answer_db;
+  $existuje= select('COUNT(*)','information_schema.VIEWS',
+      "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+  if ($existuje) {
+    $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+    if ($idd) $ret->zrusit.= "<br>Současně bude zrušena i objednávka č.$idd v Domě setkání.";
+  }
 end:
   return $ret;
 }
@@ -1038,10 +1044,16 @@ end:
 # zrušení akce
 function akce2_delete($id_akce,$ret,$jen_zrušit=0) {  trace();
   $msg2= '.';
-  $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
-  if ($idd) {
-    query("UPDATE ds_order SET deleted=1,id_akce=0 WHERE id_akce=$id_akce");
-    $msg2= ", objednávka č.$idd byla zrušena.";
+  // zjistíme, zda existuje pohled 
+  global $answer_db;
+  $existuje= select('COUNT(*)','information_schema.VIEWS',
+      "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+  if ($existuje) {
+    $idd= select1('IFNULL(id_order,0)','ds_order',"id_akce=$id_akce AND deleted=0");
+    if ($idd) {
+      query("UPDATE ds_order SET deleted=1,id_akce=0 WHERE id_akce=$id_akce");
+      $msg2= ", objednávka č.$idd byla zrušena.";
+    }
   }
   $nazev= select("nazev",'akce',"id_duakce=$id_akce");
   if ($jen_zrušit) {

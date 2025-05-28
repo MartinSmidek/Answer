@@ -31,7 +31,6 @@
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
   $title_flag=  in_array($ezer_server,[0,4]) ? 'lokální ' : '';
-  $jirka_flag= strpos($abs_root,'jirka-') ? " Jirka " : '';
 
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
   
@@ -51,8 +50,7 @@
   $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
 
   // skin a css
-  $new= $ezer_version!='3.1' 
-      ? '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>' : '';
+  $new= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
   $title= "$demo
     <span $title_style>"
     . $title_flag
@@ -90,7 +88,7 @@
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
     'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = jinak povolit přístup jen ze známých IP adres
-    'title_right' => $jirka_flag.$title,
+    'title_right' => $title,
 //    'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',
@@ -109,6 +107,5 @@
       }
     }"
   );
-  $app_name= $jirka_flag ? "$jirka_flag Answer" : $app_name;
   // je to standardní aplikace se startem v kořenu
   require_once("ezer$ezer_version/ezer_main.php");

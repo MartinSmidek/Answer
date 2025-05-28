@@ -326,11 +326,17 @@ function akce_clone($ida,$rok,$save=0) {
         . "SELECT '$od','$do',$same FROM akce WHERE id_duakce=$ida ");
     $id_new= pdo_insert_id();
     $ret->msg= "Byla vytvořena kopie akce '{$old->nazev}' v roce $rok";
-    // pokud byla v Domě setkání vytvoř i objednávku
-    $idd= select('id_order','ds_order',"id_akce=$ida");
-    if ($idd) {
-       dum_objednavka_make($id_new,$idd);
-       $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
+    // zjistíme, zda existuje pohled 
+    global $answer_db;
+    $existuje= select('COUNT(*)','information_schema.VIEWS',
+        "TABLE_SCHEMA='$answer_db' AND TABLE_NAME='ds_order'");
+    if ($existuje) {
+      // pokud byla v Domě setkání vytvoř i objednávku
+      $idd= select('id_order','ds_order',"id_akce=$ida");
+      if ($idd) {
+         dum_objednavka_make($id_new,$idd);
+         $ret->msg.= ", a byla k ní založena objednávka v Domě setkání";
+      }
     }
     $ret->msg.= ". <hr><b>Nezapomeň upravit datum, vyměnil jsem jen rok.</b>";
   }

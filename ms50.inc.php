@@ -43,13 +43,13 @@
           'author' => "Martin"
       ),
       'activity'=>(object)array(),
-      'CMS'=>(object)array(
-        'GMAIL'=>(object)array(
-//          'TEST'=>1,
-          'mail'=>$api_gmail_user, // adresa odesílatele mailů
-          'name'=>'YMCA Setkání', 
-          'pswd'=>$api_gmail_pass
-      ))
+//      'CMS'=>(object)array(
+//        'GMAIL'=>(object)array(
+////          'TEST'=>1,
+//          'mail'=>$api_gmail_user, // adresa odesílatele mailů
+//          'name'=>'YMCA Setkání', 
+//          'pswd'=>$api_gmail_pass
+//      ))
     );
 
   // informace pro debugger o poloze ezer modulů
@@ -67,9 +67,9 @@
   // definice zápisů do _track
   $tracking= '_track';
   $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,'
-      . 'ds_order,objednavka,faktura,join_platba,platba,cenik,pdenik,';
-  $tracked_id= ['akce'=>'id_duakce',"ds_order"=>'id_order'];
-  $tracked_view= ['ds_order'=>"$setkani_db.tx_gnalberice_order"];
+      . 'join_platba,platba,cenik,pdenik,';
+  $tracked_id= ['akce'=>'id_duakce'];
+  $tracked_view= [];
   
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_root= "db2/ds_fce3";
@@ -102,5 +102,5 @@
   // SPECIFICKÉ PARAMETRY
   global $USER;
   $VPS= isset($USER) ? ($USER->org==1 ? 'VPS' : 'PPS') : 'VPS';
-  $EZER->options->org= 'YMCA Familia, YMCA Setkání';
+//  $EZER->options->org= 'YMCA Familia, YMCA Setkání';
 ?>
