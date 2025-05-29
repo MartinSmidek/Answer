@@ -7,7 +7,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
-    if (ds2) {
+    if (has_skill('yd2') && ds2) {
       x= ds2.curr();
       the_curr.dum.faktura= x.dum.faktura;
     }
@@ -50,6 +50,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         ],
         tables: {
           akce:  "id_duakce>*,deleted,zruseno,spec,nazev,datum_od",
+          cenik: "id_cenik>*,id_akce>akce,polozka,cena,za,k_pro,k_noc,k_porce,od,do",
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,id_order>ds_order,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
