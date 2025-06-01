@@ -2310,6 +2310,7 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
   if ($pozn) {
     $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
   }
+  $res->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$res->navrh</div>";
   return $res;
 }
 # ------------------------------------------------------------------------------- akce2 vzorec2_test
@@ -15278,11 +15279,11 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
   global $ezer_path_root;
   $text= $obsah;
   $priloha= '';
-  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
+  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,$ma_cenik_verze,
        $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina,$idr)=
-    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
+    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,ma_cenik_verze,
       platba1,platba2,platba3,platba4,poplatek_d,skupina,i0_rodina',
-    "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
+    "pobyt LEFT JOIN akce ON id_duakce=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
@@ -15321,6 +15322,10 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
       }
       elseif ( $id_hlavni ) {
         $ret= akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
+        $val= $ret->mail;
+      }
+      elseif ( $ma_cenik_verze==2 ) {
+        $ret= akce2_vzorec2_pobyt($id_pobyt);
         $val= $ret->mail;
       }
       else {
