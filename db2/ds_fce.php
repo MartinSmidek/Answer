@@ -2972,10 +2972,12 @@ function ds2_show_curr($c) {
         ? "záloha $zaloha Kč" : ( 
           $zaloha>0 ? "doplatek $doplatek Kč (zálohově $zaloha Kč)" : "částka $castka Kč");
   }
-  return (object)['evi'=>$evi,'evi_text'=>$e_jmeno,
+  $ret= (object)['evi'=>$evi,'evi_text'=>$e_jmeno,
       'ucast'=>$ucast,'ucast_text'=>"$a_akce, $a_jmeno",
       'dum'=>$dum,'dum_text'=>"$d_jmeno",'dum_mmyyyy'=>$mmyyyy,
       'fak'=>$fak,'fak_text'=>$fak_text];
+  debug($ret);
+  return $ret;
 }
 # ------------------------------------------------------------------------------------------ ds2 fio
 # zapsání informace do platby

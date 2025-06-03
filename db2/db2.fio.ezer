@@ -278,15 +278,19 @@ form _ucty [,,640,*] {
       txt= t.ucast ? t.ucast : '... nastav pobyt na kartě a stiskni ?';
       x_akce= `<b>ÚČASTNÍCI</b> ${txt}`;
       xx_akce= t.ucast_text;
-      txt= t.evi ? t.evi : '... nastav osobu na kartě a stiskni ?';
-      x_evid= `<b>EVIDENCE</b>: ${txt}`;
-      xx_evid= t.evi_text;
-      txt= t.dum ? t.dum : '... nastav ji na kartě a stiskni ?';
-      x_dum= `<b>AKCE/OBJEDNÁVKY</b>: ${txt}`;
-      xx_dum= t.dum_text;
-      txt= t.fak ? t.fak : '... nastav ji na kartě a stiskni ?';
-      x_fak= `<b>FAKTURY</b>: ${txt}`;
-      xx_fak= t.fak_text;
+      if (has_skill('yae;fae;cae')) {
+        txt= t.evi ? t.evi : '... nastav osobu na kartě a stiskni ?';
+        x_evid= `<b>EVIDENCE</b>: ${txt}`;
+        xx_evid= t.evi_text;
+      }
+      if (has_skill('yd')) {
+        txt= t.dum ? t.dum : '... nastav ji na kartě a stiskni ?';
+        x_dum= `<b>AKCE/OBJEDNÁVKY</b>: ${txt}`;
+        xx_dum= t.dum_text;
+        txt= t.fak ? t.fak : '... nastav ji na kartě a stiskni ?';
+        x_fak= `<b>FAKTURY</b>: ${txt}`;
+        xx_fak= t.fak_text;
+      }
   }}
   // účastníci akce
   label [40,356,1000,3] { tag:'F', title:'<hr>' }
@@ -301,24 +305,25 @@ form _ucty [,,640,*] {
   label xx_akce [531,368,550,18] {tag:'F', style:'font-size:10pt;color:black'}
   // evidence
   label [40,381,1000,3] { tag:'F', title:'<hr>' }
-  label x_evid [40,392,348,18] {tag:'F', style:'font-size:10pt;color:black' 
+  label x_evid [40,392,348,18] {tag:'F', style:'font-size:10pt;color:black',     skill:'yae;fae;cae' 
       title:'... nastav osobu na kartě EVIDENCE a stiskni ?'}
-  button [397,390,,] {tag:'F', title:'přepiš osobu'
+  button [397,390,,] {tag:'F', title:'přepiš osobu',                             skill:'yae;fae;cae' 
     func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
     func onclick_(c:object) { 
       php.ds2_corr_platba(id_platba,'evi',1,c);
       refresh();
   }}
-  button [480,390,,] {tag:'F', title:'a dar', func onclick() { 
-    php.ds2_corr_platba(id_platba,'dar',1);
-    refresh();
+  button [480,390,,] {tag:'F', title:'a dar',                                    skill:'yae;fae;cae' 
+    func onclick() { 
+      php.ds2_corr_platba(id_platba,'dar',1);
+      refresh();
   }}
-  label xx_evid [531,392,550,18] {tag:'F', style:'font-size:10pt;color:black'}
+  label xx_evid [531,392,550,18] {tag:'F', style:'font-size:10pt;color:black',   skill:'yae;fae;cae' }
   // objednávky DS
   label [40,406,1000,3] { tag:'F', title:'<hr>' }
-  label x_dum [40,417,347,18] {tag:'F', style:'font-size:10pt;color:black' ,
+  label x_dum [40,417,347,18] {tag:'F', style:'font-size:10pt;color:black',               skill:'yd'
       title:'... nastav objednávku na kartě AKCE a stiskni ?'}
-  button [397,416,,] {tag:'F', title:'přepiš objednávku'
+  button [397,416,,] {tag:'F', title:'přepiš objednávku',                                 skill:'yd'
     func onclick() { var nazev:text
       nazev= php.select('nazev','join_platba JOIN faktura USING (id_faktura)',
           `id_platba=${fio.id_platba}`);
@@ -331,12 +336,12 @@ form _ucty [,,640,*] {
       php.ds2_corr_platba(id_platba,'order',1,c);
       refresh();
   }}
-  label xx_dum [531,417,550,18] {tag:'F', style:'font-size:10pt;color:black' }
+  label xx_dum [531,417,550,18] {tag:'F', style:'font-size:10pt;color:black',             skill:'yd' }
   // faktury DS
   label [40,432,1000,3] { tag:'F', title:'<hr>' }
-  label x_fak [40,442,347,18] {tag:'F', style:'font-size:10pt;color:black' ,
+  label x_fak [40,442,347,18] {tag:'F', style:'font-size:10pt;color:black',               skill:'yd'
       title:'... nastav fakturu na kartě FAKTURY a stiskni ?'}
-  button [397,441,,] {tag:'F', title:'přepiš fakturu'
+  button [397,441,,] {tag:'F', title:'přepiš fakturu',                                    skill:'yd'
     func onclick() { 
       js.call_root_func('akce2_curr',&this,'onclick_')
     }
@@ -345,7 +350,7 @@ form _ucty [,,640,*] {
       php.ds2_corr_platba(id_platba,'faktura',1,c);
       refresh();
   }}
-  label xx_fak [531,442,550,18] {tag:'F', style:'font-size:10pt;color:black' }
+  label xx_fak [531,442,550,18] {tag:'F', style:'font-size:10pt;color:black',             skill:'yd'}
   label [40,457,1000,3] { tag:'F', title:'<hr>' }
 }
 

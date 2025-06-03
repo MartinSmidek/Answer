@@ -119,8 +119,8 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
 # {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
 func curr() { var _curr:object
   _curr= {lst:{akce:the_duakce},ucast:ucast.curr()};
-  _curr.evi= evi.curr();
-  _curr.dum= {order:the_source=='dum' ? the_order : 0};
+  if (has_skill('yae;fae;cae')) _curr.evi= evi.curr();
+  if (has_skill('yd')) _curr.dum= {order:the_source=='dum' ? the_order : 0};
   return _curr;
 } 
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
