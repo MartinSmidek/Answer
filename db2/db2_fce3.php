@@ -27,6 +27,7 @@ function db2_rod_show($nazev,$n) {
           . ",o_umi");
   // načtení rodin
   $qr= pdo_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
+      stat AS r_stat,
       telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access AS r_access
     FROM rodina WHERE deleted='' AND nazev='$nazev'");
   while ( $qr && ($r= pdo_fetch_object($qr)) ) {
@@ -79,6 +80,7 @@ function db2_rod_show($nazev,$n) {
         $o->ulice= "®".$rod[$n]->r_ulice;
         $o->psc=   "®".$rod[$n]->r_psc;
         $o->obec=  "®".$rod[$n]->r_obec;
+        $o->stat=  "®".$rod[$n]->r_stat;
       }
       if ( !$o->kontakt ) {
         $o->email=   "®".$rod[$n]->r_emaily;
@@ -3881,7 +3883,8 @@ function ucast2_browse_ask($x,$tisk=false) {
   // ofsety v atributech členů pobytu - definice viz níže
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
       $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
-      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_osoba_geo;
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_osoba_geo,
+      $i_spolu_cenik2;
   $i_osoba_jmeno=     4;
   $i_osoba_vek=       6;
   $i_osoba_role=      9;
@@ -3897,6 +3900,7 @@ function ucast2_browse_ask($x,$tisk=false) {
   $i_key_spolu=      45;
   $i_spolu_dite_kat= 48;
   $i_spolu_note=     49;
+  $i_spolu_cenik2=   57; //  kat_nocleh, kat_dny, kat_porce, kat_dieta
 
   $delim= $tisk ? '≈' : '~';
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
@@ -4281,6 +4285,7 @@ function ucast2_browse_ask($x,$tisk=false) {
             $o->ulice= "®".$rodina[$id_kmen]->ulice;
             $o->psc=   "®".$rodina[$id_kmen]->psc;
             $o->obec=  "®".$rodina[$id_kmen]->obec;
+            $o->stat=  "®".$rodina[$id_kmen]->stat;
           }
           if ( !$o->kontakt && $id_kmen  ) {
             $o->email=   "®".$rodina[$id_kmen]->emaily;
@@ -5950,15 +5955,43 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
 # jedině pokud je $par->typ='tab' zobrazí i náhradníky
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
+# pokud má akce ceník verze=2 bude modifikováno par.fld a par.tit
+#   v par.fld místo luzka bude luzka,spacaky,zem; položky pristylky,kocarek budou vynechány
+#   v par.tit bude zkopírován popis pro luzka jak spacáky,na zemi se stejnou délkou
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
-  global $EZER, $tisk_hnizdo, $VPS;
+  global $EZER, $tisk_hnizdo;
                                                                 display("tisk hnizda $tisk_hnizdo");
+  // údaje o akci
+  list($hnizda,$org,$cenik_verze)= select('hnizda,access,ma_cenik_verze','akce',"id_duakce=$akce");
+  $hnizda= $hnizda ? explode(',',$hnizda) : null;
+  $prepocitat_luzka= 0;
+  if ($cenik_verze==2) {
+    $fld= explode(',',$par->fld);
+    $tit= explode(',',$par->tit);
+    // za lůžka přidáme spacáky a nazemi
+    $iluzko= array_search('luzka',$fld);
+    if ($iluzko!==false) {
+      $prepocitat_luzka= 1;
+      list(,$w)= explode(':',$tit[$iluzko]);
+      array_splice($fld,$iluzko+1,0,['spacaky','nazemi']);
+      array_splice($tit,$iluzko+1,0,["spacáky:$w","na zemi:$w"]);
+    }
+    // vynecháme položky pristylky kocarek a případně také hnizdo
+    $vynechat= ['pristylky','kocarek'];
+    if (!$hnizda) $vynechat[]= 'hnizdo';
+    foreach ($vynechat as $f) {
+      $if= array_search($f,$fld);
+      unset($fld[$if]);
+      unset($tit[$if]);
+    }
+    $par->fld= implode(',',$fld);    
+    $par->tit= implode(',',$tit);    
+    display("$par->fld<br>$par->tit");
+  }
   // ofsety v atributech členů pobytu
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
       $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
-      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
-  $result= (object)array();
-  $typ= $par->typ;
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_spolu_cenik2;
   $tit= isset($par->tit) ? $par->tit : '';
   $fld= $par->fld;
   $cnd= $par->cnd ? $par->cnd : 1;
@@ -5967,16 +6000,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';
   $ord= isset($par->ord) ? $par->ord : "a _nazev";
   $fil= isset($par->filtr) ? $par->filtr : null;
-  $html= '';
-  $href= '';
   $n= 0;
-  // hnízda
-  list($hnizda,$org)= select('hnizda,access','akce',"id_duakce=$akce");
-  $hnizda= $hnizda ? explode(',',$hnizda) : null;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
-  $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
-  $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
   $c_dite_kat= $org==2
       ? map_cis('fa_akce_dite_kat','zkratka') 
       : map_cis('ys_akce_dite_kat','zkratka');  
@@ -5984,10 +6010,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
-  $cond= $cnd;
   // získání dat - podle $kdo
   $clmn= array();
-  $expr= array();       // pro výrazy
   # diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
   list($hlavni,$soubezna)= select("a.id_hlavni,IFNULL(s.id_duakce,0)",
       "akce AS a LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
@@ -5997,13 +6021,13 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'cmd'=>'browse_load',
     'cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
       . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14,15)")
-//      . " AND p.id_pobyt=62834"
+//      . " AND p.id_pobyt=69563"
       ,
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
 //  /**/                                                   debug($y);
-  # rozbor výsledku browse/ask
+  # rozbor výsledku browse/ask po pobytech
   array_shift($y->values);
   foreach ($y->values as $x) {
     // aplikace neosobních filtrů
@@ -6011,15 +6035,6 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       $umi= explode(',',$x->r_umi);
       if ( !in_array($fil->r_umi,$umi) ) continue;
     }
-//     // ke spočítaným účastím přidej r_ms
-//     if ( $fil && $fil->ucasti_ms ) {
-//       $ru= pdo_qry("SELECT COUNT(*)+r_ms as _pocet FROM akce AS a
-//               JOIN pobyt AS p ON a.id_duakce=p.id_akce
-//               JOIN rodina AS r ON r.id_rodina=p.i0_rodina
-//               WHERE a.druh=1 AND p.i0_rodina={$x->key_rodina} AND a.datum_od<='{$x->datum_od}'");
-//       $xu= pdo_fetch_object($ru);
-//       if ( $xu->_pocet!=$fil->ucasti_ms ) continue;
-//     }
     // pokračování, pokud záznam vyhověl filtrům
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
@@ -6030,7 +6045,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     if ( $x->r_emaily )   $emaily[]=   trim($x->r_emaily,",; ");
     # rozšířené spojení se získá slepením údajů všech účastníků
     $xs= explode('≈',$x->r_cleni);
-//    /**/                                                 debug($x);
+//    /**/                                                 debug($xs,"členi pobytu");
     $pocet= 0;
     $spolu_note= "";
     $osoba_note= "";
@@ -6038,10 +6053,13 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $deti= array();
     $rodice= array();
     $vek_deti= array();
+    // rozdělení noclehů v případě ceníku verze 2
+    $luzka= 0; $spacaky= 0; $nazemi= 0;
 //                                                         if ( $x->key_pobyt==32146 ) debug($x);
     foreach ($xs as $i=>$xi) {
+//    /**/                                                 if ($i!=0) continue; 
       $o= explode('~',$xi);
-//    /**/                                                 debug($o);
+//    /**/                                                 debug($o,"člen pobytu č.$i");
 //                                                         if ( $x->key_pobyt==32146 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
@@ -6074,21 +6092,41 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
             $rodice['a']['prijmeni']= trim($o[$i_osoba_prijmeni]);
         }
       }
+      // výpočet ubytování pro ceník verze 2
+      if ($prepocitat_luzka) {
+        // přepočítej noci a stravy - $i_spolu_cenik2 -> kat_nocleh, kat_dny, kat_porce, kat_dieta
+        $kat_n= $o[$i_spolu_cenik2+0];
+        $dny= $o[$i_spolu_cenik2+1];
+        $nn= $ns= $no= $nv= 0;
+        for ($d= 0; $d<strlen($dny); $d+=4) {
+          $nn+= $dny[$d];
+          $ns+= $dny[$d+1];
+          $no+= $dny[$d+2];
+          $nv+= $dny[$d+3];
+        }
+        display("$kat_n,$nn,$dny");
+        switch ($kat_n) {
+          case 'L': $luzka+= $nn ? 1 : 0; break;
+          case 'S': $spacaky+= $nn ? 1 : 0; break;
+          case 'Z': $nazemi+= $nn ? 1 : 0; break;
+        }
+      }
     }
 //    /**/                                                 debug($rodice,"RODIČE");
 //    /**/                                                 debug($deti,"DĚTI");
 //    /**/                                                 debug($cleni,"ČLENI");
     $o= explode('~',$xs[0]);
+//    /**/                                                 debug($o,"člen pobytu č.0");
     // show: adresa, ulice, psc, obec, stat, kontakt, telefon, nomail, email
     $io= $i_adresa;
     $adresa=  $o[$io++]; $ulice= $o[$io++]; $psc= $o[$io++]; $obec= $o[$io++]; $stat= $o[$io++];
     $kontakt= $o[$io++]; $telefon= $o[$io++]; $nomail= $o[$io++]; $email= $o[$io++];
     // úpravy
     $emaily= count($emaily) ? implode(', ',$emaily).';' : '';
-    $email=  trim($kontakt ? $email   : substr($email,$r),",; ") ?: $emaily;
+    $email=  trim($kontakt ? $email   : mb_substr($email,1),",; ") ?: $emaily;
     $emaily= $emaily ?: $email;
     $telefony= count($telefony) ? implode(', ',$telefony).';' : '';
-    $telefon=  trim($kontakt ? $telefon : substr($telefon,$r),",; ") ?: $telefony;
+    $telefon=  trim($kontakt ? $telefon : mb_substr($telefon,1),",; ") ?: $telefony;
     $telefony= $telefony ?: $telefon;
 //                                                         if ( $x->key_pobyt==22141 )
 //                                                         display("email=$email, emaily=$emaily, telefon=$telefon, telefony=$telefony");
@@ -6099,7 +6137,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     // přepsání do výstupního pole
     $n++;
     $clmn[$n]= array();
-    $r= 0; // 1 ukáže bez (r)
+//    $r= 1; // 1 ukáže bez (r)
     foreach($flds as $f) {          // _pocet,poznamka,note
       $c= '';
       switch ($f) {
@@ -6117,11 +6155,11 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                         break;
       case 'jmena2':    $c= explode(' ',$x->_jmena);
                         $c= $c[0].' '.$c[1]; break;
-      case 'vek_deti':  $c= implode(',',$vek_deti); break;
-      case 'ulice':     $c= $adresa  ? $ulice   : substr($ulice,$r); break;
-      case 'psc':       $c= $adresa  ? $psc     : substr($psc,$r);   break;
-      case 'obec':      $c= $adresa  ? $obec    : substr($obec,$r);  break;
-      case 'stat':      $c= $adresa  ? $stat    : substr($stat,$r);
+      case 'vek_deti':  $c= ".  ".implode(', ',$vek_deti); break;
+      case 'ulice':     $c= $adresa  ? $ulice   : str_replace('®','',$ulice); break;
+      case 'psc':       $c= $adresa  ? $psc     : str_replace('®','',$psc); break;
+      case 'obec':      $c= $adresa  ? $obec    : str_replace('®','',$obec); break;
+      case 'stat':      $c= $adresa  ? $stat    : str_replace('®','',$stat);
                         if ( $c=='CZ' ) $c= '';
                         break;
       case 'telefon':   $c= $telefon;  break;
@@ -6129,18 +6167,22 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '*telefony': foreach($rodice as $X) {
                           if (!$X['telefon']) continue;
                           $c.= "{$X['jmeno']}:{$X['telefon']} ";
-                        }; break;
+                        }
+                        break;
       case '*obcanky':  foreach($rodice as $X) {
                           if (!$X['obcanka']) continue;
                           $c.= "{$X['jmeno']}:{$X['obcanka']} ";
-                        }; break;
+                        }
+                        break;
       case '*deti':     foreach($deti as $X) {
                           $c.= "{$X['jmeno']}:{$X['vek']}:{$X['kat']} ";
-                        }; break;
+                        }
+                        break;
       case '*diety':    foreach($cleni as $X) { 
                           if ($X['dieta']=='-') continue;
                           $c.= "{$X['jmeno']}:{$X['dieta']} ";
-                        }; break;
+                        }
+                        break;
       case 'email':     $c= $email;  break;
       case 'emaily':    $c= $emaily; break;
       case '_pocet':    $c= $pocet; break;
@@ -6154,8 +6196,11 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '_vyjimky':  $c= $x->cstrava_cel!=''    || $x->cstrava_pol!=''
                          || $x->cstrava_cel_bm!='' || $x->cstrava_pol_bm!=''
                          || $x->cstrava_cel_bl!='' || $x->cstrava_pol_bl!='' ? 1 : 0; break;
-      case '_vps':      $VPS_= $access==1 ? 'VPS' : 'PPS'; $vps_= $access==1 ? '(vps)' : '(pps)';
+      case '_vps':      $VPS_= $org==1 ? 'VPS' : 'PPS'; $vps_= $org==1 ? '(vps)' : '(pps)';
                         $c= $x->funkce==1 ? $VPS_ : (strpos($x->r_umi,'1')!==false ? $vps_ : ''); break;
+      case 'luzka':     $c= $luzka;  break;
+      case 'spacaky':   $c= $spacaky;  break;
+      case 'nazemi':    $c= $nazemi;  break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
