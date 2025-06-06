@@ -2573,7 +2573,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
   }
   // t = pracovní poznámka
-  label rozklad [308,Td-136,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto" }
+  label rozklad [308,Td-136,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto;z-index:0" }
   // t = pracovní poznámka
   edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
@@ -2776,7 +2776,7 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
   }
 }
 # ==========================================================================================> STRAVA
-panel DnySpolu [,,235,200] { type:'popup', title:'Rozpis noclehů a stravy'
+panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
 # nastaví položku spolu.kat_dny
   var ids:number, stav:object
   use u: form {
@@ -2804,6 +2804,8 @@ panel DnySpolu [,,235,200] { type:'popup', title:'Rozpis noclehů a stravy'
     select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
     select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
     label warn [165,160,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
+    label [70,193,200,20] { 
+      title:"<i class='fa fa-share fa-rotate-270' style='vertical-align:super;'></i> datum vstávání" }
   }
   func ukaz(_ids) { var dny:text
     ids= _ids;
