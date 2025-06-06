@@ -9801,9 +9801,9 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       . ",v_nocleh,v_strava,v_program,v_sleva"
       ,
     '_cnd'=> " p.id_akce=$akce AND p.funkce!=99 "
-      . " AND p.id_pobyt IN (69619,69409)"
-//    'ord'=> "IF(funkce<=2,1,IF(funkce IN (10,14),3,2)),_jm"
+//      . " AND p.id_pobyt IN (69619,69409)"
     ];
+  
   $href= '';
   $ret= tisk2_sestava_pary($akce,$par,'$title','$vypis',false,true);
 //  /**/                                                   debug($ret,'tisk2_sestava_pary');
@@ -9819,6 +9819,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
 //  $par->fld= str_replace(',key_pobyt,funkce','',$par->fld); // odstranění pomocných polí
   $tits= explode(',',$par->tit);
   $flds= explode(',',$par->fld);
+  $last_fld= array_search('key_pobyt',$flds); // index prvního nezobrazovaného pole
   // získání dat - podle $kdo
   $clmn= array();       // pro hodnoty
   $expr= array();       // pro výrazy
@@ -9848,7 +9849,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
     $nedoplatek= $platba < $predpis ? $predpis - $platba : 0;
     $naklad= $predpis - $x->c_sleva;
     // vyplnění polí
-    foreach($flds as $f) {
+    foreach($flds as $if=>$f) {
       $exp= ''; $val= 0;
       if ( substr($f,0,1)=='=' ) {
         switch ($f) {
@@ -9895,7 +9896,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
         $clmn[$n][$f]= $val;
         if ( $exp ) $expr[$n][$f]= $exp;
       }
-      else { // $f nezačíná =
+      elseif ($if<$last_fld) { // $f nezačíná =
         $val= $f ? $x->$f : '';
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
@@ -9911,6 +9912,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
   // zobrazení tabulkou
   $tab= '';
   $ths= '';
+  $flds= array_slice($flds,0,$last_fld);
   if ( $export ) {
     $result->tits= $tits;
     $result->flds= $flds;
@@ -9944,7 +9946,6 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
     if ( count($suma)>0 ) {
       $sum.= "<tr>";
       foreach ($flds as $f) {
-        if ($f==='key_pobyt') break; // jen zobrazovaná pole
         $val= isset($suma[$f]) ? $suma[$f] : '';
         $sum.= "<th style='text-align:right'>$val</th>";
       }
@@ -10194,8 +10195,8 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace(
     |open $name
     |sheet vypis;;L;page
     |A1 $title          $a_kod::bold size=14 |A2 $vypis ::bold size=12
-    |{$Z}1 $a_co ::bold left size=14
-    |{$Z}2 $a_misto, $a_oddo ::bold size=14 left
+    |{$Z}1 $a_co ::bold right size=14
+    |{$Z}2 $a_misto, $a_oddo ::bold size=14 right
     |A3 Celkem: $a_celkem ::bold
 __XLS;
   // titulky a sběr formátů
