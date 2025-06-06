@@ -6031,9 +6031,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $tit= explode(',',$par->tit);
     // za lůžka přidáme spacáky a nazemi
     $iluzko= array_search('luzka',$fld);
+    $cv2_prepocitat_luzka= $iluzko===false ? 0 : 1;
     $ispacaky= array_search('spacaky',$fld);
-    if ($ispacaky===false && $iluzko!==false) {
-      $cv2_prepocitat_luzka= 1;
+    if ($ispacaky===false) {
       list(,$w)= explode(':',$tit[$iluzko]);
       array_splice($fld,$iluzko+1,0,['spacaky','nazemi']);
       array_splice($tit,$iluzko+1,0,["spacáky:$w","na zemi:$w"]);
@@ -6094,8 +6094,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 //  /**/                                                   debug($y);
   # rozbor výsledku browse/ask po pobytech
   array_shift($y->values);
-//  $limit= 1; $offset= 17; $irec= 0; // limit -1 => vše
+//  $limit= 1; $offset= 19; $irec= 0; // limit -1 => vše
   $limit= -1; $offset= 0; $irec= 0; // limit -1 => vše
+//  /**/                                                   debug($y->values[$offset]);
   foreach ($y->values as $x) {
     $irec++;
     if ($irec<=$offset) continue;
@@ -6104,7 +6105,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $cv2_strava= []; // dny -> pobyt -> S|O|V -> C|P -> dieta -> počet
     $cv2_vyjimka= 0; $cv2_diety= '';
     $cv2_strava_sum= ['C'=>[],'P'=>[]]; // C|P -> dieta -> počet
-    $cv2_luzka= 0; $cv2_spacaky= 0; $cv2_nazemi= 0;
+    $cv2_noci= 0; $cv2_luzka= 0; $cv2_spacaky= 0; $cv2_nazemi= 0;
     // aplikace neosobních filtrů
     if ( $fil && $fil->r_umi ) {
       $umi= explode(',',$x->r_umi);
@@ -6174,6 +6175,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
           for ($d= 0; $d<strlen($dny); $d+=4) {
             $nn+= $dny[$d];
           }
+          $cv2_noci= max($nn,$cv2_noci);
           switch ($kat_n) {
             case 'L': $cv2_luzka+= $nn ? 1 : 0; break;
             case 'S': $cv2_spacaky+= $nn ? 1 : 0; break;
@@ -6304,6 +6306,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '_vps':      $VPS_= $org==1 ? 'VPS' : 'PPS'; $vps_= $org==1 ? '(vps)' : '(pps)';
                         $c= $x->funkce==1 ? $VPS_ : (strpos($x->r_umi,'1')!==false ? $vps_ : ''); break;
       // pro ceník verze 2
+      case 'noci':      $c= $cv2 ? $cv2_noci : $x->noci;  break;
       case 'luzka':     $c= $cv2 ? $cv2_luzka : $x->luzka;  break;
       case 'spacaky':   $c= $cv2 ? $cv2_spacaky : 0;  break;
       case 'nazemi':    $c= $cv2 ? $cv2_nazemi : 0;  break;
@@ -9780,7 +9783,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
   $result= (object)array();
   $par= (object)[
     'tit'=> "Jméno:25"
-      . ",pokoj:7,dětí:5:r,lůžka:5:r:s,spa cáky:5:r:s,bez lůžka:5:r:s,nocí:5:r:s"
+      . ",pokoj:7,dětí:5:r:s,lůžka:5:r:s,spa cáky:5:r:s,bez lůžka:5:r:s,nocí:5:r"
       . ",str. celá:5:r:s,str. pol.:5:r:s"
       . ",cena ubyt.:7:r:s,cena strava:7:r:s,cena prog.:7:r:s,sleva:7:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:s"
@@ -9789,11 +9792,11 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dárce:25,dar:7:r:s,rozpočet organizace:10:r:s",
     'fld'=> "rodice_"
-      . ",pokoj,#deti,luzka,spacaky,nazemi,=pocetnoci,strava_cel,strava_pol"
+      . ",pokoj,#deti,luzka,spacaky,nazemi,noci,strava_cel,strava_pol"
       . ",c_nocleh,c_strava,c_program,c_sleva,=platit"
       . ",=uctem,=datucet"
       . ",=nedoplatek,=prispevky,=pokladna,datpokl,"
-      . "=preplatek,=vratka,=datvratka,duvod,poznamka,spz,"
+      . "=preplatek,=vratka,=datvratka,duvod,poznamka,r_spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,"
       . "=dotace,=nedopl,=darce,=dar,=naklad"
         // pomocná pole
@@ -9853,8 +9856,8 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       $exp= ''; $val= 0;
       if ( substr($f,0,1)=='=' ) {
         switch ($f) {
-        case '=pocetnoci':  $val= max(0,$x->pocetdnu);
-                            break;
+//        case '=pocetnoci':  $val= $x->noci;
+//                            break;
         case '=platit':     $val= $predpis;
                             $exp= "=[c_nocleh,0]+[c_strava,0]+[c_program,0]+[c_sleva,0]"; break;
         case '=preplatek':  $val= $preplatek ?: '';

@@ -677,12 +677,12 @@ menu m {type:'left', //active:*
       note= "Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
         tisknout se budou jen údaje z červeně označených řádků";
     }
-    the_vypis= info.header(i);
+    the_vypis= i.title; 
+    info.header(i);
     if (i.par.exp) { info.export.display(1); info.export= i.par.exp } 
     else { info.export.display(0) };
     if (i.par.exp2) { info.export2.display(1); info.export2= i.par.exp2; } 
     else { info.export2.display(0) };
-    info.fill(`${the_title}  / ${the_vypis}`,' ');
     info.msg= note;
     x= php.tisk2_sestava(the_akce,the_par,the_title,the_vypis,0,the_hnizdo);
     info.fill('',x.html);
