@@ -2280,7 +2280,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   const Td= 230
   var cena: object,
       zmena_spec_strav: number
-  label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
+//  label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
   func Same() { return form.same() && zmena_spec_strav==0; }
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
   func ini() {
@@ -2563,7 +2563,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   label [460,91,54,14] {title:'den platby'}
   label [545,91,61,14] {title:'stav platby'}
   label [618,91,61,14] {tag:'deti', title:'platba za'}
-  list uhrady_lst [308,100,360,190] { rows:25
+  // seznam plateb
+  list uhrady_lst [308,100,360,30] { rows:25
 //    label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
     label  u_poradi [0,14,2,17] 
     field  u_castka [12,10,40,] {format:'r', help:'vratky se znaménkem -'}
@@ -2571,9 +2572,10 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     field  u_datum  [145,10,85,] {type:'date', format:'r'}
     select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
+    func onstart() { this.set_css('overflow-unset',''); }
   }
-  // t = pracovní poznámka
-  label rozklad [308,Td-136,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto;z-index:0" }
+  // rozklad ceny podle ceníku verze 2
+  label rozklad [308,Td-116,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto;z-index:0" }
   // t = pracovní poznámka
   edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
