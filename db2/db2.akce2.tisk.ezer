@@ -667,23 +667,43 @@ menu m {type:'left', //active:*
 #                                         ,tit:'Hebrejsky:40,Česky:30'
 #                                         ,fld:'=pozpatku,=par',ord:'prijmeni'}}
   }
-  proc onclick (i) { var x: object, note: text
-    the_item.set(i); the_par.set(i.par); clear; note.set('');
+  func onclick (i:ezer) { var x: object, note: text
+    the_item= i; the_par= i.par; clear(); note= '';
     // doplnění intervalu posledních změn
-    the_par.set(hodin_zmeny.get,'zmeny');
+    if (the_cenik_verze==2 && the_par.snidane) { alert('nelze s ceníkem 2. verze'); return }
+    the_par.zmeny= hodin_zmeny;
     // ošetření výpisů umožňujících tisk jen výběru pobytů
-    [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected');
-      note.set("Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
-        tisknout se budou jen údaje z červeně označených řádků");
-    ];
-    the_vypis.set(conc(i.owner.title,' - ',i.title));
-    { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
-    { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
-    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-    info.msg.set(note);
-    x.set(ask('tisk2_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get,0,the_hnizdo.get));
+    if (the_par.sel) { the_par.selected= ucast.call('ucast_selected');
+      note= "Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
+        tisknout se budou jen údaje z červeně označených řádků";
+    }
+    the_vypis= i.title; 
+    info.header(i);
+    if (i.par.exp) { info.export.display(1); info.export= i.par.exp } 
+    else { info.export.display(0) };
+    if (i.par.exp2) { info.export2.display(1); info.export2= i.par.exp2; } 
+    else { info.export2.display(0) };
+    info.msg= note;
+    x= php.tisk2_sestava(the_akce,the_par,the_title,the_vypis,0,the_hnizdo);
     info.fill('',x.html);
   }
+//  proc onclick (i) { var x: object, note: text
+//    the_item.set(i); the_par.set(i.par); clear; note.set('');
+//    // doplnění intervalu posledních změn
+//    the_par.set(hodin_zmeny.get,'zmeny');
+//    // ošetření výpisů umožňujících tisk jen výběru pobytů
+//    [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected');
+//      note.set("Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
+//        tisknout se budou jen údaje z červeně označených řádků");
+//    ];
+//    the_vypis.set(conc(i.owner.title,' - ',i.title));
+//    { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
+//    { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
+//    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+//    info.msg.set(note);
+//    x.set(ask('tisk2_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get,0,the_hnizdo.get));
+//    info.fill('',x.html);
+//  }
 }
 # ----------------------==>   stitek_A,P - adresní štítek 3x7
 report sti_A [0,0,200,287] { format:'A4:5,6,70,41',

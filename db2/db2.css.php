@@ -157,7 +157,8 @@ li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
               z-index:1; box-shadow:2px 2px 10px #333; }
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
-
+.overflow-unset { overflow:unset !important; }
+    
 .page { font-size:9pt !important; padding:10px; line-height:13pt; }
 .page_2clmn { background-image:url(img/page_vr.png);
               background-position:368px 0;
