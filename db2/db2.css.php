@@ -159,7 +159,8 @@ li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
 .datepicker_vista { z-index:3 !important; }
     
 .overflow-unset { overflow:unset !important; }
-.vertical-text { writing-mode: vertical-lr; text-align: left; padding: 5px;  letter-spacing: 2px; }
+.vertical-text { text-align: left; padding: 5px;  letter-spacing: 1pt; 
+              writing-mode: vertical-lr; transform: rotate(180deg); }
     
 .page { font-size:9pt !important; padding:10px; line-height:13pt; }
 .page_2clmn { background-image:url(img/page_vr.png);
