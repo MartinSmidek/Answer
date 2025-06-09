@@ -2346,7 +2346,7 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
 #   sleva=>x kde x je inidividuální sleva
 #   sleva na ubytovaní, stravu či program ruší slevu pro VPS
 function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
-  $ret= (object)['navrh'=>'','tabulka'=>'','rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
+  $ret= (object)['navrh'=>'','tabulka'=>'','full'=>[],'rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
   $hd= ['jmeno'=>'jméno &nbsp; &nbsp; :50',
       't'=>'jako?::U-účastník, V-VPS, H-host, p-pomocný pečovatel, D-dítě ve skupince, C-chůva, d-chované dítě',
       'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk','Kc'=>'cena:35'];
@@ -2362,17 +2362,19 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
       $osoba[$i][$hid]= $o->$hid??'';
     }
   }
-//  debug($osoby,'osoby');
+//  /**/                                                   debug($osoby,'akce2_vzorec2 - osoby');
   $header.= "</tr>";
   $footer.= "</tr>";
   $cena= []; // polozka => iosoba => [pocet,cena]
   $druh= []; // položka =>druh
   $blok= []; // druh => 0=zdarma/1
-  $rc= pdo_qry("SELECT druh,polozka,cena,krat,za,t,n,p,od,do "
+  $full= []; // položka -> počet
+  $rc= pdo_qry("SELECT druh,polozka,cena,krat,za,t,n,p,od,do,poradi "
       . "FROM cenik WHERE id_akce=$ida ORDER BY poradi");
-  while ($rc && (list($_druh,$pol,$kc,$co,$za,$t,$n,$p,$od,$do)= pdo_fetch_row($rc))) {
+  while ($rc && (list($_druh,$pol,$kc,$co,$za,$t,$n,$p,$od,$do,$ipol)= pdo_fetch_row($rc))) {
     $druh[$pol]= $_druh;
     if (!isset($blok[$_druh])) $blok[$_druh]= 0;
+    $pocet= 0;
     foreach ($osoby as $i=>$o) {
       if (isset($o->undefined)) continue; // nejsou definované dny
       if (isset($o->chuva)) continue; // pečuje o dítě jiné rodiny
@@ -2386,12 +2388,12 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
       if ($ok) {
         if (!isset($cena[$pol][$i])) $cena[$pol][$i]= [0,$kc];
         switch ($co) {
-          case 'xN': $cena[$pol][$i][0]+= $o->xN; break;
-          case 'xS': $cena[$pol][$i][0]+= $o->xS; break;
-          case 'xO': $cena[$pol][$i][0]+= $o->xO; break;
-          case 'xV': $cena[$pol][$i][0]+= $o->xV; break;
-          case 'P':  $cena[$pol][$i][0]++;        break;
-          case 'S':  $cena[$pol][$i][0]++;        break;
+          case 'xN': $cena[$pol][$i][0]+= $o->xN; $full[$ipol]+= $o->xN; break;
+          case 'xS': $cena[$pol][$i][0]+= $o->xS; $full[$ipol]+= $o->xS; break;
+          case 'xO': $cena[$pol][$i][0]+= $o->xO; $full[$ipol]+= $o->xO; break;
+          case 'xV': $cena[$pol][$i][0]+= $o->xV; $full[$ipol]+= $o->xV; break;
+          case 'P':  $cena[$pol][$i][0]++;        $full[$ipol]++; break;
+          case 'S':  $cena[$pol][$i][0]++;        $full[$ipol]++; break;
 //          case 'S':  isset($slevy->ubytovani) ? 0 : $cena[$pol][$i][0]++; break;
         }
         if ($cena[$pol][$i][0]) $blok[$_druh]++;
@@ -2414,6 +2416,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
       $blok['d']++;
     }
   }
+//  /**/                                                   debug($full,'akce2_vzorec2 - full');
   // redakce
 //  debug($blok,"blok 2");
   $celkem= 0;
@@ -2505,7 +2508,8 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
 //  $html.= "</table>";
   $ret->navrh= $html;
   $ret->tabulka= $tab;
-//  debug($ret);
+  $ret->full= $full;
+//  /**/                                                   debug($ret,'akce2_vzorec2 - return');
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
@@ -4468,37 +4472,22 @@ function ucast2_browse_ask($x,$tisk=false) {
         });
       }
       else {
-        // alfanumerické je řazení podle operačního systému
-        $asi_windows= preg_match('/^\w+\.bean|192.168/',$_SERVER["SERVER_NAME"]);
-        if ( 1 || $asi_windows ) {
-          // asi Windows
-          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
-          usort($zz,function($a,$b) {
-            global $test_clmn,$test_asc;
-            $ax= utf2win($a->$test_clmn,1); $bx= utf2win($b->$test_clmn,1);
-            $c= $test_asc * strcoll($ax,$bx);
-            return $c;
-          });
-        }
-        else {
-          // asi Linux
-          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
-          usort($zz,function($a,$b) {
-            global $test_clmn,$test_asc;
-            $a0= mb_substr($a->$test_clmn,0,1);
-            $b0= mb_substr($b->$test_clmn,0,1);
-            if ( $a0=='(' ) {
-              $c= -$test_asc;
-            }
-            elseif ( $b0=='(' ) {
-              $c= $test_asc;
-            }
-            else {
-              $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
-            }
-            return $c;
-          });
-        }
+        $collator= new Collator('cs_CZ'); // Nastavení českého jazyka
+        usort($zz,function($a,$b) use ($collator) {
+          global $test_clmn,$test_asc;
+          $a0= mb_substr($a->$test_clmn,0,1);
+          $b0= mb_substr($b->$test_clmn,0,1);
+          if ( $a0=='(' ) {
+            $c= -$test_asc;
+          }
+          elseif ( $b0=='(' ) {
+            $c= $test_asc;
+          }
+          else {
+            $c= $test_asc * $collator->compare($a->$test_clmn,$b->$test_clmn);
+          }
+          return $c;
+        });
       }
 //                                                 debug($zz);
     }
@@ -5550,6 +5539,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$title)                       //!
      : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)       //!
      : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vc'   ? akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp'   ? ( $cenik_verze==2 
                              ? akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export)
                              : akce2_vyuctov_pary($akce,$par,$title,$vypis,$export))   //!
@@ -5575,7 +5565,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)         
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))))))))))));
+     )))))))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -6033,7 +6023,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $iluzko= array_search('luzka',$fld);
     $cv2_prepocitat_luzka= $iluzko===false ? 0 : 1;
     $ispacaky= array_search('spacaky',$fld);
-    if ($ispacaky===false) {
+    if ($iluzko!==false && $ispacaky===false) {
       list(,$w)= explode(':',$tit[$iluzko]);
       array_splice($fld,$iluzko+1,0,['spacaky','nazemi']);
       array_splice($tit,$iluzko+1,0,["spacáky:$w","na zemi:$w"]);
@@ -6052,7 +6042,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $par->tit= implode(',',$tit);    
     // pokud je v položkách nějaká strava
     $cv2_prepocitat_stravu= strpos($par->fld,'strava')===false ? 0 : 1;
-    /**/ $cv2_prepocitat_stravu= 1;
+//    /**/ $cv2_prepocitat_stravu= 1;
   }
   // ofsety v atributech členů pobytu
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
@@ -6095,12 +6085,12 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   # rozbor výsledku browse/ask po pobytech
   array_shift($y->values);
 //  $limit= 1; $offset= 19; $irec= 0; // limit -1 => vše
-  $limit= -1; $offset= 0; $irec= 0; // limit -1 => vše
+//  $limit= -1; $offset= 0; $irec= 0; // limit -1 => vše
 //  /**/                                                   debug($y->values[$offset]);
   foreach ($y->values as $x) {
-    $irec++;
-    if ($irec<=$offset) continue;
-    if (!$limit--) break;
+//    $irec++;
+//    if ($irec<=$offset) continue;
+//    if (!$limit--) break;
     // počáteční hodnoty pro ceník verze 2
     $cv2_strava= []; // dny -> pobyt -> S|O|V -> C|P -> dieta -> počet
     $cv2_vyjimka= 0; $cv2_diety= '';
@@ -9379,6 +9369,156 @@ function akce2_plachta_export($line,$file) { trace();
   return $html;
 }
 # ====================================================================================> . vyúčtování
+# -------------------------------------------------------------------------- akce2 sestava_cenik_cv2
+# generování sestavy přehledu čerpání všech položek ceníku pro účastníky $akce - páry
+#   $cnd = podmínka
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   člověkolůžka, člověkopřistýlky
+function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  // vyber položky z ceníku
+  $polozky= $nadpisy= '';
+  $cenik= []; // poradi -> cena
+  $rc= pdo_qry("SELECT poradi,polozka,druh,cena FROM cenik "
+      . "WHERE id_akce=$akce AND krat!='' ORDER BY poradi "
+//      . "LIMIT 3"
+      . "");
+  while ($rc && (list($ipol,$polozka,$druh,$cena)= pdo_fetch_row($rc))) {
+    if (in_array($druh,['x','p','d'])) continue;
+    $polozky.= ",$ipol";
+    $nadpisy.= ",{$polozka}:7:r:s";
+    if (in_array($druh,['u','s'])) $cenik[$ipol]= $cena;
+  }
+  $par= (object)[
+    'tit'=> "Jméno:25"
+      . ",pokoj:7,dětí:5:r:s$nadpisy",
+    'fld'=> "rodice_"
+      . ",pokoj,#deti$polozky"
+        // pomocná pole
+      . ",key_pobyt,funkce"
+      ,
+//    '_cnd'=> " p.id_akce=$akce AND p.funkce!=99 "
+//      . " AND p.id_pobyt IN (69619,69409,69874)"
+//      . " AND p.id_pobyt IN (69874)"
+//      ,
+    ];
+  
+  $ret= tisk2_sestava_pary($akce,$par,'$title','$vypis',false,true);
+//  /**/                                                   debug($ret,'tisk2_sestava_pary');
+  // sežazení podle přítomnosti na akci a podle abecedy
+  $collator= new Collator('cs_CZ'); // Nastavení českého jazyka
+  usort($ret,function($x,$y) use ($collator) {
+    $xin= $x['funkce']<=2 ? 1 : (in_array($x['funkce'],[10,14]) ? 3 : 2);
+    $yin= $y['funkce']<=2 ? 1 : (in_array($y['funkce'],[10,14]) ? 3 : 2);
+    $srt= $xin <=> $yin ?: $collator->compare($x['rodice_'],$y['rodice_']);
+    return $srt;
+  });
+  // dekódování parametrů
+//  $par->fld= str_replace(',key_pobyt,funkce','',$par->fld); // odstranění pomocných polí
+  $tits= explode(',',$par->tit);
+  $flds= explode(',',$par->fld);
+  $last_fld= array_search('key_pobyt',$flds); // index prvního nezobrazovaného pole
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  for ($i= 0; $i<count($tits); $i++) {
+    $idw= $tits[$i];
+    $fld= $flds[$i];
+    list($id,,$f,$sum)= array_merge(explode(':',$idw),array_fill(0,4,''));
+    if ( $sum=='s' ) $suma[$fld]= 0;
+    if ( isset($f) ) $fmts[$fld]= $f;
+  }
+  // průchod pobyty
+  foreach ($ret as $n=>$x) {
+    $x= (object)$x;
+    // projdeme ceník a přidáme položky
+    $cen= akce2_vzorec2_pobyt($x->key_pobyt);
+    $cen= $cen->full;
+    // vyplnění polí
+    foreach($flds as $if=>$f) {
+      $val= 0;
+      if ($if<$last_fld) { // $f nezačíná =
+        if (isset($cen[$f])) {
+          $val= $cen[$f];
+          $clmn[$n][$f]= $val;
+        }
+        else {
+          $val= $f ? $x->$f : '';
+          if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
+        }
+        // případný výpočet sumy
+        if ( isset($suma[$f]) && is_numeric($val) ) {
+           $suma[$f]+= $val;
+        }
+      }
+    }
+  }
+//  /**/                                           debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+//  /**/                                           debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+//  /**/                                           debug($suma,"sumy pro $akce B");
+  // zobrazení tabulkou
+  $tab= '';
+  $ths= '';
+  $cen= '';
+  $mul= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+    $result->koef= $cenik;
+    $result->vertical= 1; // vertikální titulky
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th class='vertical-text'>$id</th>";
+    }
+    // data
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $style= akce2_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $if=>$f) {
+        if ($if>=$last_fld) break;
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+        if ($f=='rodice_') {
+          $cen.= "<th style='text-align:right'>jednotková cena</th>";
+          $mul.= "<th style='text-align:right'>celková cena</th>";
+        }
+        else {
+          if (isset($cenik[$f])) {
+            $cen.= "<th style='text-align:right'>$cenik[$f]</th>";
+            $mul.= "<th style='text-align:right'>".$cenik[$f]*$val."</th>";
+          }
+          else {
+            $cen.= "<td></td>";
+            $mul.= "<td></td>";
+          }
+        }
+      }
+      $sum.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
+        . "$sum<tr>$cen</tr><tr>$mul</tr></table></div>";
+    $result->html.= "</br>";
+  }
+  return $result;
+}
 # ------------------------------------------------------------------------------- akce2 sestava_noci
 # generování sestavy přehledu člověkonocí pro účastníky $akce - páry
 #   $cnd = podmínka
@@ -10169,8 +10309,10 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
 # tab.flds = názvy položek
 # tab.clmn = hodnoty položek
 # tab.atrs = formáty
+# tab.koef = pokud jsou, budou zaobrazeny pod sumy a pod nimi bude suma*koef
 # tab.expr = vzorce
 #    .DPH, .X = specifické tabulky
+# pokud je $par->vertical==1 budou titulky vertikální
 function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace();
   global $xA, $xn, $tisk_hnizdo, $ezer_version;
   $tisk_hnizdo= $hnizdo;
@@ -10182,6 +10324,7 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace(
     $tab= tisk2_sestava($akce,$par,$title,$vypis,true,$hnizdo);
 //                                                    debug($tab,"tisk2_vyp_excel/tab");
   // nová hlavička
+  $vertical= $tab->vertical==1 ? '::vert' : '';
   $Z= Excel5_n2col(count($tab->flds)-1);
   list($a_org,$a_misto,$a_druh,$a_od,$a_do,$a_kod)= 
       select("access,misto,IFNULL(zkratka,''),datum_od,datum_do,ciselnik_akce", //a IFNULL(g_kod,'')
@@ -10202,8 +10345,10 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace(
     |{$Z}2 $a_misto, $a_oddo ::bold size=14 right
     |A3 Celkem: $a_celkem ::bold
 __XLS;
+  // jsou koeficienty?
+  $koefs= isset($tab->koef);
   // titulky a sběr formátů
-  $fmt= $sum= array();
+  $fmt= $sum= $koef= array();
   $n= 4;
   $lc= 0;
   $clmns= $del= '';
@@ -10211,16 +10356,21 @@ __XLS;
   if ( $tab->flds ) foreach ($tab->flds as $f) {
     $A= Excel5_n2col($lc);
     $xA[$f]= $A;
+    if ($koefs && isset($tab->koef[$f])) {
+      $koef[$A]= $tab->koef[$f];
+    }
+    
     $lc++;
   }
   $lc= 0;
   if ( $tab->tits ) foreach ($tab->tits as $idw) {
     if ( $idw=='^' ) continue;
     $A= Excel5_n2col($lc);
-    list($id,$w,$f,$s)= array_merge(explode(':',$idw),array_fill(0,4,''));      // název sloupce : šířka : formát : suma
+    // název sloupce : šířka : formát : suma
+    list($id,$w,$f,$s)= array_merge(explode(':',$idw),array_fill(0,4,''));      
     if ( $f ) $fmt[$A]= $f;
     if ( $s ) $sum[$A]= true;
-    $xls.= "|$A$n $id";
+    $xls.= "|$A$n $id $vertical";
     if ( $w ) {
       $clmns.= "$del$A=$w";
       $del= ',';
@@ -10272,13 +10422,27 @@ __XLS;
   $xls.= "\n|A$n1:$A$n border=+h|A$n1:$A$n border=t";
   // sumy sloupců
   if ( count($sum) ) {
-    $xls.= "\n";
     $nn= $n;
     $ns= $n+2;
+    $nf= $n+3;
+    $nm= $n+4;
+    $xls.= "\n|A$ns součty sloupců :: right bcolor=ffdddddd";
     foreach ($sum as $A=>$x) {
       $xls.= "|$A$ns =SUM($A$n1:$A$nn) :: bcolor=ffdddddd";
     }
+    // koeficienty
+    if ($koefs) {
+      $xls.= "\n|A$nf jednotková cena :: right bcolor=ffdddddd";
+      $xls.= "\n|A$nm cena po sloupcích :: right bcolor=ffdddddd";
+      foreach ($sum as $A=>$x) {
+        if (isset($koef[$A])) {
+          $xls.= "|$A$nf {$koef[$A]}";
+          $xls.= "|$A$nm =$A$nf*$A$ns  :: bcolor=ffdddddd";
+        }
+      }
+    }
   }
+  if ($koef) $n+= 2;
   // tabulka DPH, pokud je
   if ( isset($tab->DPH) ) {
     $n+= 3;
@@ -10324,7 +10488,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-//                                                                display($xls);
+//  /**/                                                              display($xls);
   require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
   if ( $inf ) {

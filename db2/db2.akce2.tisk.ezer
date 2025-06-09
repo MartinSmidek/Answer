@@ -555,11 +555,11 @@ menu m {type:'left', //active:*
     item {title:'Štítky na obálku účastníka' ,par:{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
-    item {title:' ... snídaně jako celé' par:{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99",snidane:'c'
+    item {title:' ... snídaně jako celé' par:{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99",snidane:'c',cv:'1'
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
     item {title:'Stravenky - rodiny'    ,par:{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"},  skill:'#crz'}
-    item {title:' ... snídaně jako celé',par:{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99",snidane:'c'},  skill:'#crz'}
+    item {title:' ... snídaně jako celé',par:{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99",snidane:'c',cv:'1'},  skill:'#crz'}
     item {title:'Stravenky - pečouni'   ,par:{typ:'vjp',exp:'PDF-stravenky',cnd:"1"},          skill:'#crz'}
     item {title:'Stravenky - prázdné'   ,par:{exp:''},                                         skill:'#crz'
       proc onclick(i) { var res: object
@@ -626,7 +626,8 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'vsd2',exp:'Excel2',cnd:'1',souhrn:1}}
     item {title:'Počty strav - výlet 3.den'
                                         ,par:{typ:'vsd3',exp:'Excel2',cnd:'1',souhrn:1}}
-    item {title:'Člověkolůžka'          ,par:{typ:'vn',exp:'Excel2',cnd:'funkce NOT IN (9,10,13,14,15)'}}
+    item {title:'Člověkolůžka'          ,par:{typ:'vn',cv:'1',exp:'Excel2',cnd:'funkce NOT IN (9,10,13,14,15)'}}
+    item {title:'... pro ceník verze 2' ,par:{typ:'vc',cv:'2',exp:'Excel2',cnd:'funkce NOT IN (9,10,13,14,15)'}}
     item {title:'Skupinky'              ,par:{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',precislovat:1}} // fce:'tisk'
     item {title:'... bez přečíslování v hnízdech'
                                         ,par:{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',precislovat:0}}
@@ -670,7 +671,7 @@ menu m {type:'left', //active:*
   func onclick (i:ezer) { var x: object, note: text
     the_item= i; the_par= i.par; clear(); note= '';
     // doplnění intervalu posledních změn
-    if (the_cenik_verze==2 && the_par.snidane) { alert('nelze s ceníkem 2. verze'); return }
+    if (the_cenik_verze==2 && the_par.cv==1) { alert('nelze s ceníkem 2. verze'); return }
     the_par.zmeny= hodin_zmeny;
     // ošetření výpisů umožňujících tisk jen výběru pobytů
     if (the_par.sel) { the_par.selected= ucast.call('ucast_selected');

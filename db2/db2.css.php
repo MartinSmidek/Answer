@@ -157,8 +157,9 @@ li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
               z-index:1; box-shadow:2px 2px 10px #333; }
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
-.overflow-unset { overflow:unset !important; }
     
+.overflow-unset { overflow:unset !important; }
+
 .page { font-size:9pt !important; padding:10px; line-height:13pt; }
 .page_2clmn { background-image:url(img/page_vr.png);
               background-position:368px 0;
@@ -273,6 +274,8 @@ table.dary      { width:200px; }
 .chart          { float:right; }
 .fis_kat        { font-family:Courier; font-weight:bold; }
 .button_small   { width:20px; height:20px; font-size:x-small; }
+.vertical-text { text-align: left; padding: 5px;  min-width: 20px; letter-spacing: 1pt;
+                 writing-mode: vertical-lr; transform: rotate(180deg); }
 /* spolupráce s přihláškou verze 2 */
 table.dny { border-collapse: collapse; }
 table.dny th.date-cell { text-align: right; white-space: nowrap; padding:0 10px 0 0 }
