@@ -4472,37 +4472,22 @@ function ucast2_browse_ask($x,$tisk=false) {
         });
       }
       else {
-        // alfanumerické je řazení podle operačního systému
-        $asi_windows= preg_match('/^\w+\.bean|192.168/',$_SERVER["SERVER_NAME"]);
-        if ( 1 || $asi_windows ) {
-          // asi Windows
-          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
-          usort($zz,function($a,$b) {
-            global $test_clmn,$test_asc;
-            $ax= utf2win($a->$test_clmn,1); $bx= utf2win($b->$test_clmn,1);
-            $c= $test_asc * strcoll($ax,$bx);
-            return $c;
-          });
-        }
-        else {
-          // asi Linux
-          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
-          usort($zz,function($a,$b) {
-            global $test_clmn,$test_asc;
-            $a0= mb_substr($a->$test_clmn,0,1);
-            $b0= mb_substr($b->$test_clmn,0,1);
-            if ( $a0=='(' ) {
-              $c= -$test_asc;
-            }
-            elseif ( $b0=='(' ) {
-              $c= $test_asc;
-            }
-            else {
-              $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
-            }
-            return $c;
-          });
-        }
+        $collator= new Collator('cs_CZ'); // Nastavení českého jazyka
+        usort($zz,function($a,$b) use ($collator) {
+          global $test_clmn,$test_asc;
+          $a0= mb_substr($a->$test_clmn,0,1);
+          $b0= mb_substr($b->$test_clmn,0,1);
+          if ( $a0=='(' ) {
+            $c= -$test_asc;
+          }
+          elseif ( $b0=='(' ) {
+            $c= $test_asc;
+          }
+          else {
+            $c= $test_asc * $collator->compare($a->$test_clmn,$b->$test_clmn);
+          }
+          return $c;
+        });
       }
 //                                                 debug($zz);
     }
