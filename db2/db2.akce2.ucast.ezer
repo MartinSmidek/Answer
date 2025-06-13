@@ -117,12 +117,13 @@ func ucast_pobyt_akce_platba(_idp,_ida)  {
 }
 # ukázání rozkladu ceny za účastníka pobytu - bez speciálních slev
 func ucast_cena_osoba(_ids)  { var cena: object
-  cena= php.akce2_vzorec2_pobyt(0,_ids,0);
+  cena= php.akce2_vzorec2_pobyt(0,_ids,{spec_slevy:0});
   alert(cena.navrh);
 }
 # ukázání dnů účastníka pobytu
 func ucast_cena_dny(_ids) { 
-  DnySpolu.ukaz(_ids);
+  if (DnySpolu.ukaz(_ids)) 
+    reload(the_pobyt);
 }
 # zobrazení osob - nastavených účastníků
 func osoby_show() {                             // obnova údajů o osobách
@@ -2375,7 +2376,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
       navrh.display(1); duvod_text.display(0);
       if (the_cenik_verze==2) {
         // zjisti cenu
-        cena= php.akce2_vzorec2_pobyt(the_pobyt);
+        cena= php.akce2_vzorec2_pobyt(the_pobyt,0,
+          {back_cena:'akce2.ucast.ucast_cena_osoba',back_dny:'akce2.ucast.ucast_cena_dny'});
         navrh= cena.navrh;
         rozklad= cena.tabulka;
         if (!eq(u.b.funkce,9,13)) { // přihláška,náhradník ... ukázat, nezapisovat
@@ -2574,7 +2576,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
     func onstart() { this.set_css('overflow-unset',''); }
   }
-  // rozklad ceny podle ceníku verze 2
+  # ==> rozklad ceny podle ceníku verze 2
   label rozklad [308,Td-116,310,116] {tag:'b', style:"overflow-x:hidden;overflow-y:auto;z-index:0" }
   // t = pracovní poznámka
   edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
@@ -2777,7 +2779,8 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
     label info [0,0,400,400] { style:'background:white;overflow:auto' }
   }
 }
-# ==========================================================================================> STRAVA
+# ========================================================================================> DnySpolu
+/*
 panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
 # nastaví položku spolu.kat_dny
   var ids:number, stav:object
@@ -2823,6 +2826,7 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
 //    return(panel.modal());
   }
 }
+*/
 panel Strava [,,330,290] {type:'popup', title:'Nestandardní počet strav - xxx'
 # nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
   var x='',             // postfix položek cstrava_cel,cstrava_pol,strava_cel,strava_pol

@@ -2223,7 +2223,15 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 }
 # ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
 # výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
-function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
+# výsledek ovlivňují položky objektu $spec
+#   spec_slevy=1  do ceny budou započteny inidividuální slevy
+#   back_dny      úplný název ezer funkce vyvolané kliknutím na jméno
+#   back_cena     úplný název ezer funkce vyvolané kliknutím na částku
+#   cena=1        pokud je 0 nebude zobrazován sloupec cen
+#   prijmeni=0    pokud je 1 bude zobrazeno příjmení člena pobytu
+#
+function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
+//function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
   $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
   $OR_chuvy= '';
@@ -2247,8 +2255,10 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
       $pozn[]= "obsahuje cenu pobytu osobního pečovatele ";
     }
   }
+  $order= ($spec->prijmeni??0) ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";
   $rs= pdo_qry("
-    SELECT jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),c1.ikona AS _dite,
+    SELECT prijmeni,jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),
+      IF(funkce=99,'P',c1.ikona) AS _dite,
       kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
     FROM spolu
@@ -2259,9 +2269,9 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
     LEFT JOIN tvori ON osoba.id_osoba=tvori.id_osoba AND id_rodina=i0_rodina
     JOIN akce ON id_akce=id_duakce
     WHERE ($cond) $OR_chuvy
-    ORDER BY IFNULL(role,'e'),_vek DESC
+    ORDER BY $order
   ");
-  while ($rs && (list($jmeno,$vzorec,$sleva,$ids,$pecovane,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
+  while ($rs && (list($prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
     if (!$slevy) {
@@ -2273,7 +2283,8 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
       // pokud je to VPS a není sleva za sloužící VPS zaměň 'V' za 'U'
       $t1= 'U';
     }
-    $osoba[$i]= (object)['jmeno'=>$jmeno,'ids'=>$ids,
+    $osoba[$i]= (object)['jmeno'=>($spec->prijmeni??0) ? "$prijmeni $jmeno" : $jmeno,
+        'ids'=>$ids,
         't'=>$t2=='U' ? $t1 : $t2,
         'n'=>$n,'p'=>$p,'d'=>$d,'v'=>$v];
     if ($dny) {
@@ -2308,7 +2319,7 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec_slevy=1) { // trace();
     $i++;
   }
 //  debug($osoba,"podklady");
-  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec_slevy);
+  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
   if ($pozn) {
     $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
   }
@@ -2345,11 +2356,23 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
 #   ubytovani=>0, strava=>0, program=>0 jsou speciální slevy pokud $spec_slevy=1
 #   sleva=>x kde x je inidividuální sleva
 #   sleva na ubytovaní, stravu či program ruší slevu pro VPS
-function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
+function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
+  /**/                                                   debug($spec,'akce2_vzorec2 - spec');
+  if ($spec===null) $spec= (object)[];
+  if (!isset($spec->spec_slevy)) $spec->spec_slevy= 1;
+  if (!isset($spec->cena)) $spec->cena= 1;
+  if (!isset($spec->jako)) $spec->jako= 1;
+  // šířku ovlivňuje zobrazení příjmení
+  $w_jmeno= ($spec->prijmeni??0) ? 120 : 50;
+  $w_table= ($spec->prijmeni??0) ? 365 : 295;
   $ret= (object)['navrh'=>'','tabulka'=>'','full'=>[],'rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
-  $hd= ['jmeno'=>'jméno &nbsp; &nbsp; :50',
-      't'=>'jako?::U-účastník, V-VPS, H-host, p-pomocný pečovatel, D-dítě ve skupince, C-chůva, d-chované dítě',
-      'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk','Kc'=>'cena:35'];
+  $hd= ['jmeno'=>"jméno &nbsp; &nbsp; :$w_jmeno",
+        't'=>'jako?::P-pečovatel, U-účastník, V-VPS, H-host, p-pomocný pečovatel, '
+          . 'D-dítě ve skupince, C-chůva, d-chované dítě',
+        'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk'];
+  if ($spec->cena) $hd['Kc']= 'cena:35';
+  if (!$spec->jako) unset($hd['t']);
+  /**/                                                   debug($hd,'akce2_vzorec2 - hd');
   $osoba= []; // i => [id=>val,...]
   $header= $footer= "<tr>";
   foreach ($hd as $hid=>$hname) {
@@ -2362,7 +2385,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
       $osoba[$i][$hid]= $o->$hid??'';
     }
   }
-//  /**/                                                   debug($osoby,'akce2_vzorec2 - osoby');
+  /**/                                                   debug($osoba,'akce2_vzorec2 - osoba');
   $header.= "</tr>";
   $footer.= "</tr>";
   $cena= []; // polozka => iosoba => [pocet,cena]
@@ -2477,7 +2500,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
 //  debug($osoba,"tabulka poplatků za osoby");
   $tab= '';
   $tab= "<style>"
-      . ".tab_ceny_osob {table-layout:fixed; width:295px;}"
+      . ".tab_ceny_osob {table-layout:fixed; width:{$w_table}px;}"
       . ".tab_ceny_osob td,th {overflow:hidden;white-space:nowrap;text-align:right}"
       . "</style>";
   $tab.= "<table class='tab_ceny_osob'>$header";
@@ -2485,15 +2508,31 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
     $tab.= "<tr>";
     $ids= $osoby[$i]->ids;
     foreach ($hd as $hid=>$hname) {
-      if ($hid=='Kc') {
+      if ($hid=='t' && !$spec->jako) continue;
+      if ($hid=='Kc' && $spec->cena) {
         $kc= $o[$hid]?:0;
-        $tab.= isset($osoby[$i]->undefined) ? "<td style='background:yellow'>???</td>"
-          : "<td><a href='ezer://akce2.ucast.ucast_cena_osoba/$ids'>$kc</a></td>";
+        if ($spec->back_cena) {
+          $href= "ezer://$spec->back_cena/$ids"; // ezer://akce2.ucast.ucast_cena_osoba/$ids
+          $tab.= isset($osoby[$i]->undefined) ? "<td style='background:yellow'>???</td>"
+            : "<td><a href='$href'>$kc</a></td>";
+        }
+        else {
+          $tab.= isset($osoby[$i]->undefined) ? "<td style='background:yellow'>???</td>"
+            : "<td>$kc</td>";
+        }
       }
       elseif ($hid=='jmeno') {
-        $bad= isset($o['bad']) ? ";background:yellow" : '';
-        $tab.= "<td style='text-align:left$bad'>"
-            . "<a href='ezer://akce2.ucast.ucast_cena_dny/$ids'>$o[$hid]</a></td>";
+        $jmeno= $o['jmeno'];
+        $bad= isset($o['bad']) || (!$spec->cena && isset($osoby[$i]->undefined)) 
+            ? ";background:yellow" : '';
+        if ($spec->back_dny) {
+          $href= "ezer://$spec->back_dny/$ids"; // ezer://akce2.ucast.ucast_cena_osoba/$ids
+          $tab.= "<td style='text-align:left$bad'>"
+              . "<a href='$href'>$jmeno</a></td>";
+        }
+        else {
+          $tab.= "<td style='text-align:left$bad'>$jmeno</td>";
+        }
       }
       else {
         $tab.= isset($o[$hid]) ? "<td>$o[$hid]</td>" : '';        
@@ -2501,7 +2540,9 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec_slevy=1) { // trace();
     }
     $tab.= "</tr>";
   }
-  $tab.= str_replace("<td></td></tr>","<th>$celkem2</th></tr>",$footer);
+  if ($spec->cena) {
+    $tab.= str_replace("<td></td></tr>","<th>$celkem2</th></tr>",$footer);
+  }
   $tab.= "</table>";
 //  display($tab);
 //  $html.= "<tr><td><b>Celkem</b></td><td></td><th>$celkem</th></tr>";
@@ -5015,7 +5056,9 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
                              : akce2_strava_vylet($akce,$par,$title,$vypis,$export))   //! 3.den děti oběd
      : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)    //!
      : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$title)                       //!
-     : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)       //!
+     : ( $par->typ=='ve'   ? ( $cenik_verze==2 
+                             ? akce2_text_eko_cv2($akce,$par,$title,$vypis,$export)       //!
+                             : akce2_text_eko($akce,$par,$title,$vypis,$export))
      : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vc'   ? akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp'   ? ( $cenik_verze==2 
@@ -5538,6 +5581,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $n= 0;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
+  $c_funkce= map_cis('ms_akce_funkce','zkratka');  $c_funkce[0]= '';
   $c_dite_kat= $org==2
       ? map_cis('fa_akce_dite_kat','zkratka') 
       : map_cis('ys_akce_dite_kat','zkratka');  
@@ -5554,9 +5598,10 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $soubeh= $soubezna ? 1 : ( $hlavni ? 2 : 0);
   $browse_par= (object)array(
     'cmd'=>'browse_load',
-    'cond'=>$par->_cnd ?: "$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
-      . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14,15)")
-//      . " AND p.id_pobyt IN (69619,69665)"
+    'cond'=>$par->_cnd ? "$par->_cnd AND p.id_akce=$akce" 
+      : "$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
+        . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14,15)")
+//        . " AND p.id_pobyt IN (69619,69665)"
       ,
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
@@ -5779,6 +5824,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                          || $x->cstrava_cel_bl!='' || $x->cstrava_pol_bl!='' ? 1 : 0); break;
       case '_vps':      $VPS_= $org==1 ? 'VPS' : 'PPS'; $vps_= $org==1 ? '(vps)' : '(pps)';
                         $c= $x->funkce==1 ? $VPS_ : (strpos($x->r_umi,'1')!==false ? $vps_ : ''); break;
+      case '_funkce':   $c= $c_funkce[$x->funkce]; break;
       // pro ceník verze 2
       case 'noci':      $c= $cv2 ? $cv2_noci : $x->noci;  break;
       case 'luzka':     $c= $cv2 ? $cv2_luzka : $x->luzka;  break;
@@ -7149,6 +7195,11 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) {
 //    ";
   $result= tisk2_table($tits,$flds,$clmn,$export,$nadpis);
   return $result;
+}
+# ------------------------------------------------------------------------------- akce2 text_eko_cv2
+function akce2_text_eko_cv2($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $html= '';
 }
 # ----------------------------------------------------------------------------------- akce2 text_eko
 function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
@@ -8889,6 +8940,8 @@ function akce2_plachta_export($line,$file) { trace();
 function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
   // vyber položky z ceníku
+  $druhy= $par->druhy;
+  $note= $par->note??'';
   $polozky= $nadpisy= '';
   $cenik= []; // poradi -> cena
   $rc= pdo_qry("SELECT poradi,polozka,druh,cena FROM cenik "
@@ -8896,20 +8949,21 @@ function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace
 //      . "LIMIT 3"
       . "");
   while ($rc && (list($ipol,$polozka,$druh,$cena)= pdo_fetch_row($rc))) {
-    if (in_array($druh,['x','p','d'])) continue;
+    if (strpos($druhy,$druh)===false) continue;
+//    if (in_array($druh,['x','p','d'])) continue;
     $polozky.= ",$ipol";
     $nadpisy.= ",{$polozka}:7:r:s";
-    if (in_array($druh,['u','s'])) $cenik[$ipol]= $cena;
+//    if (in_array($druh,['u','s'])) 
+        $cenik[$ipol]= $cena;
   }
   $par= (object)[
-    'tit'=> "Jméno:25"
+    'tit'=> "Jméno:25,funkce:5:r"
       . ",pokoj:7,dětí:5:r:s$nadpisy",
-    'fld'=> "rodice_"
-      . ",pokoj,#deti$polozky"
+    'fld'=> "rodice_,_funkce,pokoj,#deti$polozky"
         // pomocná pole
       . ",key_pobyt,funkce"
       ,
-//    '_cnd'=> " p.id_akce=$akce AND p.funkce!=99 "
+    '_cnd'=> $par->cnd
 //      . " AND p.id_pobyt IN (69619,69409,69874)"
 //      . " AND p.id_pobyt IN (69874)"
 //      ,
@@ -8945,13 +8999,15 @@ function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace
   // průchod pobyty
   foreach ($ret as $n=>$x) {
     $x= (object)$x;
+    // nazveme pečovatele
+    if ($x->funkce==99) $x->rodice_= 'pečovatelé celkem';
     // projdeme ceník a přidáme položky
     $cen= akce2_vzorec2_pobyt($x->key_pobyt);
     $cen= $cen->full;
     // vyplnění polí
     foreach($flds as $if=>$f) {
       $val= 0;
-      if ($if<$last_fld) { // $f nezačíná =
+      if ($if<$last_fld) { // mimo pomocné sloupce
         if (isset($cen[$f])) {
           $val= $cen[$f];
           $clmn[$n][$f]= $val;
@@ -9005,15 +9061,18 @@ function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace
       foreach ($flds as $if=>$f) {
         if ($if>=$last_fld) break;
         $val= isset($suma[$f]) ? $suma[$f] : '';
-        $sum.= "<th style='text-align:right'>$val</th>";
+        $val_= number_format($val, 0, '.', ' ');
         if ($f=='rodice_') {
+          $sum.= "<th style='text-align:right'>celkový počet</th>";
           $cen.= "<th style='text-align:right'>jednotková cena</th>";
           $mul.= "<th style='text-align:right'>celková cena</th>";
         }
         else {
+          $sum.= "<th style='text-align:right'>$val_</th>";
           if (isset($cenik[$f])) {
             $cen.= "<th style='text-align:right'>$cenik[$f]</th>";
-            $mul.= "<th style='text-align:right'>".$cenik[$f]*$val."</th>";
+            $mul_= number_format($cenik[$f]*$val, 0, '.', ' ');
+            $mul.= "<th style='text-align:right'>$mul_</th>";
           }
           else {
             $cen.= "<td></td>";
@@ -9023,7 +9082,8 @@ function akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export=false) { trace
       }
       $sum.= "</tr>";
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
+    $result->html= $note ? "$note<br><br>" : '';
+    $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
         . "$sum<tr>$cen</tr><tr>$mul</tr></table></div>";
     $result->html.= "</br>";
   }
