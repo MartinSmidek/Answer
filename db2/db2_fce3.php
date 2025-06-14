@@ -2607,6 +2607,7 @@ function akce_dny2sov($ids,$dny) { //trace();
   $v= $xv==0 ? '-' : ($xv==$xv_def ? 'V' : 'v');
 //  display("$n $s$o$v ... $xn, $xs, $xo, $xv <= $dny");
 //  query("UPDATE spolu SET kat_dny='$dny' WHERE id_spolu=$ids");
+  $ret->necely_pobyt= $xn==$noci ? 0 : 1;
   $ret->n= "$n";
   $ret->sov= "$s$o$v";
   $ret->xN= $xn;

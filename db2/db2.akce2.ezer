@@ -813,6 +813,7 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
         kat_dny= js.dny_precti();
         if (kat_dny!=old) kat_dny.change();
         stav= php.akce_dny2sov(ids,kat_dny);
+        p_od_pobyt= stav.necely_pobyt; p_od_pobyt.change();
 //        echo(debug(stav,kat_dny));
         form.save();
 //        reload(the_pobyt);
@@ -820,6 +821,7 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
     }}
     button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
     field kat_dny { data:'spolu.kat_dny' }
+    field p_od_pobyt { data:'spolu.p_od_pobyt' } // kvůli signalizaci neúplného pobytu
     select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
     select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
     select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
