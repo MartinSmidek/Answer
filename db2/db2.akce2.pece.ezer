@@ -8,6 +8,7 @@ var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duak
 var zalozka: text               // evid | akce | foto
 var the_pobyt: number           // klíč společného pobytu pečounů
 var back: object
+var ukazovat_ceny= 0            // zobrazit rozklad cen - lze měnit kontextovým menu
 
 use header: form _header   [  4,  0,,]
 use up:     form _pece     [  6, 25,,]
@@ -91,6 +92,11 @@ func pece_dny(_ids) {
 func pece_dny_all(_ids) { 
   if (DnySpolu.ukaz(_ids))
     p_str.strava_init();
+}
+# ukázání rozkladu ceny - bez speciálních slev
+func pece_cena(_ids)  { var cena: object
+  cena= php.akce2_vzorec2_pobyt(0,_ids,{spec_slevy:0});
+  alert(cena.navrh);
 }
 # nastavení pro akci v hnízdech
 proc pece_hnizda() { var opts:object
@@ -177,10 +183,7 @@ form _header [,,380,50] {
     func onclick() { this.display(0); akce_back() }
   }
   button expl [-2,6,,] { title:'[fa-question] Vysvětlivky pro úpravy', help:'popis barev a karet'
-    func onclick() { var help:text
-      help= "oranžové jméno .. ";
-      alert(help);
-    }
+    func onclick() { Vysvetlivky.show('akce2.pece'); }
   }
 }
 # -----------------------------------------------------------------------------------------==> _page
@@ -217,9 +220,15 @@ form _page [,,580,20] {
   label frame [0,16,582,430] { css:'ae_work'}
   # -------------------------==> kontextové_menu
   menu { type:'context', join:frame
-    item { title:'ukázat změny', proc onclick () { track.back_show('osoba',up.b.key_osoba.get) } }
+    item { title:'ukázat změny', func onclick () { track.back_show('osoba',up.b.key_osoba) } }
+    item { title:'ukázat/skrýt ceny', func onclick () { ukazovat_ceny= 1-ukazovat_ceny; } }
     item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
-      proc onclick () { elim.osoby(up.b.key_osoba.get,up.b.jmeno.get,up.b.prijmeni.get); }}
+      func onclick () { elim.osoby(up.b.key_osoba,up.b.jmeno,up.b.prijmeni); }}
+    item { title:'-ukázat data', skill:'m', 
+      func onclick() { 
+        js.call_root_func_par('syst_tab_rec_show',array('spolu',up.b.key_spolu),&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 }
 # -------------------------------------------------------------------==> _aktivity
@@ -336,8 +345,8 @@ form _osoba [,,580,] { tag:'a',
   select hnizdo [L+160,T+284,37,] {type:'map', data:s.s_hnizdo, format:'un', 
     options:ms_akce_hnizda.zkratka, title:'hnízdo' }
   // strava 
-  check p_kc_strava  [L+5,T+305,181,] {data:s.p_kc_strava, title:'místo stravenek hotovost' }
-  check s_rodici  [L+5,T+281,210,] {data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
+  check p_kc_strava  [L+5,T+305,181,] {data:s.p_kc_strava, title:'místo stravy hotovost' }
+  check s_rodici  [L+5,T+281,210,] {tag:'cv1', data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
   check pulstrava [L+464,T+279,99,] {tag:'cv1', data:s.pulstrava, title:'poloviční strava', format:'d' }
   
   # ==> částečný pobyt
@@ -345,7 +354,7 @@ form _osoba [,,580,] { tag:'a',
   // rozklad ceny podle ceníku verze 2
   label [L+236,T+291,336,14] { tag:'cv2', 
       title:'Kliknutím na jméno uprav stravu a dobu pobytu. Viz popis na Strava.' }
-  label rozklad [L+236,T+311,320,44] {tag:'cv2', css:'karta_info' }
+  label rozklad [L+230,T+311,340,50] {tag:'cv2', css:'karta_info' }
   
   // ------------------- ošetření položek od-*
   var od_strava_default: number,
@@ -565,7 +574,7 @@ form _pece [,,400,] { css:'ds_form'
     }
     func onrowclick() { reload_pecoun() }
     // ==> změna pečouna
-    func reload_pecoun() { var cena:object #==> . načtení pečouna
+    func reload_pecoun() { var cena:object, parms:object #==> . načtení pečouna
       // ochrana proti neuložené změně, pokud je možné údaje měnit
       if (!p_oso.same()) {
         warning('neuložené změny pro pečouna <b>',p_oso.prijmeni,'</b> použij [Zpět] nebo [Uložit]');
@@ -584,8 +593,12 @@ form _pece [,,400,] { css:'ds_form'
           p_oso.d.browse_fill(skup);
           if (the_cenik_verze==2) {
             // zjisti náklady
-            cena= php.akce2_vzorec2_pobyt(key_pobyt,key_spolu,
-                {cena:0,jako:0,back_dny:'akce2.pece.pece_dny'});
+            parms= {prijmeni:0,cena:0,jako:0,back_dny:'akce2.pece.pece_dny_all'};
+            if (ukazovat_ceny) {
+              parms.cena= 1;
+              parms.back_cena= 'akce2.pece.pece_cena';
+            }
+            cena= php.akce2_vzorec2_pobyt(key_pobyt,key_spolu,parms);
             p_oso.rozklad= cena.tabulka;
           }
           else { // starý ceník
@@ -607,9 +620,13 @@ form _pece [,,400,] { css:'ds_form'
 }
 # ---------------------------------------------------------------------------------------==> _strava
 form _strava [,,580,] {
-  func strava_init() { var cena:object
-    cena= php.akce2_vzorec2_pobyt(the_pobyt,0,
-      {prijmeni:1,cena:0,jako:0,back_dny:'akce2.pece.pece_dny_all'});
+  func strava_init() { var cena:object, parms:object
+    parms= {prijmeni:1,cena:0,jako:0,back_dny:'akce2.pece.pece_dny_all'};
+    if (ukazovat_ceny) {
+      parms.cena= 1;
+      parms.back_cena= 'akce2.pece.pece_cena';
+    }
+    cena= php.akce2_vzorec2_pobyt(the_pobyt,0,parms);
     rozklad= cena.tabulka;
   }
   label [10,40,155,] { title:`<h3>Stravování a ubytování</h3>
@@ -623,7 +640,7 @@ form _strava [,,580,] {
       Pokud je jméno žluté, je třeba doplnit hodnoty. Jinak nebude objednána strava.
   ` }
   label rozklad [179,50,390,380] { title:'Stravování a ubytování', 
-      style:"overflow-x:hidden;overflow-y:auto", css:'karta_info' }
+      style:"overflow-x:hidden;overflow-y:auto;max-height:fit-content", css:'karta_info' }
 }
 # ------------------------------------------------------------------------------------------==> _cmd
 form _cmd [,,200,32] { css:'ds_form'
@@ -741,6 +758,15 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
     }
   }
 }
-
+# ================================================================================> Vysvětlivky
+panel Vysvetlivky [,,500,500] {type:'popup', title:'Vusvětlivky pro práci s kartou Pečouni'
+  func show(topic) { var hlp:text
+      h.hlp= php.select('help','ezer_answer._help',`topic='${topic}'`);
+      return(panel.modal(200,100,'',0,0,1));
+  }
+  use h:form {
+    label hlp [0,0,*,*] 
+  }
+}
 # ------------------------------------------------==> .. maps
 map jidla= "i,zkratka,nazev;1:s:snídani,2:o:oběd,3:v:večeři" 
