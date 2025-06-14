@@ -3,7 +3,8 @@
 "use strict";
 // ======================================================================================> dny spolu
 // -------------------------------------------------------------------------------------- dny zobraz
-  const dny_headers = ['den', 'N', 'S', 'O', 'V'];
+  const dny_headers = ['', 'N', 'S', 'O', 'V'];
+  const dny_titles = ['','nocleh', 'snídaně', 'oběd', 'večeře'];
   var dny_matrix = "";
 
   function dny_formatDatum(date) {
@@ -39,9 +40,9 @@
 
     // Hlavička
     const thead = jQuery('<tr></tr>');
-    dny_headers.forEach(header => {
-      thead.append(jQuery('<th></th>').text(header));
-    });
+    for (let i= 0; i<=4; i++) {
+      thead.append(jQuery('<th></th>').text(dny_headers[i]).prop('title',dny_titles[i]));
+    }
     table.append(thead);
 
     for (let i = 0; i < dny; i++) {
@@ -54,7 +55,7 @@
       for (let j = 0; j < cols; j++) {
         const index = i * cols + j;
         let obsah = data.charAt(index) === '1' ? 'x' : ' ';
-        const td = jQuery('<td></td>');
+        const td = jQuery('<td></td>').prop('title',dny_titles[j+1]);
 
         let jeNeaktivni = false;
         if (i === 0 && j < n1) jeNeaktivni = true;

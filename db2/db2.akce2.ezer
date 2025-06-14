@@ -795,6 +795,54 @@ panel Prihlaska [,,400,500] { title:'Data přihlášky', type:'popup', css:'dial
     label txt [0,0,400,500] { style:"overflow:auto" }
   }
 }
+# =======================================================================================> Dny Spolu
+panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
+# nastaví položku spolu.kat_dny
+  var ids:number, stav:object
+  use u: form {
+    func onstart() { 
+      kat_n.selects('L,S,Z,-'); 
+      kat_p.selects('C,P'); 
+      kat_d.selects('-,BL'); 
+    }
+    label matrix [5,5,160,*] { style:'font-size:13px' }
+    button [165,22,,] { title:'[fa-save] Uložit' 
+      func onclick() { var old:text
+        clear();
+        old= kat_dny;
+        kat_dny= js.dny_precti();
+        if (kat_dny!=old) kat_dny.change();
+        stav= php.akce_dny2sov(ids,kat_dny);
+        p_od_pobyt= stav.necely_pobyt; p_od_pobyt.change();
+//        echo(debug(stav,kat_dny));
+        form.save();
+//        reload(the_pobyt);
+        panel.hide(1);
+    }}
+    button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
+    field kat_dny { data:'spolu.kat_dny' }
+    field p_od_pobyt { data:'spolu.p_od_pobyt' } // kvůli signalizaci neúplného pobytu
+    select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
+    select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
+    select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
+    label warn [165,160,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
+    label [70,193,200,20] { 
+      title:"<i class='fa fa-share fa-rotate-270' style='vertical-align:super;'></i> datum vstávání" }
+  }
+  func ukaz(_ids) { var dny:text
+    ids= _ids;
+    u.load(ids);
+    u.warn.display(0);
+    if (!u.kat_dny) { // doplnění defaultních hodnot
+      php.akce_dny_default(the_duakce,ids);
+      u.load(ids);
+      u.warn.display(1);
+    }
+    js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
+    return(panel.modal(730,220,'',0,0,1));
+//    return(panel.modal());
+  }
+}
 # ==========================================================================================> PROCES
 panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu' 
   var parent:object,  // vstup - parent je panel, ve kterém je obsažena procedura se 
