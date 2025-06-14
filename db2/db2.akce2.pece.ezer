@@ -85,13 +85,17 @@ func init_pece() {
 }
 # ukázání dnů aktuálního pečouna
 func pece_dny(_ids) { 
-  if (DnySpolu.ukaz(_ids))
+  if (DnySpolu.ukaz(_ids)) {
     up.b.reload_pecoun();
+    up.b.browse_row();
+  }
 }
 # ukázání dnů všech pečounů
 func pece_dny_all(_ids) { 
-  if (DnySpolu.ukaz(_ids))
+  if (DnySpolu.ukaz(_ids)) {
     p_str.strava_init();
+    reload(_ids);
+  }
 }
 # ukázání rozkladu ceny - bez speciálních slev
 func pece_cena(_ids)  { var cena: object
@@ -594,7 +598,7 @@ form _pece [,,400,] { css:'ds_form'
           p_oso.d.browse_fill(skup);
           if (the_cenik_verze==2) {
             // zjisti náklady
-            parms= {prijmeni:0,cena:0,jako:0,back_dny:'akce2.pece.pece_dny_all'};
+            parms= {prijmeni:0,cena:0,jako:0,back_dny:'akce2.pece.pece_dny'};
             if (ukazovat_ceny) {
               parms.cena= 1;
               parms.back_cena= 'akce2.pece.pece_cena';
