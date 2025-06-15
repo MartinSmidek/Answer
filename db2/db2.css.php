@@ -179,8 +179,9 @@ span.zmeneny {
   position:absolute; color:black; z-index:2; font-size:8px; height:11px; padding:0 1px;
   border-left:1px solid #aaa; border-right:1px solid #aaa; border-bottom:1px solid #aaa; }
 /* úpravy standardu */
-div.ContextHelp img {
+/* div.ContextHelp img {
   top:3px; padding:0; position:relative; }
+*/ 
 div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3,            /*Ezer3*/
 div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .BrowseSmart td.BrowseQry input {
