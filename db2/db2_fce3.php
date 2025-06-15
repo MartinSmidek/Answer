@@ -2377,7 +2377,7 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
 #   back_cena     úplný název ezer funkce vyvolané kliknutím na částku
 #
 function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
-  /**/                                                   debug($spec,'akce2-vzorec2 - spec');
+//  /**/                                                   debug($spec,'akce2-vzorec2 - spec');
   if ($spec===null) $spec= (object)[];
   if (!isset($spec->funkce_slevy)) $spec->funkce_slevy= 1;
   if (!isset($spec->cena)) $spec->cena= 1;
@@ -5604,6 +5604,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
   $c_funkce= map_cis('ms_akce_funkce','zkratka');  $c_funkce[0]= '';
+  $c_prednasi= map_cis('ms_akce_prednasi','zkratka');  $c_prednasi[0]= '';
   $c_dite_kat= $org==2
       ? map_cis('fa_akce_dite_kat','zkratka') 
       : map_cis('ys_akce_dite_kat','zkratka');  
@@ -5847,6 +5848,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '_vps':      $VPS_= $org==1 ? 'VPS' : 'PPS'; $vps_= $org==1 ? '(vps)' : '(pps)';
                         $c= $x->funkce==1 ? $VPS_ : (strpos($x->r_umi,'1')!==false ? $vps_ : ''); break;
       case '_funkce':   $c= $c_funkce[$x->funkce]; break;
+      case '_prednasi': $c= $c_prednasi[$x->prednasi]; break;
       // pro ceník verze 2
       case 'noci':      $c= $cv2 ? $cv2_noci : $x->noci;  break;
       case 'luzka':     $c= $cv2 ? $cv2_luzka : $x->luzka;  break;
@@ -7221,7 +7223,7 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) {
 # ------------------------------------------------------------------------------- akce2 text_eko_cv2
 function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trace();
   $result= (object)array();
-  $ucast= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd'],'','',false,(object)['funkce_slevy'=>1]);
+  $ucast= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','dotace'=>1],'','',false);
   $cena1= $ucast->cena;
   $pec= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','cnd'=>'funkce=99']);
   $cena2= $pec->cena;
@@ -8993,7 +8995,7 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
   // vyber položky z ceníku
   $druhy= $par->druhy;
   $note= $par->note??'';
-  $slevy= isset($spec->funkce_slevy) ? 1 : 0;
+  $dotace= $par->dotace??0;
   $polozky= $nadpisy= '';
   $cenik= []; // poradi -> cena
   $rc= pdo_qry("SELECT poradi,polozka,druh,cena FROM cenik "
@@ -9020,8 +9022,8 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
 //      . " AND p.id_pobyt IN (69874)"
 //      ,
     ];
-  if ($slevy) {
-    $par->tit.= ',individuální sleva:5:r';
+  if ($dotace) {
+    $par->tit.= ',individuální dotace:5:r';
     $par->fld.= ',sleva';
   }
   

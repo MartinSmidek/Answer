@@ -350,7 +350,7 @@ form _osoba [,,580,] { tag:'a',
     options:ms_akce_hnizda.zkratka, title:'hnízdo' }
   // strava 
   check p_kc_strava  [L+5,T+305,181,] {data:s.p_kc_strava, title:'místo stravy hotovost' }
-  check s_rodici  [L+5,T+281,210,] {tag:'cv1', data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
+  check s_rodici  [L+5,T+281,210,] { data:s.s_rodici, title:'stravu platí rodiče - účastníci akce', format:'d' }
   check pulstrava [L+464,T+279,99,] {tag:'cv1', data:s.pulstrava, title:'poloviční strava', format:'d' }
   
   # ==> částečný pobyt
