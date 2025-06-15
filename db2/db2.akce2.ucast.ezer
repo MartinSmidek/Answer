@@ -117,7 +117,7 @@ func ucast_pobyt_akce_platba(_idp,_ida)  {
 }
 # ukázání rozkladu ceny za účastníka pobytu - bez speciálních slev
 func ucast_cena_osoba(_ids)  { var cena: object
-  cena= php.akce2_vzorec2_pobyt(0,_ids,{spec_slevy:0});
+  cena= php.akce2_vzorec2_pobyt(0,_ids,{funkce_slevy:0});
   alert(cena.navrh);
 }
 # ukázání dnů účastníka pobytu

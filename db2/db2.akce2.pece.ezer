@@ -99,7 +99,7 @@ func pece_dny_all(_ids) {
 }
 # ukázání rozkladu ceny - bez speciálních slev
 func pece_cena(_ids)  { var cena: object
-  cena= php.akce2_vzorec2_pobyt(0,_ids,{spec_slevy:0});
+  cena= php.akce2_vzorec2_pobyt(0,_ids,{funkce_slevy:0});
   alert(cena.navrh);
 }
 # nastavení pro akci v hnízdech

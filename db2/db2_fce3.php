@@ -2240,13 +2240,7 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 }
 # ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
 # výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
-# výsledek ovlivňují položky objektu $spec
-#   spec_slevy=1  do ceny budou započteny inidividuální slevy
-#   back_dny      úplný název ezer funkce vyvolané kliknutím na jméno
-#   back_cena     úplný název ezer funkce vyvolané kliknutím na částku
-#   cena=1        pokud je 0 nebude zobrazován sloupec cen
-#   prijmeni=0    pokud je 1 bude zobrazeno příjmení člena pobytu
-#
+# výsledek ovlivňují položky objektu $spec popsaného v akce2_vzorec2
 function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
   $spec->prijmeni= isset($spec->prijmeni) ? $spec->prijmeni : 0; 
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
@@ -2292,8 +2286,8 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
     if (!$slevy) {
-      $slevy= json_decode($vzorec);
-      $slevy->individualni= $sleva;
+      $slevy= json_decode($vzorec);   // může obsahovat {"ubytovani":0,"strava":0,"program":0}
+      $slevy->dotace= $sleva;         // přiznaná individuální sleva 
 //      debug($slevy,$vzorec);
     }
     if ($t1=='V' && ($slevy->za??'')!='Sv') { 
@@ -2359,7 +2353,8 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
     if ($strava_oddo=='oo') $osoba[$i]->xO++;
     $osoba[$i]->sov= 'SOV';
   }
-  return akce2_vzorec2($ida,$osoba);
+  $spec= (object)[];
+  return akce2_vzorec2($ida,$osoba,null,$spec);
 }
 # ------------------------------------------------------------------------------------- akce2 vzorec
 # výpočet platby za osoby na akci
@@ -2370,13 +2365,21 @@ function akce2_vzorec2_test($ida,$idc) { // trace();
 #     v=věk
 # pokud je do ceny zahrnuto něco s druh=x ohlásí se jako chybná kombinace
 # slevy jsou dány jako objekt s nepovinnými položkami
-#   ubytovani=>0, strava=>0, program=>0 jsou speciální slevy pokud $spec_slevy=1
-#   sleva=>x kde x je inidividuální sleva
-#   sleva na ubytovaní, stravu či program ruší slevu pro VPS
+#   ubytovani=0, strava=0, program=0 jsou slevy, uplatněné pokud $spec->funkce_slevy=1
+#   sleva=>x      kde x je inidividuální dotace
+#   ! sleva na ubytovaní, stravu či program ruší slevu pro VPS
+# výpočet je ovlivněn položkami objektu $spec - popis je u akce2_vzorec2_pobyt
+#   funkce_slevy=1  do ceny budou započteny slevy podle funkce
+#   cena=1        do tabulky je zařazen sloupec s cenou a celkovým součtem cen
+#   jako=1        do tabulky je zařazen sloupec s identifikací funkce+s_role
+#   prijmeni=0    pokud je 1 bude zobrazeno příjmení člena pobytu
+#   back_dny      úplný název ezer funkce vyvolané kliknutím na jméno
+#   back_cena     úplný název ezer funkce vyvolané kliknutím na částku
+#
 function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
-  /**/                                                   debug($spec,'akce2_vzorec2 - spec');
+  /**/                                                   debug($spec,'akce2-vzorec2 - spec');
   if ($spec===null) $spec= (object)[];
-  if (!isset($spec->spec_slevy)) $spec->spec_slevy= 1;
+  if (!isset($spec->funkce_slevy)) $spec->funkce_slevy= 1;
   if (!isset($spec->cena)) $spec->cena= 1;
   if (!isset($spec->jako)) $spec->jako= 1;
   if (!isset($spec->prijmeni)) $spec->prijmeni= 0;
@@ -2390,7 +2393,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
         'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk'];
   if ($spec->cena) $hd['Kc']= 'cena:35';
   if (!$spec->jako) unset($hd['t']);
-//  /**/                                                   debug($hd,'akce2_vzorec2 - hd');
+//  /**/                                                   debug($hd,'akce2-vzorec2 - hd');
   $osoba= []; // i => [id=>val,...]
   $header= $footer= "<tr>";
   foreach ($hd as $hid=>$hname) {
@@ -2403,7 +2406,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
       $osoba[$i][$hid]= $o->$hid??'';
     }
   }
-//  /**/                                                   debug($osoba,'akce2_vzorec2 - osoba');
+//  /**/                                                   debug($osoba,'akce2-vzorec2 - osoba');
   $header.= "</tr>";
   $footer.= "</tr>";
   $cena= []; // polozka => iosoba => [pocet,cena]
@@ -2443,7 +2446,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
   }
   // záznam blokových slev
 //  debug($blok,"blok 1");
-  if ($spec_slevy) {
+  if ($spec->funkce_slevy) {
     foreach ($slevy as $nazev=>$nula) {
       if ($nula==0) {
         switch ($nazev) {
@@ -2453,11 +2456,11 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
         }
       }
     }
-    if ($slevy->individualni??0>0) {
+    if ($slevy->dotace??0>0) {
       $blok['d']++;
     }
   }
-//  /**/                                                   debug($full,'akce2_vzorec2 - full');
+//  /**/                                                   debug($full,'akce2-vzorec2 - full');
   // redakce
 //  debug($blok,"blok 2");
   $celkem= 0;
@@ -2501,8 +2504,8 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
           $html.= "<tr><td>$pol $nx</td><td align='right'>$kc</td><td></td></tr>";
         }
       }    
-      if ($d=='d' && $spec_slevy && $slevy->individualni??0>0) {
-        $kc= -$slevy->individualni;
+      if ($d=='d' && $spec->funkce_slevy && $slevy->dotace>0) {
+        $kc= -$slevy->dotace;
         $ret->rozpis[$d]+= $kc;
         $za_blok+= $kc;
         $celkem+= $kc;
@@ -2568,7 +2571,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
   $ret->navrh= $html;
   $ret->tabulka= $tab;
   $ret->full= $full;
-//  /**/                                                   debug($ret,'akce2_vzorec2 - return');
+//  /**/                                                   debug($ret,'akce2-vzorec2 - return');
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
@@ -7218,7 +7221,7 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) {
 # ------------------------------------------------------------------------------- akce2 text_eko_cv2
 function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trace();
   $result= (object)array();
-  $ucast= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd'],'','',false,(object)['spec_slevy'=>1]);
+  $ucast= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd'],'','',false,(object)['funkce_slevy'=>1]);
   $cena1= $ucast->cena;
   $pec= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','cnd'=>'funkce=99']);
   $cena2= $pec->cena;
@@ -8990,7 +8993,7 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
   // vyber položky z ceníku
   $druhy= $par->druhy;
   $note= $par->note??'';
-  $slevy= isset($spec->spec_slevy) ? 1 : 0;
+  $slevy= isset($spec->funkce_slevy) ? 1 : 0;
   $polozky= $nadpisy= '';
   $cenik= []; // poradi -> cena
   $rc= pdo_qry("SELECT poradi,polozka,druh,cena FROM cenik "
