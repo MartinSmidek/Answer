@@ -454,11 +454,11 @@ menu m {type:'left', //active:*
     item {title:'Narozeniny, výročí'    ,par:{typ:'vv',cnd:'1'}}
     item {title:'Přehled o akci (děti,pečouni)', par:{typ:'vi',cnd:'1'},               skill:'#crz'}
     item {title:'Ekonomické ukazatele'  ,par:{typ:'ve',cnd:'1'},                       skill:'#crz' }
-    item {title:'Náklady podle ceníku'  ,par:{typ:'vc',druhy:'uspd',dotace:'1',cv:'2',exp:'Excel2'
+    item {title:'... náklady bez pečounů',par:{typ:'vc',druhy:'uspd',dotace:'1',cv:'2',exp:'Excel2'
         ,cnd:'p.funkce NOT IN (99,9,14)'
         ,note:`Jsou zobrazena čerpání všech položek ceníku mimo druh='x'.<br>
                Jsou zobrazeny všechny pobyty mimo pečounů a mimo náhradníků a odhlášených.`}}
-    item {title:'Náklady pečounů'       ,par:{typ:'vc',druhy:'uspd',cv:'2',exp:'Excel2'
+    item {title:'... náklady pečounů'   ,par:{typ:'vc',druhy:'uspd',cv:'2',exp:'Excel2'
         ,cnd:'p.funkce IN (99)'
         ,note:`Jsou zobrazena čerpání všech položek ceníku mimo druh='x'.<br>
                Jsou zobrazeny všechny pobyty pečounů.`}}
@@ -688,6 +688,9 @@ menu m {type:'left', //active:*
       if (the_par.typ=='vsd3') {
         the_par.vylet= prompt2('kolikátý den bude výlet?',3)-1;
       }
+    }
+    else {
+      if (the_par.cv==2) { alert('lze jen ceníkem 2. verze (od léta 2025)'); return }
     }
     the_par.zmeny= hodin_zmeny;
     // ošetření výpisů umožňujících tisk jen výběru pobytů

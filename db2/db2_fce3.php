@@ -7227,12 +7227,12 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $cena1= $ucast->cena;
   $pec= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','cnd'=>'funkce=99']);
   $cena2= $pec->cena;
-  /**/                                                    debug($ucast,"akce2_text_eko_cv2 - účastníci");
+//  /**/                                                    debug($ucast,"akce2_text_eko_cv2 - účastníci");
 //  /**/                                                    debug($cena2,"akce2_text_eko_cv2 - pečouni");
   $tab= []; // druh -> cena
   $rc= pdo_qry("SELECT poradi,druh,t FROM cenik WHERE id_akce=$akce");
   while ($rc && (list($poradi,$druh,$t)= pdo_fetch_row($rc))) {
-    display("tab[$druh]+= cena[$poradi]");
+//    display("tab[$druh]+= cena[$poradi]");
     switch ($druh) {
       case 'x': break;
       case 'p': 
@@ -7251,7 +7251,31 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
     }
   }
   /**/                                                    debug($tab,"akce2_text_eko_cv2 - tab");
-  $result->html= debugx($tab);
+  // formátování odpovědi dle ceníku akce
+  $prijmy= $tab[1]['P'];
+  $prijmy_= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
+  $vydaje= $tab[2]['u']+$tab[2]['s'];
+  $ubyt_= number_format($tab[2]['u'], 0, '.', ' ')."&nbsp;Kč";
+  $stra_= number_format($tab[2]['s'], 0, '.', ' ')."&nbsp;Kč";
+  $vydaje_= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
+  $html.= "<h3>Pokrytí nákladu kolektivu pečovatelů z programového příspěvku rodičů</h3>";
+  $html.= "<i>Pozn. pokud jsou někteří pečovatelé pomocní nebo tzv. mimořádní, předpokládá se, že jejich pobyt 
+    <br>je uhrazen mimo pečovatelský rozpočet.</i><br>";
+  $html.= "<br><table class='stat'>";
+  $html.= "<tr><th></th><th>příspěvek rodičů</th><th>náklady pečovatelů</th></tr>";
+  $html.= "<tr><th>program dětí</th><td align='right'>$prijmy_</td><td></td></tr>";
+  $html.= "<tr><th>ubytování</th><td></td><td align='right'>$ubyt_</td></tr>";
+  $html.= "<tr><th>stravování</th><td></td><td align='right'>$stra_</td></tr>";
+  $html.= "<tr><th>suma</th><th align='right'>$prijmy_</th><th align='right'>$vydaje_</th></tr>";
+  $html.= "</table>";
+  $html.= "<h3>Shrnutí pro pečovatele</h3>";
+  $obrat= $prijmy - $vydaje;
+  $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
+  $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy, 
+    přímé náklady na pobyt pečovatelů na akci činí $vydaje, 
+    <br>celkem <b>$obrat</b> zůstává na program dětí a roční přípravu pečovatelů.";
+  // výstup
+  $result->html= $html; //.'<hr>'.debugx($tab);
   return $result;
 }
 # ----------------------------------------------------------------------------------- akce2 text_eko
@@ -9012,8 +9036,8 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
   }
   $par= (object)[
     'tit'=> "Jméno:25,funkce:5:r"
-      . ",pokoj:7,dětí:5:r:s$nadpisy",
-    'fld'=> "rodice_,_funkce,pokoj,#deti$polozky"
+      . ",pokoj:7,dětí:5:r:s$nadpisy".($dotace?',individuální dotace:7:r:s':''),
+    'fld'=> "rodice_,_funkce,pokoj,#deti$polozky".($dotace?',sleva':'')
         // pomocná pole
       . ",key_pobyt,funkce"
       ,
@@ -9022,10 +9046,6 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
 //      . " AND p.id_pobyt IN (69874)"
 //      ,
     ];
-  if ($dotace) {
-    $par->tit.= ',individuální dotace:5:r';
-    $par->fld.= ',sleva';
-  }
   
   $ret= tisk2_sestava_pary($akce,$par,'$title','$vypis',false,true);
 //  /**/                                                   debug($ret,'tisk2_sestava_pary');
@@ -9125,6 +9145,14 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
           $sum.= "<th style='text-align:right'>celkový počet</th>";
           $cen.= "<th style='text-align:right'>jednotková cena</th>";
           $mul.= "<th style='text-align:right'>celková cena</th>";
+        }
+        elseif ($f=='sleva') {
+          $sum.= "<th style='text-align:right'>$val_</th>";
+          $cen.= "<td></td>";
+          $kc= -$val;
+          $result->cena[$f]= $kc;
+          $mul_= number_format($kc, 0, '.', ' ');
+          $mul.= "<th style='text-align:right'>$mul_</th>";
         }
         else {
           $sum.= "<th style='text-align:right'>$val_</th>";
