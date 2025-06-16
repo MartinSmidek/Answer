@@ -1,18 +1,18 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 
-function tmp_pecouni() {
-  $n= 0;
-  $rp= pdo_qry("SELECT id_spolu,pfunkce FROM spolu JOIN pobyt USING (id_pobyt) "
-      . "WHERE funkce=99 AND id_akce=3094");
-  while ($rp && (list($ids,$pfunkce)= pdo_fetch_row($rp))) {
-    if (!$pfunkce) {
-      $n+= query("UPDATE spolu SET pfunkce=3 WHERE id_spolu=$ids");    
-    }
-    $n+= query("UPDATE spolu SET kat_nocleh='Z',kat_porce='C',kat_dieta='-',"
-        . "kat_dny='00111111111111111111111111111110' WHERE id_spolu=$ids");    
-  }
-  return "nastavené $n x default pro pečouny";
-}
+//function tmp_pecouni() {
+//  $n= 0;
+//  $rp= pdo_qry("SELECT id_spolu,pfunkce FROM spolu JOIN pobyt USING (id_pobyt) "
+//      . "WHERE funkce=99 AND id_akce=3094");
+//  while ($rp && (list($ids,$pfunkce)= pdo_fetch_row($rp))) {
+//    if (!$pfunkce) {
+//      $n+= query("UPDATE spolu SET pfunkce=3 WHERE id_spolu=$ids");    
+//    }
+//    $n+= query("UPDATE spolu SET kat_nocleh='Z',kat_porce='C',kat_dieta='-',"
+//        . "kat_dny='00111111111111111111111111111110' WHERE id_spolu=$ids");    
+//  }
+//  return "nastavené $n x default pro pečouny";
+//}
 
 
 
@@ -5081,7 +5081,9 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='ve'   ? ( $cenik_verze==2 
                              ? akce2_text_eko_cv2($akce,$par,$title,$vypis,$export)       //!
                              : akce2_text_eko($akce,$par,$title,$vypis,$export))
-     : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vn'   ? ( $cenik_verze==2 
+                             ? akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export)
+                             : akce2_sestava_noci($akce,$par,$title,$vypis,$export))   //!
      : ( $par->typ=='vc'   ? akce2_sestava_cenik_cv2($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp'   ? ( $cenik_verze==2 
                              ? akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export)
@@ -5881,12 +5883,16 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 #   $cnd = podmínka
 #   $par->sel = seznam id_pobyt
 #   $par->subtyp = pro EROP se dopčítávají sloupce účast na MS a účast na mužské akci
+# pokud má akce ceník verze 2 lze užít další parametry
+#   $par->bydli = pokud je na akci ubytován
+#
 function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $subtyp= isset($par->subtyp) ? $par->subtyp : '';
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
+  $note= $par->note??'';
   $cv2= 0;
   if ( $tisk_hnizdo ) $cnd.= " AND IF(funkce=99,s_hnizdo=$tisk_hnizdo,hnizdo=$tisk_hnizdo)";
   $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';
@@ -5930,7 +5936,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     SELECT
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
-      o.dieta,s.kat_dieta,a.ma_cenik_verze,
+      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik_verze,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina, r3.role AS p_role,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -5943,8 +5949,8 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       s.poznamka AS s_note,s.pfunkce,s.dite_kat,s.skupinka,
       IFNULL(r2.note,r1.note) AS r_note,
       IFNULL(r2.role,r1.role) AS r_role,
-      ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek,
-      (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
+      IF(MONTH(o.narozeni),TIMESTAMPDIFF(YEAR,o.narozeni,a.datum_od),YEAR(a.datum_od)-YEAR(o.narozeni)) AS _vek,
+    (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
         FROM akce JOIN pobyt ON id_akce=akce.id_duakce
         JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
         JOIN osoba ON osoba.id_osoba=spolu.id_osoba
@@ -5974,6 +5980,18 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       ORDER BY $ord";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
+    // mají se vyloučit nebydlící?
+    if ($par->bydli??0) {
+      if ($x->ma_cenik_verze==2) {
+        // přepočítej noci 
+        $xn= 0;
+        for ($d= 0; $d<strlen($x->kat_dny); $d+=4) {
+          $xn+= $x->kat_dny[$d];
+        }
+        if (!$xn) continue;
+      }
+      elseif (!$x->luzka) continue;
+    }
     $n++;
     $clmn[$n]= array();
     // zapamatování verze ceníku
@@ -6091,7 +6109,9 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  return tisk2_table($tits,$flds,$clmn,$export);
+  $result= tisk2_table($tits,$flds,$clmn,$export);
+  if ($note) $result->html= "$note {$result->html}";
+  return $result;
 }
 # ---------------------------------------------------------------------------- akce2 sestava_pecouni
 # generování sestavy pro účastníky $akce - pečouny
@@ -6335,13 +6355,13 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
     }
   }
   $fmts['den']= 'c';
-//  /**/                                      ;                 debug($clmn,'clmn init');
+//  /**/                                                       debug($clmn,'clmn init');
 //  /**/                                                       debug($tits,'tits');
 //  /**/                                                       debug($flds,'flds');
   $par= (object)[
     'tit'=> "Jméno,*",
     'fld'=> "rodice_,strava_dny",
-    '_cnd'=> " p.id_akce=$akce AND p.funkce!=99 "
+    '_cnd'=> " p.funkce NOT IN (9,10,13,14,15,99) "
 //      . " AND p.id_pobyt IN (69673)" // Czudkovi
 //      . " AND p.id_pobyt IN (69466)"
 //      . " AND p.id_pobyt IN (69619,69409,69874)"
@@ -7271,8 +7291,8 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $html.= "<h3>Shrnutí pro pečovatele</h3>";
   $obrat= $prijmy - $vydaje;
   $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
-  $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy, 
-    přímé náklady na pobyt pečovatelů na akci činí $vydaje, 
+  $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy_, 
+    přímé náklady na pobyt pečovatelů na akci činí $vydaje_, 
     <br>celkem <b>$obrat</b> zůstává na program dětí a roční přípravu pečovatelů.";
   // výstup
   $result->html= $html; //.'<hr>'.debugx($tab);
@@ -7812,14 +7832,17 @@ function tisk2_table($tits,$flds,$clmn,$export=false,$prolog='') {  trace();
     $ret->clmn= $clmn;
   }
   else {
+    $frmt= [];
     // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
+    foreach ($tits as $if=>$idwf) {
+      list($id,,$f)= explode(':',$idwf);
+      $frmt[$if]= $f??'';
       $ths.= "<th>$id</th>";
     }
-    foreach ($clmn as $i=>$c) {
+    foreach ($clmn as $c) {
       $tab.= "<tr>";
-      foreach ($flds as $f) {
+      foreach ($flds as $if=>$f) {
+        $align= $frmt[$if]=='r' ? " align='right'" : '';
         if ( $f=='id_osoba' || $f=='^id_osoba' )
           $tab.= "<td style='text-align:right'>".tisk2_ukaz_osobu($c[$f])."</td>";
         elseif ( $f=='^id_rodina' )
@@ -7828,7 +7851,7 @@ function tisk2_table($tits,$flds,$clmn,$export=false,$prolog='') {  trace();
           $tab.= "<td style='text-align:right'>".tisk2_ukaz_pobyt($c['^id_pobyt'])."</td>";
         else {
 //                                 debug($c,$f); return $ret;
-          $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+          $tab.= "<td$align>{$c[$f]}</td>";
         }
       }
       $tab.= "</tr>";
@@ -9075,7 +9098,9 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // průchod pobyty
+  $rows= 0;
   foreach ($ret as $n=>$x) {
+    $rows++;
     $x= (object)$x;
     // nazveme pečovatele
     if ($x->funkce==99) $x->rodice_= 'pečovatelé celkem';
@@ -9171,7 +9196,8 @@ function akce2_sestava_cenik_cv2($akce,$par,$title='',$vypis='',$export=false,$s
       }
       $sum.= "</tr>";
     }
-    $result->html= $note ? "$note<br><br>" : '';
+    $result->html= $note ? "$note<br>" : '';
+    $result->html.= "Sestava má $rows řádků.<br><br>";
     $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
         . "$sum<tr>$cen</tr><tr>$mul</tr></table></div>";
     $result->html.= "</br>";
@@ -9602,7 +9628,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       . ",key_pobyt,funkce"
       . ",v_nocleh,v_strava,v_program,v_sleva"
       ,
-    '_cnd'=> " p.id_akce=$akce AND p.funkce!=99 "
+    '_cnd'=> " p.funkce!=99 "
 //      . " AND p.id_pobyt IN (69619,69409)"
     ];
   
@@ -9635,7 +9661,9 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // průchod pobyty
+  $rows= 0;
   foreach ($ret as $n=>$x) {
+    $rows++;
     $x= (object)$x;
     // dopočet úhrad
     $u= akce2_uhrady_load($x->key_pobyt);
@@ -9753,7 +9781,9 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       }
       $sum.= "</tr>";
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html= "Jsou zobrazeni všichni evidovaní mimo pečounů. "
+        . "<br>Sestava má $rows řádků.<br><br>";
+    $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
     $result->html.= "</br>";
     $result->href= $href;
   }
