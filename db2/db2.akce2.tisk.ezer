@@ -19,8 +19,8 @@ proc onfocus() {
   info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
   // volba správné akce a příslušného menu
   { eq(the_soubeh.get,2);
-    the_akce.set(the_hlavni.get); m.display(2,'d'); //m.d.i.click 
-  | the_akce.set(the_duakce.get); m.display(2,'a'); //m.n.i.click 
+    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click 
+  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click 
   };
   // případně nastavení hnízd
   tisk_hnizda;
