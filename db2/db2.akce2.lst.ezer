@@ -820,7 +820,7 @@ form _page [,,275,360] {
     show polozka  { data:cenik.polozka }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
       proc onsubmit() { this.save } }
-    show druh [,,0,] { title:'.', help:'druh položky: u|s|p|d', data:cenik.druh, format:'ruq*s'
+    show druh [,,0,] { title:'.', help:'druh položky: u/s/p/d/x', data:cenik.druh, format:'ruq*s'
       proc onsubmit() { this.save } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show pol [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'tuq*s'
@@ -838,16 +838,16 @@ form _page [,,275,360] {
       proc onsubmit() { this.save } }
     // pro y verze 2025
     show co_2025 [,,0,] { title:'x', data:cenik.krat, format:'urq=s',
-      help:'kolikrát se platí ...'
+      help:'Pobyt nebo x-krát Noc, Snídaně, Oběd, Večeře '
       proc onsubmit() { this.save } }
     show pro_2025 [,,0,] { title:'t', data:cenik.t, format:'urq=s',
-      help:'typ účasti'
+      help:'typ účasti Učastník, Vps, Dítě, Pečoun, Tým (kněz,psych,hudba)'
       proc onsubmit() { this.save } }
     show noc_2025 [,,0,] { title:'n', data:cenik.n, format:'urq=s',
       help:'kategorie noclehu'
       proc onsubmit() { this.save } }
     show porce_2025 [,,0,] { title:'p', data:cenik.p, format:'urq=s',
-      help:'kategorie porce'
+      help:'kategorie porce Celá, Poloviční'
       proc onsubmit() { this.save } }
     // jen y;f
     show dph [,,0,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s:e'

@@ -510,6 +510,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         if ( $p->web_changes )   $web_online++;
         if ( $p->web_changes&4 ) $web_novi++;
       }
+/*      
       // sčítání úhrad 
       $uhradit= $p->_platit - $p->_vratit;
       $vratit_celkem+= $p->_vratit;
@@ -535,14 +536,8 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
       }
       if ($uhradit)
         $dary_celkem+= $zaplaceno > $uhradit ? $zaplaceno - $uhradit : 0;
-//      // záznam plateb
-//      if ( $p->platba ) {
-//        $celkem+= $p->platba;
-//        $platby[$p->zpusobplat]+= $p->platba;
-//      }
-//      if ( $p->avizo ) {
-//        $aviz++;
-//      }
+ * 
+ */
       // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9 a nepřijat/13
       if ( in_array($fce,array(9,10,13,14,15) ) ) {
         $neprijati+= $fce==13 ? 1 : 0;
@@ -793,10 +788,11 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
       $info->_po=  $po;
       $info->_pg=  $pg;
 //    }
+/*    
     // zobrazení přehledu plateb
 //    debug($uhrady,"úhrady celkem $uhrady_celkem");
     $help= '';
-    if ( /*!$soubeh &&*/ ($uhrady_celkem || $uhradit_celkem) ) {
+    if ( /+!$soubeh &&+/ ($uhrady_celkem || $uhradit_celkem) ) {
       $st= "style='border-top:1px solid black'";
       if ($dary_celkem)
         $help.= "Hodnota darů bude správně až budou vráceny storna a přeplatky.<br>";
@@ -850,6 +846,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         </i>
           ";
     }
+*/    
   }
   elseif (!$uid && !$id_order) {
     $html= "Tato akce ještě nebyla vložena do databáze
@@ -2268,7 +2265,8 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
   }
   $order= $spec->prijmeni ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";
   $rs= pdo_qry("
-    SELECT prijmeni,jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,IF(funkce=1,'V','U'),
+    SELECT funkce,prijmeni,jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,
+      IF(funkce IN (1,2),'V',IF(funkce=0,'U',IF(funkce IN (3,4,5,6),'T','H'))),
       IF(funkce=99,'P',c1.ikona) AS _dite,
       kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
@@ -2282,10 +2280,14 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     WHERE ($cond) $OR_chuvy
     ORDER BY $order
   ");
-  while ($rs && (list($prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,$t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
+  while ($rs && (list($funkce,$prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,
+         $t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
     if (!$slevy) {
+      if ($funkce==99) { // pečouni neplatí
+        $vzorec= '{"ubytovani":0,"strava":0,"program":0}';
+      }
       $slevy= json_decode($vzorec);   // může obsahovat {"ubytovani":0,"strava":0,"program":0}
       $slevy->dotace= $sleva;         // přiznaná individuální sleva 
 //      debug($slevy,$vzorec);
@@ -5538,15 +5540,18 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
   return tisk2_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------- tisk2 sestava_pary
-# generování sestavy pro účastníky $akce - rodiny, pokud je par.rodiny=1 pak poze páry s dětmi
-# jedině pokud je $par->typ='tab' zobrazí i náhradníky
-#   $par->fld = seznam položek s prefixem
-#   $par->cnd = podmínka která bude doplněna vyřazením nepřítomných na akci
-#   $par->_cnd = podmínka, která bude použita bez úpravy
-#   $par->jen_deti = budou zahrnuty výsledky jen pro děti (bez os. pečovatele) tj. s_role=2,4
+# generování sestavy pro účastníky $akce - rodiny následně parametrizovaná pomocí položek $par
+#   fld         seznam položek s prefixem
+#   rodiny=0    pokud 1 pak pouze páry s dětmi
+#   jen_deti=0  pokud 1 budou zahrnuty výsledky jen pro děti (bez os. pečovatele) tj. s_role=2,4
+#   cnd         podmínka která bude doplněna vyřazením nepřítomných na akci (9,10,13,14,15)
+#     tab=1       doplní cnd o náhradníky (10,13,14)
+#   _cnd        podmínka, která bude použita bez úpravy, pouze doplněna o akci
+#   vek         pokud je vek=a-b budou vybrání členi s a<=vek<b 
 # pokud má akce ceník verze=2 bude modifikováno par.fld a par.tit
 #   v par.fld místo luzka bude luzka,spacaky,zem; položky pristylky,kocarek budou vynechány
 #   v par.tit bude zkopírován popis pro luzka jak spacáky,na zemi se stejnou délkou
+#
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
   global $EZER, $tisk_hnizdo;
   // údaje o akci
@@ -5599,9 +5604,10 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $fld= $par->fld;
   $cnd= $par->cnd ? "id_akce=$akce AND ($par->cnd)" : 1;
   if ( $tisk_hnizdo ) $cnd.= " AND hnizdo=$tisk_hnizdo ";
-  $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';
+//  $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';  ucast2_browse_ask to neumí
   $ord= isset($par->ord) ? $par->ord : "a _nazev";
   $fil= isset($par->filtr) ? $par->filtr : null;
+  $par_vek= isset($par->vek) ? explode('-',$par->vek) : null;
   $n= 0;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
@@ -5628,7 +5634,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14,15)")
 //        . " AND p.id_pobyt IN (69619,69665)"
       ,
-    'having'=>$hav,'order'=>$ord,
+//    'having'=>$hav,  -- ucast2_browse_ask to neumí
+    'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
 //  /**/                                                   debug($y);
@@ -5679,6 +5686,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 //    /**/                                                 debug($o,"člen pobytu č.$i");
 //                                                         if ( $x->key_pobyt==32146 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
+        $o_vek= $o[$i_osoba_vek];
+//        display("$par_vek[0]<=$o_vek && $o_vek<$par_vek[1] = ".($par_vek[0]<=$o_vek && $o_vek<$par_vek[1]?1:0));
+        if ($par_vek && !($par_vek[0]<=$o_vek && $o_vek<$par_vek[1])) continue;
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_osoba_jmeno]);
         if ( $o[$i_spolu_note] ) $spolu_note.= " + $jmeno:$o[$i_spolu_note]";
@@ -5698,9 +5708,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
             $rodice[$o[$i_osoba_role]]['obcanka']= trim($o[$i_osoba_obcanka]);
           }
           if ( $o[$i_osoba_role]=='d' ) {
-            $vek_deti[]= $o[$i_osoba_vek];
+            $vek_deti[]= $o_vek;
             $deti[$i]['jmeno']= $o[$i_osoba_jmeno];
-            $deti[$i]['vek']= $o[$i_osoba_vek];
+            $deti[$i]['vek']= $o_vek;
             $deti[$i]['kat']= $c_dite_kat[$o[$i_spolu_dite_kat]]; 
           }
         }
@@ -6367,7 +6377,10 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
 //      . " AND p.id_pobyt IN (69619,69409,69874)"
 //      . " AND p.id_pobyt IN (69874)"
     ];
-  if ($pouze) $par->jen_deti= 1;
+  if ($pouze) {
+    $par->jen_deti= 1;
+    $par->vek= "3-99";
+  }
   $ret= tisk2_sestava_pary($akce,$par,'$title','$vypis',false,true);
 //  /**/                                                      debug($ret,'tisk2_sestava_pary');
   // průchod pobyty
@@ -6426,8 +6439,8 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
       }
       $sum.= "</tr>";
     }
-    $result->html= ($pouze ? "Je zobrazen počet strav objednaných pro děti bez os. pečovatele, "
-          . "včetně pomocných pečovatelů<br><br>" : '')
+    $result->html= ($pouze ? "Je zobrazen počet strav objednaných pro děti starší jak 3 roky, "
+        . "které nemají os. pečovatele.<br>Jsou započítáni i pomocní pečovatelé.<br><br>" : '')
         . "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
         . "$sum</table></div>";
     $result->html.= "</br>";
@@ -7243,7 +7256,13 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) {
 # ------------------------------------------------------------------------------- akce2 text_eko_cv2
 function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trace();
   $result= (object)array();
+  $html= '';
+//  goto bilance;
+  // -------------------------------------- program dětí & náklady pečounů
+  $kc= function($x) { return number_format($x, 0, '.', ' ')."&nbsp;Kč"; };
+  // zjištění příspěvků rodičů na program dětí - dotace přidá sloupce individ.slev=dotací
   $ucast= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','dotace'=>1],'','',false);
+  // zjištění nákladů 
   $cena1= $ucast->cena;
   $pec= akce2_sestava_cenik_cv2($akce,(object)['druhy'=>'uspd','cnd'=>'funkce=99']);
   $cena2= $pec->cena;
@@ -7272,28 +7291,113 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   }
   /**/                                                    debug($tab,"akce2_text_eko_cv2 - tab");
   // formátování odpovědi dle ceníku akce
-  $prijmy= $tab[1]['P'];
-  $prijmy_= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
+  $p_slev_vps= $tab[1]['d']; 
+  $p_prog_deti= $tab[1]['P'];
+  $p_prog_deti_= $kc($p_prog_deti);
   $vydaje= $tab[2]['u']+$tab[2]['s'];
-  $ubyt_= number_format($tab[2]['u'], 0, '.', ' ')."&nbsp;Kč";
-  $stra_= number_format($tab[2]['s'], 0, '.', ' ')."&nbsp;Kč";
-  $vydaje_= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
+  $ubyt_= $kc($tab[2]['u']);
+  $stra_= $kc($tab[2]['s']);
+  $vydaje_= $kc($vydaje);
   $html.= "<h3>Pokrytí nákladu kolektivu pečovatelů z programového příspěvku rodičů</h3>";
-  $html.= "<i>Pozn. pokud jsou někteří pečovatelé pomocní nebo tzv. mimořádní, předpokládá se, že jejich pobyt 
+  $html.= "<i><b>Poznámka</b> Pokud jsou někteří pečovatelé pomocní nebo tzv. mimořádní, předpokládá se, že jejich pobyt 
     <br>je uhrazen mimo pečovatelský rozpočet.</i><br>";
   $html.= "<br><table class='stat'>";
   $html.= "<tr><th></th><th>příspěvek rodičů</th><th>náklady pečovatelů</th></tr>";
-  $html.= "<tr><th>program dětí</th><td align='right'>$prijmy_</td><td></td></tr>";
+  $html.= "<tr><th>program dětí</th><td align='right'>$p_prog_deti_</td><td></td></tr>";
   $html.= "<tr><th>ubytování</th><td></td><td align='right'>$ubyt_</td></tr>";
   $html.= "<tr><th>stravování</th><td></td><td align='right'>$stra_</td></tr>";
   $html.= "<tr><th>suma</th><th align='right'>$prijmy_</th><th align='right'>$vydaje_</th></tr>";
   $html.= "</table>";
-  $html.= "<h3>Shrnutí pro pečovatele</h3>";
-  $obrat= $prijmy - $vydaje;
-  $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
+  $html.= "<p><b>Shrnutí pro pečovatele</b></p>";
+  $obrat= $p_prog_deti - $vydaje;
+  $obrat= $kc($obrat);
   $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy_, 
     přímé náklady na pobyt pečovatelů na akci činí $vydaje_, 
     <br>celkem <b>$obrat</b> zůstává na program dětí a roční přípravu pečovatelů.";
+  // -------------------------------------- předpis & náklad & dary
+  $par= (object)['fld'=>'prijmeni,key_pobyt,platba,c_suma',
+//    'cnd'=>" funkce=99" // pečouni
+//    'cnd'=>" id_pobyt IN (69684)" // Farářovi    - dar
+//    'cnd'=>" id_pobyt IN (69220)" // Katarina    - tým
+//    'cnd'=>" id_pobyt IN (69324)" // Brucknerovi - dotace
+//    'cnd'=>" id_pobyt IN (69483)" // Baletkovi   - VPS
+  ];
+  $predpis= $naklad= [];
+  $kc_predpis= $kc_naklad= 0;
+  $kc_platby= $kc_dary= 0;
+  $ret= tisk2_sestava_pary($akce,$par,'$title','$vypis',false,true);
+  // průchod pobyty
+  $n_platici= $n_platby= 0;
+  foreach ($ret as $p) {
+    $p= (object)$p;
+    $idp= $p->key_pobyt;
+    $kc_platby+= $p->platba;
+    if ($p->platba) {
+      $kc_dary+= $p->platba - $p->c_suma;
+      $n_platby++;
+    }
+    if ($p->c_suma) $n_platici++;
+    // projdeme ceník a přidáme položky
+    $pre= akce2_vzorec2_pobyt($idp,0,(object)['funkce_slevy'=>1]);
+    $nak= akce2_vzorec2_pobyt($idp,0,(object)['funkce_slevy'=>0]);
+    foreach (['u','s','p','d'] as $x) {
+      $kx= $pre->rozpis[$x];
+      $predpis[$x]+= $kx;
+      $kc_predpis+= $kx;
+      $kx= $nak->rozpis[$x];
+      $naklad[$x]+= $kx;
+      $kc_naklad+= $kx;
+    }
+  }
+  debug($predpis,"předpis = $kc_predpis");  // d = dotace + slevy podle ceníku tzn. VPS
+  debug($naklad,"náklad = $kc_naklad");     // d = slevy podle ceníku tzn. VPS
+  display("platby = $kc_platby, dary = $kc_dary, zaplaceno = $n_platby/$n_platici");
+  $td= "td align='right'";
+  // formátování bilance
+  // předpisy
+  $p_ubyt= $predpis['u']; $p_ubyt_= $kc($p_ubyt);
+  $p_stra= $predpis['s']; $p_stra_= $kc($p_stra);
+  $p_prog= $predpis['p']; 
+  $p_slev= $predpis['d']; $p_slev_= $kc($p_slev);
+  $p_slev= $predpis['d']; $p_slev_= $kc($p_slev);
+  $p_suma= $p_ubyt+$p_stra+$p_prog+$p_slev; $p_suma_= $kc($p_suma);
+  $p_prog_par= $p_prog-$p_prog_deti; $p_prog_par_= $kc($p_prog_par);
+  $p_slev_dot= $p_slev-$p_slev_vps; $p_slev_dot_= $kc($p_slev_dot);
+  $p_slev_vps_= $kc($p_slev_vps);
+  // náklady
+  $n_ubyt= $naklad['u']; $n_ubyt_= $kc($n_ubyt);
+  $n_stra= $naklad['s']; $n_stra_= $kc($n_stra);
+  $n_suma= $n_ubyt+$n_stra; $n_suma_= $kc($n_suma);
+  $html.= "<h3>Částečná bilance akce</h3>";
+  $html.= "<i><b>Poznámka</b> "
+      . "Tato částečná bilance zahrnuje pouze náklady na ubytování a stravování (vč. pečounů). "
+      . "<br>Nejsou zahrnuty různé nájmy, faktury a DPP placených odborníků a další (tisky, materiál, ...).</i><br>";
+  $btab= "<br><table class='stat'>";
+  $btab.= "<tr><th></th><th>předpis plateb</th><th>náklady</th></tr>";
+  $btab.= "<tr><th>ubytování</th><$td>$p_ubyt_</td><$td>$n_ubyt_</td></tr>";
+  $btab.= "<tr><th>stravování</th><$td>$p_stra_</td><$td>$n_stra_</td></tr>";
+  $btab.= "<tr><th>program účastníků</th><$td>$p_prog_par_</td><td></td></tr>";
+  $btab.= "<tr><th>program dětí</th><$td>$p_prog_deti_</td><td></td></tr>";
+  $btab.= "<tr><th>slevy VPS</th><$td>$p_slev_vps_</td><td></td></tr>";
+  $btab.= "<tr><th>individuální dotace</th><$td>$p_slev_dot_</td><td></td></tr>";
+  $btab.= "<tr><th>suma</th><th align='right'>$p_suma_</th><th align='right'>$n_suma_</th></tr>";
+  $btab.= "</table>";
+  // -------------------------------------- platby & dary & vratky
+  $kc_platby_= $kc($kc_platby);
+  $kc_dary_= $kc($kc_dary);
+  $kc_suma_= $kc($kc_platby+$kc_dary);
+  $saturace= "$n_platby z $n_platici tj. ".round(100 * $n_platby/$n_platici);
+  $dni= date("j/n");
+  $ptab= "<br><table class='stat'>";
+  $ptab.= "<tr><th></th><th>uhrazeno k $dni</th><th>stav</th></tr>";
+  $ptab.= "<tr><th>předepsané platby</th><$td>$kc_platby_</td><$td>$saturace %</td></tr>";
+  $ptab.= "<tr><th>přidané dary</th><$td>$kc_dary_</td><$td></td></tr>";
+  $ptab.= "<tr><th>suma</th><th align='right'>$kc_suma_</th><th align='right'></th></tr>";
+  $ptab.= "</table>";
+  // tabulky vedle sebe
+  $html.= "<table><tr><td>$btab</td><td>&nbsp;&nbsp;&nbsp;</td>"
+      . "<td style='vertical-align:bottom'>$ptab</td></tr></table>";
+//  /**/                                                    debug($tab,"akce2_text_eko_cv2 - bilance1");
   // výstup
   $result->html= $html; //.'<hr>'.debugx($tab);
   return $result;
