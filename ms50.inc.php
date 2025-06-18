@@ -54,6 +54,7 @@
     "db2/db2_tcpdf.php",
     "db2/db2_fce3.php",
     "db2/db2.system.php",
+    "db2/ds_fce.php",
     "ms50/ms50_fce.php"
   );
   

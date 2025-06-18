@@ -45,6 +45,7 @@
   $app_php= array(
     "db2/db2_ys2_fce3.php",
     "db2/db2_tcpdf.php",
+    "db2/ds_fce.php",
     "db2/db2_fce3.php"
   );
   
