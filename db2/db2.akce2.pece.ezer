@@ -770,7 +770,7 @@ panel Vysvetlivky [,,500,500] {type:'popup', title:'Vysvětlivky pro práci s ka
       return(panel.modal(200,100,'',0,0,1));
   }
   use h:form {
-    label hlp [0,0,*,*] { style:"overflow-x:auto" css:'ContextHelp' }
+    label hlp [0,0,*,*] { style:"overflow-x:auto;padding:0" css:'ContextHelp' }
   }
 }
 # ------------------------------------------------==> .. maps
