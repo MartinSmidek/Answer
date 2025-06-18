@@ -5946,7 +5946,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     SELECT
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
-      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik_verze,
+      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina, r3.role AS p_role,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -6000,7 +6000,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         }
         if (!$xn) continue;
       }
-      elseif (!$x->luzka) continue;
+      elseif ($x->ma_cenik && !$x->luzka) continue;
     }
     $n++;
     $clmn[$n]= array();
@@ -7294,6 +7294,8 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $p_slev_vps= $tab[1]['d']; 
   $p_prog_deti= $tab[1]['P'];
   $p_prog_deti_= $kc($p_prog_deti);
+  $p_prog_pary= $tab[1]['p'];
+  $p_prog_pary_= $kc($p_prog_pary);
   $vydaje= $tab[2]['u']+$tab[2]['s'];
   $ubyt_= $kc($tab[2]['u']);
   $stra_= $kc($tab[2]['s']);
@@ -7361,7 +7363,7 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $p_slev= $predpis['d']; $p_slev_= $kc($p_slev);
   $p_slev= $predpis['d']; $p_slev_= $kc($p_slev);
   $p_suma= $p_ubyt+$p_stra+$p_prog+$p_slev; $p_suma_= $kc($p_suma);
-  $p_prog_par= $p_prog-$p_prog_deti; $p_prog_par_= $kc($p_prog_par);
+//  $p_prog_par= $p_prog-$p_prog_deti; $p_prog_par_= $kc($p_prog_par);
   $p_slev_dot= $p_slev-$p_slev_vps; $p_slev_dot_= $kc($p_slev_dot);
   $p_slev_vps_= $kc($p_slev_vps);
   // náklady
@@ -7376,7 +7378,7 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $btab.= "<tr><th></th><th>předpis plateb</th><th>náklady</th></tr>";
   $btab.= "<tr><th>ubytování</th><$td>$p_ubyt_</td><$td>$n_ubyt_</td></tr>";
   $btab.= "<tr><th>stravování</th><$td>$p_stra_</td><$td>$n_stra_</td></tr>";
-  $btab.= "<tr><th>program účastníků</th><$td>$p_prog_par_</td><td></td></tr>";
+  $btab.= "<tr><th>program účastníků</th><$td>$p_prog_pary_</td><td></td></tr>";
   $btab.= "<tr><th>program dětí</th><$td>$p_prog_deti_</td><td></td></tr>";
   $btab.= "<tr><th>slevy VPS</th><$td>$p_slev_vps_</td><td></td></tr>";
   $btab.= "<tr><th>individuální dotace</th><$td>$p_slev_dot_</td><td></td></tr>";
