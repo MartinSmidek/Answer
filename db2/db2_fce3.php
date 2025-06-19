@@ -5562,6 +5562,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $nj_def= [0,$noci,$oddo[0]=='o' ? $noci+1 : $noci,$noci]; // počet S,O,V
   $hnizda= $hnizda ? explode(',',$hnizda) : null;
   $jen_deti= $par->jen_deti??0;
+  $par_note= $par->note??'';
   $cv2= $cv2==2 ? 1 : 0; 
   // $cv2 vyvolá výpočty podle ceníku verze 2
   // zúčastněné proměnné mají prefix $cv2_
@@ -5578,7 +5579,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     if ($iluzko!==false && $ispacaky===false) {
       list(,$w)= explode(':',$tit[$iluzko]);
       array_splice($fld,$iluzko+1,0,['spacaky','nazemi']);
-      array_splice($tit,$iluzko+1,0,["spacáky:$w","na zemi:$w"]);
+      array_splice($tit,$iluzko+1,0,["spacáky:$w:r","na zemi:$w:r"]);
     }
     // vynecháme položky pristylky kocarek a případně také hnizdo
     $vynechat= ['pristylky','kocarek'];
@@ -5885,6 +5886,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   $res= $internal ? $clmn : tisk2_table($tits,$flds,$clmn,$export);
+  if ($par_note) $res->html= "$par_note {$res->html}";
   return $res;
 }
 # -------------------------------------------------------------------------------- tisk_sestava_lidi
