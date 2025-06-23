@@ -2671,8 +2671,8 @@ form _cmd_p [,,623,30] { css:'ae_work'
   }
   button [247,6,,] { title:"[fa-times fa-red] Zruš platbu" help:"napřed se zeptá na číslo platby"
     func onclick() { var i:number, u:array
-      i= 1;
-      if (pla.uhrady_n>1) i= prompt2("napiš pořadové číslo rušené platby",1);
+      i= 0;
+      if (pla.uhrady_n>1) i= prompt2("napiš pořadové číslo rušené platby",0);
       u= php.select('id_uhrada,u_castka','uhrada',`id_pobyt=${the_pobyt} AND u_poradi=${i}`);
       if (u[0] && confirm(`opravdu zrušit zaplacení ${u[1]} Kč?`)) {
         php.query(`DELETE FROM uhrada WHERE id_uhrada=${u[0]}`);

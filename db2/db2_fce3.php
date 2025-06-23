@@ -7651,7 +7651,7 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   }
   else $html.= "<h3>Na akci nemá žádný pár výročí svatby</h3>";
   if ( isset($vyroci['a']) && count($vyroci['a']) ) {
-    $html.= "<h3>Narozeniny dopělých na akci</h3><table>";
+    $html.= "<h3>Narozeniny dospělých na akci</h3><table>";
     foreach($vyroci['a'] as $txt) {
       list($kdo,$kdy)= explode('|',$txt);
       $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
