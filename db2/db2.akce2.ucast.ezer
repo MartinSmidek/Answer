@@ -2435,13 +2435,13 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
         echo(`zmena_spec_strav=${zmena_spec_strav} pro ${nazev}`);
       }
   }  
-  button stravy     [89,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+  button stravy     [89,Td+-5,37,] {tag:'b,2', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('','normalnich'); }
   }
   button stravy_bm  [140,Td+-5,37,] {tag:'b,2', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('_bm','bezmasých'); }
   }
-  button stravy_bl  [190,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+  button stravy_bl  [190,Td+-5,37,] {tag:'b,2', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     func onclick() { nestandard('_bl','bezlepkových'); }
   }
   // funkce
@@ -2454,7 +2454,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   field pocetdnu    [51,Td+15,11,] {tag:'b,2', data:pobyt.pocetdnu}                  // sémantika: počet nocí
   field kocarek     [71,Td+15,11,] {tag:'b,2', data:pobyt.kocarek}
   // normální strava
-  label [55,Td+-18,,] { tag:'b', title:'strava nomální' }
+  label [55,Td+-18,,] { tag:'b,2', title:'strava nomální' }
   field strava_cel  [94,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel}
   field strava_pol  [112,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol}
   // bezmasá
@@ -2462,7 +2462,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   field strava_cel_bm  [144,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bm}
   field strava_pol_bm  [162,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bm}
   // bezlepková
-  label [190,Td+-18,,] { tag:'b', title:'bezlepková' }
+  label [190,Td+-18,,] { tag:'b,2', title:'bezlepková' }
   field strava_cel_bl  [194,Td+15,11,] {tag:'b,2', data:pobyt.strava_cel_bl}
   field strava_pol_bl  [212,Td+15,11,] {tag:'b,2', data:pobyt.strava_pol_bl}
   // vlastní pečovatelé
