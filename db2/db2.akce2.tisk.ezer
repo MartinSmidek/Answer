@@ -630,9 +630,12 @@ menu m {type:'left', //active:*
     item {title:'Platby bez DPH'                                                             skill:'f'
                                         ,par:{typ:'vp2',cv:'1',exp:'Excel2',cnd:'1'}}
     item {title:'[fa-file-excel-o] Počty strav - souhrn'
-        ,par:{typ:'vsd2',exp:'Excel2',cnd:'1',souhrn:1}}
+        ,par:{typ:'vsd2',exp:'Excel2',cnd:'1',souhrn:1
+        ,note:`Souhrn denních počtů strav pro účastníky a pečouny.`}}
     item {title:'[fa-file-excel-o] Počty strav - výlet 3.den'
-        ,par:{typ:'vsd3',exp:'Excel2',cnd:'1',souhrn:1}}
+        ,par:{typ:'vsd3',exp:'Excel2',cnd:'1',souhrn:1
+        ,note:`Souhrn denních počtů strav pro účastníky a pečouny. 
+               <br><br>Je zapotřebí odečíst pečouny, kteří nepojedou na výlet !!!`}}
     item {title:'[fa-file-excel-o] Člověkolůžka' 
         ,par:{typ:'vn',exp:'Excel2',druhy:'u',cnd:'funkce NOT IN (9,10,13,14,15,99)'
         ,note:`Jsou zobrazena čerpání položek ceníku s druhem='u'.<br>
