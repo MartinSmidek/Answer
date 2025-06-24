@@ -6333,6 +6333,7 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
   list($noci,$od)= select("DATEDIFF(datum_do,datum_od),datum_od","akce","id_duakce=$akce");
   // omezení na výlet
   $pouze= $par->vylet??0;
+  $note= $par->note??'';
   // formátování tabulky
   $clmn= array();       // den -> fld -> počet
   $expr= array();       // den -> fld -> vzorec
@@ -6373,7 +6374,7 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
   $par= (object)[
     'tit'=> "Jméno,*",
     'fld'=> "rodice_,strava_dny",
-    '_cnd'=> " p.funkce NOT IN (9,10,13,14,15,99) "
+    '_cnd'=> " p.funkce NOT IN (9,10,13,14,15) "
 //      . " AND p.id_pobyt IN (69673)" // Czudkovi
 //      . " AND p.id_pobyt IN (69466)"
 //      . " AND p.id_pobyt IN (69619,69409,69874)"
@@ -6443,6 +6444,7 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
     }
     $result->html= ($pouze ? "Je zobrazen počet strav objednaných pro děti starší jak 3 roky, "
         . "které nemají os. pečovatele.<br>Jsou započítáni i pomocní pečovatelé.<br><br>" : '')
+        . ($note ? "$note<br><br>" : '')
         . "<div class='stat'><table class='stat'><tr>$ths</tr>$tab"
         . "$sum</table></div>";
     $result->html.= "</br>";
