@@ -5962,6 +5962,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       IFNULL(r2.note,r1.note) AS r_note,
       IFNULL(r2.role,r1.role) AS r_role,
       IF(MONTH(o.narozeni),TIMESTAMPDIFF(YEAR,o.narozeni,a.datum_od),YEAR(a.datum_od)-YEAR(o.narozeni)) AS _vek,
+      IF(MONTH(o.narozeni),ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1),YEAR(a.datum_od)-YEAR(o.narozeni)) AS _vek_,
     (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
         FROM akce JOIN pobyt ON id_akce=akce.id_duakce
         JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -6374,7 +6375,7 @@ function akce2_strava_cv2($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_p
   $par= (object)[
     'tit'=> "Jméno,*",
     'fld'=> "rodice_,strava_dny",
-    '_cnd'=> " p.funkce NOT IN (9,10,13,14,15) "
+    '_cnd'=> " p.funkce NOT IN (9,10,13,14,15) "  // stravy včetně pečounů
 //      . " AND p.id_pobyt IN (69673)" // Czudkovi
 //      . " AND p.id_pobyt IN (69466)"
 //      . " AND p.id_pobyt IN (69619,69409,69874)"
