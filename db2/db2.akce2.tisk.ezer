@@ -239,8 +239,8 @@ menu m {type:'left', //active:*
     item {title:'Děti na akci'                                                               skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
                                         ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
-                                        ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,narození:12:r,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,dite_kat,_vek,narozeni_dmy,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,~věk:5,narození:12:r,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,dite_kat,_vek,_vek_,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50,^'

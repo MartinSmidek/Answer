@@ -157,17 +157,17 @@ proc reload(id_spolu) {  //==> reload pečounů
 | p_oso.init; p_oso.d.browse_init;
   p_oso.o.key(0); p_oso.s.key(0);
 }
-var pall: object
-proc pecouni_add(p,i) {  // používají panely PridaniJmenem a PridaniAkce
-  var pk: number
-  var id: number
-  var pou: number
-  p.chck.get;
-  pall.set(p.all.get); id.set(pall.get('id'));
-  // přidání pečouna na akci
-  spolu.insert_record(object('id_osoba',id.get,'id_pobyt',the_pobyt.get));
-  reload(0);
-}
+//var pall: object
+//proc pecouni_add(p,i) {  // používají panely PridaniJmenem a PridaniAkce
+//  var pk: number
+//  var id: number
+//  var pou: number
+//  p.chck.get;
+//  pall.set(p.all.get); id.set(pall.get('id'));
+//  // přidání pečouna na akci
+//  spolu.insert_record(object('id_osoba',id.get,'id_pobyt',the_pobyt.get));
+//  reload(0);
+//}
 # ---------------------------------------------------------------------------------------==> _header
 form _header [,,380,50] {
   proc fill(x) {
@@ -193,27 +193,27 @@ form _header [,,380,50] {
 # -----------------------------------------------------------------------------------------==> _page
 form _page [,,580,20] {
   # --------------------------- záložky
-  proc tags(a,on,off) {
+  func tags(a:ezer,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
     a.set_css('ae_butt_on','ae_butt_off');
     panel.display(1,on); panel.display(0,off);
   }
-  proc page_init() {
-    zalozka.set('evid'); tags(evd,'p_oso','p_act|p_fot|p_str');
+  func page_init() {
+    zalozka= 'evid'; tags(&evd,'p_oso','p_act|p_fot|p_str');
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'p_oso','p_act|p_fot|p_str');
-      zalozka.set('evid'); up.b.reload_pecoun;
+    func onclick() { tags(&this,'p_oso','p_act|p_fot|p_str');
+      zalozka= 'evid'; up.b.reload_pecoun();
     }
   }
   label jin [152,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
-    proc onclick() { tags(this,'p_act','p_oso|p_fot|p_str');
-      zalozka.set('akce'); up.b.reload_pecoun;
+    func onclick() { tags(&this,'p_act','p_oso|p_fot|p_str');
+      zalozka= 'akce'; up.b.reload_pecoun();
     }
   }
   label plt [292,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c',
-    proc onclick() { tags(this,'p_fot','p_oso|p_act|p_str');
-      zalozka.set('foto'); up.b.reload_pecoun;
+    func onclick() { tags(&this,'p_fot','p_oso|p_act|p_str');
+      zalozka= 'foto'; up.b.reload_pecoun();
     }
   }
   label str [432,0,120,20] {tag:'p', title:'<b>Strava</b>', format:'c',
@@ -240,7 +240,7 @@ form _aktivity [,,580,] {
   var ido: number
   field jme [10,25,200,] { format:'o' }
   button [300,25,,] { title:'^evidence', css:'db_evidence',
-    proc onclick() { evi.evid_osoba(ido.get) } }
+    func onclick() { evi.evid_osoba(ido) } }
   edit pozn [390,52,175,250] { format:'o', title:'^poznámka k té akci' }
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
@@ -259,9 +259,9 @@ form _aktivity [,,580,] {
     show fce  [,, 60,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     show jak  [,, 30,] { title:'jak', help:"'dítě' znamená věk pod 18 let"
       expr:"IF(FLOOR(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<18,IF(s.s_role=4,'pom.p','dítě'),'')" }
-    proc onrowclick() { pozn.set(spozn.get) }
-    proc onsubmit() {
-      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
+    func onrowclick() { pozn= spozn }
+    func onsubmit() {
+      akce_show(ida,idp,conc(akce,' ',rok),'AKTIVITA') }
   }
   proc ucasti(id_osoba,_prijmeni,_jmeno) {
     id_osoba; ido.set(id_osoba);
@@ -282,9 +282,9 @@ form _osoba [,,580,] { tag:'a',
   field key_pobyt [L+517,T+37,50,] { format:'ro', style:'color:white', css:'Label' }
   # skoky do evidence, pobyty
   button go_evi [L+474,T+14,,] {title:'^evidence', css:'db_evidence'
-    proc onclick() { evi.evid_osoba(key_osoba.get) } }
+    func onclick() { evi.evid_osoba(key_osoba) } }
   button go_pob [L+474,T+35,,] {title:'^rodina', css:'db_evidence'
-    proc onclick() { ucast.ucast_pobyt(up.b.rod_pobyt.get) } }
+    func onclick() { ucast.ucast_pobyt(up.b.rod_pobyt) } }
   # osobní údaje
   field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení',title:'^příjmení'}
   field jmeno    [L+109,T+30,79,] {data:o.jmeno,title:'^jméno'}
@@ -484,7 +484,7 @@ form _pece [,,400,] { css:'ds_form'
   label leg [20,6,400,17] { title:"<span class='yellow'>zobrazit (pom.peč, os.peč., člen G), zapsané u rodičů na kartě Účastníci</span>"}
   // omezení browse
   check nevlastni [0,2,15,15] { title:' ', value:'1', format:'t'
-    proc onchange() { reload(0) }}
+    func onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
   view p: table pobyt  { join:'ON p.id_pobyt=s.id_pobyt' }
@@ -619,7 +619,7 @@ form _pece [,,400,] { css:'ds_form'
     }
     # ------------------------==> kontextové_menu
     menu { type:'context', join:b
-      item { title:'zrušit označení', skill:'m', proc onclick () { b.selected('clear') } }
+      item { title:'zrušit označení', skill:'m', func onclick () { b.selected('clear') } }
     }
   }
 }
@@ -719,18 +719,28 @@ form _cmd [,,200,32] { css:'ds_form'
       reload(0);
   } }
   // procedury
-  proc b_display(on) { up.b.display(on);  }
+  func b_display(on) { up.b.display(on);  }
 }
 # ================================================================================> Přidání jménem 3
 panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých pečounů jménem'
   use fl: form _fl [12,10,,]
-  proc onfocus() { fl.jmena.init; fl.vse.init; fl.L.init; fl.jmena.focus }
+  func onfocus() { fl.jmena.init(); fl.vse.init(); fl.L.init(); fl.jmena.focus() }
   form _fl [,,300,200] {
     var last: number
     var rod: object
     var popis: text
-    button [0,250,,] { title:'přidat do pečounů akce', proc onclick() {
-      each(L,pecouni_add); reload(0); panel.hide(0)
+//    button [0,250,,] { title:'přidat do pečounů akce', proc onclick() {
+//      each(L,pecouni_add); reload(0); panel.hide(0)
+//    } }
+    button [0,250,,] { title:'přidat do pečounů akce', func onclick() {
+      var p: ezer, pall: object
+      for (p of L) {
+        pall= p.all;
+        echo(p.info);
+        spolu.insert_record({id_osoba:pall.id,id_pobyt:the_pobyt});
+      }
+      reload(0); 
+      panel.hide(0)
     } }
     button [144,250,,] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }

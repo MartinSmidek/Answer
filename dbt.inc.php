@@ -23,10 +23,12 @@
   // živá větev v github
   $git_app_branch= 'test';   // místo defaultu 'master'
 
-  // informace pro debugger
+  // informace pro debugger o poloze ezer modulů
   $dbg_info= (object)array(
-    'src_path'  => array('db2','ezer3.2') // poloha a preference zdrojových modulů
+    'src_path'  => array('dbt','db2','ezer3.2') // poloha a preference zdrojových modulů
   );
+
+  $ezer_root_js= 'db2'; // informace pro sys_doc.php
 
   // databáze
   $deep_root= "../files/answer";
@@ -51,11 +53,6 @@
           'pswd'=>$api_gmail_pass
       ))
     );
-
-  // informace pro debugger o poloze ezer modulů
-  $dbg_info= (object)array(
-    'src_path'  => array('dbt','db2','ezer3.2') // poloha a preference zdrojových modulů
-  );
 
 //  // cesta k utilitám MySQL/MariaDB
 //  $ezer_mysql_path= array(
@@ -82,9 +79,35 @@
     "db2/db2_tcpdf.php",
     "db2/db2.system.php",
     "ezer$ezer_version/server/ezer_ruian.php",
-    "ezer$ezer_version/server/ezer_cms3.php"
+//    "ezer$ezer_version/server/ezer_cms3.php"
   );
   
+  // definice modulů specifických pro Answer
+  $app_php= array(
+    "db2/db-akce.php",
+    "db2/db-bank.php",
+    "db2/db-cenik.php",
+    "db2/db-data.php",
+    "db2/db-dotaznik.php",
+    "db2/db-dum.php",
+    "db2/db-elim.php",
+    "db2/db-foto.php",
+    "db2/db-lib.php",
+    "db2/db-mail.php",
+    "db2/db-mapa.php",
+    "db2/db-pece.php",
+    "db2/db-pokl.php",
+    "db2/db-prihl.php",
+    "db2/db-stat.php",
+    "db2/db-tisk.php",
+    "db2/db-ucast.php",
+    "db2/db-obsolete.php",
+    "db2/db-delete.php",
+    "db2/db2_tcpdf.php",
+    "ezer$ezer_version/server/ezer_ruian.php",
+//    "ezer$ezer_version/server/ezer_cms3.php"
+  );
+
   $ezer= array(
   );
   
