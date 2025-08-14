@@ -1,4 +1,5 @@
-<?php
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 # ------------------------------------------------------------------------------------- db2 rod_show
 # BROWSE ASK
@@ -302,7 +303,7 @@ function git_make($par) {
     fce_error('chybná aktuální složka');
   // proveď příkaz Git
   $state= 0;
-  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';
+  $branch= $folder=='ezer' ? 'ezer'.EZER_VERSION : 'master';
   switch ($cmd) {
     case 'log':
     case 'status':

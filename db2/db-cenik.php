@@ -155,7 +155,7 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
   $w_table= $spec->prijmeni ? 365 : 295;
   $ret= (object)['navrh'=>'','tabulka'=>'','full'=>[],'rozpis'=>['u'=>0,'s'=>0,'p'=>0,'d'=>0,'bad'=>'']];
   $hd= ['jmeno'=>"jméno &nbsp; &nbsp; :$w_jmeno",
-        't'=>'jako?::P-pečovatel, U-účastník, V-VPS, H-host, p-pomocný pečovatel, '
+        't'=>'jako?::P-pečovatel, U-účastník (S-storno), V-VPS, H-host, p-pomocný pečovatel, '
           . 'D-dítě ve skupince, C-chůva, d-chované dítě',
         'n'=>'noc','sov'=>'jídla','p'=>'porce','d'=>'dieta','v'=>'věk'];
   if ($spec->cena) $hd['Kc']= 'cena:35';

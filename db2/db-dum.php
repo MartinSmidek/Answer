@@ -1,4 +1,5 @@
-<?php
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 define('org_ds',64);
 define ('POZOR',"<span style:'color:red;background:yellow'>POZOR</span>");
@@ -19,7 +20,7 @@ function ds_ceny_group() { //debug($par);
 //        'id'=>"rok_$rok",
         'options'=>(object)array(
           'title'=>$rok,
-          'par'=> $ezer_version=='3.2'
+          'par'=> $ezer_version>='3.2'
             ? (object)array('*'=>(object)array('rok'=>$rok))
             : (object)array('rok'=>$rok)
       ));
@@ -170,6 +171,11 @@ function dum_faktura_delete($duvod,$idf) {
   $dnes= date('Y-m-d');
   query_track("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
 }
+# ------------------------------------------------------------------------------- dum faktura_update
+# fakturu bude upravena, je třeba zpsat důvod opravy,
+function dum_faktura_update($parm,$idf) {
+  
+}
 # --------------------------------------------------------------------------------- dum faktura_save
 # pokud je uvedeno idf je třeba zneplatněnou fakturu pozančit jako smazanou, zpsat důvod opravy,
 # vytvořit novou fakturu a její id zaměnit za idf v join_platba
@@ -221,6 +227,7 @@ end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ: 1=záloha | 2=daňový doklad k záloze | 3=vyúčtování | 4=výjimečná faktura 
+# 250806 přidána možnost revize - přidání datetime do stejmenného sloupce
 function dum_faktura($par) {  debug($par,'dum_faktura');
   global $dum_faktura_dfl, $dum_faktura_fld; 
   $err= '';
@@ -253,6 +260,8 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vystavena= $date->format('j. n. Y');
   $par->vystavena= $date->format('Y-m-d');
   $splatnost= $date->modify('+14 days');
+  // jde o revizi finanční části, tedy o vystavení de-facto nové faktury se stejným názvem?
+  $revize= $par->revize??0 ? '' : time();
   // společné údaje
   $vals['{obdobi}']= $oddo;
   $vals['{ic_dic}']= ($ic ? "IČ: $ic" : '').($dic ? "    DIČ: $dic" : '');
@@ -2196,7 +2205,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
     $r2= $r1+1;
     $xls.= "\n\n|A$r1:$A$r border=+h\n|A$r1:$A$r1 border=t|A$r2:$A$r border=t\n|close";
     file_put_contents("docs/kniha.txt",$xls);
-    require_once "ezer3.2/server/vendor/autoload.php";
+    require_once "ezer".EZER_VERSION."/server/vendor/autoload.php";
     $res->err= Excel2007($xls,1);
     if ( !$res->err ) 
       $res->ref= "<a href='docs/kniha.xlsx' target='xls'>zde</a>.";

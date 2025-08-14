@@ -221,12 +221,17 @@ form _vyuctovani [,,623,400] {
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   label vystavena [300,297,100,18] {tag:'h'}
   button [300,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
-    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, je:text
-      clear();
+    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, 
+        je:text, revize:number
+      clear(); revize= 0;
       je= php.select('nazev','faktura',`id_pobyt=${id_pobyt} AND deleted='' `);
       if (je) {
-        alert(`pro tento pobyt již byla vystavena faktura ${je} - opravit ji lze v záložce Faktury`);
-        return;
+//        alert(`pro tento pobyt již byla vystavena faktura ${je} - opravit ji lze v záložce Faktury`);
+//        return;
+        if (confirm(`pro tento pobyt již byla vystavena faktura ${je} 
+            - chceš přegenerovat podle opravené ceny?`)) {
+              revize= 1;
+            }
       }
       vyrizuje= sys('user','options','vyrizuje');
       nadpis= `Za pobyt v Domě setkání ve dnech ${udaje_pobyt.oddo} Vám fakturujeme:`;

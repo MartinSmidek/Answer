@@ -77,8 +77,8 @@ var smazane_o= 1,                               // 1|o.deleted=''
 var ido=0, idr=0, ok=0                          // výsledky eliminace
 var last_ido_lst='', last_idos_lst=''
         
-#if ezer_version==3.2
-# ===============================================================================> ezer_version==3.2
+#if ezer_version==3.3
+# ===============================================================================> ezer_version==3.3
 # ------------------------------------------------------------------------------------------==> uses
 use c:  form _cmd    [0,584,,]
 var o1: ezer, o2: ezer  // nabývají hodnot o1_  o2_

@@ -686,7 +686,7 @@ function ds2_obj_menu($ym_list=null) {
         $iid= $o->uid;
         $zkratka= $stav[$o->state];
         $par= (object)array('uid'=>$iid,'grp'=>$group);
-        if ($ezer_version=='3.2') 
+        if ($ezer_version>='3.2') 
           $par= (object)array('*'=>$par);
 //        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
         $tit= $o->nazev ? wu("$iid - $zkratka - $o->nazev") : wu("$iid - $zkratka - $o->name");
@@ -751,7 +751,7 @@ function ds2_kli_menu($rok_od=-1,$rok_do=1) {
       $par= (object)array('od'=>$od,'do'=>$do,
         'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids,
         'mesic_rok'=>/*w*u*/($mesice[$m])." $rok");
-      if ($ezer_version=='3.2') 
+      if ($ezer_version>='3.2') 
         $par= (object)array('*'=>$par);
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;

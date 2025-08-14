@@ -23,11 +23,6 @@
   // živá větev v github
   $git_app_branch= 'test';   // místo defaultu 'master'
 
-  // informace pro debugger
-  $dbg_info= (object)array(
-    'src_path'  => array('db2','ezer3.2') // poloha a preference zdrojových modulů
-  );
-
   // databáze
   $deep_root= "../files/answer";
   require_once("$deep_root/ms50_test.dbs.php");
@@ -54,7 +49,7 @@
 
   // informace pro debugger o poloze ezer modulů
   $dbg_info= (object)array(
-    'src_path'  => array('ms50','db2','ezer3.2') // poloha a preference zdrojových modulů
+    'src_path'  => array('ms50','db2',"ezer$ezer_version") // poloha a preference zdrojových modulů
   );
 
 //  // cesta k utilitám MySQL/MariaDB

@@ -1,4 +1,5 @@
-<?php
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 # --------------------------------------------------------------------------==> . sta2 mrop stat map
 # zobrazení bydliště
@@ -1136,7 +1137,7 @@ function akce_ciselnik($rok) {
   }
   $xls.= "\n|close";
                                       display($xls);
-  require_once "ezer3.2/server/vendor/autoload.php";
+  require_once "ezer".EZER_VERSION."/server/vendor/autoload.php";
   $inf= Excel2007($xls);
   if ( $inf ) {
     $html.= "Číselník se nepovedlo vygenerovat ($inf)";

@@ -1,4 +1,5 @@
-<?php
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 # =====================================================================================> . potvrzení
 # ---------------------------------------------------------------------------------------- ucet_potv
@@ -1427,7 +1428,7 @@ function mail2_new_PHPMailer($smtp=null) {
   }
   // inicializace Ezer_PHPMailer
   global $abs_root;
-  $server= "$abs_root/ezer3.2/server";
+  $server= "$abs_root/ezer".EZER_VERSION."/server";
   require_once "$server/ezer_mailer.php";
   $mail= new Ezer_PHPMailer($smtp);
 end:  
@@ -2221,7 +2222,7 @@ function kasa_send_mail($subject,$html,$from='',$to='',$fromname='',$typ='',$rep
     'Username'   => 'answer@setkani.org',
     'files_path' => __DIR__.'/../../files/setkani4'
   ];
-  require_once "$abs_root/ezer3.2/server/ezer_mailer.php";
+  require_once "$abs_root/ezer".EZER_VERSION."/server/ezer_mailer.php";
   $mail= new Ezer_PHPMailer($smtp);
   if ( $mail->Ezer_error ) { 
     $msg= $mail->Ezer_error;
