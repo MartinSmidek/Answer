@@ -71,16 +71,16 @@
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_root= "db2/ds_fce3";
 
-  // definice modulů specifických pro Answer
-  $app_php= array(
-    "db2/db2_ys2_fce3.php",
-    "db2/db2_fce3.php",
-    "db2/ds_fce.php",
-    "db2/db2_tcpdf.php",
-    "db2/db2.system.php",
-    "ezer$ezer_version/server/ezer_ruian.php",
-//    "ezer$ezer_version/server/ezer_cms3.php"
-  );
+//  // definice modulů specifických pro Answer
+//  $app_php= array(
+//    "db2/db2_ys2_fce3.php",
+//    "db2/db2_fce3.php",
+//    "db2/ds_fce.php",
+//    "db2/db2_tcpdf.php",
+//    "db2/db2.system.php",
+//    "ezer$ezer_version/server/ezer_ruian.php",
+////    "ezer$ezer_version/server/ezer_cms3.php"
+//  );
   
   // definice modulů specifických pro Answer
   $app_php= array(

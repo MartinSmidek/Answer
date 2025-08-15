@@ -2,7 +2,7 @@
 define("EZER_VERSION","3.3");  
 
 define('org_ds',64);
-define ('POZOR',"<span style:'color:red;background:yellow'>POZOR</span>");
+define ('POZOR',"<br><span style='color:red;background:yellow'>POZOR</span>");
 
 # ------------------------------------------------------------------------------------ ds ceny_group
 # vygeneruje menu.group pro 7 let 
@@ -171,24 +171,21 @@ function dum_faktura_delete($duvod,$idf) {
   $dnes= date('Y-m-d');
   query_track("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
 }
-# ------------------------------------------------------------------------------- dum faktura_update
-# fakturu bude upravena, je třeba zpsat důvod opravy,
-function dum_faktura_update($parm,$idf) {
-  
-}
 # --------------------------------------------------------------------------------- dum faktura_save
-# pokud je uvedeno idf je třeba zneplatněnou fakturu pozančit jako smazanou, zpsat důvod opravy,
+# pokud je uvedeno idf je třeba zneplatněnou fakturu poznačit jako smazanou, zpsat důvod opravy,
 # vytvořit novou fakturu a její id zaměnit za idf v join_platba
 function dum_faktura_save($parm,$idf=0) {
   $msg= '';
   $x= array_merge((array)$parm); $x['html']= "...";
-//  debug($x,"dum_faktura_save(...)");                                                    /*DEBUG*/
+  debug($x,"dum_faktura_save(...)");                                                    /*DEBUG*/
   // uložení do tabulky
   $p= $parm->parm;
   $order= $p->id_order ?? '';
   $pobyt= $p->id_pobyt ?? '';
   $nadpis= pdo_real_escape_string($p->nadpis); 
-  $duvod= pdo_real_escape_string($parm->duvod_zmeny).date(' (j.n.Y)'); 
+  $duvod= $p->revize??0 ? "revize faktury ... " : '';
+  $duvod.= pdo_real_escape_string($parm->duvod_zmeny); 
+  $duvod.= date(' (j.n.Y)'); 
 //  $jso= $html= '';
   $p->parm_json= json_encode($p);
   $jso= pdo_real_escape_string($parm->parm_json); 
@@ -211,7 +208,7 @@ function dum_faktura_save($parm,$idf=0) {
     query("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,val) "
         . "VALUE (NOW(),'$USER->abbr','faktura',$idf2,'i','$fld','$val')");
   }
-  // pokud jde o náhradu za $idf
+  // pokud jde o náhradu za $idf, opravu adresy nebo revizi ceny
   if ($idf) {
     $dnes= date('Y-m-d');
     query_track("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
@@ -227,7 +224,7 @@ end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ: 1=záloha | 2=daňový doklad k záloze | 3=vyúčtování | 4=výjimečná faktura 
-# 250806 přidána možnost revize - přidání datetime do stejmenného sloupce
+# 250806 přidána možnost revize - obsahuje id zneplatněné verze faktury
 function dum_faktura($par) {  debug($par,'dum_faktura');
   global $dum_faktura_dfl, $dum_faktura_fld; 
   $err= '';
@@ -245,7 +242,6 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $oddo= $par->oddo;
   $rok= $par->rok;
   $num= $par->num;
-  $vs= $par->vs;
   $ss= $par->ss;
   $order= $par->id_order;
   $pobyt= $par->id_pobyt ?: 0; 
@@ -261,7 +257,10 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $par->vystavena= $date->format('Y-m-d');
   $splatnost= $date->modify('+14 days');
   // jde o revizi finanční části, tedy o vystavení de-facto nové faktury se stejným názvem?
-  $revize= $par->revize??0 ? '' : time();
+  $revize= $par->revize??0; // id_faktura rušené verze
+  if ($revize) {
+    $par->vs= substr($par->nazev,-4); // ponecháme starší VS
+  }
   // společné údaje
   $vals['{obdobi}']= $oddo;
   $vals['{ic_dic}']= ($ic ? "IČ: $ic" : '').($dic ? "    DIČ: $dic" : '');
@@ -272,13 +271,13 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   // QR platba
   $vals['{QR-IBAN}']= 'CZ1520100000002000465448'; // Dům setkání: 2000465448 / 2010
   $vals['{QR-ds}']= urlencode('YMCA Setkání');
-  $vals['{QR-vs}']= $vals['{VS}']= $vs;
+  $vals['{QR-vs}']= $vals['{VS}']= $par->vs;
   $vals['{QR-ss}']= $vals['{SS}']= $ss;
   $vals['{QR-pozn}']= urlencode("pobyt v Domě setkání");
   $vyjimecna= 0;
   // podle typu faktury
   if ($typ==3) { // vyúčtování
-    $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
+    if (!$revize) $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
@@ -288,7 +287,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   } // vyúčtování
   elseif ($typ==4) { // výjimečné vyúčtování zadáním konečných částek
     $vyjimecna= 1;
-    $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
+    if (!$revize) $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
@@ -297,7 +296,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   } // výjimečné vyúčtování zadáním konečných částek
   elseif ($typ==1) { // záloha
-    $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
+    if (!$revize) $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Zálohová faktura $par->nazev";
     $dum_faktura_fld['za_co'][1]= "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
     $vals['{DUZP-text}']= '';
@@ -306,7 +305,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   } // záloha
   else { // $typ==2 daňový doklad 
-    $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
+    if (!$revize) $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Daňový doklad $par->nazev";
     $par->nadpis= "Daňový doklad k přijaté platbě <b>$zaloha Kč</b> "
         . "za zálohovou fakturu {$par->nazev}.";
@@ -681,7 +680,7 @@ $html
 __HTML;
 //  display($html);
   file_put_contents("fakt.html",$html_exp);
-//  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
+  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
   return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
       'parm'=>$par,'err'=>$err);
 }
