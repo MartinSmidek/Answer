@@ -3,6 +3,7 @@
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
  * 
  * verze 2025.3
+ * 2025-08-27 text nad dětmi rozlišen podle typu M|O
  * 2025-03-27 volání z www.setkani.org s parametrem sid
  * 2025-03-14 přidávání verze J a R
  * 2025-02-27 ostrý provoz pro MS: LK a Obnovy
@@ -63,7 +64,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
 // ========================================================================== parametrizace aplikace
   $akce_default= [ // položky které aplikace umí
   // základní typ přihlášky
-    'p_typ'         =>  0, // M|O|R|J
+    'p_typ'         =>  0, // M|O|R|J ... letní kurz | obnova | rodinný | jednotlivci
     'p_pozde'       =>  0, // od teď přihlášené brát jen jako náhradníky
     'p_registrace'  =>  0, // je povoleno registrovat se neznámým emailem
     'p_sleva'       =>  0, // umožnit požádat o slevu
@@ -79,10 +80,10 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_detska_od'   =>  3, // hranice poloviční stravy
     'p_detska_do'   => 10, // hranice poloviční stravy
   // -- jen pro obnovy MS
-    'p_obnova'      =>  0, // OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
+    'p_obnova'      =>  0, // O: OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
   // -- jen pro LK MS
-    'p_upozorneni'  =>  0, // LETNÍ KURZ MS: vyžadovat akceptaci upozornění
-    'p_dokument'    =>  0, // LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
+    'p_upozorneni'  =>  0, // M: LETNÍ KURZ MS: vyžadovat akceptaci upozornění
+    'p_dokument'    =>  0, // M: LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
   // -- jen pro jednotlivce
     'p_oso_adresa'  =>  0, // zadání osobní adresy, pokud není použije se rodinná ale změna se poptá zda jde o rodinnou nebo jen vlastní
   // OBSOLETE
@@ -286,10 +287,15 @@ function polozky() { // --------------------------------------------------------
           typ_akce('MOR') ? 'Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.' : (
           typ_akce('J') ? 'Zkontrolujte a případně doplňte své údaje.' : ''),  
       'deti' =>
-          "<p><b>Děti</b> (zapište prosím i ty vaše, které necháváte doma)."
-          . ( $akce->p_pecouni 
-            ? '<br>Pečovatele pro dítě přidávejte, pouze pokud nevyužijete služeb našeho kolektivu pečovatelů.</p>'
-            : ''),
+          typ_akce('M')
+          ? "<p><b>Děti</b> (zapište prosím i ty vaše, které necháváte doma)."
+            . ( $akce->p_pecouni 
+              ? '<br>Pečovatele pro dítě přidávejte, pouze pokud nevyužijete služeb našeho kolektivu pečovatelů.</p>'
+              : '')
+          : "<p><b>Děti</b> (zapište prosím všechny vaše děti)
+             <br>Hlídání pro děti nezajišťujeme, pokud potřebujete vzít např. kojence s sebou, 
+             musíte si pro něj zajistit a zaplatit pečovatele. 
+             Toto dítě i pečovatele prosím také zapište do přihlášky.</p>",
       'strava' =>
           "<b>Objednáváme stravu:</b> snídani, oběd, večeři (dětem od $akce->p_detska_od "
           . "do $akce->p_detska_do let poloviční porce);"
@@ -430,7 +436,7 @@ function polozky() { // --------------------------------------------------------
         case 'o': $x_fld= &$o_fld; break;
         case 'r': $x_fld= &$r_fld; break;
         case 'p': $x_fld= &$p_fld; break;
-        default: continue;
+        default: continue 2;
       }
       if ($x_fld && isset($x_fld[$fld])) {
         $x_fld[$fld][1]= $val;
