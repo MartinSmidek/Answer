@@ -1530,7 +1530,7 @@ form _evidence [,,623,] { style:'height:fit-content'
 //        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
 //      change_width);
     for (elem of array(&page.frame, &evid.frame, &pla.frame, &pla_ds.frame, &act0.frame, &alb0.frame, &docu.frame)) {
-      change_width(elem);
+      if (elem) change_width(elem);
     }
     // 1 sloupec
     if (n==1) {
