@@ -449,11 +449,13 @@ form _page [,,275,360] {
       info.sey.browse_seek; show_akce(form.key);
   }}
   // Změna ceníku
-  radio cen_ma [13,254,210,19] { tag:'cor', data:akce.ma_cenik, // skill:'yaa|yaan;caa|caan;faa|faan'
-    case [0,0,94,] { title:'používat ceník', expr:'1' }
-    case [93,0,115,] { title:'ceny DS ==> ', expr:'2' }
+  radio cen_ma [13,254,210,19] { title:'ceník:', tag:'cor', data:akce.ma_cenik, // skill:'yaa|yaan;caa|caan;faa|faan'
+    case [0,0,34,] { title:'ne', expr:'0' }
+    case [39,0,37,] { title:'v.1', expr:'1' }
+    case [79,0,36,] { title:'v.2', expr:'3' }
+    case [119,0,115,] { title:'ceny DS ==> ', expr:'2' }
   }
-  button [198,255,,] { tag:'cor', title:'Objednávka', skill:'yd2|yd2'
+  button [214,255,,] { tag:'cor', title:'Objednávka', skill:'yd2|yd2'
     func onclick() {
       clear();
       if (key_akce==the_duakce) dum.Objednavka.Show(the_duakce);
@@ -464,7 +466,7 @@ form _page [,,275,360] {
       cen_copy.enable(1);
       cen_copy.selects(php.akce2_select_cenik(form.key()),',:',0,1)
   }}
-  select cen_copy [138,232,139,] {tag:'cor', format:'ntd', help:'vzory ceníků'
+  select cen_copy [157,232,139,] {tag:'cor', format:'ntd', help:'vzory ceníků'
     func onchanged() { var msg:text
       msg= php.akce2_change_cenik('dotaz',form.key(),cen_copy.key());
       if (substr(msg,-1,1)=='?') {
@@ -480,7 +482,7 @@ form _page [,,275,360] {
   label [159,283,20,] { tag:'cor', title:'Kč' }
   // ------------------------------------- hnízda
   var hnizda_ok=1
-  check is_hnizda [292,230,161,] { tag:'cor' title:'akce je v hnízdech' format:'t'
+  check is_hnizda [322,252,134,] { tag:'cor' title:'akce je v hnízdech' format:'t'
       skill:'yaa|yaan;caa|caan;faa|faan' 
     func onchange() { 
       hnizda.display(is_hnizda); 
@@ -488,7 +490,7 @@ form _page [,,275,360] {
         hnizda= ''; hnizda.change() 
       }
   }}
-  check [292,252,161,] { tag:'cor' title:'akce je mezinárodní', 
+  check [322,230,134,] { tag:'cor' title:'akce je mezinárodní', 
       skill:'yaa|yaan;caa|caan;faa|faan', data:akce.mezinarodni}
   edit hnizda [292,262,161,40] { tag:'cor' title:'^jména hnízd oddělená čárkami' 
       data:akce.hnizda format:'n' 

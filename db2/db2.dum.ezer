@@ -221,12 +221,20 @@ form _vyuctovani [,,623,400] {
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   label vystavena [300,297,100,18] {tag:'h'}
   button [300,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
-    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, je:text
-      clear();
-      je= php.select('nazev','faktura',`id_pobyt=${id_pobyt} AND deleted='' `);
+    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, 
+        je:array
+      clear(); 
+      je= php.select('nazev,id_faktura','faktura',`id_pobyt=${id_pobyt} AND deleted='' `);
       if (je) {
-        alert(`pro tento pobyt již byla vystavena faktura ${je} - opravit ji lze v záložce Faktury`);
-        return;
+//        alert(`pro tento pobyt již byla vystavena faktura ${je} - opravit ji lze v záložce Faktury`);
+//        return;
+        if (confirm(`pro tento pobyt již byla vystavena faktura ${je} 
+            - chceš přegenerovat podle opravené ceny?`)) {
+        }
+        else return;
+      }
+      else {
+        je= ['',0];
       }
       vyrizuje= sys('user','options','vyrizuje');
       nadpis= `Za pobyt v Domě setkání ve dnech ${udaje_pobyt.oddo} Vám fakturujeme:`;
@@ -236,16 +244,28 @@ form _vyuctovani [,,623,400] {
         return;
       }
       adresa= php.dum_spolu_adresa(hos.ids);
-      faktura= php.dum_faktura({typ:3,show:1,save:1,strucna:strucna,vystavena:fdate('Y-m-d'),
+      faktura= php.dum_faktura({nazev:je[0],revize:je[1],
+          typ:3,show:1,save:1,strucna:strucna,vystavena:fdate('Y-m-d'),
           adresa:adresa,ds_vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,nadpis:nadpis,
           num:uf.fakt_num,ubyt_zal:0,stra_zal:0,vs:uf.fakt_num,ss:udaje_pobyt.pobyt,vyrizuje:vyrizuje});
       if (faktura.err) { alert(faktura.err); return }
-      call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
-          {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
+      if (je[1]) { // je revize
+        call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
+            {block:&this,func:'revize',title:'[fa-save] Uložit jako revizi'});
+      }
+      else {
+        call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
+            {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
+      }
     }
     func ulozeno() { var msg:text
       msg= php.dum_faktura_save(faktura);
+      alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
+            <br>Je třeba ji poslat i našemu ekonomovi.`);
+    }
+    func revize() { var msg:text
+      msg= php.dum_faktura_save(faktura,faktura.parm.revize); // označí jako smazané
       alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
             <br>Je třeba ji poslat i našemu ekonomovi.`);
     }

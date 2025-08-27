@@ -468,17 +468,37 @@ form _cmd [,,623,30] {
   label [136,0,481,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
   //==> .. [zpět]
   label  [0,0,121,30] { tag:'r', css:'ae_parm search', skill:'yaa;faa;caa', style:"box-shadow:2px 2px 10px #333" }
-  proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
+  func _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
     set_state('show');
-    evid.Plain;
+    evid.Plain();
     sp1.enable(1,'.*');
     os2.enable(1,'.*'); sp2.enable(1,'.*');
     pob.enable(1,'.*'); rod.enable(1,'.*');
     rod.cleni.enable(1);
-    [ renew; reload(the_pobyt.get) | warning; u.b.browse_count; u.b.load_zalozka | evid.Init; ];
-    [ ido; rod.cleni.raise('onrowclick',ido) ];
-    mode.set('');
+    if (renew) 
+      reload(the_pobyt) 
+    else { 
+      warning(); 
+      if (u.b.browse_count())  
+        u.b.load_zalozka() 
+      else 
+        evid.Init();
+    }
+    if (ido)
+      rod.cleni.raise('onrowclick',ido);
+    mode= '';
   }
+//  proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
+//    set_state('show');
+//    evid.Plain;
+//    sp1.enable(1,'.*');
+//    os2.enable(1,'.*'); sp2.enable(1,'.*');
+//    pob.enable(1,'.*'); rod.enable(1,'.*');
+//    rod.cleni.enable(1);
+//    [ renew; reload(the_pobyt.get) | warning; u.b.browse_count; u.b.load_zalozka | evid.Init; ];
+//    [ ido; rod.cleni.raise('onrowclick',ido) ];
+//    mode.set('');
+//  }
   button zpet [7,6,,] { /*tag:'s,z,r',*/ title:'[fa-undo] Zpět',help:'Neměnit změněná data',css:'search'
     proc onclick() { Click }
     func Click() {
@@ -1510,7 +1530,7 @@ form _evidence [,,623,] { style:'height:fit-content'
 //        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
 //      change_width);
     for (elem of array(&page.frame, &evid.frame, &pla.frame, &pla_ds.frame, &act0.frame, &alb0.frame, &docu.frame)) {
-      change_width(elem);
+      if (elem) change_width(elem);
     }
     // 1 sloupec
     if (n==1) {

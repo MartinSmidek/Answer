@@ -443,7 +443,7 @@ Ezer.onlogin= function() {
 function personify(access,test) {
 //  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
   test= test || '';
-  var v= Ezer.version=='3.2' ? `<sub><small>${Ezer.version}</small></sub>` : '';
+  var v= `<sub><small>${Ezer.version}</small></sub>`;
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
   var tits= ['',`Answer${test}${v} Setkání`,`Answer${test}${v} Familia`,`Answer${test}${v} (společný)`];

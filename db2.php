@@ -14,7 +14,7 @@
   #   $options    = doplnění Ezer.options
 
   // verze použitého jádra Ezeru
-  $ezer_version= '3.2'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
 
   // server, databáze, cesty, klíče
   $deep_root= "../files/answer";
@@ -126,8 +126,7 @@
   $access_app= $access_app[$cookie];
   $choice_js= "personify('menu_on'); return false;";
   // doplnění jména aplikace o laděnou verzi ezer
-  $new= $ezer_version!='3.1' 
-      ? '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>' : '';
+  $new= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
   $title= "$demo
     <span $title_style>"
     . $title_flag
@@ -135,9 +134,9 @@
         Answer$new $access_app
       </span>
       <div id='access_menu'>
-        <span onclick='personify(1);'>Ans(w)er Setkání</span>
-        <span onclick='personify(2);'>Ans(w)er Familia</span>
-        <span onclick='personify(3);' class='separator'>Ans(w)er (společný)</span>
+        <span onclick=\"personify(1,'');\">Answer Setkání</span>
+        <span onclick=\"personify(2,'');\">Answer Familia</span>
+        <span onclick=\"personify(3,'');\" class='separator'>Answer (společný)</span>
       </div>
     </span>";
   

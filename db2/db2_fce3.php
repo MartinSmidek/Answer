@@ -9740,7 +9740,7 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
       . ",v_nocleh,v_strava,v_program,v_sleva"
       ,
     '_cnd'=> " p.funkce!=99 "
-//      . " AND p.id_pobyt IN (69445,69483)"
+//      . " AND p.id_pobyt IN (69619,69409)"
     ];
   
   $href= '';
