@@ -3,7 +3,7 @@
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
  * 
  * verze 2025.3
- * 2025-08-27 text nad dětmi rozlišen podle typu M|O
+ * 2025-08-27 text nad dětmi rozlišen podle typu M|O, oprava s_role dítěte s chůvou
  * 2025-03-27 volání z www.setkani.org s parametrem sid
  * 2025-03-14 přidávání verze J a R
  * 2025-02-27 ostrý provoz pro MS: LK a Obnovy
@@ -2655,10 +2655,6 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
       (object)['fld'=>'s_role',    'op'=>'i','val'=>$role=='d'?2:1]
     );
-//    if ($akce->p_strava) {
-//      $chng[]= (object)['fld'=>'kat_porce',  'op'=>'i','val'=>get('o','Xdieta',$ido)];
-//      $chng[]= (object)['fld'=>'kat_dieta',  'op'=>'i','val'=>get('o','Xporce',$ido)];
-//    }
     _ezer_qry("INSERT",'spolu',0,$chng);
   } // zapojíme do pobytu
  
