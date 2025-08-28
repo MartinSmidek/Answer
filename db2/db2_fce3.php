@@ -9774,7 +9774,6 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
   // průchod pobyty
   $rows= 0;
   foreach ($ret as $n=>$x) {
-    $rows++;
     $x= (object)$x;
     // dopočet úhrad
     $u= akce2_uhrady_load($x->key_pobyt);
@@ -9789,6 +9788,11 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
     $preplatek= $platba > $predpis ? $platba - $predpis : 0;
     $nedoplatek= $platba < $predpis ? $predpis - $platba : 0;
     $naklad= $predpis - $x->c_sleva;
+    // vynecháme ty, kteří byli odhlášeni, pokud nezaplatili
+    if ($x->funkce==14 && $platba==0) {
+      continue;
+    }
+    $rows++;
     // vyplnění polí
     foreach($flds as $if=>$f) {
       $exp= ''; $val= 0;

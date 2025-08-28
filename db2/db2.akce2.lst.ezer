@@ -334,6 +334,7 @@ form _page [,,275,360] {
   func show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
     form.load(id_akce); 
+    cen_ma.Init();
     if (has_skill('y')) web_url= php.web_prihlaska_url(id_akce);
     ds_order= the_order ? 1 : 2;
     switch (zalozka) {
@@ -448,12 +449,30 @@ form _page [,,275,360] {
       | alert(ask('akce2_soubeh_nastav',form.key)) };
       info.sey.browse_seek; show_akce(form.key);
   }}
-  // Změna ceníku
-  radio cen_ma [13,254,210,19] { title:'ceník:', tag:'cor', data:akce.ma_cenik, // skill:'yaa|yaan;caa|caan;faa|faan'
-    case [0,0,34,] { title:'ne', expr:'0' }
-    case [39,0,37,] { title:'v.1', expr:'1' }
-    case [79,0,36,] { title:'v.2', expr:'3' }
+  // Změna ceníku: 
+  // - ma_cenik=0 .. bez ceníku
+  // - ma_cenik=1 a ma_cenik_verze=0/2 ... 1,0 verze 1 ... 1,2 verze 2
+  // - ma_cenik=2 ... DS
+  field ma_cenik { data:akce.ma_cenik }
+  field ma_cenik_verze { data:akce.ma_cenik_verze }
+  radio cen_ma [13,254,210,19] { title:'ceník:', tag:'cor'  // skill:'yaa|yaan;caa|caan;faa|faan'
+    case [0,0,50,] { title:'nemá', expr:'0' }
+    case [50,0,37,] { title:'v.1', expr:'1' }
+    case [86,0,36,] { title:'v.2', expr:'3' }
     case [119,0,115,] { title:'ceny DS ==> ', expr:'2' }
+    func Init() { var x:number
+      x= ma_cenik ? (ma_cenik==2 ? 2 : (ma_cenik_verze==2 ? 3 : 1)) : 0;
+      cen_ma= x;
+    }
+    func onchange() {
+      switch (this) {
+        case 0: ma_cenik= 0; ma_cenik_verze= 0; break;
+        case 1: ma_cenik= 1; ma_cenik_verze= 1; break;
+        case 2: ma_cenik= 2; ma_cenik_verze= 0; break;
+        case 3: ma_cenik= 1; ma_cenik_verze= 2; break;
+      }
+      ma_cenik.change(); ma_cenik_verze.change();
+    }
   }
   button [214,255,,] { tag:'cor', title:'Objednávka', skill:'yd2|yd2'
     func onclick() {
@@ -565,7 +584,9 @@ form _page [,,275,360] {
           if (datum_do.changed()) upd.datum_do= datum_do;
           php.dum_objednavka_upd(ida,upd)
         }
-        form.save(); form.load(); info.sey.browse_seek()
+        form.save(); form.plain(); 
+        info.volba_akce(the_duakce);
+//        form.load(); info.sey.browse_seek()
       }
       else { // přidání nové akce
         // kontrola pouze pro YS

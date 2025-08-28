@@ -343,10 +343,12 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
 # vytvoří kat_dny podle SOV
-function akce_sov2dny($sov,$ida) { // trace();
+# 0=S, 1=O, 2=V
+function akce_sov2dny($sov,$ida) { trace();
   $dny= '';
   list($noci,$oddo)= select('DATEDIFF(datum_do,datum_od),strava_oddo','akce',"id_duakce=$ida");
   if ($oddo[0]=='o') $dny.= "00".($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1");
+  if ($oddo[0]=='v') $dny.= "000".($sov[2]=='-'?"0":"1");
   $dny.= str_repeat("1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
   if ($oddo[1]=='o') $dny.= "1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
 //  display($dny);

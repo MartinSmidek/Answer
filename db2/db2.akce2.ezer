@@ -179,7 +179,7 @@ panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'
   func curr() {return {pobyt:0,rodina:0,osoba:0}}
   proc reaccess() {}
   proc ucast_hnizda() {}                        // nastavení pro akci v hnízdech
-  proc ucast_pobyt(idp) {}                         // ukázání pobytu na běžné akci
+  proc ucast_pobyt(_idp) {}                     // ukázání pobytu na běžné akci
   proc ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
   proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
   #proc init_ucast2() {}
