@@ -1869,7 +1869,7 @@ function connect_db() { // -----------------------------------------------------
   require_once("$kernel/server/ae_slib.php");
   require_once("$kernel/pdo.inc.php");
   require_once("$kernel/server/ezer_pdo.php");
-  require_once("db2/db2_fce3.php");
+//  require_once("db2/db2_fce3.php"); --- nic se nepoužívá
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
   require_once('db2/db2_tcpdf.php');
