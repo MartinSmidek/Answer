@@ -985,19 +985,21 @@ function akce2_change_cenik($faze,$id_akce,$id_akce_vzor) {  trace();
   // 'proved' kopii, napřed vymaž starý ceník
   query("DELETE FROM cenik WHERE id_akce=$id_akce");
   // kopie ze vzoru
+  $flds= "poradi,druh,polozka,cena,krat,za,t,n,p,od,do,typ,dph";
   if ($hnizda) { // do hnízd
     $n_h= count(explode(',',$hnizda));
     for ($h=1; $h<=$n_h; $h++) {
-      query("INSERT INTO cenik (id_akce,hnizdo,poradi,polozka,za,typ,od,do,cena,dph)
-          SELECT $id_akce,$h,poradi,polozka,za,typ,od,do,cena,dph
+      query("INSERT INTO cenik (id_akce,hnizdo,$flds)
+          SELECT $id_akce,$h,$flds
           FROM cenik WHERE id_akce=$id_akce_vzor");
     }
   }
   else { // bez hnízd
-    query("INSERT INTO cenik (id_akce,poradi,polozka,za,typ,od,do,cena,dph)
-          SELECT $id_akce,poradi,polozka,za,typ,od,do,cena,dph
+    query("INSERT INTO cenik (id_akce,$flds)
+          SELECT $id_akce,$flds
           FROM cenik WHERE id_akce=$id_akce_vzor");
   }
+   $id_new= pdo_insert_id();
   $msg= "hotovo, nezapomeňte jej upravit (ceny,DPH)";
 end:
   return $msg;
