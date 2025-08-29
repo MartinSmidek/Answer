@@ -1651,7 +1651,7 @@ function tisk2_table($tits,$flds,$clmn,$export=false,$prolog='') {  trace();
       $n++;
     }
     $prolog= $prolog ?: "Seznam má $n řádků<br><br>";
-    $ret->html= "$prolog<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $ret->html= "$prolog<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div><br>";
   }
   return $ret;
 }
