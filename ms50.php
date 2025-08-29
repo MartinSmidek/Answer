@@ -8,8 +8,9 @@
   #   $options    = doplnění Ezer.options
   #   $add_pars   = doplnění $EZER->options
 
-  $kernel= "ezer3.2"; 
-  $ezer_version= '3.2'; 
+  // verze použitého jádra Ezeru
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
+
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -61,7 +62,7 @@
   
   $app_css= [ 
       "db2/db2.css.php=skin",
-      "$kernel/client/wiki.css"
+      "ezer$ezer_version/client/wiki.css"
    ];
 
   //  require_once("answer.php");
@@ -108,5 +109,5 @@
   );
 
   // je to aplikace se startem v kořenu
-  require_once("$kernel/ezer_main.php");
+  require_once("ezer$ezer_version/ezer_main.php");
 

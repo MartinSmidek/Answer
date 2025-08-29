@@ -11,7 +11,6 @@
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
   $ezer_version= $_SESSION[$ezer_root]['ezer'];
-  $kernel= "ezer{$_SESSION[$ezer_root]['ezer']}";
   $abs_root=     $_SESSION[$ezer_root]['abs_root'];
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
@@ -50,12 +49,26 @@
   
   // definice modulů specifických pro Answer
   $app_php= array(
-    "db2/db2_ys2_fce3.php",
+    "db2/db-akce.php",
+    "db2/db-bank.php",
+    "db2/db-cenik.php",
+    "db2/db-data.php",
+    "db2/db-dotaznik.php",
+    "db2/db-dum.php",
+    "db2/db-elim.php",
+    "db2/db-evid.php",
+    "db2/db-foto.php",
+    "db2/db-lib.php",
+    "db2/db-mail.php",
+    "db2/db-mapa.php",
+    "db2/db-pece.php",
+    "db2/db-pokl.php",
+    "db2/db-prihl.php",
+    "db2/db-stat.php",
+    "db2/db-tisk.php",
+    "db2/db-ucast.php",
     "db2/db2_tcpdf.php",
-    "db2/db2_fce3.php",
-    "db2/db2.system.php",
-    "db2/ds_fce.php",
-    "ms50/ms50_fce.php"
+    "ezer$ezer_version/server/ezer_ruian.php",
   );
   
   $ezer= array(

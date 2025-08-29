@@ -9,7 +9,8 @@
   #   $add_pars   = doplnění $EZER->options
 
   // verze použitého jádra Ezeru
-  $ezer_version= '3.2'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
+
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -24,8 +25,6 @@
   $title_style= $ezer_server ? '' : "style='color:#ef7f13'";
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
-  // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
-  $kernel=   "ezer3.2"; 
 
   // nastav PDO=2
   $_GET['pdo']= 2;
@@ -64,7 +63,7 @@
   $app_css= [ 
       "db2/db2.css",
       "db2/db2.css.php=skin",
-      "/$kernel/client/wiki.css"
+      "/ezer$ezer_version/client/wiki.css"
    ];
 
   //  require_once("answer.php");
@@ -111,5 +110,5 @@
   );
 
   // je to aplikace se startem v kořenu
-  require_once("$kernel/ezer_main.php");
+  require_once("ezer$ezer_version/ezer_main.php");
 
