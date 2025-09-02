@@ -2326,7 +2326,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
   func ini() {
     zmena_spec_strav= 0;
-    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; cena= '';
+    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; rozklad= '';
     // výpočet součtu cen a rozpis, došlé platby
     if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)) {
       rozpis_ceny();
