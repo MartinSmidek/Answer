@@ -171,8 +171,9 @@ func prijeti_prihlasky () { var msg:text
 }
 func prijeti_prihlasky_new (idw,stav) { 
   if (stav==0) {
-    if (confirm("Beru přihlášku a vzniklé změny na vědomí.")) {
+    if (confirm("Beru přihlášku a vzniklé změny na vědomí.<br>Bude zapsán návrh ceny.")) {
       php.query_track(`UPDATE prihlaska SET prijata=1 WHERE id_prihlaska=${idw}`);
+      php.akce2_vzorec2_pobyt(the_pobyt,0,0,1); // zapíše platba1...platba4 případně vzorec (slevy)
       js.set_css_changed(0,'zmeneny');
       refresh_ucast(the_pobyt);
     }
@@ -1013,6 +1014,23 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       cmd.b_display(1);
 //      page.oform_show('show'); // pokud je text
     }
+//    func onrowclick() { // ==> . onrowclick
+//      if (!b.browse_count()) {
+//        return;
+//      }
+//      if (!neni_ulozeno()) { // warning
+//        page.page_init();
+//        old_row= b.browse_active();
+//        // přechod na jiný pobyt
+//        os1.init(); os2.init();
+//        sp1.init(); sp2.init();
+//        rod.key(key_rodina);
+//        rod.key_pobyt= key_pobyt;
+//        the_pobyt= key_pobyt;
+//        copy_by_name(b,pob);
+//        load_zalozka()
+//      }
+//    }
     proc onrowclick() { // ==> . onrowclick
       b.browse_count;
       neni_ulozeno // warning
@@ -1636,6 +1654,7 @@ form _pobyt [,,360,62] {
     func onclick() { PRIHLASKA.osobni(id_prihlaska); }}
   field id_prihlaska [257,-12,36,] {tag:'F', format:'ro', style:'color:white', 
         css:'Label', help:' ', tabindex:0 }
+  field prijata
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
         help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
@@ -2306,15 +2325,16 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
   func ini() {
     zmena_spec_strav= 0;
+    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0;
     // výpočet součtu cen a rozpis, došlé platby
-    if (has_skill("yaa;faa;caa")) {
+    if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)) {
       rozpis_ceny();
       celkem= c_nocleh + c_strava + c_program + c_sleva;
       vratka= v_nocleh + v_strava + v_program + v_sleva;
       naklad= celkem - c_sleva - vratka + v_sleva;
       dar_dluh= platba - (celkem - vratka);
       dar_dluh_d= platba_d - poplatek_d;
-    };
+    }
     // obarvení tlačítek [Str.pol]
     if (u.b.cstrava_cel || u.b.cstrava_pol) stravy.set_css('cervena','cerna');
     else stravy.set_css('cerna','cervena');
@@ -2398,6 +2418,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
         // zjisti cenu
         cena= php.akce2_vzorec2_pobyt(the_pobyt,0,
           {back_cena:'akce2.ucast.ucast_cena_osoba',back_dny:'akce2.ucast.ucast_cena_dny'});
+        // echo(debug(cena,`kontrola: ${c_nocleh} ${c_strava} ${c_program} `));
         navrh= cena.navrh;
         rozklad= cena.tabulka;
         if (!eq(u.b.funkce,9,13)) { // přihláška,náhradník ... ukázat, nezapisovat

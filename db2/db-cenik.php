@@ -3,12 +3,14 @@
 # ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
 # výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
 # výsledek ovlivňují položky objektu $spec popsaného v akce2_vzorec2
-function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
+# $zapsat_cenu=1 zapíše do pobytu platba1,..platba4
+function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null,$zapsat_cenu=0) { // trace();
   $spec->prijmeni= isset($spec->prijmeni) ? $spec->prijmeni : 0; 
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
   $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
   $OR_chuvy= '';
   $pozn= []; // poznámky pod čarou
+  $funkce= -1; 
   // zjištění případných chův z jiných pobytů tedy účtovaných tímto pobytem
   if ($idp) {
     $chuvy= [];
@@ -26,6 +28,14 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     if (count($chuvy)) {
       $OR_chuvy= "OR id_spolu IN (".implode(',',$chuvy).")";
       $pozn[]= "obsahuje cenu pobytu osobního pečovatele ";
+    }
+    // pokud je funkce VPS a v číselníku je sleva za:Sv a v ceníku je taky
+    // pak definuje pobyt.vzorec
+    $za_Sv= select1("IF(ikona='{\"za\":\"Sv\"}',data,0)",'_cis',"druh='ms_cena_vzorec'");
+    list($funkce,$ida)= select('funkce,id_akce','pobyt',"id_pobyt=$idp");
+    $sleva_vps= select("cena",'cenik',"id_akce=$ida AND druh='d' AND t='V' ");
+    if ($za_Sv && in_array($funkce,[1,2]) && $sleva_vps) {
+      query_track("UPDATE pobyt SET vzorec=$za_Sv WHERE id_pobyt=$idp");
     }
   }
   $order= $spec->prijmeni ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";
@@ -45,12 +55,13 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     WHERE ($cond) $OR_chuvy
     ORDER BY $order
   ");
-  while ($rs && (list($funkce,$prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,
+  while ($rs && (list($_funkce,$prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,
          $t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
+    $funkce= $_funkce;
     if (!$slevy) {
-      if ($funkce==99) { // pečouni neplatí
+      if ($_funkce==99) { // pečouni neplatí
         $vzorec= '{"ubytovani":0,"strava":0,"program":0}';
       }
       $slevy= json_decode($vzorec);   // může obsahovat {"ubytovani":0,"strava":0,"program":0}
@@ -97,7 +108,16 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     $i++;
   }
 //  debug($osoba,"podklady");
-  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+  if ($zapsat_cenu) {
+    $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+    $cena= (object)$res->rozpis;
+    query_track("UPDATE pobyt "
+        . "SET platba1=$cena->u, platba2=$cena->s, platba3=$cena->p, platba4=$cena->d "
+        . "WHERE id_pobyt=$idp ");
+  }
+  else {
+    $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+  }
   if ($pozn) {
     $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
   }

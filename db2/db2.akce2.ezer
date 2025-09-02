@@ -226,9 +226,9 @@ panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db
 panel grf {type:'right', title:'Grafy', _sys:'*', include:'onclick,db2.akce2.grf', skill:'yaa;faa;caa#T'
   proc reaccess() {}
 }
-panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk#T'
-  proc reaccess() {}
-}
+//panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk#T'
+//  proc reaccess() {}
+//}
 # ==========================================================================================> . ELIM
 panel elim [0,0,975,617] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
     include:'onload,db2.akce2.elim'

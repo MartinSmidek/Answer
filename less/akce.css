@@ -42,6 +42,7 @@ html body div.wrapper header div.header div.user {
 html body div.wrapper header div.header div.info {
   position: absolute;
   z-index: 2;
+  margin-left: 150px;
   background: yellow;
   border: 3px solid red;
   color: red;

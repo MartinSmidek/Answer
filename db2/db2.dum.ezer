@@ -221,7 +221,8 @@ form _vyuctovani [,,623,400] {
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   label vystavena [300,297,100,18] {tag:'h'}
   button [300,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
-    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, je:array
+    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, 
+        je:array
       clear(); 
       je= php.select('nazev,id_faktura','faktura',`id_pobyt=${id_pobyt} AND deleted='' `);
       if (je) {
@@ -231,6 +232,9 @@ form _vyuctovani [,,623,400] {
             - chceš přegenerovat podle opravené ceny?`)) {
         }
         else return;
+      }
+      else {
+        je= ['',0];
       }
       vyrizuje= sys('user','options','vyrizuje');
       nadpis= `Za pobyt v Domě setkání ve dnech ${udaje_pobyt.oddo} Vám fakturujeme:`;

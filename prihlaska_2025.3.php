@@ -3,6 +3,7 @@
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání 
  * 
  * verze 2025.3
+ * 2025-08-29 parametr p_css určuje vzhled vč. loga a (c) podle _cis*akce_prihl_css
  * 2025-08-27 text nad dětmi rozlišen podle typu M|O, oprava s_role dítěte s chůvou
  * 2025-03-27 volání z www.setkani.org s parametrem sid
  * 2025-03-14 přidávání verze J a R
@@ -16,7 +17,7 @@
 $ORG= 1;  // verze pro YMCA Setkání
 $VERZE= '2025'; // verze přihlášek: rok 
 $MINOR= '3'; // verze přihlášek: release
-$CORR_JS= '3'; // verze přihlášek: oprava JS části pro vynucený reload
+$CORR_JS= '4'; // verze přihlášek: oprava JS nebo CSS části pro vynucený reload
 $MYSELF= "prihlaska_$VERZE.$MINOR"; // $CORR_JS se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
 //error_reporting(E_ALL);
@@ -862,55 +863,77 @@ function prihlasit() { trace();
   }
 
   // ------------------------------ zapiš objednávku stravy do db !!! pouze normální a bezlepkové
-  if ($akce->p_strava) {
-    $strava= [];
-    $spec= []; // pro každou dietu zvlášť
-    $oddo= $akce->strava_oddo;  // 'vo' nebo 'oo'
+  if ($akce->p_strava) { // lze jen pro ceník verze 2, zapíšeme spolu.kat_*
     // podle polozky.options
     //   'Xporce'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
     //   'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
-    $dieta= [1=>'',2=>'_bl'];
-    $porce= [1=>'_cel',2=>'_pol'];
-    foreach ($dieta as $id=>$d) {
-      $spec[$id]= 0;
-      foreach ($porce as $ip=>$p) {
-        $fld["strava$p$d"]= 0;
-        $fld["cstrava$p$d"]= '';
-        foreach ([0,1,2] as $j) {
-          $strava[$id][$ip][$j]= 0;
-        }
-      }
-    }
+    $dieta= [0=>'-',1=>'-',2=>'BL'];
+    $porce= [0=>'-',1=>'C',2=>'P'];
     foreach (array_keys($vars->cleni) as $idc) {
-      if (get('o','spolu',$idc)) {
-        $id= get('o','Xdieta',$idc); $d= $dieta[$id];
-        $ip= get('o','Xporce',$idc); $p= $porce[$ip];
+      if (($ids= get('o','id_spolu',$idc))) {
+        $chng= [];
+        // specifikace jídla
+        $chng[]= (object)['fld'=>'kat_dieta', 'op'=>'i','val'=>$dieta[get('o','Xdieta',$idc)]];
+        $chng[]= (object)['fld'=>'kat_porce', 'op'=>'i','val'=>$porce[get('o','Xporce',$idc)]];
         // odběr jídla
-        $ns= get('o','Xstrava_s',$idc); if (!$ns) $spec[$id]= 1;
-        $no= get('o','Xstrava_o',$idc); if (!$no) $spec[$id]= 1;
-        $nv= get('o','Xstrava_v',$idc); if (!$nv) $spec[$id]= 1;
-        // pokud je nějaké 
-        if ($ns+$no+$nv > 0) {
-          $fld["strava$p$d"]++;
-          // podrobně
-          $strava[$id][$ip][0]+= $ns;
-          $strava[$id][$ip][1]+= $no;
-          $strava[$id][$ip][2]+= $nv;
-        }
+        $s= get('o','Xstrava_s',$idc) ? 'S' : '-'; 
+        $o= get('o','Xstrava_o',$idc) ? 'O' : '-';
+        $v= get('o','Xstrava_v',$idc) ? 'V' : '-';
+        $chng[]= (object)['fld'=>'kat_dny', 'op'=>'i','val'=>akce_sov2dny("$s$o$v",$vars->id_akce)];
+        // zápis do spolu
+        _ezer_qry("UPDATE",'spolu',$ids,$chng);
       }
     }
-    // zápis případných výjimek jako řetězce se jménem cstrava_cel apod.
-    foreach ($dieta as $id=>$d) {
-      if ($spec[$id]) {
-        foreach ($porce as $ip=>$p) {
-          $x= $strava[$id][$ip][0].$strava[$id][$ip][1].$strava[$id][$ip][2];
-          $xs= str_repeat($x,$akce->dnu);
-          $fld["cstrava$p$d"]= $oddo=='oo' 
-              ? '0'.substr($xs,1,-1).'0'
-              : '00'.substr($xs,2,-1).'0';
-        }
-      }
-    }
+    
+
+//    $strava= [];
+//    $spec= []; // pro každou dietu zvlášť
+//    $oddo= $akce->strava_oddo;  // 'vo' nebo 'oo'
+//    // podle polozky.options
+//    //   'Xporce'=> [1=>'celá',2=>'poloviční'],        // ['_cel','_pol']
+//    //   'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['','_bl']
+//    $dieta= [1=>'',2=>'_bl'];
+//    $porce= [1=>'_cel',2=>'_pol'];
+//    foreach ($dieta as $id=>$d) {
+//      $spec[$id]= 0;
+//      foreach ($porce as $ip=>$p) {
+//        $fld["strava$p$d"]= 0;
+//        $fld["cstrava$p$d"]= '';
+//        foreach ([0,1,2] as $j) {
+//          $strava[$id][$ip][$j]= 0;
+//        }
+//      }
+//    }
+//    foreach (array_keys($vars->cleni) as $idc) {
+//      if (get('o','spolu',$idc)) {
+//        $id= get('o','Xdieta',$idc); $d= $dieta[$id];
+//        $ip= get('o','Xporce',$idc); $p= $porce[$ip];
+//        // odběr jídla
+//        $ns= get('o','Xstrava_s',$idc); if (!$ns) $spec[$id]= 1;
+//        $no= get('o','Xstrava_o',$idc); if (!$no) $spec[$id]= 1;
+//        $nv= get('o','Xstrava_v',$idc); if (!$nv) $spec[$id]= 1;
+//        // pokud je nějaké 
+//        if ($ns+$no+$nv > 0) {
+//          $fld["strava$p$d"]++;
+//          // podrobně
+//          $strava[$id][$ip][0]+= $ns;
+//          $strava[$id][$ip][1]+= $no;
+//          $strava[$id][$ip][2]+= $nv;
+//        }
+//      }
+//    }
+//    // zápis případných výjimek jako řetězce se jménem cstrava_cel apod.
+//    foreach ($dieta as $id=>$d) {
+//      if ($spec[$id]) {
+//        foreach ($porce as $ip=>$p) {
+//          $x= $strava[$id][$ip][0].$strava[$id][$ip][1].$strava[$id][$ip][2];
+//          $xs= str_repeat($x,$akce->dnu);
+//          $fld["cstrava$p$d"]= $oddo=='oo' 
+//              ? '0'.substr($xs,1,-1).'0'
+//              : '00'.substr($xs,2,-1).'0';
+//        }
+//      }
+//    }
   }
 
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
@@ -1765,6 +1788,11 @@ function page() {
   $hide= "style='display:none'";
   $hide_2002= "style='display:none;z-index:2002'";
   $info= $DOM_default->info=='hide' ? '' : $DOM_default->info;
+  // nalezení CSS, IMG, ... podle p_css nebo default
+  $p_css= $akce->p_css??'?';
+  list($css,$logo)= select_2('hodnota,ikona','_cis',"druh='akce_prihl_css' AND data='$p_css' ");    
+  $css= $css??'akce';
+  $logo= $logo??'husy_ymca.png';
   echo <<<__EOD
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -1775,7 +1803,7 @@ function page() {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci YMCA Setkání</title>
     <link rel="shortcut icon" href="/db2/img/$icon" />
-    <link rel="stylesheet" href="/less/akce$_TEST.css?verze=3" type="text/css" media="screen" charset='utf-8'>
+    <link rel="stylesheet" href="/less/$css$_TEST.css?verze=$CORR_JS" type="text/css" media="screen" charset='utf-8'>
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="$MYSELF.js?patch=$CORR_JS" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
@@ -1794,7 +1822,7 @@ function page() {
         <div class="header">
           <div id='info' class='info'>$info</div>
           <a class="logo" href="https://www.setkani.org" target="web" title="" >
-            <img src="/img/husy_ymca.png" alt=""></a>
+            <img src="/img/$logo" alt=""></a>
           <div id='user' class="user"></div>
         </div>
         <div class="intro">Přihláška na akci <b>$akce->nazev ($akce->oddo)</b></div>
@@ -1869,7 +1897,7 @@ function connect_db() { // -----------------------------------------------------
   require_once("$kernel/server/ae_slib.php");
   require_once("$kernel/pdo.inc.php");
   require_once("$kernel/server/ezer_pdo.php");
-//  require_once("db2/db2_fce3.php"); --- nic se nepoužívá
+  require_once("db2/db-cenik.php"); 
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
   require_once('db2/db2_tcpdf.php');
@@ -1902,8 +1930,8 @@ function read_akce() { // ------------------------------------------------------
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
-  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do,$rok,$dnu,$strava_oddo)= select_2( // doplnění informací
-      "access,nazev,misto,poradatel,datum_od,datum_do,YEAR(datum_od),DATEDIFF(datum_do,datum_od),strava_oddo"
+  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do,$rok,$dnu,$strava_oddo,$cv)= select_2( // doplnění informací
+      "access,nazev,misto,poradatel,datum_od,datum_do,YEAR(datum_od),DATEDIFF(datum_do,datum_od),strava_oddo,ma_cenik_verze"
       ,'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
@@ -1912,6 +1940,7 @@ function read_akce() { // ------------------------------------------------------
   $akce->rok= $rok;
   $akce->dnu= $dnu+1;
   $akce->strava_oddo= $strava_oddo;
+  $akce->cenik_verze= $cv; 
   $MarketaZelinkova= 6849;
   list($akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select_2("CONCAT(jmeno,' ',prijmeni),telefon,email",
@@ -2655,7 +2684,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
       (object)['fld'=>'s_role',    'op'=>'i','val'=>$role=='d'?2:1]
     );
-    _ezer_qry("INSERT",'spolu',0,$chng);
+    $vars->cleni[$ido]->id_spolu= _ezer_qry("INSERT",'spolu',0,$chng);
   } // zapojíme do pobytu
  
   if ($idr) {

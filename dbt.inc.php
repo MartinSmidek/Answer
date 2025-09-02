@@ -102,8 +102,8 @@
     "db2/db-stat.php",
     "db2/db-tisk.php",
     "db2/db-ucast.php",
-    "db2/db-obsolete.php",
-    "db2/db-delete.php",
+//    "db2/db-obsolete.php",
+//    "db2/db-delete.php",
     "db2/db2_tcpdf.php",
     "ezer$ezer_version/server/ezer_ruian.php",
 //    "ezer$ezer_version/server/ezer_cms3.php"
