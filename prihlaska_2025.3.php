@@ -335,8 +335,17 @@ function polozky() { // --------------------------------------------------------
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [1=>'celá',2=>'poloviční'],        // ['C','P']
       'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['-','BL']
-      'Xnocleh'   => [1=>'lůžko',2=>'spacák',3=>'bez lůžka',4=>'spí jinde'],  // ['L','S','Z','-']
+      'Xnocleh'   => [1=>'lůžkoviny',2=>'spacák',3=>'bez lůžka',4=>'spí jinde'],  // ['L','S','Z','-']
     ];
+  // případné zúžení noclehů
+  if ($akce->p_nocleh) {
+    $noc= [0,'L','S','Z','-'];
+    for ($i= 1; $i<=4; $i++) {
+      if (strpos($akce->p_nocleh,$noc[$i])===false) {
+        unset($options['Xnocleh'][$i]);
+      }
+    }
+  }
   $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
   // v $sub_options je převodní tabulka plné->zúžené podle _cis.ikona

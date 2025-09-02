@@ -766,13 +766,13 @@ form _page [,,275,360] {
     check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
     field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
-    check p_nocleh [360,410,120,] { tag:'pri,M,O', title:'výběr noclehu'}
-    check p_obnova [30,430,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
-    check p_upozorneni [30,430,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
-    check p_dokument [30,450,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
-  edit veta_potvrzeni [13,500,438,40] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
+  field p_nocleh [208,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování (LSZ-) ', help:'LSZ-'}
+    check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
+    check p_upozorneni [30,450,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
+    check p_dokument [30,470,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
+  edit veta_potvrzeni [13,520,438,40] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
-  const prihl_top= 551
+  const prihl_top= 571
   label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }

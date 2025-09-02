@@ -2328,7 +2328,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     zmena_spec_strav= 0;
     celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; rozklad= '';
     // výpočet součtu cen a rozpis, došlé platby
-    if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)) {
+    if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)
+        && !eq(u.b.funkce,13,9,14,15)) {
       rozpis_ceny();
       celkem= c_nocleh + c_strava + c_program + c_sleva;
       vratka= v_nocleh + v_strava + v_program + v_sleva;
