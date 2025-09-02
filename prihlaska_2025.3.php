@@ -872,6 +872,8 @@ function prihlasit() { trace();
     foreach (array_keys($vars->cleni) as $idc) {
       if (($ids= get('o','id_spolu',$idc))) {
         $chng= [];
+        // specifikace noclehu
+        $chng[]= (object)['fld'=>'kat_nocleh', 'op'=>'i','val'=>'L'];
         // specifikace jídla
         $chng[]= (object)['fld'=>'kat_dieta', 'op'=>'i','val'=>$dieta[get('o','Xdieta',$idc)]];
         $chng[]= (object)['fld'=>'kat_porce', 'op'=>'i','val'=>$porce[get('o','Xporce',$idc)]];

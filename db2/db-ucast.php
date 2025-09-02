@@ -573,13 +573,13 @@ function ucast2_browse_ask($x,$tisk=false) {
         : "LEFT JOIN uhrada AS u USING (id_pobyt)";
     $qp= pdo_qry("
       SELECT p.*,$uhrada1 AS uhrada,
-        IFNULL(id_prihlaska,0) AS id_prihlaska,IFNULL(prijata,-1) AS prijata $ms1
+        FLOOR(IFNULL(id_prihlaska,0)/10) AS id_prihlaska,IFNULL(id_prihlaska,0)%10 AS prijata $ms1
       FROM pobyt AS p
       $uhrada2
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       -- LEFT JOIN prihlaska AS pr USING (id_pobyt)
       LEFT JOIN (
-        SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt,IF(verze>=2025,prijata,-2) AS prijata 
+        SELECT MAX(id_prihlaska*10+IF(prijata,1,0)) AS id_prihlaska,id_pobyt
         FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
       $ms2
       WHERE $cond_p $AND
