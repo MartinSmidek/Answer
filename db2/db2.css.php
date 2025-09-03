@@ -280,9 +280,11 @@ table.dary      { width:200px; }
 /* spolupráce s přihláškou verze 2 */
 table.dny { border-collapse: collapse; }
 table.dny th { padding-right:7px }
-table.dny th.date-cell { text-align: right; white-space: nowrap; padding:0 10px 0 0 }
+table.dny th.date-cell { text-align: right; white-space: nowrap; }
 table.dny td { border: 1px dotted #333; padding: 2px 8px; font-size: 14px; min-width: 8px; height: 16px; background-color: white;}
-table.dny td.disabled { background-color: #bbb; color: #999; pointer-events: none; }
+table.dny td.disabled { background-color: #bbb !important; color: #999; pointer-events: none; }
+table.dny th.noci,
+table.dny td.noci { border-right: 1px solid #333; background-color: #ccc }
 /* = = = = = = = = = = = = = = = = = = = = = = statistika */
 div.stat        { padding-right:15px; }
 table.stat      { border-collapse:collapse; font-size:8pt; /*width:100%;*/ }

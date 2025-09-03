@@ -40,8 +40,9 @@
 
     // Hlavička
     const thead = jQuery('<tr></tr>');
-    for (let i= 0; i<=4; i++) {
-      thead.append(jQuery('<th></th>').text(dny_headers[i]).prop('title',dny_titles[i]));
+    for (let i= 0; i<=cols; i++) {
+      thead.append(jQuery(i==1 ? '<th class="noci"></th>' : '<th></th>')
+        .text(dny_headers[i]).prop('title',dny_titles[i]));
     }
     table.append(thead);
 
@@ -55,7 +56,8 @@
       for (let j = 0; j < cols; j++) {
         const index = i * cols + j;
         let obsah = data.charAt(index) === '1' ? 'x' : ' ';
-        const td = jQuery('<td></td>').prop('title',dny_titles[j+1]);
+        const td = jQuery(j==0 ? '<td class="noci"></td>' : '<td></td>')
+          .prop('title',dny_titles[j+1]);
 
         let jeNeaktivni = false;
         if (i === 0 && j < n1) jeNeaktivni = true;

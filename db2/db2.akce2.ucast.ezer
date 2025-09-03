@@ -1543,11 +1543,11 @@ form _evidence [,,623,] { style:'height:fit-content'
     sp2.os.set(os2);
     rod.show_rodina; pob.show_pobyt;
   }
-  # změny sloupců
+  # změny sloupcůc
   func c_change(n) { var elem:ezer
-//    foreach(array(
-//        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
-//      change_width);
+    // pokračuj jen při změně
+    if (n==cmode) return;
+    // změň layout
     for (elem of array(&page.frame, &evid.frame, &pla.frame, &pla_ds.frame, &act0.frame, &alb0.frame, &docu.frame)) {
       if (elem) change_width(elem);
     }
