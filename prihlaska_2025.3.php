@@ -885,9 +885,11 @@ function prihlasit() { trace();
     foreach (array_keys($vars->cleni) as $idc) {
       if (($ids= get('o','id_spolu',$idc))) {
         $chng= [];
+        $noc= 'L'; // defaultní ubytování je na lůžku
         // specifikace noclehu
         if ($akce->p_nocleh) {
-          $chng[]= (object)['fld'=>'kat_nocleh', 'op'=>'i','val'=>$spani[get('o','Xnocleh',$idc)]];
+          $noc= $spani[get('o','Xnocleh',$idc)];
+          $chng[]= (object)['fld'=>'kat_nocleh', 'op'=>'i','val'=>$noc];
         }
         // specifikace jídla
         $chng[]= (object)['fld'=>'kat_dieta', 'op'=>'i','val'=>$dieta[get('o','Xdieta',$idc)]];
@@ -896,7 +898,8 @@ function prihlasit() { trace();
         $s= get('o','Xstrava_s',$idc) ? 'S' : '-'; 
         $o= get('o','Xstrava_o',$idc) ? 'O' : '-';
         $v= get('o','Xstrava_v',$idc) ? 'V' : '-';
-        $chng[]= (object)['fld'=>'kat_dny', 'op'=>'i','val'=>akce_sov2dny("$s$o$v",$vars->id_akce)];
+        $chng[]= (object)['fld'=>'kat_dny', 'op'=>'i',
+            'val'=>akce_sov2dny("$s$o$v",$vars->id_akce,$noc)];
         // zápis do spolu
         _ezer_qry("UPDATE",'spolu',$ids,$chng);
       }
