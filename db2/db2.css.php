@@ -284,7 +284,7 @@ table.dny th.date-cell { text-align: right; white-space: nowrap; }
 table.dny td { border: 1px dotted #333; padding: 2px 8px; font-size: 14px; min-width: 8px; height: 16px; background-color: white;}
 table.dny td.disabled { background-color: #bbb !important; color: #999; pointer-events: none; }
 table.dny th.noci,
-table.dny td.noci { border-right: 1px solid #333; background-color: #ccc }
+table.dny td.noci { border-right: 2px solid #888; background-color: #c8d3e9 }
 /* = = = = = = = = = = = = = = = = = = = = = = statistika */
 div.stat        { padding-right:15px; }
 table.stat      { border-collapse:collapse; font-size:8pt; /*width:100%;*/ }
