@@ -41,7 +41,7 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null,$zapsat_cenu=0) { // trace()
   $order= $spec->prijmeni ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";
   $rs= pdo_qry("
     SELECT funkce,prijmeni,jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,
-      IF(funkce IN (1,2),'V',IF(funkce=0,'U',IF(funkce IN (3,4,5,6),'T','H'))),
+      IF(funkce IN (1,2),'V',IF(funkce=0,'U',IF(funkce IN (3,4,5,6),'T',IF(funkce=10,'N','H')))),
       IF(funkce=99,'P',c1.ikona) AS _dite,
       kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
