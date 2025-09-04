@@ -766,7 +766,8 @@ form _page [,,275,360] {
     check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
     field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
-  field p_nocleh [208,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování (LSZ-) ', help:'LSZ-'}
+  field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
+    label [217,437,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
     check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
     check p_upozorneni [30,450,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
     check p_dokument [30,470,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
