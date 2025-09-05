@@ -191,7 +191,8 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
   }
   // údaje z verze minor=2,3
   $full= tisk2_ukaz_prihlasku($idpr,$ida,$idp,'','','úplná data');
-  $html= "<div style='text-align:right;width:100%;padding-right:30px'>$full$olds &nbsp; </div>"; 
+  $html= "<div style='text-align:right;width:100%'>$full$olds &nbsp; </div>"; 
+//  $html= "<div style='text-align:right;width:100%;padding-right:30px'>$full$olds &nbsp; </div>"; 
   $html.= "<div style='font-size:12px'>";
   // strava podle přihlášky
   if (($x->form->strava??0) > 0) {

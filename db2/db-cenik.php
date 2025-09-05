@@ -3,12 +3,14 @@
 # ------------------------------------------------------------------------------ akce2 vzorec2_pobyt
 # výpočet platby za pobyt na akci, případně jen pro jednu jeho osobu
 # výsledek ovlivňují položky objektu $spec popsaného v akce2_vzorec2
-function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
+# $zapsat_cenu=1 zapíše do pobytu platba1,..platba4
+function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null,$zapsat_cenu=0) { // trace();
   $spec->prijmeni= isset($spec->prijmeni) ? $spec->prijmeni : 0; 
   $osoba= []; $i= 0; $ida= 0; $vzorec= ''; $slevy= null; 
   $cond= $ids ? "id_spolu=$ids" : "id_pobyt=$idp";
   $OR_chuvy= '';
   $pozn= []; // poznámky pod čarou
+  $funkce= -1; 
   // zjištění případných chův z jiných pobytů tedy účtovaných tímto pobytem
   if ($idp) {
     $chuvy= [];
@@ -27,11 +29,22 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
       $OR_chuvy= "OR id_spolu IN (".implode(',',$chuvy).")";
       $pozn[]= "obsahuje cenu pobytu osobního pečovatele ";
     }
+    // pokud není nastavená sleva a je funkce VPS a v číselníku je sleva za:Sv a v ceníku je taky
+    // pak definuje pobyt.vzorec
+    list($funkce,$ida,$vzorec)= select('funkce,id_akce,vzorec','pobyt',"id_pobyt=$idp");
+    display("vzorec=$vzorec");
+    if (!$vzorec) {
+      $za_Sv= select1("IF(ikona='{\"za\":\"Sv\"}',data,0)",'_cis',"druh='ms_cena_vzorec'");
+      $sleva_vps= select("cena",'cenik',"id_akce=$ida AND druh='d' AND t='V' ");
+      if ($za_Sv && in_array($funkce,[1,2]) && $sleva_vps) {
+        query_track("UPDATE pobyt SET vzorec=$za_Sv WHERE id_pobyt=$idp");
+      }
+    }
   }
   $order= $spec->prijmeni ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";
   $rs= pdo_qry("
     SELECT funkce,prijmeni,jmeno,IFNULL(c2.ikona,'{}') AS _vzorec,sleva,id_spolu,pecovane,
-      IF(funkce IN (1,2),'V',IF(funkce=0,'U',IF(funkce IN (3,4,5,6),'T','H'))),
+      IF(funkce IN (1,2),'V',IF(funkce=0,'U',IF(funkce IN (3,4,5,6),'T',IF(funkce=10,'N','H')))),
       IF(funkce=99,'P',c1.ikona) AS _dite,
       kat_nocleh,kat_dny,kat_porce,kat_dieta,TIMESTAMPDIFF(YEAR,narozeni,datum_od) AS _vek,
       id_akce,DATEDIFF(datum_do,datum_od) AS noci,strava_oddo
@@ -45,12 +58,13 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     WHERE ($cond) $OR_chuvy
     ORDER BY $order
   ");
-  while ($rs && (list($funkce,$prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,
+  while ($rs && (list($_funkce,$prijmeni,$jmeno,$vzorec,$sleva,$ids,$pecovane,
          $t1,$t2,$n,$dny,$p,$d,$v,$_ida,$noci,$strava_oddo)
       = pdo_fetch_row($rs))) {
     if (!$ida) $ida= $_ida;
+    $funkce= $_funkce;
     if (!$slevy) {
-      if ($funkce==99) { // pečouni neplatí
+      if ($_funkce==99) { // pečouni neplatí
         $vzorec= '{"ubytovani":0,"strava":0,"program":0}';
       }
       $slevy= json_decode($vzorec);   // může obsahovat {"ubytovani":0,"strava":0,"program":0}
@@ -97,7 +111,16 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null) { // trace();
     $i++;
   }
 //  debug($osoba,"podklady");
-  $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+  if ($zapsat_cenu) {
+    $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+    $cena= (object)$res->rozpis;
+    query_track("UPDATE pobyt "
+        . "SET platba1=$cena->u, platba2=$cena->s, platba3=$cena->p, platba4=$cena->d "
+        . "WHERE id_pobyt=$idp ");
+  }
+  else {
+    $res= akce2_vzorec2($ida,$osoba,$slevy,$spec);
+  }
   if ($pozn) {
     $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
   }
@@ -342,15 +365,17 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce sov2dny
-# vytvoří kat_dny podle SOV
-# 0=S, 1=O, 2=V
-function akce_sov2dny($sov,$ida) { trace();
+# vytvoří kat_dny podle SOV ... 0=S, 1=O, 2=V ... 
+# pokud je $n='-' nezapočítají se noci
+function akce_sov2dny($sov,$ida,$n='L') { trace();
   $dny= '';
+  $noc= $n=='-'?"0":"1";
   list($noci,$oddo)= select('DATEDIFF(datum_do,datum_od),strava_oddo','akce',"id_duakce=$ida");
   if ($oddo[0]=='o') $dny.= "00".($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1");
   if ($oddo[0]=='v') $dny.= "000".($sov[2]=='-'?"0":"1");
-  $dny.= str_repeat("1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
-  if ($oddo[1]=='o') $dny.= "1".($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
+  $dny.= str_repeat(
+      $noc.($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1").($sov[2]=='-'?"0":"1"),$noci-1);
+  if ($oddo[1]=='o') $dny.= $noc.($sov[0]=='-'?"0":"1").($sov[1]=='-'?"0":"1")."0";
 //  display($dny);
   return $dny;
 }
@@ -909,3 +934,5 @@ function akce2_vyuctov_pary_cv2($akce,$par,$title,$vypis,$export=false) { trace(
   }
   return $result;
 }
+# ========================================================================================== VERZE 1
+# viz db-obsolete.php

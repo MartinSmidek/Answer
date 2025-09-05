@@ -38,7 +38,7 @@ html {
             text-indent: -7px; background-color: @head_b;
           }
           div.info {
-            position: absolute; z-index: 2;
+            position: absolute; z-index: 2; margin-left: 150px;
             background: yellow; border: 3px solid red; color: red; padding: 0 5px; 
           }
         }
@@ -173,6 +173,7 @@ html {
     #alertbox_back { right: 10px; top: 10px; position: absolute; }
     #errorbox { border-left: 20px solid red; }
     section.trace {
+      overflow: hidden;
       margin-top: 10px; border-top:3px dashed red;
       background-color: @form_b;
       table { 

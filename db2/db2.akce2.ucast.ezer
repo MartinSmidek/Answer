@@ -71,8 +71,8 @@ func curr() {
     : {pobyt:the_pobyt, rodina:rod.key_rodina, osoba:rod.cleni.key_osoba};
 }
 # přepnutí organizace
-proc reaccess() { #==> . reaccess - změna
-  init_ucast2
+func reaccess() { #==> . reaccess - změna
+  init_ucast2()
 }
 # nastavení pro akci v hnízdech
 func ucast_hnizda() { var opts:object
@@ -136,9 +136,9 @@ proc ucast_selected() {                         // seznam vybraných účastník
   return(u.b.selected('get')) }
 proc spolu_show() { sp1.key; sp1.show_spolu; sp2.key; sp2.show_spolu }
 # úpravy formulářů pro y;f;c
-proc init_forms() {
-  the_pobyt.set(0);
-  evid.Init;
+func init_forms() {
+  the_pobyt= 0;
+  evid.Init();
 }
 # volání zajistí natažení dat z lst.the_akce z panel.onfucus
 proc clear_ucast2() {
@@ -171,8 +171,10 @@ func prijeti_prihlasky () { var msg:text
 }
 func prijeti_prihlasky_new (idw,stav) { 
   if (stav==0) {
-    if (confirm("Beru přihlášku a vzniklé změny na vědomí.")) {
+    if (confirm("Beru přihlášku a vzniklé změny na vědomí.<br>Bude zapsán návrh ceny.")) {
       php.query_track(`UPDATE prihlaska SET prijata=1 WHERE id_prihlaska=${idw}`);
+      pob.prijata= 1;
+      php.akce2_vzorec2_pobyt(the_pobyt,0,0,1); // zapíše platba1...platba4 případně vzorec (slevy)
       js.set_css_changed(0,'zmeneny');
       refresh_ucast(the_pobyt);
     }
@@ -361,10 +363,10 @@ proc refresh_ucast(idp) {
   [ u.b.browse_row; u.b.raise('onrowclick',idp) ];
 }
 
-proc page_clear() {
-  evid.Plain;
-  rod.nerodina.Init;
-  evid.Init;
+func page_clear() {
+  evid.Plain();
+  rod.nerodina.Init();
+  evid.Init();
 }
 # --------------------------------------------------==> . reload
 proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
@@ -422,8 +424,8 @@ proc jump(ido) { var idp:number
 # ochrana proti neuložení změny
 func neni_ulozeno() { var no: number
   no= !evid.Same();
-  if (no) { //echo('neni_ulozeno!');
-    warning(`neuložené změny pro pobyt <b>${u.b._nazev}</b> použij [Zpět] nebo [Uložit]`);
+  if (no) { 
+    warning(`neuložené změny pro pobyt <b>${cmd.edited}</b> použij [Zpět] nebo [Uložit]`);
     u.b.browse_active(u.old_row);
   }
   return(no)
@@ -454,12 +456,22 @@ func ucast_lock_on(_table,_id) { var lock:object, msg:text
 form _cmd [,,623,30] {
   # 'rodiny', 'osoby' znamená hledání mezi rodinami resp. osobami s tagem 'r' resp. 'o'
   var mode=''           // novy_clen | novy_pobyt | novy_singl | '' | rodiny | osoby
-  proc set_state(_mode) { switch(_mode,
-    'new', {form.enable(1,'z'); form.enable(0,'x'); form_mode.set('new')}, // blok umístění role
-    'edit',{form.enable(1,'s'); form.enable(0,'x')},
-    'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
-    'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
-  )}
+  var edited: text      // jméno editovaného pobytu ... kvůli hlášení neni_ulozeno
+  func set_state(_mode) { 
+    edited= '';
+    switch(_mode) {
+      case 'new':  form.enable(1,'z'); form.enable(0,'x'); form_mode= 'new'; break; // blok umístění role
+      case 'edit': form.enable(1,'s'); form.enable(0,'x'); edited= u.b._nazev; break;
+      case 'none': form.enable(0,'s|r|x'); form.enable(1,'n'); break;
+      case 'show': form.enable(0,'s'); form.enable(1,'x'); form_mode= 'show'; break;
+    }
+  }
+//  proc set_state(_mode) { switch(_mode,
+//    'new', {form.enable(1,'z'); form.enable(0,'x'); form_mode.set('new')}, // blok umístění role
+//    'edit',{form.enable(1,'s'); form.enable(0,'x')},
+//    'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
+//    'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
+//  )}
   func tym_skill(skil) { var butt:ezer
     for (butt of form.tagged('T')) {
       butt.set_skill(skil==2 ? 1 : 0); 
@@ -518,7 +530,7 @@ form _cmd [,,623,30] {
   //==> .. [uložit]
   button [60,6,,] { tag:'s,r,T', title:'[fa-save] Uložit',help:'Uložit změněná data',css:'search'
                 skill:'yaa|yaa+;faa|faa+;caa|caa+;T'
-    proc onclick() { ulozit } }
+    func onclick() { ulozit() } }
   # ----------------------------------------------- přidat pobyt
   label [145,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
   #==> . + rodina
@@ -560,7 +572,7 @@ form _cmd [,,623,30] {
   button pridat_osobu [497,5,,] {tag:'x,T', title:'[fa-heart-o] přidej',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
-    proc onclick() { Init }
+    func onclick() { Init() }
     proc Init() { var _prijmeni:text
       set_state('new'); mode.set('osoby');
       os1.clear_osoba; os2.clear_osoba;
@@ -688,6 +700,7 @@ form _cmd [,,623,30] {
         }
       }
       if (!pob.same()) { pob.save(); php.table_lock('off','pobyt',pob.key()); }
+      if (!pla.same()) { pla.save(); pla.plain(); php.table_lock('off','pobyt',pob.key()); }
       if (!os1.same()) { os1.key(); os1.save_osoba(); php.table_lock('off','osoba',os1.key()) };
       if (!os2.same()) { os2.key(); os2.save_osoba(); php.table_lock('off','osoba',os2.key()) };
       if (!sp1.same() && sp1.key()) {
@@ -1013,21 +1026,38 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       cmd.b_display(1);
 //      page.oform_show('show'); // pokud je text
     }
-    proc onrowclick() { // ==> . onrowclick
-      b.browse_count;
-      neni_ulozeno // warning
-    | b.browse_count;
-      page.page_init;
-      old_row.set(b.browse_active);
-      // přechod na jiný pobyt
-      os1.init; os2.init;
-      sp1.init; sp2.init;
-      rod.key(key_rodina.get);
-      rod.key_pobyt.set(key_pobyt.get);
-      the_pobyt.set(key_pobyt.get);
-      copy_by_name(b,pob);
-      load_zalozka
+    func onrowclick() { // ==> . onrowclick
+      if (!b.browse_count()) {
+        return;
+      }
+      if (!neni_ulozeno()) { // warning
+        page.page_init();
+        old_row= b.browse_active();
+        // přechod na jiný pobyt
+        os1.init(); os2.init();
+        sp1.init(); sp2.init();
+        rod.key(key_rodina);
+        rod.key_pobyt= key_pobyt;
+        the_pobyt= key_pobyt;
+        copy_by_name(b,pob);
+        load_zalozka()
+      }
     }
+//    proc onrowclick() { // ==> . onrowclick
+//      b.browse_count;
+//      neni_ulozeno // warning
+//    | b.browse_count;
+//      page.page_init;
+//      old_row.set(b.browse_active);
+//      // přechod na jiný pobyt
+//      os1.init; os2.init;
+//      sp1.init; sp2.init;
+//      rod.key(key_rodina.get);
+//      rod.key_pobyt.set(key_pobyt.get);
+//      the_pobyt.set(key_pobyt.get);
+//      copy_by_name(b,pob);
+//      load_zalozka
+//    }
     # ==> . sloupce
     proc show_dup(on) { on;
       _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
@@ -1508,7 +1538,11 @@ form _evidence [,,623,] { style:'height:fit-content'
 //    os1.display(on); sp1.display(on);
 //    [ eq(cmode.get,2); os2.display(on); sp2.display(on) ];
 //  }
-  proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same,pla.Same)) }
+  func Same() { var same:number
+    same= rod.same() && pob.same() && sp1.same() && sp2.same() && os1.same() && os2.same();
+    same= same && pla.Same();
+    return same;
+  }
   proc Plain() { rod.plain; os1.plain; pob.plain; sp1.plain; sp2.plain; os2.plain }
   proc Init() {
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
@@ -1524,11 +1558,11 @@ form _evidence [,,623,] { style:'height:fit-content'
     sp2.os.set(os2);
     rod.show_rodina; pob.show_pobyt;
   }
-  # změny sloupců
+  # změny sloupcůc
   func c_change(n) { var elem:ezer
-//    foreach(array(
-//        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
-//      change_width);
+    // pokračuj jen při změně
+    if (n==cmode) return;
+    // změň layout
     for (elem of array(&page.frame, &evid.frame, &pla.frame, &pla_ds.frame, &act0.frame, &alb0.frame, &docu.frame)) {
       if (elem) change_width(elem);
     }
@@ -1636,6 +1670,7 @@ form _pobyt [,,360,62] {
     func onclick() { PRIHLASKA.osobni(id_prihlaska); }}
   field id_prihlaska [257,-12,36,] {tag:'F', format:'ro', style:'color:white', 
         css:'Label', help:' ', tabindex:0 }
+  field prijata
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
         help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
@@ -1697,7 +1732,17 @@ form _pobyt [,,360,62] {
 
   // funkce
   select funkce   [7,35,80,] {tag:'a', type:'map', data:p.funkce, format:'un',
-    options:ms_akce_funkce.zkratka, title:'^společná funkce'}
+    options:ms_akce_funkce.zkratka, title:'^společná funkce'
+    func onchanged() { var x:ezer
+      if (eq(funkce.key(),9,13,14,15)) { 
+        for (x of [&pla.c_nocleh,&pla.c_strava,&pla.c_program,&pla.c_sleva]) {
+          if (x.get()) {
+            x.set(0); x.change();
+          }
+        }
+      }
+    } 
+  }
   select prednasi [93,35,66,] {tag:'a', type:'map0', data:p.prednasi, format:'un',
     options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í'}
   select hnizdo [165,35,37,] {tag:'a', type:'map', data:p.hnizdo, format:'un', 
@@ -2302,19 +2347,23 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   var cena: object,
       zmena_spec_strav: number
 //  label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
-  func Same() { return form.same() && zmena_spec_strav==0; }
+  func Same() { 
+    return form.same() && zmena_spec_strav==0; 
+  }
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
   func ini() {
     zmena_spec_strav= 0;
+    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; rozklad= ''; navrh= '';
     // výpočet součtu cen a rozpis, došlé platby
-    if (has_skill("yaa;faa;caa")) {
+    if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)
+        && !eq(u.b.funkce,9,13,14,15)) {
       rozpis_ceny();
       celkem= c_nocleh + c_strava + c_program + c_sleva;
       vratka= v_nocleh + v_strava + v_program + v_sleva;
       naklad= celkem - c_sleva - vratka + v_sleva;
       dar_dluh= platba - (celkem - vratka);
       dar_dluh_d= platba_d - poplatek_d;
-    };
+    }
     // obarvení tlačítek [Str.pol]
     if (u.b.cstrava_cel || u.b.cstrava_pol) stravy.set_css('cervena','cerna');
     else stravy.set_css('cerna','cervena');
@@ -2398,6 +2447,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
         // zjisti cenu
         cena= php.akce2_vzorec2_pobyt(the_pobyt,0,
           {back_cena:'akce2.ucast.ucast_cena_osoba',back_dny:'akce2.ucast.ucast_cena_dny'});
+        // echo(debug(cena,`kontrola: ${c_nocleh} ${c_strava} ${c_program} `));
         navrh= cena.navrh;
         rozklad= cena.tabulka;
         if (!eq(u.b.funkce,9,13)) { // přihláška,náhradník ... ukázat, nezapisovat

@@ -42,6 +42,7 @@ html body div.wrapper header div.header div.user {
 html body div.wrapper header div.header div.info {
   position: absolute;
   z-index: 2;
+  margin-left: 150px;
   background: yellow;
   border: 3px solid red;
   color: red;
@@ -273,6 +274,7 @@ html body #errorbox {
   border-left: 20px solid red;
 }
 html body section.trace {
+  overflow: hidden;
   margin-top: 10px;
   border-top: 3px dashed red;
   background-color: #FDEFF1;
@@ -307,4 +309,9 @@ table.xdebug-error th {
   font-size: 10pt;
   background: white;
 }
+/*@width:   800px;
+@foot_h:   50px;
+@head_h:  120px;*/
+/*@box_fs:  12pt;
+@box_fs2: 14pt;*/
 /*# sourceMappingURL=akce_test.css.map */

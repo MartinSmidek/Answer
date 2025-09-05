@@ -805,7 +805,7 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
       kat_p.selects('C,P'); 
       kat_d.selects('-,BL'); 
     }
-    label matrix [5,5,160,*] { style:'font-size:13px' }
+    label matrix [0,5,160,*] { style:'font-size:13px' }
     button [165,22,,] { title:'[fa-save] Uložit' 
       func onclick() { var old:text
         clear();
@@ -822,10 +822,10 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
     button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
     field kat_dny { data:'spolu.kat_dny' }
     field p_od_pobyt { data:'spolu.p_od_pobyt' } // kvůli signalizaci neúplného pobytu
-    select kat_n [165,84,40,] { title:'-&nbsp; nocleh', data:'spolu.kat_nocleh', format:'fc' }
-    select kat_p [165,107,40,] { title:'-&nbsp; porce', data:'spolu.kat_porce', format:'fc'}
-    select kat_d [165,130,40,] { title:'-&nbsp; dieta', data:'spolu.kat_dieta', format:'fc'}
-    label warn [165,160,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
+    select kat_n [165,89,40,] { title:'-&nbsp;nocleh', data:'spolu.kat_nocleh', format:'fc' }
+    select kat_p [165,112,40,] { title:'-&nbsp;porce', data:'spolu.kat_porce', format:'fc'}
+    select kat_d [165,135,40,] { title:'-&nbsp;dieta', data:'spolu.kat_dieta', format:'fc'}
+    label warn [165,165,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
     label [70,193,200,20] { 
       title:"<i class='fa fa-share fa-rotate-270' style='vertical-align:super;'></i> datum vstávání" }
   }
