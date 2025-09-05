@@ -29,13 +29,16 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null,$zapsat_cenu=0) { // trace()
       $OR_chuvy= "OR id_spolu IN (".implode(',',$chuvy).")";
       $pozn[]= "obsahuje cenu pobytu osobního pečovatele ";
     }
-    // pokud je funkce VPS a v číselníku je sleva za:Sv a v ceníku je taky
+    // pokud není nastavená sleva a je funkce VPS a v číselníku je sleva za:Sv a v ceníku je taky
     // pak definuje pobyt.vzorec
-    $za_Sv= select1("IF(ikona='{\"za\":\"Sv\"}',data,0)",'_cis',"druh='ms_cena_vzorec'");
-    list($funkce,$ida)= select('funkce,id_akce','pobyt',"id_pobyt=$idp");
-    $sleva_vps= select("cena",'cenik',"id_akce=$ida AND druh='d' AND t='V' ");
-    if ($za_Sv && in_array($funkce,[1,2]) && $sleva_vps) {
-      query_track("UPDATE pobyt SET vzorec=$za_Sv WHERE id_pobyt=$idp");
+    list($funkce,$ida,$vzorec)= select('funkce,id_akce,vzorec','pobyt',"id_pobyt=$idp");
+    display("vzorec=$vzorec");
+    if (!$vzorec) {
+      $za_Sv= select1("IF(ikona='{\"za\":\"Sv\"}',data,0)",'_cis',"druh='ms_cena_vzorec'");
+      $sleva_vps= select("cena",'cenik',"id_akce=$ida AND druh='d' AND t='V' ");
+      if ($za_Sv && in_array($funkce,[1,2]) && $sleva_vps) {
+        query_track("UPDATE pobyt SET vzorec=$za_Sv WHERE id_pobyt=$idp");
+      }
     }
   }
   $order= $spec->prijmeni ? "prijmeni,jmeno" : "IFNULL(role,'e'),_vek DESC";

@@ -71,8 +71,8 @@ func curr() {
     : {pobyt:the_pobyt, rodina:rod.key_rodina, osoba:rod.cleni.key_osoba};
 }
 # přepnutí organizace
-proc reaccess() { #==> . reaccess - změna
-  init_ucast2
+func reaccess() { #==> . reaccess - změna
+  init_ucast2()
 }
 # nastavení pro akci v hnízdech
 func ucast_hnizda() { var opts:object
@@ -136,9 +136,9 @@ proc ucast_selected() {                         // seznam vybraných účastník
   return(u.b.selected('get')) }
 proc spolu_show() { sp1.key; sp1.show_spolu; sp2.key; sp2.show_spolu }
 # úpravy formulářů pro y;f;c
-proc init_forms() {
-  the_pobyt.set(0);
-  evid.Init;
+func init_forms() {
+  the_pobyt= 0;
+  evid.Init();
 }
 # volání zajistí natažení dat z lst.the_akce z panel.onfucus
 proc clear_ucast2() {
@@ -363,10 +363,10 @@ proc refresh_ucast(idp) {
   [ u.b.browse_row; u.b.raise('onrowclick',idp) ];
 }
 
-proc page_clear() {
-  evid.Plain;
-  rod.nerodina.Init;
-  evid.Init;
+func page_clear() {
+  evid.Plain();
+  rod.nerodina.Init();
+  evid.Init();
 }
 # --------------------------------------------------==> . reload
 proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
@@ -572,7 +572,7 @@ form _cmd [,,623,30] {
   button pridat_osobu [497,5,,] {tag:'x,T', title:'[fa-heart-o] přidej',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
-    proc onclick() { Init }
+    func onclick() { Init() }
     proc Init() { var _prijmeni:text
       set_state('new'); mode.set('osoby');
       os1.clear_osoba; os2.clear_osoba;
@@ -2353,7 +2353,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
   func ini() {
     zmena_spec_strav= 0;
-    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; rozklad= '';
+    celkem= 0; vratka= 0; naklad= 0; dar_dluh= 0; dar_dluh_d= 0; rozklad= ''; navrh= '';
     // výpočet součtu cen a rozpis, došlé platby
     if (has_skill("yaa;faa;caa") && (pob.id_prihlaska?pob.prijata:1)
         && !eq(u.b.funkce,9,13,14,15)) {
