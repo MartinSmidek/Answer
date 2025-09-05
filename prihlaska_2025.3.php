@@ -3004,7 +3004,7 @@ function souhrn($ucel) {
   // akce
   $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo";
   // účastníci
-  $ucastnici= ''; $del= ''; $jidlo= ''; $vzkazy= ''; $pecovani= ''; $pece= [];
+  $ucastnici= ''; $del= ''; $jidlo= ''; $vps= ''; $vzkazy= ''; $pecovani= ''; $pece= [];
   $emails= [$vars->email]; 
   foreach (array_keys($vars->cleni) as $id) {
     $spolu= get('o','spolu',$id);
@@ -3049,11 +3049,11 @@ function souhrn($ucel) {
         // porce
         $ip= get('o','Xporce',$id); 
         $jidlo.= ', porce '.$options['Xporce'][$ip];
-        // ubytování ?
-        if ($akce->p_nocleh) {
-          $in= get('o','Xnocleh',$id); 
-          $jidlo.= ', ubytování '.$options['Xnocleh'][$in];
-        }
+      }
+      // ubytování ?
+      if ($akce->p_nocleh) {
+        $in= get('o','Xnocleh',$id); 
+        $jidlo.= ', ubytování '.$options['Xnocleh'][$in];
       }
       $jidlo.= '</li>';
     } // strava
@@ -3086,6 +3086,10 @@ function souhrn($ucel) {
   if ($jidlo) {
     $jidlo= "<ul style='text-align:left'>$jidlo</ul>";
   }
+  // doplnění poděkování za přijetí služby VPS
+  if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
+    $vps= get('p','Xvps') ? "<p>Děkujeme, že přijímáte službu jako VPS.</p>" : '';
+  }
   // doplnění poznámky a případné žádosti o slevu
   $pozn= get('p','pracovni');
   // přípony plurál/singulár
@@ -3115,6 +3119,7 @@ function souhrn($ucel) {
         )
       . $pecovani
       . $vzkazy
+      . $vps
       . "<p>$veta</p>"
 //      . "<p>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď.</p>"
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
