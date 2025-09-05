@@ -922,6 +922,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $p->web_color= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
 //      $p->web_color= $p-web_changes;
       $p->web_changes= 0;
+      if ($p->id_prihlaska && substr($akce->datum_od,0,4)<2025) $p->prijata= 1;
       if ($p->prijata==0) $p->web_color+= 4;
 //                                   if ($idp==69706) { debug($p); }
       # pobyt I
