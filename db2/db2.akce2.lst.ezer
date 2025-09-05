@@ -292,7 +292,7 @@ form _page [,,275,360] {
     if (key_akce) {
       lock= php.table_lock(on,'akce',key_akce); 
       if ((on=='on') && (!lock.ok)) {
-        alert(conc(lock.info,lock.note));
+        alert(lock.info);
         akce_zpet();
       }
     }
