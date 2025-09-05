@@ -1750,7 +1750,7 @@ form _pobyt [,,360,62] {
   label [5,65,1,1] { tag:'a' } // oprava
 }
 # -------------------------------------------------------------------------------------==> PRIHLASKA
-panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', type:'popup', css:'dialog'
+panel PRIHLASKA [0,80,380,360] { title:'osobní údaje k akci z přihlášky', type:'popup', css:'dialog'
   func osobni(idpr) { var y:object
     clear(); 
     panel.title= `Údaje z přihlášky No.${idpr}`;
