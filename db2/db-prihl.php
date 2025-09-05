@@ -167,6 +167,7 @@ function prihl_show($idp,$idw) { trace();
 }
 function prihl_show_2025($idp,$idpr,$minor) { trace();
 # minor je subverze uvedená 
+  $nocleh= [1=>'lůžkoviny',2=>'spacák',3=>'bez lůžka',4=>'spí jinde'];
   $html= 'pobyt nevznikl online přihláškou';
 //  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
   list($idr,$json,$ida,$stav)= select('id_rodina,vars_json,id_akce,stav','prihlaska',
@@ -203,7 +204,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     $p_od= $akce->p_detska_od??3;
     $p_do= $akce->p_detska_do??12;
     // zjisti defaultní porci
-    $html.= "<b>Strava</b><ul>";
+    $html.= "<b>Strava</b><ul style='padding-inline-start:25px'>";
     foreach ($x->cleni as $ido=>$clen) {
       if (!$clen->spolu) continue;
       list($jmeno,$vek)= select("jmeno,TIMESTAMPDIFF(YEAR,narozeni,'$a_od')",'osoba',"id_osoba=$ido");
@@ -221,6 +222,10 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
       else {
         $html.= "bez stravy";
       }
+      // nocleh, pokud je definován
+      if (isset($akce->p_nocleh)) {
+        $html.= ', ubytování '.(($clen->Xnocleh??1) == 1 ? $nocleh[1] : $nocleh[$clen->Xnocleh]);
+      }
       $html.= "</li>";
     }
     $html.= "</ul>";
@@ -235,7 +240,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
       $pecoun= select1("CONCAT(jmeno,' ',prijmeni)",'osoba',"id_osoba=$clen->o_pecoun");
       $pece.= "<li>o $dite pečuje $pecoun</li>";
     }
-    $html.= $pece ? "<b>Osobní pečování</b><ul>$pece</ul>" : '';
+    $html.= $pece ? "<b>Osobní pečování</b><ul style='padding-inline-start:25px'>$pece</ul>" : '';
   }
   // žádost o slevu
   $pobyt= $x->pobyt->$idp??0;

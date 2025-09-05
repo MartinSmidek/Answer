@@ -335,7 +335,8 @@ function polozky() { // --------------------------------------------------------
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [1=>'celá',2=>'poloviční'],        // ['C','P']
       'Xdieta'    => [1=>'bez diety',2=>'bezlepková'],  // ['-','BL']
-      'Xnocleh'   => [1=>'lůžkoviny',2=>'spacák',3=>'bez lůžka',4=>'spí jinde'],  // ['L','S','Z','-']
+      // texty musí být stejné jako v prihl_show_2025
+      'Xnocleh'   => [1=>'lůžkoviny',2=>'spacák',3=>'bez lůžka',4=>'spí jinde'],  
     ];
   // případné zúžení noclehů
   if ($akce->p_nocleh) {
@@ -3088,7 +3089,7 @@ function souhrn($ucel) {
   }
   // doplnění poděkování za přijetí služby VPS
   if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
-    $vps= get('p','Xvps') ? "<p>Děkujeme, že přijímáte službu jako VPS.</p>" : '';
+    $vps= get('p','Xvps') ? "<p>Děkujeme, že přijímáte službu VPS.</p>" : '';
   }
   // doplnění poznámky a případné žádosti o slevu
   $pozn= get('p','pracovni');
