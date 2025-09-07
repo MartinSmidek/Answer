@@ -3089,7 +3089,7 @@ function souhrn($ucel) {
   }
   // doplnění poděkování za přijetí služby VPS
   if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
-    $vps= get('p','Xvps') ? "<p>Děkujeme, že přijímáte službu VPS.</p>" : '';
+    $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu VPS.</p>" : '';
   }
   // doplnění poznámky a případné žádosti o slevu
   $pozn= get('p','pracovni');
