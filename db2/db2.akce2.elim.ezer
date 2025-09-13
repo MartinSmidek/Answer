@@ -1009,20 +1009,38 @@ form _cmd [,,425,30] { css:'ae_parm'
   }}
   #==> .. originál
   button [452,4,,] { type:'html', title:"originál [fa-exchange] kopie", 
-    proc onclick() { var qry:text, x1:number, x2:number, x:object
-      eq(mode.get,'osoba','osoba_lst','cleni_lst');
-      x.set(o1.get); o1.set(o2.get); o2.set(x);
-      o1.init_all("ORIGINÁL",0); o1.property(°{left:0});
-      o2.init_all("KOPIE",1);    o2.property(°{left:490});
-    | eq(mode.get,'cleni');
-      x.set(c1.get); c1.set(c2.get); c2.set(x);
-      c1.init_all("ORIGINÁL",0); c1.property(°{left:0});
-      c2.init_all("KOPIE",1);    c2.property(°{left:490});
-    | eq(mode.get,'rodina','rodina_lst');
-      x.set(r1.get); r1.set(r2.get); r2.set(x);
-      r1.init_all("ORIGINÁL",0); r1.property(°{left:0});
-      r2.init_all("KOPIE",1);    r2.property(°{left:490});
-  }}
+    func onclick() { var qry:text, x1:number, x2:number, x:object
+      if (eq(mode,'osoba','osoba_lst','cleni_lst')) {
+        x= o1; o1= o2; o2= x;
+          o1.init_all("ORIGINÁL",0); o1.property({left:0});
+          o2.init_all("KOPIE",1);    o2.property({left:490});
+      }
+      elseif (mode=='cleni') {
+        x= c1; c1= c2; c2= x;
+        c1.init_all("ORIGINÁL",0); c1.property({left:0});
+        c2.init_all("KOPIE",1);    c2.property({left:490});
+      }
+      elseif (eq(mode,'rodina','rodina_lst') {
+        x= r1; r1= r2; r2= x;
+        r1.init_all("ORIGINÁL",0); r1.property({left:0});
+        r2.init_all("KOPIE",1);    r2.property({left:490});
+      }
+    }
+//    proc onclick() { var qry:text, x1:number, x2:number, x:object
+//      eq(mode.get,'osoba','osoba_lst','cleni_lst');
+//      x.set(o1.get); o1.set(o2.get); o2.set(x);
+//      o1.init_all("ORIGINÁL",0); o1.property(°{left:0});
+//      o2.init_all("KOPIE",1);    o2.property(°{left:490});
+//    | eq(mode.get,'cleni');
+//      x.set(c1.get); c1.set(c2.get); c2.set(x);
+//      c1.init_all("ORIGINÁL",0); c1.property(°{left:0});
+//      c2.init_all("KOPIE",1);    c2.property(°{left:490});
+//    | eq(mode.get,'rodina','rodina_lst');
+//      x.set(r1.get); r1.set(r2.get); r2.set(x);
+//      r1.init_all("ORIGINÁL",0); r1.property(°{left:0});
+//      r2.init_all("KOPIE",1);    r2.property(°{left:490});
+//    }
+  }
   /*
   button rod_cleni [726,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni",
     proc onclick() {

@@ -2521,6 +2521,155 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $chart->chart= 'bar';
       }
       break;
+    case 'hist_vzd': // --------------------------------------------------- vzdělání
+      $chart->title= 'účastníci MROP s vyznačením vzdělání';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      $mrop_y= array('neuvedl','ZŠ','SŠ','VŠ');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $datum_od= select('datum_od','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$datum_od) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT _cis.hodnota
+          FROM osoba
+          LEFT JOIN _cis ON druh='ms_akce_vzdelani' AND data=vzdelani
+          WHERE iniciace=$rok AND deleted=''
+          ");
+        while ($mr && (list($vzd)= pdo_fetch_row($mr))) {
+          // 0 - neuvedl, 1-základní, 2-střední, 3-vysokoškolské)
+          $mrop[$vzd][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('silver','red','green','blue');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+    case 'hist_vir': // --------------------------------------------------- církev
+      $chart->title= 'účastníci MROP a jejich vztah k církvi';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      $mrop_y= array('neuvedl','bez vyznání','nekatolík','katolík');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $datum_od= select('datum_od','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$datum_od) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT cirkev,_cis.ikona
+          FROM osoba
+          LEFT JOIN _cis ON druh='ms_akce_cirkev' AND data=cirkev
+          WHERE iniciace=$rok AND deleted=''
+          ");
+        while ($mr && (list($kod,$cir)= pdo_fetch_row($mr))) {
+          // 0 - neuvedl, 1 - bez vyznání, 2 - nekatolík, 3 - katolík
+          $cir= $kod==0 ? 0 : ($cir==3 ? 1 : ($cir==1 ? 3 : 2));
+          $mrop[$cir][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('silver','red','green','blue');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+    case 'hist_vek': // --------------------------------------------------- věk
+      $chart->title= 'účastníci MROP a jejich vztah k církvi';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $po= $par->po ?: 10;
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      
+      $mrop_y= array('neuvedl','bez vyznání','nekatolík','katolík');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $datum_od= select('datum_od','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$datum_od) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT cirkev,_cis.ikona
+          FROM osoba
+          LEFT JOIN _cis ON druh='ms_akce_cirkev' AND data=cirkev
+          WHERE iniciace=$rok AND deleted=''
+          ");
+        while ($mr && (list($kod,$cir)= pdo_fetch_row($mr))) {
+          // 0 - neuvedl, 1 - bez vyznání, 2 - nekatolík, 3 - katolík
+          $cir= $kod==0 ? 0 : ($cir==3 ? 1 : ($cir==1 ? 3 : 2));
+          $mrop[$cir][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('silver','red','green','blue');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>'počet účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y;
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
   }
   $y->chart= $chart;
 //  debug($y);
