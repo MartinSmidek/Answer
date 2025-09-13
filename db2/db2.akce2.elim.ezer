@@ -235,9 +235,12 @@ proc elim_cleni(idr) { var cleni:text
   return(1)
 }
 # --------------------------------------------------==> refresh
-proc elim_start() {
-  return(panel.modal(10,cconc(eq(sys('ezer','version'),'ezer3.1'),5,-40)))
+func elim_start() {
+  return(panel.modal(10,10))
 }
+//proc elim_start() {
+//  return(panel.modal(10,cconc(eq(sys('ezer','version'),'ezer3.1'),5,-40)))
+//}
 proc elim_refresh() { var os1:number, os2:number
   eq(mode.get,'osoba');
   os1.set(o1.bs.ido.get); o1.load_all;
@@ -1020,7 +1023,7 @@ form _cmd [,,425,30] { css:'ae_parm'
         c1.init_all("ORIGINÁL",0); c1.property({left:0});
         c2.init_all("KOPIE",1);    c2.property({left:490});
       }
-      elseif (eq(mode,'rodina','rodina_lst') {
+      elseif (eq(mode,'rodina','rodina_lst')) {
         x= r1; r1= r2; r2= x;
         r1.init_all("ORIGINÁL",0); r1.property({left:0});
         r2.init_all("KOPIE",1);    r2.property({left:490});
