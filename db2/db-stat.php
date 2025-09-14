@@ -2345,8 +2345,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y,
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2396,8 +2397,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); //'categories'=>$mrop_y);
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2452,8 +2454,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2508,8 +2511,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2556,8 +2560,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2605,8 +2610,9 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
+          'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -2672,7 +2678,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
       debug($mrop_y,"$i_vek_od-$i_vek_do");
       $chart->series= array_reverse($chart->series);
       $chart->yAxis= (object)array('title'=>(object)
-          ['text'=>'počet účastníků MROP v daném roce'],
+          ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],
           'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,
           'title'=>(object)array('text'=>'rok konání MROP '));
