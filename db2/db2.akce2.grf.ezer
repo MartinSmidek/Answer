@@ -75,6 +75,12 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-bar-chart] ... YMCA/CPR+ŠM po iniciací", par:{type:'y_x po', tag:'d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-bar-chart] skladba podle vzdělání", par:{type:'hist_vzd', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-bar-chart] ... podle příslušnosti k církvi", par:{type:'hist_vir', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-bar-chart] ... podle věku", par:{type:'hist_vek', tag:'i|d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'mrop'}, tag:'d'}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'mrop'}, tag:'d'}
     item  {title:"[fa-bar-chart] Aktuální věk iniciovaných",  par:{type:'vek_abs',tag:'i|d',
