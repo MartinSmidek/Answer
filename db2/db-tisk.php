@@ -875,20 +875,20 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $clmn[$n]= array();
     // zapamatování verze ceníku
     if (!$cv2) $cv2= $x->ma_cenik_verze;
-    // doplnění položek pro subtyp=EROP
+    // doplnění položek pro subtyp=EROP tj. i pro MROP
     $historie= '';
-    if ($subtyp=='EROP') {
+    if ($subtyp=='EROP') { 
       list($akce_ms,$akce_vps,$akce_ch,$iniciace,$firming,$cizi)= select(
           "SUM(IF(druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
           'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
-          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<'2023-09-01' ");
+          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<NOW() ");
       $historie= '';
       if (!$cizi) {
         if ($akce_ch) $historie.= " chlapi $akce_ch x";
         if ($akce_ms) $historie.= " MS $akce_ms x";
         if ($akce_vps) $historie.= ' (vps)';
         if ($firming) $historie.= " firming $firming";
-        $historie.= " iniciace $iniciace";
+        if ($iniciace) $historie.= " iniciace $iniciace";
       }
       $x->funkce= $x->funkce==1 ? 'stoker' : ($x->funkce==12 ? 'lektor' : ($x->funkce==5 ? 'hospodář' : $x->funkce==1));
     }
