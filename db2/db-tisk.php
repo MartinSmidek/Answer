@@ -878,10 +878,11 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     // doplnění položek pro subtyp=EROP tj. i pro MROP
     $historie= '';
     if ($subtyp=='EROP') { 
+      // pčoítáme jen akce, na ketrých byl jako dospělý
       list($akce_ms,$akce_vps,$akce_ch,$iniciace,$firming,$cizi)= select(
           "SUM(IF(druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
           'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
-          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<NOW() ");
+          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<NOW() AND YEAR(datum_od)-YEAR(narozeni)>18");
       $historie= '';
       if (!$cizi) {
         if ($akce_ch) $historie.= " chlapi $akce_ch x";
