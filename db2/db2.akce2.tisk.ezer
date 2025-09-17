@@ -376,6 +376,12 @@ menu m {type:'left', //active:*
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:15, chata:15'
                                         ,fld:'pr_jm,skupina,pokoj'}}
+    item {title:'... pro starší'
+                                        ,par:{typ:'mrop',exp:'Excel2',exp2:'PDF-obalky'
+                                        ,cnd:"funkce=1"
+                                        ,ord:"prijmeni,jmeno"
+                                        ,tit:'jméno:25, skupina:15, chata:15'
+                                        ,fld:'pr_jm,skupina,pokoj'}}
     item {title:'štítky se jménem'
                                         ,par:{typ:'mrop',exp:'Excel2',exp2:'PDF-stitky'
                                         ,cnd:"funkce=0"
