@@ -13,6 +13,32 @@ function web_prihlaska_url($ida) {  trace();
   }
   return $a;
 }
+
+# ------------------------------------------------------------------------------------- web zmena_ok
+# Vygeneruje QR kód jako PNG pro dané ID akce
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
+function akce_qr($akceId) {
+  global $ezer_version, $abs_root, $rel_root, $ezer_root;
+  $vendor_path= "./ezer$ezer_version/server/vendor";
+  // ochrana před nenainstaloveným Endroid\QrCode
+  if (file_exists()) return "-";
+  // Endroid\QrCode existuje
+  require "$vendor_path/autoload.php";
+  $abs= "$abs_root/docs/$ezer_root/qr-akce-$akceId.png";
+  $rel_qr= "http://$rel_root/docs/$ezer_root/qr-akce-$akceId.png";
+  $base= "$rel_root/prihlaska_2025.php";
+  $url= $base . '?akce=' . urlencode($akceId);
+  $result= Builder::create()
+      ->writer(new PngWriter())
+      ->data($url)
+      ->size(120)
+      ->margin(2)
+      ->build();
+  $png= $result->getString();
+  file_put_contents($abs, $png);
+  return "<a href='$rel_qr' target='QR'><img src='$rel_qr'></a>";
+}
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
 #  - doit=0 => generování přehledové hlášky o změnách týkající se pobytu

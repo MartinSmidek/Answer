@@ -731,6 +731,8 @@ form _page [,,275,360] {
     // součinnost s Úprava
     p_enable= xp_enable; // = web_prihlasky
     p_pozde= xp_pozde;  // = web_obsazeno
+    // zobrazení QR kódu
+    QR= php.akce_qr(page.a_akce);
   }
   label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
       style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
@@ -743,7 +745,9 @@ form _page [,,275,360] {
       help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' }
   check p_MAIL [343,50,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
       help:'MAIL=1 (dflt) posílá maily, MAIL=0 je pouze zobrazuje (pro chráněné IP adresy)' }
-  
+# ==> .. QR kód přihlášky
+  label [340,160,200,30] { tag:'pri,M,O,R,J', title:"QR adresy přihlášky<br>(klikni pro stažení)"  }
+  label QR [335,185,80,80] { tag:'pri,M,O,R,J' }
   # -----------==> .. zobrazení varianty přihlášky podle p_tag
   check p_pozde [13,71,300,] { tag:'pri,M,O,R,J', title:'od teď přihlášené brát jen jako náhradníky'}
   check p_sleva [250,71,241,] { tag:'pri,M,O,R,J', title:'žádost o slevu'}
