@@ -51,7 +51,8 @@ function akce_qr($akceId) {
   global $ezer_version, $abs_root, $rel_root, $ezer_root;
   $err= $ans= '';
   // Cesty a URL
-  $vendor_path = "./ezer$ezer_version/server/vendor";
+//  $vendor_path = "./ezer$ezer_version/server/vendor";
+  $vendor_path = "$abs_root/db2/vendor";
   $autoload = "$vendor_path/autoload.php";
   $dir_abs = "$abs_root/docs/$ezer_root";
   $file_name = "qr-akce-$akceId.png";
