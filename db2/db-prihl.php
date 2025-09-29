@@ -13,6 +13,78 @@ function web_prihlaska_url($ida) {  trace();
   }
   return $a;
 }
+
+# ------------------------------------------------------------------------------------- web zmena_ok
+# Vygeneruje QR kód jako PNG pro dané ID akce
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
+
+function akce_qr($akceId) {
+  global $ezer_version, $abs_root, $rel_root, $ezer_root;
+  $err= $ans= '';
+  // Cesty a URL
+  $vendor_path = "$abs_root/db2/vendor";
+  $autoload = "$vendor_path/autoload.php";
+  $dir_abs = "$abs_root/docs/$ezer_root";
+  $file_name = "qr-akce-$akceId.png";
+  $abs = "$dir_abs/$file_name";
+  // Doporučuju https, pokud je dostupné
+  $scheme = 'http';
+  $rel_qr = "$scheme://$rel_root/docs/$ezer_root/$file_name";
+  $base = "$scheme://$rel_root/prihlaska_2025.php";
+  $url = $base . '?akce=' . urlencode($akceId);
+  // 1) Composer autoload
+  if (!is_readable($autoload)) {
+    // Fallback, když není vendor/autoload.php
+    $err= "QR knihovna není dostupná (chybí $autoload). <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
+    goto end;
+  }
+  require_once $autoload;
+  // 2) Ověření třídy až po autoloadu
+  if (!class_exists(Builder::class)) {
+    $err= "QR knihovna není načtena. <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
+    goto end;
+  }
+  // 3) Ujisti se, že existuje cílový adresář a je zapisovatelný
+  if (!is_dir($dir_abs)) {
+    if (!@mkdir($dir_abs, 0775, true)) {
+      $err= "Nelze vytvořit cílový adresář: $dir_abs";
+      goto end;
+    }
+  }
+  if (!is_writable($dir_abs)) {
+    // Zvaž nastavení vlastníka/skupiny mimo PHP (chown/chmod)
+    $err= "Adresář není zapisovatelný: $dir_abs";
+    goto end;
+  }
+  // 4) Generování a zápis QR s ošetřením chyb
+  try {
+    $result = Builder::create()
+        ->writer(new PngWriter())
+        ->data($url)
+        ->size(120)
+        ->margin(2)
+        ->build();
+    $png = $result->getString();
+    if (file_put_contents($abs, $png) === false) {
+      $err= "Nepodařilo se uložit QR do: $abs";
+      goto end;
+    }
+    // 5) Hotovo — zobraz obrázek s odkazem
+    $ans= "<a href='$rel_qr' target='QR'><img src='$rel_qr' alt='QR'></a>";
+  } catch (\Throwable $e) {
+      // Fallback: zobrazit odkaz místo QR
+      $err= "Chyba generování QR: " . htmlspecialchars($e->getMessage()) .
+             " — <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
+      goto end;
+  }
+end:
+  if ($err) {
+    display($err);
+    $ans= 'QR není dostupný';
+  }
+  return $ans;
+}
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
 #  - doit=0 => generování přehledové hlášky o změnách týkající se pobytu
