@@ -1170,8 +1170,8 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
         display("akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message)");
         $qr= akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message);
 //        display($qr);
-//        $val= "<div><div style='float:right'>$qr</div>$tab</div>";
-        $val= $val.$qr;
+        $val= "<div><div style='float:right'>$qr</div>$tab</div>";
+//        $val= $val.$qr;
       }
       else {
         $ret= akce2_vzorec($id_pobyt);
