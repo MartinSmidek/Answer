@@ -1105,9 +1105,9 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
   $text= $obsah;
   $priloha= '';
   list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,$ma_cenik_verze,
-       $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina,$idr)=
+       $rok_akce,$nazev_akce,$ss_akce,$skupina,$idr)=
     select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,ma_cenik_verze,
-      platba1,platba2,platba3,platba4,poplatek_d,skupina,i0_rodina',
+      YEAR(datum_od),nazev,ciselnik_akce,skupina,i0_rodina',
     "pobyt LEFT JOIN akce ON id_duakce=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
@@ -1121,7 +1121,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
         foreach ($nazvy as $nazev) {
           $foto= "$ezer_path_root/fotky/$nazev";
           if (file_exists($foto) ) {
-            $date= @filemtime($foto);
+            $date= filemtime($foto);
             $ymd= date('Y-m-d',$date);
             $na_akci= select('COUNT(*)','akce JOIN pobyt ON id_akce=id_duakce',
                 "id_pobyt=$id_pobyt AND '$ymd' BETWEEN datum_od AND datum_do");
@@ -1151,7 +1151,27 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
       }
       elseif ( $ma_cenik_verze==2 ) {
         $ret= akce2_vzorec2_pobyt($id_pobyt);
-        $val= $ret->mail;
+        $tab= $ret->mail;
+        $amount= (float)array_sum($ret->rozpis);
+        $account= "000000-2400465447/2010";
+        $account= "CZ2420100000002400465447"; // IBAN
+        $ss= $ss_akce;
+        $vs= '';
+        $message= $nazev_akce;
+        debug($ret,$amount);
+        // zkusíme najít datum narození muže
+        $ro= pdo_query("SELECT narozeni FROM osoba JOIN spolu USING (id_osoba)
+            WHERE id_pobyt=$id_pobyt AND narozeni!='0000-00-00' AND $rok_akce-YEAR(narozeni)>18
+            ORDER BY sex,narozeni ");
+        while ($ro && (list($narozeni)= pdo_fetch_array($ro))) {
+          $vs= substr($narozeni,2,2).substr($narozeni,5,2).substr($narozeni,8,2);
+          break;
+        }
+        display("akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message)");
+        $qr= akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message);
+//        display($qr);
+//        $val= "<div><div style='float:right'>$qr</div>$tab</div>";
+        $val= $val.$qr;
       }
       else {
         $ret= akce2_vzorec($id_pobyt);

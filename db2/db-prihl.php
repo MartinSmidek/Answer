@@ -14,105 +14,73 @@ function web_prihlaska_url($ida) {  trace();
   return $a;
 }
 
-# ------------------------------------------------------------------------------------- web zmena_ok
-# Vygeneruje QR kód jako PNG pro dané ID akce
-//use Endroid\QrCode\Builder\Builder;
-//use Endroid\QrCode\Writer\PngWriter;
-//function akce_qr($akceId) {
-//  // ochrana před nedostupným Endroid\QrCode
-//  if (class_exists(Builder::class)) {
-//    // Endroid\QrCode existuje
-//    global $ezer_version, $abs_root, $rel_root, $ezer_root;
-//    $vendor_path= "./ezer$ezer_version/server/vendor";
-//    require "$vendor_path/autoload.php";
-//    $abs= "$abs_root/docs/$ezer_root/qr-akce-$akceId.png";
-//    $rel_qr= "http://$rel_root/docs/$ezer_root/qr-akce-$akceId.png";
-//    $base= "$rel_root/prihlaska_2025.php";
-//    $url= $base . '?akce=' . urlencode($akceId);
-//    $result= Builder::create()
-//        ->writer(new PngWriter())
-//        ->data($url)
-//        ->size(120)
-//        ->margin(2)
-//        ->build();
-//    $png= $result->getString();
-//    file_put_contents($abs, $png);
-//    return "<a href='$rel_qr' target='QR'><img src='$rel_qr'></a>";
-//  }
-//  // Endroid\QrCode neexistuje
-//  else {
-//    return "???";
-//  }
-//}
+# ------------------------------------------------------------------------------- generování QR kódů
+# Generuje QR kódy online přihlášky a příkazů platby
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
-
-function akce_qr($akceId) {
-  global $ezer_version, $abs_root, $rel_root, $ezer_root;
-  $err= $ans= '';
-  // Cesty a URL
-//  $vendor_path = "./ezer$ezer_version/server/vendor";
-  $vendor_path = "$abs_root/db2/vendor";
-  $autoload = "$vendor_path/autoload.php";
-  $dir_abs = "$abs_root/docs/$ezer_root";
-  $file_name = "qr-akce-$akceId.png";
-  $abs = "$dir_abs/$file_name";
-  // Doporučuju https, pokud je dostupné
-  $scheme = 'http';
-  $rel_qr = "$scheme://$rel_root/docs/$ezer_root/$file_name";
-  $base = "$scheme://$rel_root/prihlaska_2025.php";
-  $url = $base . '?akce=' . urlencode($akceId);
-  // 1) Composer autoload
-  if (!is_readable($autoload)) {
-    // Fallback, když není vendor/autoload.php
-    $err= "QR knihovna není dostupná (chybí $autoload). <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
-    goto end;
-  }
-  require_once $autoload;
-  // 2) Ověření třídy až po autoloadu
-  if (!class_exists(Builder::class)) {
-    $err= "QR knihovna není načtena. <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
-    goto end;
-  }
-  // 3) Ujisti se, že existuje cílový adresář a je zapisovatelný
-  if (!is_dir($dir_abs)) {
-    if (!@mkdir($dir_abs, 0775, true)) {
-      $err= "Nelze vytvořit cílový adresář: $dir_abs";
-      goto end;
-    }
-  }
-  if (!is_writable($dir_abs)) {
-    // Zvaž nastavení vlastníka/skupiny mimo PHP (chown/chmod)
-    $err= "Adresář není zapisovatelný: $dir_abs";
-    goto end;
-  }
-  // 4) Generování a zápis QR s ošetřením chyb
-  try {
-    $result = Builder::create()
-        ->writer(new PngWriter())
-        ->data($url)
-        ->size(120)
-        ->margin(2)
-        ->build();
-    $png = $result->getString();
-    if (file_put_contents($abs, $png) === false) {
-      $err= "Nepodařilo se uložit QR do: $abs";
-      goto end;
-    }
-    // 5) Hotovo — zobraz obrázek s odkazem
-    $ans= "<a href='$rel_qr' target='QR'><img src='$rel_qr' alt='QR'></a>";
-  } catch (\Throwable $e) {
-      // Fallback: zobrazit odkaz místo QR
-      $err= "Chyba generování QR: " . htmlspecialchars($e->getMessage()) .
-             " — <a href=\"$url\" target=\"QR\">Odkaz na přihlášku</a>";
-      goto end;
-  }
+# vygeneruje QR kód url přihlášky akce $ida jako PNG uložený v docs/<aplikace>/qr
+# vrací html odkaz na PNG 
+function akce_qr_prihlasky(int $ida) {
+  global $rel_root;
+  $vendor_path= "./db2/vendor";
+  require "$vendor_path/autoload.php";
+  $html= '';
+  // ochrana před nedostupným Endroid\QrCode
+  if (!class_exists(Builder::class)) goto end; // nech prázdné místo
+  $scheme= $_SERVER['REQUEST_SCHEME'];
+  // generování QR
+  $base= "$scheme://$rel_root/prihlaska_2025.php";
+  $url= $base . '?akce=' . urlencode($ida);
+  $result= Builder::create()->writer(new PngWriter())->data($url)->size(120)->margin(2)->build();
+  // uložení 
+  $png= $result->getString();
+  $html= akce_qr_save($png,"qr-akce-$ida");
 end:
-  if ($err) {
-    display($err);
-    $ans= 'QR není dostupný';
+  return $html;
+}
+# vygeneruje Spayd-QR kód platby jako PNG uložený v docs/<aplikace>/qr
+# vrací html odkaz na PNG 
+function akce_qr_platby(int $id_pobyt,
+    string $account, float $amount, string $ss, string $vs= '', string $message= ''): string {
+  $html= '';
+  $vendor_path= "./db2/vendor";
+  require "$vendor_path/autoload.php";
+  // ochrana před nedostupným Endroid\QrCode
+  if (!class_exists(Builder::class)) goto end; // nech prázdné místo
+  // generování QR
+  $currency = 'CZK';
+  $parts = ['SPD*1.0'];
+  $parts[] = 'ACC:'.spayd_escape($account);
+  $parts[] = 'AM:'.number_format($amount, 2, '.', '');
+  $parts[] = 'CC:'.$currency;
+  if ($vs !== null && $vs !== '')   $parts[] = 'X-VS:'.spayd_escape($vs);
+  if ($ss !== null && $ss !== '')   $parts[] = 'X-SS:'.spayd_escape($ss);
+  if ($message !== null && $message !== '') {
+    $parts[] = 'MSG:'.spayd_escape($message); // nebo X-SELF jako zpráva "pro mě"
   }
-  return $ans;
+  $data= implode('*', $parts);
+  $result= Builder::create()->writer(new PngWriter())->data($data)->size(120)->margin(2)->build();
+  // uložení 
+  $png= $result->getString();
+  $html= akce_qr_save($png,"qr-platba-$id_pobyt");
+end:
+  return $html;
+}
+function spayd_escape(string $s): string { // V SPAYD se escapují: \  *  :
+  return strtr($s, ['\\'=>'\\\\', '*'=>'\\*', ':'=>'\\:']);
+}
+function akce_qr_save($png,$png_name) {
+  global $abs_root, $rel_root, $ezer_root;
+  // cesta ke generovanému QR
+  $abs_dir= "$abs_root/docs/$ezer_root/qr";
+  $scheme= $_SERVER['REQUEST_SCHEME'];
+  $url= "$scheme://$rel_root/docs/$ezer_root/qr/$png_name.png"; 
+  // existuje cílový adresář a je zapisovatelný?
+  if (!is_dir($abs_dir)) {
+    mkdir($abs_dir, 0775, true);
+  }
+  file_put_contents("$abs_dir/$png_name.png", $png);
+  return "<a href='$url' target='QR'><img src='$url'></a>";
 }
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci

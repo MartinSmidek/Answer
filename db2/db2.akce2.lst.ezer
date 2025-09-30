@@ -666,7 +666,7 @@ form _page [,,275,360] {
       | alert(ret.msg)
       }
   } }
-  button [316,423,,] {tag:'corf', title:'Potvrzení firmingu', format:'nc', style:'z-index:1', skill:'faan|faa:m'
+  button [316,499,,] {tag:'corf', title:'Potvrzení firmingu', format:'nc', style:'z-index:1', skill:'faan|faa:m'
     proc onclick() { var ret:object
       has_skill('faa:m');
       ret.set(ask('akce2_confirm_firm',form.key,0));
@@ -732,7 +732,7 @@ form _page [,,275,360] {
     p_enable= xp_enable; // = web_prihlasky
     p_pozde= xp_pozde;  // = web_obsazeno
     // zobrazení QR kódu
-    QR= php.akce_qr(page.a_akce);
+    QR= php.akce_qr_prihlasky(page.a_akce);
   }
   label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
       style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
