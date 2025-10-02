@@ -177,7 +177,7 @@ function dum_faktura_delete($duvod,$idf) {
 function dum_faktura_save($parm,$idf=0) {
   $msg= '';
   $x= array_merge((array)$parm); $x['html']= "...";
-  debug($x,"dum_faktura_save(...)");                                                    /*DEBUG*/
+//  debug($x,"dum_faktura_save(...)");                                                    /*DEBUG*/
   // uložení do tabulky
   $p= $parm->parm;
   $order= $p->id_order ?? '';
@@ -428,7 +428,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
       // redakce položek ceny pro zobrazení ve sloupcích
       $cena= dum_vzorec_cena($ds_vzorec,$rok,$order,$pobyt);
-      debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
+//      debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
       $celkem= $cena['celkem'];
     }
     
@@ -474,9 +474,9 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
   }
-  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
+//  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
   // zápis rozpisu DPH
-  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
+//  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
   
   // nadpisy položek a šířka polí
   $cs= $strucna==0 ? [6,4,6,3,3] :  [4,2,4,1,1];
@@ -680,7 +680,7 @@ $html
 __HTML;
 //  display($html);
   file_put_contents("fakt.html",$html_exp);
-  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
+//  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
   return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
       'parm'=>$par,'err'=>$err);
 }
@@ -691,7 +691,7 @@ __HTML;
 # pokud není pak dej jednoho dospělého s plnou penzí
 function dum_objednavka_create($udaje1,$udaje2) { 
   $udaje= (object)array_merge((array)$udaje1,(array)$udaje2);
-  debug($udaje,'dum_objednavka_create');
+//  debug($udaje,'dum_objednavka_create');
   // povinné údaje
   $frm= stamp_date($udaje->od,1);
   $unt= stamp_date($udaje->do,1);
@@ -737,7 +737,7 @@ function dum_objednavka_make($ida,$idd=0) {
 # -------------------------------------------------------------------------- dum objednavka_akce_upd
 # uprav objednávku k akci IDA - pokud je 
 function dum_objednavka_upd($ida,$upd) { 
-  debug($upd,'dum_objednavka_upd');                                               /*DEBUG*/
+//  debug($upd,'dum_objednavka_upd');                                               /*DEBUG*/
   $set= $del= '';
   if (isset($upd->ds_order)) {    
     $ido= dum_objednavka_akce($ida);
@@ -872,7 +872,7 @@ function dum_objednavka($id_order) {
       }
     }
   }
-  debug($x,"dum_objednavka($id_order)");                                                  /*DEBUG*/
+//  debug($x,"dum_objednavka($id_order)");                                                  /*DEBUG*/
   return $x;
 }
 # ------------------------------------------------------------------------------ dum objednavka_akce
@@ -923,7 +923,7 @@ function dum_objednavka_safe_delete($ido) {
 # ------------------------------------------------------------------------------ dum objednavka_save
 # uložení objednávky pobytu
 function dum_objednavka_save($id_order,$changed) { 
-  debug($changed,"dum_objednavka_save($id_order,...)");                                   /*DEBUG*/
+//  debug($changed,"dum_objednavka_save($id_order,...)");                                   /*DEBUG*/
   $set= ""; $del= '';
   $set_akce= ""; $del_akce= '';
   // pokud ve změnách all=1 tak nastavíme rooms1='*' a budeme ignorovat změny v pokojích
@@ -1328,7 +1328,7 @@ function dum_cat_typ() {
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_orders($x) {
   global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
-  debug($x,"dum_browse_orders");
+//  debug($x,"dum_browse_orders");
   $y= (object)array('ok'=>0);
   $curr= $x->sql; // předání pracovní objednávky
   $seek= '0';
@@ -1378,7 +1378,7 @@ function dum_browse_orders($x) {
     if ($x->subcmd=='refresh') $y->oldkey= $x->oldkey;
     $y->ok= 1;
     if ($seek) $y->seek= $seek_id;
-    debug($y,"dum_browse_orders>  ");
+//    debug($y,"dum_browse_orders>  ");
     $y->values= $z;
     array_unshift($y->values,null);
   }
@@ -1957,7 +1957,7 @@ function dum_kniha_hostu($par,$export=0) {
             $rows_spolu= [];             
           }
           $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
-          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                     /*DEBUG*/
+//          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                     /*DEBUG*/
           if ($up->osobonoci==0) {
             display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
             fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");

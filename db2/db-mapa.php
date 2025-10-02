@@ -510,7 +510,7 @@ function geo_refresh($ido) {
       'y'=>'+',
       'par'=>(object)array('cond'=>"id_osoba=$ido")));
   $y= geo_fill($x); // error, msg, note
-  debug($y,"výsledek geo_fill pro $ido");
+//  debug($y,"výsledek geo_fill pro $ido");
   $geo->ok= isset($y->error) ? 0 : 1;
   $geo->note= $y->note;
   $geo->warning= $y->warning;
@@ -548,7 +548,7 @@ function geo_fill ($y) { debug($y,'geo_fill');
     $idox= tisk2_ukaz_osobu($ido);
     if ($stav<=0) {
       $geo= geo_get_osoba($ido);
-      debug($geo,'po geo_get_osoba');
+//      debug($geo,'po geo_get_osoba');
       geo_set_osoba($ido,$geo);
       if ($geo->error) {
         $lineadr= urlencode($geo->address);
@@ -564,7 +564,7 @@ function geo_fill ($y) { debug($y,'geo_fill');
         ";
       }
       elseif ($y->par->y=='+') {
-        debug($geo->adresa);
+//        debug($geo->adresa);
         $y->note= "byla zadána adresa <br> {$geo->address} <br> mám opravit na <br> "
             .implode(', ',$geo->adresa).' ?';
         $y->warning= "rozeznaná adresa je: ".implode(', ',$geo->adresa);

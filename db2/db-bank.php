@@ -113,7 +113,7 @@ function ds2_show_curr($c) {
       'ucast'=>$ucast,'ucast_text'=>"$a_akce, $a_jmeno",
       'dum'=>$dum,'dum_text'=>"$d_jmeno",'dum_mmyyyy'=>$mmyyyy,
       'fak'=>$fak,'fak_text'=>$fak_text];
-  debug($ret);
+//  debug($ret);
   return $ret;
 }
 # ------------------------------------------------------------------------------------------ ds2 fio
