@@ -1450,7 +1450,7 @@ function tut_dir_find ($root,$rok,$kod) {
   $y= (object)array('ok'=>1);
   $patt= "{$root}Agenda MS/Akce MS/$rok/$kod*";
   $fs= simple_glob($patt);
-                                                debug($fs,$patt);
+//                                                debug($fs,$patt);
   if (!$fs) { $y->ok= 0; goto end; }
   $file= $fs[0];
   if ( count($fs)==1 ) {

@@ -1302,8 +1302,8 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
       $kc_naklad+= $kx;
     }
   }
-  debug($predpis,"předpis = $kc_predpis");  // d = dotace + slevy podle ceníku tzn. VPS
-  debug($naklad,"náklad = $kc_naklad");     // d = slevy podle ceníku tzn. VPS
+//  debug($predpis,"předpis = $kc_predpis");  // d = dotace + slevy podle ceníku tzn. VPS
+//  debug($naklad,"náklad = $kc_naklad");     // d = slevy podle ceníku tzn. VPS
   display("platby = $kc_platby, dary = $kc_dary, zaplaceno = $n_platby/$n_platici");
   $td= "td align='right'";
   // formátování bilance
@@ -1720,7 +1720,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
   $hnizda= select('hnizda','akce',"id_duakce=$akce");
-                                                       debug($ret);
+//                                                       debug($ret);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;

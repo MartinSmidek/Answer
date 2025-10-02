@@ -252,7 +252,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     $m= null;
     display($stav);
     while (preg_match("/(\d)+/", $stav, $m)) {
-      debug($m);
+//      debug($m);
       $older= $m[0];
       $olds.= ' < '.tisk2_ukaz_prihlasku($older,$ida,$idp,'','',$older);
       // načteme další

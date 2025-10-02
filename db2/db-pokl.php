@@ -189,9 +189,9 @@ function kasa_send($whos,$to_send=0) {
   $html= '';
   list($adr,$replyto,$par,$subj,$txt)= select('adr,replyto,par,subj,txt','cron',"batch='rr-note'");
   $adresy= (array)json_decode($adr);
-  debug($adresy,'adr');
+//  debug($adresy,'adr');
   $subst= (array)json_decode($par);
-  debug($subst,'par');
+//  debug($subst,'par');
   $n= 0;
   $whos= $whos=='*' ? array_keys($adresy) : explode(',',$whos);
   foreach ($whos as $who) {

@@ -351,7 +351,7 @@ function evid2_ymca_darci($org,$kdy='loni') {
   $min= 4999;
   $rok= $kdy=='loni' ? date('Y')-1 : date('Y');
   $tits= explode(',','jméno:20,dar:10,činný č.:8,telefon:12,mail:40,ID');
-              debug($tits,'1');
+//              debug($tits,'1');
   $flds= explode(',','jmeno,dar,cc,telefon,mail,id_osoba');
   $clmn= array();
   $rd= pdo_qry("SELECT id_osoba,CONCAT(jmeno,' ',prijmeni),kontakt,email,telefon,

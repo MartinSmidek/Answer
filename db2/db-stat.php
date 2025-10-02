@@ -1392,7 +1392,7 @@ function chart_typs($x) {
     $graf[]= $g; $graf_tit[]= $p; $graf_y[]= $y; $graf_z[]= $z;
   }
   $ret= (object)array('sel'=>$sel,'graf'=>$graf,'y'=>$graf_y,'z'=>$graf_z,'tit'=>$graf_tit);
-  debug($ret,$x);
+//  debug($ret,$x);
   return $ret;
 }
 # ---------------------------------------------------------------------------------==> . chart akce2
@@ -1475,7 +1475,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
           if ($x->$tema) $data_temata[$i]++;
         }
       }
-      debug($data_temata);
+//      debug($data_temata);
       foreach ($data_temata as $i=>$pocet) {
         $name= isset($names['temata'][$i]) ? $names['temata'][$i] : $i;
         $desc= (object)array('name'=>$name,'y'=>$pocet);
@@ -1617,7 +1617,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
       break;
   }
   $y->chart= $chart;
-  debug($y);
+//  debug($y);
 end:
   return $y;
 }
@@ -1749,7 +1749,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
       $rok= $par->od;
       $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
       $x= dot_prehled($rok,$dot_par);
-      debug($x,'x');
+//      debug($x,'x');
       $data= (array)$x->know->man_vek; 
       $data= array_merge($data);
 //      $data= implode(',',$man_vek);
@@ -1876,7 +1876,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $mrop[$iniciace][$vek]= $pocet;
         $iniciovani+= $pocet;
       }
-      debug($erop,"EROP"); 
+//      debug($erop,"EROP"); 
       // zestárnutí o rok: $mrop[$rok][$vek] => $mrop[$rok+1][$vek-1]
       for ($rok= $od; $rok<=$do; $rok++) {
         // připočti iniciované předešlého roku do dalšího roku jako o rok starší
@@ -2018,7 +2018,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         ksort($data[$i]);
       }
       $celkem= round($celkem);
-      debug($data,'data');
+//      debug($data,'data');
       $roky= array(); // názvy intervalů 20..
       for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
         $roky[]= $interval*$po . ($po>1 ? '...' : '');
@@ -2168,7 +2168,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         ksort($data[$i]);
       }
       $celkem= round($celkem);
-      debug($data,'data');
+//      debug($data,'data');
       $roky= array(); // názvy intervalů 20..
       for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
         $roky[]= $interval*$po . ($po>1 ? '...' : '');
@@ -2248,7 +2248,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         ksort($data[$i]);
       }
       $celkem= round($celkem);
-      debug($data,'data');
+//      debug($data,'data');
       $roky= array(); // názvy intervalů 20..
       for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
         $roky[]= $interval*$po . ($po>1 ? '...' : '');
@@ -2336,7 +2336,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           }
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= $par->type=='pred_mrop' 
           ? array('orange','blue','navy')
           : array('navy','blue','orange');
@@ -2390,7 +2390,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           else $mrop[0][$rok]++;
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= array('orange','blue','cyan','green');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
@@ -2447,7 +2447,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           else $mrop[0][$rok]++;
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= array('orange','red','violet','blue');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
@@ -2504,7 +2504,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           else $mrop[3][$rok]++;
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= array('red','violet','blue','orange');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
@@ -2553,7 +2553,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           $mrop[$vzd][$rok]++;
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= array('silver','red','green','blue');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
@@ -2603,7 +2603,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
           $mrop[$cir][$rok]++;
         }
       }
-      debug($mrop,"$od-$do");
+//      debug($mrop,"$od-$do");
       $color= array('silver','red','green','blue');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
@@ -2675,7 +2675,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $serie= (object)array('name'=>$mrop_y[$i],'data'=>$data);
         $chart->series[$i]= $serie;
       }
-      debug($mrop_y,"$i_vek_od-$i_vek_do");
+//      debug($mrop_y,"$i_vek_od-$i_vek_do");
       $chart->series= array_reverse($chart->series);
       $chart->yAxis= (object)array('title'=>(object)
           ['text'=>($par->prc ? 'procento':'počet').' účastníků MROP v daném roce'],

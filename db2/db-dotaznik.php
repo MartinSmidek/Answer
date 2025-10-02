@@ -650,7 +650,7 @@ function dot_spy_data ($rok) {
   };
   $n0= $filtr(0,-1);
   $n1= $filtr(1,-2);
-  debug($dotaz,"tipy 0:$n0, 1:$n1");
+//  debug($dotaz,"tipy 0:$n0, 1:$n1");
   // zapíšeme dotazník k osobě
   foreach ($dotaz as $d) {
     foreach ($d->tips as $ido=>$w) {
@@ -1079,7 +1079,7 @@ table.dot .vert p {
 }
 </style>";
   $y->html= $style.$tab;
-                                  debug($y);
+//                                  debug($y);
   return $y;
 }
 # --------------------------------------------------------------------------------------- dot import
@@ -1262,7 +1262,7 @@ function dot_import ($rok) { trace();
         // doplnění nových do tabulky DOTAZ -- zachová položky nazor_* v existujících
         $exists= select('COUNT(*)','dotaz',"dotaznik=$rok AND id=$id");
         if (!$exists) {
-                                                  debug($value);
+//                                                  debug($value);
           $set= "dotaznik=$rok, id=$id";
           foreach ($value as $fld => $val) {
             $set.= ", $fld='$val'";
@@ -1385,7 +1385,7 @@ function dot_import ($rok) { trace();
         list($desc,$itms)= explode('?',$d_i);
         list($clmn,$typ,$fld,$fld_text)= explode(',',$desc);
         $itms= explode(';',$itms);
-                                                          debug($itms,"clmn $clmn itms $typ,$fld");
+//                                                          debug($itms,"clmn $clmn itms $typ,$fld");
         if ($rok==2024 && in_array($clmn,['G','Y','Z'])) continue;
         switch ($typ) {
           case 'x': $id= $line+1; break;
