@@ -88,6 +88,8 @@ menu m {type:'left',
       par:{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... s divnou/žádnou občankou'
       par:{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
+    item {title:'náhradníkům této akce'
+      par:{k:'et',uq:'U9',on:'akce',off:'gen|skup',cond:'p.funkce=9'} }
     item {title:'vzor mailu: Potvrzení platby'
       proc onclick(i) {
         ii.fill(conc(i.owner.title,' - ',i.title),' ');
@@ -114,8 +116,10 @@ menu m {type:'left',
       par:{k:'es',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
       par:{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
-    item {title:'... staré nebo žádné OP'
+    item {title:'... s divnou/žádnou občankou'
       par:{k:'es',uq:'U4',on:'akce',off:'gen|skup'} }
+    item {title:'náhradníkům této akce'
+      par:{k:'es',uq:'U9',on:'akce',off:'gen|skup'} }
   }
   proc onclick (i) {
     menu_item.set(i); menu_par.set(i.par);
@@ -337,7 +341,8 @@ form _etext  {
       'U5',{ komu.set(5); },
       'U6',{ komu.set(6); },
       'U7',{ komu.set(7); },
-      'U8',{ komu.set(8); }
+      'U8',{ komu.set(8); },
+      'U9',{ komu.set(9); }
       );
       id_duakce.change; hnizdo.change; komu.change; cis_skupina.change; id_mailist.change;
     }
@@ -357,8 +362,8 @@ form _etext  {
       var conf: object, info:object
       var blokovano: number, pocet: number
       var err: text, cond: text
-      echo(debug(menu_par));
-      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6','U7','U8')) return;
+//      echo(debug(menu_par));
+      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6','U7','U8','U9')) return;
       # rozesílání podle nastavené akce
       prazdny(); if (!et_prazdy) return;
       cond= menu_par.cond ? menu_par.cond : '';
@@ -428,6 +433,8 @@ form _etext  {
     case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
     // kněžím, psychologům (dopis.komu=8)
     case 'U8': texty.browse_load(`${prefix} etd.komu=8`); break;
+    // náhradníkům
+    case 'U9': texty.browse_load(`${prefix} etd.komu=9`); break;
     }
     reload2()
   }
@@ -664,6 +671,8 @@ form _esady  {
     case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
     // kněžím, psychologům (dopis.komu=8)
     case 'U8': texty.browse_load(`${prefix} etd.komu=8`); break;
+    // náhradníkům
+    case 'U9': texty.browse_load(`${prefix} etd.komu=9`); break;
     }
     reload2();
   }

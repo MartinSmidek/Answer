@@ -627,9 +627,10 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
   $AND= $komu==0 ? " AND p.funkce IN (0,1,2,5)" : (
         $komu==1 ? " AND p.funkce IN (1,2,5)"   : (
         $komu==2 ? " AND p.funkce IN (0,1,2,5) " : (
+        $komu==9 ? " AND p.funkce IN (9) " : (
         $komu==3 ?
            " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
-       : " --- chybné komu --- " )));
+       : " --- chybné komu --- " ))));
   $HAVING= $komu==2 ? "HAVING _uhrada<_poplatek" : "";
   // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
   // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
@@ -759,6 +760,7 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
 #   'U6'- (komu=6) jako U5 ale jen pro prislusnost=CZ/SK
 #   'U7'- (komu=7) jako U5 ale jen pro prislusnost!=CZ/SK
 #   'U8'- (komu=8) kněží, psycho
+#   'U9'- (komu=9) náhradníkům
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
@@ -881,6 +883,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     }
     break;
   // --------------------------------------------------- účastníci akce
+  case 'U9':    // náhradníci
   case 'U8':    // kněží, psychologové
   case 'U7':    // všichni zahraniční přítomní 
   case 'U6':    // všichni tuzemští přítomní 
@@ -906,8 +909,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            $dopis_var=='U5' ? " AND p.funkce NOT IN (9,10,13,14,15,99) " : (
            $dopis_var=='U6' ? " AND p.funkce NOT IN (9,10,13,14,15) AND o.prislusnost IN ('','CZ','SK') " : (
            $dopis_var=='U7' ? " AND p.funkce NOT IN (9,10,13,14,15) AND o.prislusnost NOT IN ('','CZ','SK') " : (
-           $dopis_var=='U8' ? " AND p.funkce IN (3,4)" 
-         : " --- chybné komu --- " ))))))));
+           $dopis_var=='U8' ? " AND p.funkce IN (3,4)" : (
+           $dopis_var=='U9' ? " AND p.funkce IN (9)" 
+         : " --- chybné komu --- " )))))))));
 //    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
     $HAVING= $dopis_var=='U3' ? ( $ma_cenu 
           ? "HAVING _uhrada/_na_akci<$cena" 
@@ -1100,7 +1104,7 @@ end:
 # spočítá proměnné podle id_pobyt a dosadí do textu dopisu
 # vrátí celý text
 function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) { 
-    debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
+//    debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
   global $ezer_path_root;
   $text= $obsah;
   $priloha= '';
@@ -1158,7 +1162,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
         $ss= $ss_akce;
         $vs= '';
         $message= $nazev_akce;
-        debug($ret,$amount);
+//        debug($ret,$amount);
         // zkusíme najít datum narození muže
         $ro= pdo_query("SELECT narozeni FROM osoba JOIN spolu USING (id_osoba)
             WHERE id_pobyt=$id_pobyt AND narozeni!='0000-00-00' AND $rok_akce-YEAR(narozeni)>18
@@ -1249,6 +1253,7 @@ function mail2_personify_help() {
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
 #   'U','U1','U2','U3','U4','U5','U6','U7','U8' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U9' - dtto ale náhradníkům
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - maillist
@@ -1352,6 +1357,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
     }
     break;
   case 'U':                     // účastníci akce
+  case 'U9':                    // náhradníci
   case 'U8':                    // kněží, psycho
   case 'U5':                    // všichni přítomní vyjma pečounů
   case 'U6':                    // všichni tuzemští přítomní 
