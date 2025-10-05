@@ -181,11 +181,11 @@ form _vzory {
     i_dopisy++; 
     if (i_dopisy>=array_length(dopisy)) i_dopisy= 0;
   }
-  button jiny [-78,8,,] { tag:'but', title:'Jiný dopis', style:'zIndex:2'
+  button jiny [-96,8,,] { tag:'but', title:'[fa-arrow-right] Jiný dopis', style:'zIndex:2'
     func onclick() {
       Next(); Show();
   }}
-  button opravit [-24,8,,] { tag:'but', title:'Upravit', style:'zIndex:2'
+  button opravit [-24,8,,] { tag:'but', title:'[fa-edit] Upravit', style:'zIndex:2'
     func onclick() {
       dopis_id= id_dopis; E_dopis.modal(50,50); Show();
   }}
