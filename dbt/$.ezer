@@ -28,9 +28,11 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 //  }
 //#endif
 #if test_version<3
-  tabs ds2 {title:"[fa-home] Dům setkání", _sys:'*',  include:'onload,db2.ds2', active:*, skill:'yd2' 
+  tabs ds2 {title:"[fa-home] Dům setkání", _sys:'*',  include:'onclick,db2.ds2', active:*, skill:'yd2' 
     func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
   }
+#endif
+#if test_version<5
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
     proc reaccess() {}
     // objekt obsahující aktuálně vybrané záznamy
@@ -45,13 +47,13 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     }
   }
 #endif
-  tabs syst {title:"[fa-cog] Systém", _sys:'sys', include:'onload,ezer2.syst', active:*
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys', include:'onclick,ezer2.syst', active:*
 #if test_version<1
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
 #endif
 #if test_version<3
-    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;ben'
+    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onclick,ezer3.db', skill:'a;ben'
       par:{
         infos: [
           {title:'[fa-object-group] Schema databáze',
@@ -318,7 +320,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 #endif
   }
 #if test_version<1
-  tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
+  tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onclick,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
   // přepnutí access - refresh formulářů
   proc spinner(on) {

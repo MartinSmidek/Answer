@@ -79,6 +79,7 @@ function akce_qr_save($png,$png_name) {
   if (!is_dir($abs_dir)) {
     mkdir($abs_dir, 0775, true);
   }
+//  display("akce_qr_save: url=$url");
   file_put_contents("$abs_dir/$png_name.png", $png);
   return "<a href='$url' target='QR'><img src='$url'></a>";
 }

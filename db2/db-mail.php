@@ -328,6 +328,315 @@ end:
 }
 /** ========================================================================================> DOPISY */
 # =======================================================================================> . šablony
+# ------------------------------------------------------------------------------------ dop ids_where
+# vrátí pole id_dopis vyhovující dané podmínce 
+function dop_ids_where($cond) { //trace();
+  $ids= [];
+  $dr= pdo_query("SELECT id_dopis FROM dopis WHERE $cond");
+  while ($dr && (list($idd)= pdo_fetch_array($dr))) {
+    $ids[]= $idd;
+  }
+  return $ids;
+}
+# ---------------------------------------------------------------------------------- mail2 personify
+# spočítá proměnné podle id_pobyt a dosadí do textu dopisu
+# vrátí celý text, pokud $send_me=1 také jej pošle
+function dop_personify($id_dopis,$id_pobyt,$id_uhrada,$send_me=0) { 
+  global $USER;
+  $ret= (object)['txt'=>'','err'=>'','msg'=>''];
+  list($nazev,$obsah,$typ)= select('nazev,obsah,typ','dopis',"id_dopis=$id_dopis");
+  if ($typ=='potvrzeni_platby') {
+    if ( !$id_uhrada ) { $ret->err= "CHYBA platba neexistuje (nebo chybné pořadí?)"; goto end; }
+    $rm= pdo_qry("
+      SELECT u_castka,u_datum,u_stav
+      FROM uhrada
+      WHERE id_uhrada=$id_uhrada
+    ");
+    list($castka,$dne,$potvrzeno)= pdo_fetch_array($rm);
+    if ( $dne=='0000-00-00' ) { $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
+    if ( $potvrzeno==3 ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
+    // doplnění proměnných mailu
+    $obsah= str_replace('{platba_den}',sql_date1($dne),$obsah);
+    $obsah= str_replace('{platba_castka}',number_format($castka, 0, '.', '&nbsp;')."&nbsp;Kč",$obsah);
+  }
+  // doplnění jména akce do předmětu mailu a dp {platba_akce}
+  list($akce,$neni,$ssym)= select('nazev,ikona,ciselnik_akce',
+      "pobyt JOIN akce ON id_akce=id_duakce JOIN _cis ON _cis.druh='ms_akce_funkce'",
+      "id_pobyt=$id_pobyt  AND data=funkce");
+  if ($neni) { $ret->err= "CHYBA: nemá potvrzený pobyt na akci"; goto end; }
+  $obsah= str_replace('{platba_akce}',$akce,$obsah);
+
+  // zjištění mailů pobytu
+  $rm= pdo_qry("
+    SELECT GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),
+      IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),narozeni
+    FROM pobyt AS p
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_pobyt=$id_pobyt AND IFNULL(t.role IN ('a','b'),true)
+  ");
+  list($omaily,$rmaily,$narozeni)= pdo_fetch_row($rm);
+  $vsym= substr($narozeni,2,2).substr($narozeni,5,2).substr($narozeni,8,2);
+  $obsah= str_replace('{platba_ssym}',$ssym,$obsah);
+  $obsah= str_replace('{platba_vsym}',$vsym,$obsah);
+  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
+  $vyrizuje= $USER->options->vyrizuje; 
+  $from= $USER->options->email;
+  $subject= "$nazev na akci $akce";
+  
+  // dokončení substitucí proměnných
+  $priloha= $list= null;
+  preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+  $obsah= mail2_personify($obsah,$list[1],$id_pobyt,$priloha,$ret->err);
+
+  if ($send_me) {
+    // poslání mailu - při úspěchu zápis o potvrzení
+    $mail= mail2_new_PHPMailer();
+    if ( $mail->Ezer_error ) { 
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' - odesílací adresa nelze použít ($mail->Ezer_error)";
+      goto end;
+    }
+    $mail->AddReplyTo($from);
+    $mail->SetFrom($mail->From,$vyrizuje);
+    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+      $mail->AddAddress($adresa);   // pošli na 1. adresu
+    }
+    $mail->Subject= $subject;
+    $mail->Body= $obsah;
+    $ok= $mail->Ezer_Send();
+    if ( $ok=='ok' ) {
+      $ret->msg= "mail byl v pořádku odeslán";
+      if ($typ=='potvrzeni_platby') {
+        // zápis o zaslání potvrzení 
+        query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
+      }
+    }
+    else {
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' $ok";
+      goto end;
+    }
+  }
+  else {
+    // náhled textu 
+    $smtp= mail2_smtp();
+    $ret->txt= "<hr>Od: $vyrizuje &lt;$from&gt<br>Přes: $smtp->Username <i> &lt;= lze změnit v osobním nastavení</i>"
+        . "<br>Komu: $maily"
+        . "<br>Předmět: <b>$subject</b><hr>$obsah";
+  }
+end: 
+  return $ret;
+}
+# --------------------------------------------------------------------------------- mail2 vzor_rozpis
+# pošle mail daného typu účastníkovi pobytu                                                                          !!! + platba souběžné akce
+function mail2_vzor_rozpis($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$varianta,$poslat=0) {
+//  global $ezer_root;
+  $ret= (object)array();
+  // načtení a kontrola pobytu + mail + nazev akce
+  $p= (object)array();
+  $AND= $typ=='potvrzeni_platby' ? "AND u_poradi=$u_poradi" : "";
+  $rm= pdo_qry("
+    SELECT id_uhrada,
+     IFNULL(u_castka,0),u_datum,u_stav,
+     GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
+     a.nazev,a.access,a.hnizda,p.hnizdo
+    FROM pobyt AS p
+    LEFT JOIN uhrada AS u USING (id_pobyt)
+    JOIN akce AS a ON p.id_akce=a.id_duakce
+    LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_pobyt=$id_pobyt AND IFNULL(t.role IN ('a','b'),true) $AND
+  ");
+  list($id_uhrada,$castka,$dne,$potvrzeno,
+    $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
+  if ($typ=='potvrzeni_platby') {
+    if ( !$id_uhrada ) { $ret->err= "CHYBA platba č.$u_poradi neexistuje"; goto end; }
+    if ( !$castka ) { $ret->err= "CHYBA: není zapsána částka"; goto end; }
+    if ( $dne=='0000-00-00' ) { $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
+  }
+  if ( $castka && $potvrzeno==3 ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
+
+  // naplnění proměnných mailu
+  if ($typ=='potvrzeni_platby') {
+    $p->platba_den= sql_date1($dne);
+    $p->platba_castka= number_format($castka, 0, '.', '&nbsp;')."&nbsp;Kč";
+  }
+  else if ($typ=='rozpis_platby') {
+    
+  }
+  $p->vyrizuje= $vyrizuje;
+  // doplnění názvu hnízda, má-li smysl
+  if ($hnizda && $hnizdo) {
+    $hnizda= explode(',',$hnizda);
+    if (isset($hnizda[$hnizdo-1])) {
+      $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
+    }
+  }
+  // načtení vzoru dopisu - verze podle $varianta
+  $vzor= array();
+  $rv= pdo_qry("SELECT nazev,obsah,var_list FROM dopis WHERE typ='$typ' AND access=$access");
+  while ($rv && ($v= pdo_fetch_row($rv))) {
+    $vzor[]= $v;  
+  } 
+//  debug($vzor);
+  if (!count($vzor)) { $ret->err= "CHYBA: nebyl nalezen vzor dopisu '$typ' "; goto end; }
+  else if ($varianta>count($vzor)) $varianta= 1; // cyklické opakování
+  $ret->next= $varianta+1;
+  list($nazev,$obsah,$vars)= $vzor[$varianta-1];
+  // personifikace
+  foreach ( explode(',',$vars) as $var ) {
+    $var= trim($var);
+    $obsah= str_replace('{'.$var.'}',$p->$var,$obsah);
+  }
+  // extrakce adresy
+  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+                                                              display("maily=$maily");
+  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
+  $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
+
+  if ( $poslat ) {
+    // poslání mailu - při úspěchu zápis o potvrzení
+    $mail= mail2_new_PHPMailer();
+    if ( $mail->Ezer_error ) { 
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' - odesílací adresa nelze použít ($mail->Ezer_error)";
+      goto end;
+    }
+    $mail->AddReplyTo($from);
+    $mail->SetFrom($mail->From,$vyrizuje);
+    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+      $mail->AddAddress($adresa);   // pošli na 1. adresu
+    }
+    $mail->Subject= $nazev;
+    $mail->Body= $obsah;
+    $ok= $mail->Ezer_Send();
+    if ( $ok=='ok' ) {
+      // zápis o potvrzení
+      $ret->msg= "Byl odeslán mail$report";
+      query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
+    }
+    else {
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' $ok";
+      goto end;
+    }
+  }
+  else {
+    $ret->msg= "Je připraven mail - mám ho poslat?$report";
+    $ret->butt= "poslat:send,neposílat:quit,jiný dopis:next";
+  }
+end:
+  return $ret;
+}
+# --------------------------------------------------------------------------------- mail2 vzor_pobyt
+# pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
+#                                                                         !!! + platba souběžné akce
+function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$varianta,$poslat=0) {
+//  global $ezer_root;
+  $ret= (object)array();
+
+  // načtení a kontrola pobytu + mail + nazev akce
+  $p= (object)array();
+  $rm= pdo_qry("
+    SELECT id_uhrada,
+     IFNULL(u_castka,0),u_datum,u_stav,
+     GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
+     a.nazev,a.access,a.hnizda,p.hnizdo
+    FROM pobyt AS p
+    LEFT JOIN uhrada AS u USING (id_pobyt)
+    JOIN akce AS a ON p.id_akce=a.id_duakce
+    LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi AND IFNULL(t.role IN ('a','b'),true)
+  ");
+  list($id_uhrada,$castka,$dne,$potvrzeno,
+    $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
+  if ( !$id_uhrada ) { $ret->err= "CHYBA platba č.$u_poradi neexistuje"; goto end; }
+  if ( !$castka ) { $ret->err= "CHYBA: není zapsána částka"; goto end; }
+  if ( $dne=='0000-00-00' ) { $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
+  if ( $castka && $potvrzeno==3 ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
+//  }
+
+  // naplnění proměnných mailu
+  $p->platba_den= sql_date1($dne);
+  $p->platba_castka= number_format($castka, 0, '.', '&nbsp;')."&nbsp;Kč";
+  $p->vyrizuje= $vyrizuje;
+  // doplnění názvu hnízda, má-li smysl
+  if ($hnizda && $hnizdo) {
+    $hnizda= explode(',',$hnizda);
+    if (isset($hnizda[$hnizdo-1])) {
+      $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
+    }
+  }
+//  list($nazev,$obsah,$vars)=
+//     select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
+
+  // načtení vzoru dopisu - verze podle $varianta
+  $vzor= array();
+  $rv= pdo_qry("SELECT nazev,obsah,var_list FROM dopis WHERE typ='potvrzeni_platby' AND access=$access");
+  while ($rv && ($v= pdo_fetch_row($rv))) {
+    $vzor[]= $v;  
+  } 
+//  debug($vzor);
+  if (!count($vzor)) { $ret->err= "CHYBA: nebyl nalezen vzor dopisu 'potvrzeni_platby' "; goto end; }
+  else if ($varianta>count($vzor)) $varianta= 1; // cyklické opakování
+  $ret->next= $varianta+1;
+  list($nazev,$obsah,$vars)= $vzor[$varianta-1];
+  // personifikace
+  foreach ( explode(',',$vars) as $var ) {
+    $var= trim($var);
+    $obsah= str_replace('{'.$var.'}',$p->$var,$obsah);
+  }
+  // extrakce adresy
+  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+                                                              display("maily=$maily");
+  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
+  $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
+
+  if ( $poslat ) {
+    // poslání mailu - při úspěchu zápis o potvrzení
+    $mail= mail2_new_PHPMailer();
+    if ( $mail->Ezer_error ) { 
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' - odesílací adresa nelze použít ($mail->Ezer_error)";
+      goto end;
+    }
+    $mail->AddReplyTo($from);
+    $mail->SetFrom($mail->From,$vyrizuje);
+    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+      $mail->AddAddress($adresa);   // pošli na 1. adresu
+    }
+    $mail->Subject= $nazev;
+    $mail->Body= $obsah;
+    $ok= $mail->Ezer_Send();
+    if ( $ok=='ok' ) {
+      // zápis o potvrzení
+      $ret->msg= "Byl odeslán mail$report";
+      query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
+    }
+    else {
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' $ok";
+      goto end;
+    }
+  }
+  else {
+    $ret->msg= "Je připraven mail - mám ho poslat?$report";
+    $ret->butt= "poslat:send,neposílat:quit,jiný dopis:next";
+  }
+end:
+  return $ret;
+}
 # ------------------------------------------------------------------------------------- dop sab_text
 # přečtení běžného dopisu daného typu
 function dop_sab_text($dopis) { //trace();
@@ -714,6 +1023,7 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
       // pokud dopis obsahuje proměnné, personifikuj obsah
       $priloha= null;
       $body= $is_vars ? mail2_personify($obsah,$vars,$idp,$priloha,$err) : '';
+      $body= pdo_real_escape_string($body);
       // a vytvoř mail
       $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body,priloha)
             VALUE (1,'@',0,$id_dopis,{$x_po[$idp][0]},$idp,'{$x_pm[$idp]}','$body','$priloha')";
@@ -1048,6 +1358,7 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
         // pokud dopis obsahuje proměnné, personifikuj obsah
         $priloha= null;
         $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$priloha,$err) : '';
+        $body= pdo_real_escape_string($body);
         $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body,priloha)
               VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body','$priloha')";
 //                                         display("$i:$qr");
@@ -1105,7 +1416,7 @@ end:
 # vrátí celý text
 function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) { 
 //    debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
-  global $ezer_path_root;
+  global $ezer_path_root, $USER;
   $text= $obsah;
   $priloha= '';
   list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,$ma_cenik_verze,
@@ -1117,6 +1428,9 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
+    case 'vyrizuje':
+      $val= $USER->options->vyrizuje;
+      break;
     case 'foto_z_akce':
       $fotky= select('fotka','rodina',"id_rodina=$idr");
       if ($fotky) {
@@ -1174,7 +1488,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
         display("akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message)");
         $qr= akce_qr_platby($id_pobyt,$account,$amount,$ss,$vs,$message);
 //        display($qr);
-        $val= "<div><div style='float:right;margin:5px'>$qr</div>$tab</div>";
+        $val= "<div style='margin:5px'><div style='float:right;margin:5px'>$qr</div>$tab</div>";
 //        $val= $val.$qr;
       }
       else {
@@ -1231,7 +1545,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
     }
     $text= str_replace('{'.$var.'}',$val,$text);
   }
-  $text= pdo_real_escape_string($text);
+//  $text= pdo_real_escape_string($text); // až pokud bude vkládáno do tabulky
   return $text;
 }
 # ----------------------------------------------------------------------------- mail2 personify_help
@@ -1437,18 +1751,24 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
 # nebo přímo zadáním parametrů
 function mail2_new_PHPMailer($smtp=null) {  
 //  global $ezer_path_serv;
-  global $ezer_root;
+//  global $ezer_root;
   $mail= null;
   if (!$smtp) {
     // získání parametrizace SMTP
-    $idu= $_SESSION[$ezer_root]['user_id'];
-    $i_smtp= sys_user_get($idu,'opt','smtp');
-    $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
-    $smtp= json_decode($smtp_json);
-    if ( json_last_error() != JSON_ERROR_NONE ) {
+    $smtp= mail2_smtp();
+    if ($smtp->err) {
       fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
       goto end;
     }
+//    // získání parametrizace SMTP
+//    $idu= $_SESSION[$ezer_root]['user_id'];
+//    $i_smtp= sys_user_get($idu,'opt','smtp');
+//    $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
+//    $smtp= json_decode($smtp_json);
+//    if ( json_last_error() != JSON_ERROR_NONE ) {
+//      fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
+//      goto end;
+//    }
     $smtp->files_path= __DIR__.'/../../files/setkani4';
 //    debug($smtp,"mailer config");
   }
@@ -1459,6 +1779,18 @@ function mail2_new_PHPMailer($smtp=null) {
   $mail= new Ezer_PHPMailer($smtp);
 end:  
   return $mail;
+}
+# získání parametrizace SMTP 
+function mail2_smtp() {
+  global $ezer_root;
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp');
+  $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  $smtp= json_decode($smtp_json);
+  if ( json_last_error() != JSON_ERROR_NONE ) {
+    $smtp->err= "chyba ve volbe SMTP serveru" . json_last_error_msg();
+  }
+  return $smtp;
 }
 # -------------------------------------------------------------------------------- mail2 mai_sending
 // y je paměť procesu, který bude krok za krokem prováděn 
@@ -1913,108 +2245,6 @@ function mail2_gen_excel($gq,$nazev) { trace();
   $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
 end:
   return $href;
-}
-# --------------------------------------------------------------------------------- mail2 vzor_pobyt
-# pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
-#                                                                         !!! + platba souběžné akce
-function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$varianta,$poslat=0) {
-//  global $ezer_root;
-  $ret= (object)array();
-
-  // načtení a kontrola pobytu + mail + nazev akce
-  $p= (object)array();
-  $rm= pdo_qry("
-    SELECT id_uhrada,
-     IFNULL(u_castka,0),u_datum,u_stav,
-     GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
-     a.nazev,a.access,a.hnizda,p.hnizdo
-    FROM pobyt AS p
-    LEFT JOIN uhrada AS u USING (id_pobyt)
-    JOIN akce AS a ON p.id_akce=a.id_duakce
-    LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
-    JOIN spolu AS s USING(id_pobyt)
-    JOIN osoba AS o ON s.id_osoba=o.id_osoba
-    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
-    LEFT JOIN rodina AS r USING (id_rodina)
-    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi AND IFNULL(t.role IN ('a','b'),true)
-  ");
-  list($id_uhrada,$castka,$dne,$potvrzeno,
-    $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
-  if ( !$id_uhrada ) { $ret->err= "CHYBA platba č.$u_poradi neexistuje"; goto end; }
-  if ( !$castka ) { $ret->err= "CHYBA: není zapsána částka"; goto end; }
-  if ( $dne=='0000-00-00' ) { $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
-  if ( $castka && $potvrzeno==3 ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
-//  }
-
-  // naplnění proměnných mailu
-  $p->platba_den= sql_date1($dne);
-  $p->platba_castka= number_format($castka, 0, '.', '&nbsp;')."&nbsp;Kč";
-  $p->vyrizuje= $vyrizuje;
-  // doplnění názvu hnízda, má-li smysl
-  if ($hnizda && $hnizdo) {
-    $hnizda= explode(',',$hnizda);
-    if (isset($hnizda[$hnizdo-1])) {
-      $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
-    }
-  }
-//  list($nazev,$obsah,$vars)=
-//     select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
-
-  // načtení vzoru dopisu - verze podle $varianta
-  $vzor= array();
-  $rv= pdo_qry("SELECT nazev,obsah,var_list FROM dopis WHERE typ='potvrzeni_platby' AND access=$access");
-  while ($rv && ($v= pdo_fetch_row($rv))) {
-    $vzor[]= $v;  
-  } 
-//  debug($vzor);
-  if (!count($vzor)) { $ret->err= "CHYBA: nebyl nalezen vzor dopisu 'potvrzeni_platby' "; goto end; }
-  else if ($varianta>count($vzor)) $varianta= 1; // cyklické opakování
-  $ret->next= $varianta+1;
-  list($nazev,$obsah,$vars)= $vzor[$varianta-1];
-  // personifikace
-  foreach ( explode(',',$vars) as $var ) {
-    $var= trim($var);
-    $obsah= str_replace('{'.$var.'}',$p->$var,$obsah);
-  }
-  // extrakce adresy
-  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
-                                                              display("maily=$maily");
-  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
-  $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
-
-  if ( $poslat ) {
-    // poslání mailu - při úspěchu zápis o potvrzení
-    $mail= mail2_new_PHPMailer();
-    if ( $mail->Ezer_error ) { 
-      $ze= isset($mail->Username) ? $mail->Username : '?';
-      $ret->err= "CHYBA při odesílání mailu z '$ze' - odesílací adresa nelze použít ($mail->Ezer_error)";
-      goto end;
-    }
-    $mail->AddReplyTo($from);
-    $mail->SetFrom($mail->From,$vyrizuje);
-    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
-      $mail->AddAddress($adresa);   // pošli na 1. adresu
-    }
-    $mail->Subject= $nazev;
-    $mail->Body= $obsah;
-    $ok= $mail->Ezer_Send();
-    if ( $ok=='ok' ) {
-      // zápis o potvrzení
-      $ret->msg= "Byl odeslán mail$report";
-      query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
-    }
-    else {
-      $ze= isset($mail->Username) ? $mail->Username : '?';
-      $ret->err= "CHYBA při odesílání mailu z '$ze' $ok";
-      goto end;
-    }
-  }
-  else {
-    $ret->msg= "Je připraven mail - mám ho poslat?$report";
-    $ret->butt= "poslat:send,neposílat:quit,jiný dopis:next";
-  }
-end:
-  return $ret;
 }
 # =======================================================================================> . mailist
 # ---------------------------------------------------------------------------------- mail2 lst_using

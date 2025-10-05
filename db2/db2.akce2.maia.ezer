@@ -90,12 +90,6 @@ menu m {type:'left',
       par:{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
     item {title:'náhradníkům této akce'
       par:{k:'et',uq:'U9',on:'akce',off:'gen|skup',cond:'p.funkce=9'} }
-    item {title:'vzor mailu: Potvrzení platby'
-      proc onclick(i) {
-        ii.fill(conc(i.owner.title,' - ',i.title),' ');
-        vy.display(0); et.display(0); es.display(0); vz.display(1);
-        vz.Init
-    }}
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
@@ -121,6 +115,15 @@ menu m {type:'left',
     item {title:'náhradníkům této akce'
       par:{k:'es',uq:'U9',on:'akce',off:'gen|skup'} }
   }
+  menu {title:'Vzory mailů ', type:'group'
+    item {title:'Rozpis platby s QR', par:{typ:'rozpis_platby'}}
+    item {title:'Potvrzení platby', par:{typ:'potvrzeni_platby'}}
+    func onclick(i:ezer) {
+      ii.header(i);
+      vy.display(0); et.display(0); es.display(0); vz.display(1);
+      vz.Init(i.par.typ);
+    }
+  }
   proc onclick (i) {
     menu_item.set(i); menu_par.set(i.par);
     vz.display(0); vy.display(1);
@@ -139,24 +142,55 @@ menu m {type:'left',
 # -------------------------------------------------------------------------------------------- vzory
 # formulář pro opravu dopisu typ='potvrzeni_platby' ve variantě podle access
 form _vzory {
-  proc Init() { var a:array
-    dopis_id.set(0);
-    form.load('',conc("typ='potvrzeni_platby' AND access=",my_access.get));
-    dopis_id.set(id_dopis.get);
-    txt.set(conc("<h1>",nazev.get,"</h1>",obsah.get));
+  var dopisy: array,
+      i_dopisy= -2,
+      vars: text
+  func Init(typ) { 
+    dopisy= php.dop_ids_where(`typ='${typ}' AND access&${my_access}`);
+    if (array_length(dopisy)) {
+      i_dopisy= 0; form.enable(1,'but'); 
+      switch (typ) {
+        case 'potvrzeni_platby': vars= `<b>v mailu lze používat proměnné:</b>
+          <br>{platba_den} = z karty Platba
+          <br>{platba_castka} = z karty Platba
+          <br>{vyrizuje} = "vyřizuje" z os.nastavení`;
+          break;
+        case 'rozpis_platby': vars= `<b>v mailu lze používat proměnné:</b>
+          <br>{platba_ss} = specifický symbol
+          <br>{platba_vs} = variabilní symbol (6 čislic rodného čísla)
+          <br>{akce_cena} = rozpis platby s QR kódem`;
+          break;
+      }
+      vars= `${vars}
+          <br>{platba_akce} = název akce
+          <br>{vyrizuje} = "vyřizuje" z os.nastavení
+          <br>{pratele} = vloží název rodiny, nebo slovo 'přátelé'`;
+      vars= `<div style="float:right;padding:5px;line-height:1.5;margin-right: 15px" class="ae_work">${vars}</div>`;
+      Show();
+    }
+    else {
+      form.enable(0,'but'); txt= ''; vars= '';
+      alert(`Není žádný vzor pro ${typ}. Požádej o založení.`);
+    }
   }
-  button opravit [-24,8,,] { title:'Upravit', style:'zIndex:2'
-    proc onclick() {
-      E_dopis.modal(50,50); Init
+  func Show() {
+    form.load('',`id_dopis=${dopisy[i_dopisy]}`);
+    txt= `${vars}<b>${i_dopisy+1}/${array_length(dopisy)}: ${nazev} <i>na akci (název akce)</i></b><br><br>${obsah}`;
+  }
+  function Next() {
+    i_dopisy++; 
+    if (i_dopisy>=array_length(dopisy)) i_dopisy= 0;
+  }
+  button jiny [-78,8,,] { tag:'but', title:'Jiný dopis', style:'zIndex:2'
+    func onclick() {
+      Next(); Show();
   }}
-  label txt [0,40,,]
-  label vars [-25,40,200,] { css:'ae_work', style:'padding:5px;line-height:1.5'
-    title:'<b>v mailu lze používat proměnné:</b>
-      <br>{platba_den} = z karty Platba
-      <br>{platba_castka} = z karty Platba
-      <br>{platba_akce} = název akce
-      <br>{vyrizuje} = "vyřizuje" z os.nastavení' 
-  }
+  button opravit [-24,8,,] { tag:'but', title:'Upravit', style:'zIndex:2'
+    func onclick() {
+      dopis_id= id_dopis; E_dopis.modal(50,50); Show();
+  }}
+  label txt [0,40,*,]
+//  label vars [-25,40,200,] { css:'ae_work', style:'padding:5px;line-height:1.5' }
   field id_dopis { data:dopis.id_dopis }
   field nazev    { data:dopis.nazev }
   field obsah    { data:dopis.obsah }
@@ -445,7 +479,7 @@ form _etext  {
   # text mailu
   label obsah [0,263,645,200] { title:'zobrazení předmětu a textu mailu' }
 }
-# ========================================================================================== E_dopis
+# ========================================================================================== E dopis
 panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', 
     skill:'yams;fams;cams;T'
   use mail: form _edopis [0,0,,],

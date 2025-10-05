@@ -124,7 +124,7 @@ function akce2_vzorec2_pobyt($idp,$ids=0,$spec=null,$zapsat_cenu=0) { // trace()
   if ($pozn) {
     $res->navrh.= "<br>Poznámka: ".implode('<br>',$pozn);
   }
-  $res->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$res->navrh</div>";
+  $res->mail= "<div style='background-color:#eeeeee;margin-left:5px'>$res->navrh</div>";
   return $res;
 }
 # ------------------------------------------------------------------------------- akce2 vzorec2_test
