@@ -379,8 +379,8 @@ function dop_personify($id_dopis,$id_pobyt,$id_uhrada,$send_me=0) {
   ");
   list($omaily,$rmaily,$narozeni)= pdo_fetch_row($rm);
   $vsym= substr($narozeni,2,2).substr($narozeni,5,2).substr($narozeni,8,2);
-  $obsah= str_replace('{platba_ssym}',$ssym,$obsah);
-  $obsah= str_replace('{platba_vsym}',$vsym,$obsah);
+  $obsah= str_replace('{platba_ss}',$ssym,$obsah);
+  $obsah= str_replace('{platba_vs}',$vsym,$obsah);
   $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
   if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
   $vyrizuje= $USER->options->vyrizuje; 
