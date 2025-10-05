@@ -1015,7 +1015,7 @@ form _cmd [,,425,30] { css:'ae_parm'
   }}
   #==> .. originál
   button [452,4,,] { type:'html', title:"originál [fa-exchange] kopie", 
-    func onclick() { var qry:text, x1:number, x2:number, x:ezer
+    func onclick() { var qry:text, x1:number, x2:number, x:object
       if (eq(mode,'osoba','osoba_lst','cleni_lst')) {
         x= o1; o1= o2; o2= x;
           o1.init_all("ORIGINÁL",0); o1.property({left:0});

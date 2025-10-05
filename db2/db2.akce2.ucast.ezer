@@ -2637,7 +2637,6 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   label [618,91,61,14] {tag:'deti', title:'platba za'}
   // seznam plateb
   list uhrady_lst [308,100,360,30] { rows:25
-//    label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
     label  u_poradi [0,14,2,17] 
     field  u_castka [12,10,40,] {format:'r', help:'vratky se znaménkem -'}
     select u_zpusob [60,10,85,] {type:'map0', options:ms_akce_platba.zkratka}
@@ -2656,10 +2655,58 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 map uhrada_za=   "i,zkratka;0:pár,1:děti" 
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
+panel send_mail [,,450,400] {type:'popup', title:"Odeslání mailu podle vzoru"
+  use m: form [0,0,*,*] {
+    button [98,4,,] { tag:'but', title:'[fa-send] poslat' func onclick() { Show(1); panel.hide(0) }}
+    button [163,4,,] { title:'[fa-times] neposílat' func onclick() { panel.hide(0) }}
+    button [242,4,,] { tag:'but', title:'[fa-arrow-right] jiný dopis' func onclick() { Next(); Show(0); }}
+    label varianta [327,8,,] { style:"font-size:9pt" }
+    label txt [0,30,*,370] { style:"font-size:9pt;overflow:auto" }
+    field id_dopis { data:dopis.id_dopis }
+    field nazev    { data:dopis.nazev }
+    field obsah    { data:dopis.obsah }
+ }
+  var dopisy: array,
+      i_dopisy= -2,   // -2 neexistuje resp. chyba
+      id_uhrada: number
+  
+  func Init(typ) { var Ln:ezer, i:number
+    dopisy= php.dop_ids_where(`typ='${typ}' AND access&${my_access}`);
+    if (typ=='potvrzeni_platby') {
+      if (pla.uhrady_n>1) 
+        i= prompt2("napiš pořadové číslo platby",1)
+      else {
+        Ln= pla.uhrady_lst[0]; i= Ln.u_poradi;
+      }
+      id_uhrada= php.select1('IFNULL(id_uhrada,0)','uhrada',`id_pobyt=${the_pobyt} AND u_poradi=${i}`);
+    }
+    if (array_length(dopisy)) {
+      i_dopisy= 0; m.enable(1,'but'); 
+      Show(0);
+      if (i_dopisy>=0) panel.modal();
+    }
+    else {
+      m.enable(0,'but'); m.txt= ''; 
+      alert(`Není žádný vzor pro ${typ}. Požádej o založení.`);
+    }
+  }
+  func Show(send_me) { var ret: object
+    m.load('',`id_dopis=${dopisy[i_dopisy]}`);
+    ret= php.dop_personify(m.id_dopis,the_pobyt,id_uhrada,send_me);
+    if (ret.err) { alert(ret.err); i_dopisy= -1; }
+    if (ret.msg) warning(ret.msg);
+    m.varianta= `<i>Varianta č.${i_dopisy+1} z ${array_length(dopisy)}</i>`;
+    m.txt= ret.txt;
+  }
+  func Next() {
+    i_dopisy++; 
+    if (i_dopisy>=array_length(dopisy)) i_dopisy= 0;
+  }
+}
 form _cmd_p [,,623,30] { css:'ae_work'
   // Zpět a Uložit
-  label  [496,0,125,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [503,6,,] {title:'[fa-undo] Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [0,0,121,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [7,6,,] {title:'[fa-undo] Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     func onclick() {
       // uvolnění zámku a potlačení ochrany proti neuložené změně
       php.table_lock('off','pobyt',the_pobyt);
@@ -2667,7 +2714,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
       pla.zmena_spec_strav= 0;
       reload(the_pobyt);
   } }
-  button [560,6,,] {title:'[fa-save] Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [60,6,,] {title:'[fa-save] Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     func onclick() { 
       php.table_lock('off','pobyt',the_pobyt);
       pla.zmena_spec_strav= 0;
@@ -2679,67 +2726,29 @@ form _cmd_p [,,623,30] { css:'ae_work'
       reload(the_pobyt);
     }
   }
-  # potvrzení platby zasláním mailu
-  label  [3,0,334,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [11,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
-    help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
-    func onclick() { var y:object, from:text, name:text, i:number, Ln:ezer, end:number
-      clear();
-      echo(`uhrady_n=${pla.uhrady_n}`);
-      if (!pla.same()) { alert("nejprve je třeba uložit změněné údaje"); return }
-      if (pla.uhrady_n>1) 
-        i= prompt2("napiš pořadové číslo platby",1)
-      else {
-        Ln= pla.uhrady_lst[0];
-        i= Ln.u_poradi;
-      }
-      from= sys('user','options','email'); name= sys('user','options','vyrizuje');
-      y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1,0);
-      if (y.err) { alert(y.err); return }
-//        elseif (confirm(y.msg)) {
-//          y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1);
-//          if (y.err) alert(y.err) 
-//          else { pla.load(the_pobyt); alert(y.msg) }
-//        }
-      end= 0;
-      while (!end) { 
-        switch (choose(y.msg,y.butt)) {
-          case 'quit':
-            end= 1;
-            break;
-          case 'next':
-            y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,y.next,0);
-            if (y.err) { alert(y.err); return }
-            break;
-          case 'send':
-            y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,y.next-1,1);
-            if (y.err) alert(y.err) else { pla.load(the_pobyt); alert(y.msg); reload(the_pobyt); }
-            end= 1;
-            break;
-
-        }
-      }
+  # poslat rozpis platby
+  label  [130,0,470,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [137,6,,] { title:"[fa-send-o] Poslat rozpis platby",
+    help:'poslání mailu s rozpisem platby podle vzoru v Maily akce'
+    func onclick() { 
+      send_mail.Init('rozpis_platby');
     }
-//    proc onclick() { var y:object, from:text, name:text
-//      clear;
-//      [ pla.datplatby.get | pla.datplatby.set(now); pla.datplatby.change ];
-//      not(pla.same); alert("nejprve je třeba uložit změněné údaje")
-//    | from.set(sys('user','options','email'));
-//      name.set(sys('user','options','vyrizuje'));
-//      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,0));
-//      y.err; alert(y.err);
-//    | confirm(y.msg);
-//      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,1));
-//      { y.err; alert(y.err) | pla.load(the_pobyt.get); alert(y.msg) }
-//    }
+  }
+  # potvrzení platby zasláním mailu
+//  label  [3,0,334,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [274,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
+    help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
+    func onclick() { 
+      send_mail.Init('potvrzeni_platby'); 
+    }
   }
   # přidání řádku do seznamu plateb
-  button [154,6,,]  {title:"[fa-plus-square-o] Další platba", help:"přidá pro ni nový řádek"
+  button [417,6,,]  {title:"[fa-plus-square-o] Další platba", help:"přidá pro ni nový řádek"
     func onclick() { 
       pla.uhrady_add();
     }
   }
-  button [247,6,,] { title:"[fa-times fa-red] Zruš platbu" help:"napřed se zeptá na číslo platby"
+  button [510,6,,] { title:"[fa-times fa-red] Zruš platbu" help:"napřed se zeptá na číslo platby"
     func onclick() { var i:number, u:array
       i= 0;
       if (pla.uhrady_n>1) i= prompt2("napiš pořadové číslo rušené platby",0);
@@ -2750,8 +2759,8 @@ form _cmd_p [,,623,30] { css:'ae_work'
       }
   }}
   # uhrazení členského příspěvku na akci do pokladny
-  label  [349,0,136,30] { css:'ae_parm', skill:'yaa+' }
-  button [356,6,,] {title:'[fa-coffee] členský příspěvek',  skill:'yaa+|yaa+'
+  label  [612,0,136,30] { css:'ae_parm', skill:'yaa+' }
+  button [619,6,,] {title:'[fa-coffee] členský příspěvek',  skill:'yaa+|yaa+'
       help:'pokladna: zaplatit členský příspěvek',
     func onclick() { var ret: object
       ret= php.akce2_platba_prispevek1(the_pobyt);
