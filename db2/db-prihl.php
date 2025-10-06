@@ -80,7 +80,7 @@ function akce_qr_save($png,$png_name) {
     mkdir($abs_dir, 0775, true);
   }
   file_put_contents("$abs_dir/$png_name.png", $png);
-  return "<a href='$url' target='QR'><img src='$url'></a>";
+  return "<a href='$url' target='QR'><img src='$url' alt='klikni pro zobrazení QR kódu platby'></a>";
 }
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
