@@ -343,7 +343,7 @@ function dop_ids_where($cond) { //trace();
 # vrátí celý text, pokud $send_me=1 také jej pošle
 function dop_personify($id_dopis,$id_pobyt,$id_uhrada,$send_me=0) { 
   global $USER;
-  $ret= (object)['txt'=>'','err'=>'','msg'=>''];
+  $ret= (object)['txt'=>'','err'=>'','msg'=>'', 'refresh'=>0];
   list($nazev,$obsah,$typ)= select('nazev,obsah,typ','dopis',"id_dopis=$id_dopis");
   if ($typ=='potvrzeni_platby') {
     if ( !$id_uhrada ) { $ret->err= "CHYBA platba neexistuje (nebo chybné pořadí?)"; goto end; }
@@ -413,6 +413,11 @@ function dop_personify($id_dopis,$id_pobyt,$id_uhrada,$send_me=0) {
       if ($typ=='potvrzeni_platby') {
         // zápis o zaslání potvrzení 
         query("UPDATE uhrada SET u_stav=3 WHERE id_uhrada=$id_uhrada");
+      }
+      else if ($typ=='rozpis_platby') {
+        // zápis data zaslání rozpisu
+        query("UPDATE pobyt SET rozpis_poslan=NOW() WHERE id_pobyt=$id_pobyt");
+        $ret->refresh= 1; // refresh panelu
       }
     }
     else {
@@ -1667,6 +1672,8 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
   $res= pdo_qry($qry,1,null,1);
   $d= pdo_fetch_object($res);
+  // pokud jde o poslání ceny, poznamenej to po odeslání do pobyt.rozpis_poslan
+  $poslat_rozpis= preg_match("/\{akce_cena}/",$d->obsah) ? 1 : 0;
   // napojení na mailer
   $html= '';
   // poslání mailů
@@ -1788,6 +1795,10 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       else {
         $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
         pdo_qry($qry1);
+        // pokud jsme odesílali rozpis platby, poznamenáme to
+        if ($ok=='ok' && $poslat_rozpis) {
+          query("UPDATE pobyt SET rozpis_poslan=NOW() WHERE id_pobyt=$z->id_pobyt");
+        }
       }
       // po chybě přeruš odesílání
       if ( $ok!='ok' ) break;

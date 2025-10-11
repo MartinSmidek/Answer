@@ -246,7 +246,7 @@ proc change_width(x) { x.property(object('widen',cconc(eq(curr_w.get,1024),-250,
 
 # změna výšky oproti základní min_h
 proc h_change_all() {
-  foreach(array(cmd,cmdp),change_top1);
+  foreach(array(cmd,cmdp,pla.rozpis_poslan),change_top1);
   foreach(array(sp1,sp2,pob),change_top2);
   foreach(array(
       evid.frame,pla.frame,pla_ds.frame,act0.frame,alb0.frame,docu.frame,
@@ -876,6 +876,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     }
     show _dupl  // 1 pokud jsou duplicity
     show c_suma  [,,0,] { title:'cena', format:"rsq=", css_cell:"dluh,1:yellow,2:blue" }
+    show rozpis_poslan [,,0,] { title:'mail', js_pipe:'den_mes', format:"r", css_cell:"dluh,1:yellow,2:blue" }
     show vratka  [,,0,] { title:'vratka', format:"rsq=", css_cell:"dluh,1:yellow,2:blue"  }
     show platba  [,,0,] { title:'platba', format:"rsq=", css_cell:"dluh,1:yellow,2:blue"  }
     show budova  [,,0,] { title:'budova', format:"rsq=" }
@@ -1059,14 +1060,24 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
 //      load_zalozka
 //    }
     # ==> . sloupce
-    proc show_dup(on) { on;
-      _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
-    | _jmena.width(190); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
+//    proc show_dup(on) { on;
+//      _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
+//    | _jmena.width(190); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
+//    }
+    func show_dup(on) { 
+      if (on) {
+        _jmena.width(140); _docs.width(49); rozpis_poslan.width(0); 
+        c_suma.width(0); platba.width(0); x_umi.width(0)
+      }
+      else {
+        _jmena.width(190); _docs.width(0); rozpis_poslan.width(0); 
+        c_suma.width(0); platba.width(0); x_umi.width(0)
+      }
     }
     func onclick() { // varianty zobrazení seznamu
       if (_docs.width()==49) show_dup(0)
       elseif (platba.width()) { 
-        platba.width(0); c_suma.width(0); vratka.width(0); 
+        platba.width(0); rozpis_poslan.width(0); c_suma.width(0); vratka.width(0); 
         budova.width(35); pokoj.width(35); _docs.width(15); _jmena.width(102) }
       elseif (budova.width()) { 
         budova.width(0); pokoj.width(0); 
@@ -1075,7 +1086,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         key_pobyt.width(39); x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(150) }
       elseif (key_pobyt.width()) { 
         key_pobyt.width(0); _jmena.width(190) }
-      else { platba.width(35); c_suma.width(35); vratka.width(35); _docs.width(0); _jmena.width(82) }
+      else { platba.width(35); c_suma.width(35); rozpis_poslan.width(32); vratka.width(35); 
+        _docs.width(0); _jmena.width(49) }
     }
     proc onrefreshed() { h_change_b }
     func columns() {
@@ -2492,6 +2504,9 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   }}
   label navrh [10,123,280,Td-146] { tag:'cenik', css:'karta_info' }
   edit duvod_text [8,119,280,Td-147] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
+  // datum odeslání rozpisu platby
+  field rozpis_poslan [80,Td-15,87,] { tag:'cenik', title:'odesláno dne', type:'date', 
+      data:pobyt.rozpis_poslan, format:'rR:e' }
   label doslo [300,99,4,187] { style:"border-left:2px solid grey" }
   // nestandardní strava
   func nestandard(zkratka,nazev) { var zmena:number
@@ -2695,6 +2710,7 @@ panel send_mail [,,450,400] {type:'popup', title:"Odeslání mailu podle vzoru"
     ret= php.dop_personify(m.id_dopis,the_pobyt,id_uhrada,send_me);
     if (ret.err) { alert(ret.err); i_dopisy= -1; }
     if (ret.msg) warning(ret.msg);
+    if (ret.refresh) refresh_ucast(the_pobyt);
     m.varianta= `<i>Varianta č.${i_dopisy+1} z ${array_length(dopisy)}</i>`;
     m.txt= ret.txt;
   }
