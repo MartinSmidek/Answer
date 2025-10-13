@@ -713,7 +713,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',id_prihlaska,prijata,c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,"
+           . "keys_rodina='',id_prihlaska,prijata,c_suma,rozpis_poslan,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,"
            . "funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_color");
 //           . "funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes,web_color");
 //           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");

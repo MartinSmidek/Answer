@@ -911,6 +911,16 @@ Ezer.fce.rc2roky= function (rc) {
   return roku;
 };
 // -------------------------------------------------------------------------------------------- roku
+//ff: ys.den_mes (dat)
+//      vrací d/m z data v SQL formátu yyyy-mm-dd
+//s: ys
+var roku= 
+Ezer.fce.den_mes= function (dat) {
+  let d_m= dat=='0000-00-00' ? '' 
+      : String(Number(dat.substr(8,2)))+'/'+String(Number(dat.substr(5,2)));
+  return d_m;
+}
+// -------------------------------------------------------------------------------------------- roku
 //ff: ys.roku (dat)
 //      vrací zaokrouhlený počet roku uplynulých od daného data, první rok počítá i načatý
 //      uvedený na 1 desetinné místo pro věk>20
