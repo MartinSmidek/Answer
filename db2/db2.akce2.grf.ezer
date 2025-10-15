@@ -95,6 +95,12 @@ menu m {type:'left', format:'f+'
   menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] Věk na jejich firmingu",     par:{type:'vek_fir',tag:'i|d',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-pie-chart] skladba podle vzdělání", par:{akce:'FIRM', type:'hist_vzd', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-pie-chart] ... podle příslušnosti k církvi", par:{akce:'FIRM', type:'hist_vir', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-pie-chart] ... podle věku", par:{akce:'FIRM', type:'hist_vek', tag:'i|d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'firm'}}
   }

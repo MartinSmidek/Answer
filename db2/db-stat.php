@@ -2527,7 +2527,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
       break;
     case 'hist_vzd': // --------------------------------------------------- vzdělání
     case 'hist_vir': // --------------------------------------------------- církev
-      $akce= $par->akce;
+      $akce= $par->akce=='FIRM' ? 'firmingu' : $par->akce;
       $type= $par->type;
       $chart->title= "tuzemští účastníci $akce a jejich ";
       $od= $par->od;
@@ -2538,6 +2538,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $mrop_y= array('neuvedl','ZŠ','SŠ','VŠ');        
         $druh= 'ms_akce_vzdelani';
         $data= 'vzdelani';
+        $cis= 'hodnota';
       }
       else if ($type=='hist_vir') {
         $chart->title.= 'vztah k církvi';
@@ -2545,34 +2546,37 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $mrop_y= array('neuvedl','bez vyznání','nekatolík','katolík');        
         $druh= 'ms_akce_cirkev';
         $data= 'cirkev';
+        $cis= 'barva';
       }
       $roky= array();
       for ($rok= $od; $rok<=$do; $rok++) {
-        // zjistíme, jestli v daném roce byl MROP/EROP
-        $akce_cond= $akce=='MROP' ? "mrop=1" : "id_duakce=1501"; // zatím EROP podle ID
-        $datum_od= select('datum_od','akce',"$akce_cond AND zruseno=0 AND YEAR(datum_od)=$rok");
+        // zjistíme, jestli v daném roce byl MROP/EROP/firming
+        $akce_cond= 
+            $akce=='MROP' ? "mrop=1" : (
+            $par->akce=='FIRM' ? "firm=1" : 
+            'id_duakce=1501'); // zatím EROP podle ID
+        list($id_akce,$datum_od)= 
+            select('id_duakce,datum_od','akce',"$akce_cond AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$datum_od) continue;
         $mrop[0][$rok]= 0;
         $mrop[1][$rok]= 0;
         $mrop[2][$rok]= 0;
         $mrop[3][$rok]= 0;
         $roky[]= $rok;
-        $akce_ucast= $akce=='MROP' ? "iniciace=$rok" 
-            : "id_akce=1501 AND funkce IN (0,1)"; // zatím EROP podle ID
+//        $akce_ucast= $akce=='MROP' ? "iniciace=$rok" : (
+//            $par->akce=='FIRM' ? "firming=$rok" 
+//            : "id_akce=1501 AND funkce IN (0,1)"); // zatím EROP podle ID
         $mr= pdo_qry("
-          SELECT $data,_cis.ikona
-          FROM osoba "
-          . ($akce=='EROP' ? "JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) " : "") .
-          " LEFT JOIN _cis ON druh='$druh' AND data=$data
-          WHERE $akce_ucast AND deleted='' AND stat IN ('','CZ')
+          SELECT $data,IFNULL(_cis.$cis,0)
+          FROM osoba 
+          LEFT JOIN _cis ON druh='$druh' AND data=$data
+          JOIN spolu USING (id_osoba)
+          JOIN pobyt USING (id_pobyt)
+          WHERE id_akce=$id_akce AND funkce=0 /*AND $akce_ucast*/ AND deleted='' AND stat IN ('','CZ')
           ");
         while ($mr && (list($kod,$cir)= pdo_fetch_row($mr))) {
-          // 0 - neuvedl, 1-základní, 2-střední, 3-vysokoškolské)
-          // 0 - neuvedl, 1 - bez vyznání, 2 - nekatolík, 3 - katolík
-          if ($type=='hist_vir') {
-            // redukce církví 
-            $cir= $kod==0 ? 0 : ($cir==3 ? 1 : ($cir==1 ? 3 : 2));
-          }
+          // hodnota: 0 - neuvedl, 1-základní, 2-střední, 3-vysokoškolské)
+          // barva:   0 - neuvedl, 1 - bez vyznání, 2 - nekatolík, 3 - katolík
           $mrop[$cir][$rok]++;
         }
       }
@@ -2598,7 +2602,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
       }
       break;
     case 'hist_vek': // --------------------------------------------------- věk MROP/EROP
-      $akce= $par->akce;
+      $akce= $par->akce=='FIRM' ? 'firmingu' : $par->akce;
       $chart->title= "tuzemští účastníci $akce a jejich věk";
       $od= $par->od;
       $do= $par->do ?: date('Y');
@@ -2617,24 +2621,40 @@ function chart_akce($par) { // debug($par,'chart_akce');
       $i_vek_do= 0;
       $i_vek_od= 999;
       for ($rok= $od; $rok<=$do; $rok++) {
-        // zjistíme, jestli v daném roce byl MROP/EROP
-        $akce_cond= $akce=='MROP' ? "mrop=1" : "id_duakce=1501"; // zatím EROP podle ID
-        $datum_od= select('datum_od','akce',"$akce_cond AND zruseno=0 AND YEAR(datum_od)=$rok");
+        // zjistíme, jestli v daném roce byl MROP/EROP/firming
+        $akce_cond= 
+            $akce=='MROP' ? "mrop=1" : (
+            $par->akce=='FIRM' ? "firm=1" : 
+            'id_duakce=1501'); // zatím EROP podle ID
+        list($id_akce,$datum_od)= 
+            select('id_duakce,datum_od','akce',"$akce_cond AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$datum_od) continue;
         for ($i= 0; $i<=100/$po; $i++) {
           $mrop[$i][$rok]= 0;
         }
         $roky[]= $rok;
-        $akce_ucast= $akce=='MROP' ? "iniciace=$rok" 
-            : "id_akce=1501 AND funkce IN (0,1)"; // zatím EROP podle ID
+//        $akce_ucast= $akce=='MROP' ? "iniciace=$rok" : (
+//            $par->akce=='FIRM' ? "firming=$rok" 
+//            : "id_akce=1501 AND funkce IN (0,1)"); // zatím EROP podle ID
         $mr= pdo_qry("
           SELECT CEIL(($rok-YEAR(narozeni))/$po) AS _vek,COUNT(*),id_osoba
-          FROM osoba "
-          . ($akce=='EROP' ? "JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) " : "") .
-          "WHERE $akce_ucast AND deleted='' AND narozeni!='0000-00-00'
-            AND stat IN ('','CZ')
+          FROM osoba 
+          JOIN spolu USING (id_osoba)
+          JOIN pobyt USING (id_pobyt)
+          WHERE id_akce=$id_akce AND funkce=0 /*AND $akce_ucast*/ AND deleted='' AND stat IN ('','CZ')
+            AND narozeni!='0000-00-00'
           GROUP BY _vek
           ");
+//        $mr= pdo_qry("
+//          SELECT CEIL(($rok-YEAR(narozeni))/$po) AS _vek,COUNT(*),id_osoba
+//          FROM osoba "
+//          . ($akce=='EROP' ? "JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) " : "") . "
+//          JOIN spolu USING (id_osoba)
+//          JOIN pobyt USING (id_pobyt)
+//          WHERE id_akce=$id_akce AND funkce=0 AND $akce_ucast AND deleted='' AND stat IN ('','CZ')
+//            AND narozeni!='0000-00-00'
+//          GROUP BY _vek
+//          ");
         while ($mr && (list($i_vek,$n,$ido)= pdo_fetch_row($mr))) {
           if ($i_vek>90) { display("!!! $ido má $i_vek tzn.".$i_vek*$po); continue; } 
           $mrop[$i_vek][$rok]= $n;
