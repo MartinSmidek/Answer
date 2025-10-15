@@ -75,11 +75,11 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-bar-chart] ... YMCA/CPR+ŠM po iniciací", par:{type:'y_x po', tag:'d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
-    item  {title:"[fa-bar-chart] skladba podle vzdělání", par:{type:'hist_vzd', tag:'d',
+    item  {title:"[fa-pie-chart] skladba podle vzdělání", par:{akce:'MROP', type:'hist_vzd', tag:'d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
-    item  {title:"[fa-bar-chart] ... podle příslušnosti k církvi", par:{type:'hist_vir', tag:'d',
+    item  {title:"[fa-pie-chart] ... podle příslušnosti k církvi", par:{akce:'MROP', type:'hist_vir', tag:'d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
-    item  {title:"[fa-bar-chart] ... podle věku", par:{type:'hist_vek', tag:'i|d',
+    item  {title:"[fa-pie-chart] ... podle věku", par:{akce:'MROP', type:'hist_vek', tag:'i|d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'mrop'}, tag:'d'}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'mrop'}, tag:'d'}
@@ -90,7 +90,7 @@ menu m {type:'left', format:'f+'
     item  {title:"[fa-bar-chart] Věk na jejich iniciaci",     par:{type:'vek_rel',tag:'i|d',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
     item  {title:"[fa-bar-chart] ... model",                  par:{type:'vek_rnd',tag:'i|d',
-        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}                     skill:'m'}
   }
   menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] Věk na jejich firmingu",     par:{type:'vek_fir',tag:'i|d',
@@ -98,11 +98,17 @@ menu m {type:'left', format:'f+'
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'firm'}}
   }
-  menu {title:'Infografika EROP',type:'group'                                            skill:'m'
-    item  {title:"[fa-bar-chart] odhad frekvence", par:{type:'erop', tag:'d',
-        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+  menu {title:'Infografika EROP',type:'group'                                            
+    item  {title:"[fa-bar-chart] odhad frekvence", par:{type:'erop', tag:'d',               
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}                       skill:'m'}
     item  {title:"[fa-bar-chart] Aktuální věk neiniciovaných",par:{type:'vek_abs_nemrop',tag:'i|d',
-        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}                     skill:'m'}
+    item  {title:"[fa-pie-chart] skladba podle vzdělání", par:{akce:'EROP', type:'hist_vzd', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-pie-chart] ... podle příslušnosti k církvi", par:{akce:'EROP', type:'hist_vir', tag:'d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-pie-chart] ... podle věku", par:{akce:'EROP', type:'hist_vek', tag:'i|d',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'erop'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'erop'}}
   }
