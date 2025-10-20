@@ -61,7 +61,7 @@ var hodin_zmeny= 0              // zobrazení změn za poslední hodiny a výpis
 # inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
 var dirty=0,                     // 1 => byla ukončena inicializace modulu
     virgin_track=1    
-proc onstart() { dirty.get | akce_onstart }
+func onstart() { if (!dirty) akce_onstart() }
 func akce_onstart() { var m:object
   if (dirty) return;
   echo('------------------- ONSTART begin');
@@ -98,21 +98,21 @@ func akce_onstart() { var m:object
   echo('------------------- ONSTART end');
 }
 # změna datového přístupu
-proc reaccess() { #==> . reaccess (jen pro YS+FA)
-  lt(my_org.get,4);
-  has_access.set(sys('user','has_access'));
-  my_access.set(sys('user','access'));
-  my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
-  echo('has_access=',has_access.get,', my_access=',my_access.get,', my_org=',my_org.get);
-  [ has_skill('yaa;faa;caa'); lst.reaccess ];
-  [ has_skill('yaa;faa;caa'); ucast.reaccess ];
-  [ has_skill('yaa;faa;caa#crz'); pece.reaccess ];
-  [ has_skill('yaa;faa;caa'); tisk.reaccess ];
-  [ has_skill('yam;fam;cam'); maia.reaccess ];
-  [ has_skill('yae;fae;caa;mrop'); evi.reaccess ];
-  [ has_skill('yam;fam;cam'); mai.reaccess ];
-  [ has_skill('yaa;faa;caa'); sta.reaccess ];
-  elim.reaccess;
+func reaccess() { #==> . reaccess (jen pro YS+FA)
+  if (my_org>3) return;
+  has_access= sys('user','has_access');
+  my_access= sys('user','access');
+  my_org= my_access==3 ? sys('user','org') : my_access;
+  echo('has_access=',has_access,', my_access=',my_access,', my_org=',my_org);
+  if (has_skill('yaa;faa;caa')) lst.reaccess();
+  if (has_skill('yaa;faa;caa')) ucast.reaccess();
+  if (has_skill('yaa;faa;caa#crz')) pece.reaccess();
+  if (has_skill('yaa;faa;caa')) tisk.reaccess();
+  if (has_skill('yam;fam;cam')) maia.reaccess();
+  if (has_skill('yae;fae;caa;mrop')) evi.reaccess();
+  if (has_skill('yam;fam;cam')) mai.reaccess();
+  if (has_skill('yaa;faa;caa')) sta.reaccess();
+  elim.reaccess();
 }
 # ----------------------------------------------------------------------------==> globální procedury
 # vrací objekt obsahující aktuálně vybrané záznamy
@@ -146,100 +146,86 @@ func akce_choose(id_akce) { var a:object, ok:number
   echo(`-------------------------------- akce_choose(${id_akce}) ... the_rok=${the_rok}`);
   return ok;
 }
-//proc akce_choose(id_akce) { var a:object
-//  the_duakce.set(id_akce);
-//  a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
-//  
-//  the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
-//  the_hnizda.set(a.hnizda); the_wordpress.set(a.web_wordpress); the_mezinarodni.set(a.mezinarodni);
-//  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
-//  the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
-//  the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
-//  the_garant.set(a.garant);
-//  ms_akce_hnizda.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get));
-//  ms_akce_hnizda_plus.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get,1));
-//  ms_akce_hnizda_tisk.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get,2));
-//}
-proc accessed(org) {
-  return(function('x','y','return x&y;',org,my_access.get));
+func accessed(org) {
+  return(function('x','y','return x&y;',org,my_access));
 }
-proc spinner(on) {
-  [ function('on',"waiting(on);",on) ];
+func spinner(on) {
+  function('on',"waiting(on);",on);
 }
 # ==========================================================================================> . AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',
   skill:'yaa;faa;caa'
-  proc reaccess() {}
+  func reaccess() {}
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
-  proc akce_work(id) {}                // nastaví akci jako vybranou
-  proc akce_show(ida) {}               // 
+  func akce_work(id) {}                // nastaví akci jako vybranou
+  func akce_show(ida) {}               // 
 }
 panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
   var the_duakce_local:number    // vynulovani při změně v akci vynutí při fokus překreslení
   func curr() {return {pobyt:0,rodina:0,osoba:0}}
-  proc reaccess() {}
-  proc ucast_hnizda() {}                        // nastavení pro akci v hnízdech
-  proc ucast_pobyt(_idp) {}                     // ukázání pobytu na běžné akci
-  proc ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
-  proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
-  #proc init_ucast2() {}
-  proc akce_show() {}
-  proc osoby_show() {}                          // obnova údajů o osobě (osobách)
-  proc rodina_show() {}                         // obnova údajů o rodině
-  proc ucast_selected() {}                      // seznam vybraných účastníků
-  proc z_change() {}
+  func reaccess() {}
+  func ucast_hnizda() {}                        // nastavení pro akci v hnízdech
+  func ucast_pobyt(_idp) {}                     // ukázání pobytu na běžné akci
+  func ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
+  func clear_ucast2() {}                        // volání zajistí obnovu při onfucus
+  #func init_ucast2() {}
+  func akce_show() {}
+  func osoby_show() {}                          // obnova údajů o osobě (osobách)
+  func rodina_show() {}                         // obnova údajů o rodině
+  func ucast_selected() {}                      // seznam vybraných účastníků
+  func z_change() {}
 }
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',
     skill:'yaa;faa;caa#T;e'
-  proc reaccess() {}
-  proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
-  proc pece_hnizda() {}                         // nastavení pro akci v hnízdech
-  proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
+  func reaccess() {}
+  func init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+  func pece_hnizda() {}                         // nastavení pro akci v hnízdech
+  func akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onload,db2.akce2.tisk',skill:'yaa;faa;caa'
-  proc reaccess() {}
-  proc tisk_hnizda() {}                          // nastavení pro akci v hnízdech
-  proc ukaz_vypis() {}                          // otevření Výpisy akce na daném výpisu
+  func reaccess() {}
+  func tisk_hnizda() {}                          // nastavení pro akci v hnízdech
+  func ukaz_vypis() {}                          // otevření Výpisy akce na daném výpisu
 }
 panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam;T'
-  proc reaccess() {}
-  proc mail_hnizda() {}                          // nastavení pro akci v hnízdech
+  func reaccess() {}
+  func mail_hnizda() {}                          // nastavení pro akci v hnízdech
 }
 # ======================================================================================> . EVIDENCE
 panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop#T',
   func curr() {return {rodina:0,osoba:0}}
-  proc reaccess() {}
-  proc rodina_show() {}
-  proc osoby_show() {}
-  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
-  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
-  proc ulozen_gmail() { }
+  func reaccess() {}
+  func rodina_show() {}
+  func osoby_show() {}
+  func evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
+  func evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
+  func ulozen_gmail() { }
 }
 panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.akce2.mai',
   skill:'yam;fam;cam#T'
-  proc reaccess() {}
+  func reaccess() {}
 }
 panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yaed#T'  }
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;caa#T'
-  proc reaccess() {}
+  func reaccess() {}
 }
 panel grf {type:'right', title:'Grafy', _sys:'*', include:'onclick,db2.akce2.grf', skill:'yaa;faa;caa#T'
-  proc reaccess() {}
+  func reaccess() {}
 }
 //panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk#T'
-//  proc reaccess() {}
+//  func reaccess() {}
 //}
 # ==========================================================================================> . ELIM
 panel elim [0,0,975,617] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
     include:'onload,db2.akce2.elim'
-  proc reaccess() {}
-  proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
-  proc osoby_lst (ido,idos) {}                  // sjednocení navržených kandidátů na duplicitu
-  proc osoby_12(ido1,ido2) {}                   // sjednocení 2 navržených kandidátů na duplicitu
-  proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
-  proc rodiny_12 (idr1,idr2) {}                 // sjednocení 2 navržených kandidátů na duplicitu
-  proc rodiny_lst (idr,idrs) {}                 // sjednocení navržených kandidátů na duplicitu
-  proc cleni  (idr) {}                          // sjednocení členů dané rodiny
+  func reaccess() {}
+  func osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
+  func osoby_lst (ido,idos) {}                  // sjednocení navržených kandidátů na duplicitu
+  func osoby_12(ido1,ido2) {}                   // sjednocení 2 navržených kandidátů na duplicitu
+  func rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  func rodiny_12 (idr1,idr2) {}                 // sjednocení 2 navržených kandidátů na duplicitu
+  func rodiny_lst (idr,idrs) {}                 // sjednocení navržených kandidátů na duplicitu
+  func cleni  (idr) {}                          // sjednocení členů dané rodiny
 }
 # ==========================================================================================> COMMON
 # ------------------------------------------------------------------ _the_akce
@@ -256,11 +242,11 @@ form right [,,*,*] { style:"height:calc(100% - 61px)"
   label head [0,0,*,50]  { title:'' style:'padding-right:10px'}
   label msg  [0,35,*,20] { title:'' style:'padding-right:10px'}
   label note [0,57,,]    { title:'' style:'padding-right:10px;width:calc(100% - 30px);overflow:auto'}
-  proc fill(x,y) {
-    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
-    [ y; note.set(y) ]
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${x}</div>`;
+    if (y) note= y;
   }
-  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+  func append(x) { note= note ? `${note}<br>${x}` : x }
   func header(i:ezer) { var i_owner:ezer
     clear(); i_owner= i.owner();
     msg= ''; note= '';
@@ -884,17 +870,19 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
   var y:object,     // střadač zajištující komunikaci mezi klientem a serverem
       continue=1
   // Show(cast,celek) - posune termometr
-  proc Show(cast,celek) { 
-    it.thermo1.property(object('width',divide(multiply(cast,290),celek))) }
+  func Show(cast,celek) { 
+    it.thermo1.property({width: (cast * 290) / celek}) }
+//  proc Show(cast,celek) { 
+//    it.thermo1.property(object('width',divide(multiply(cast,290),celek))) }
   // Stop - zastaví a nechá zobrazené
-  proc Stop() { continue.set(0); it.display(0,'b'); }
+  func Stop() { continue= 0; it.display(0,'b'); }
   // End - zruší zobrazení
-  proc End() { it.display(0,'t') }
+  func End() { it.display(0,'t') }
   form _it { 
     label thermo1 [6,1,0,8]   { tag:'t', title:'' style:'background-color:#ef7f13' }
     label thermo2 [5,0,290,8] { tag:'t', title:'' style:'border:1px dotted grey' }
     label msg [0,15,300,40]   { tag:'t' format:'c' }
-    button cancel [120,30,,]  { tag:'t,b', title:'Přerušit' proc onclick () { Stop; } }
+    button cancel [120,30,,]  { tag:'t,b', title:'Přerušit' func onclick () { Stop(); } }
   }
 }
 # ===========================================================================================> TRACK
@@ -902,17 +890,17 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
 panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
 //  var reverted_table= '', reverted_key= 0
   use back: form _back [0,0,,] { tabindex:20 },
-  proc back_show(kde,klic) {
-    [ virgin_track.get; panel.popup(0,1) | panel.popup(0,0,0,1) ];
-    virgin_track.set(0);
-    panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
+  func back_show(kde,klic) {
+    if (virgin_track) panel.popup(0,1) else panel.popup(0,0,0,1);
+    virgin_track= 0;
+    panel.set_attrib('title',`Historie oprav pro ${kde} id=${klic}`);
 //    reverted_table.set(''); reverted_key.set(0);
     back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
     back.lst.raise('onrowclick')
   }
-  proc back_double(tab1,klic1,tab2,klic2) {
-    [ virgin_track.get; panel.popup(0,1) | panel.popup(0,0,0,1) ];
-    virgin_track.set(0);
+  func back_double(tab1,klic1,tab2,klic2) {
+    if (virgin_track) panel.popup(0,1) else panel.popup(0,0,0,1);
+    virgin_track= 0;
     panel.set_attrib('title',conc('Historie oprav pro ',tab1,'/',klic1,' a ',tab2,'/',klic2));
     back.lst.browse_load(conc(
         "(kde='",tab1,"' AND klic=",klic1,") OR (kde='",tab2,"' AND klic=",klic2,")"),"kdy DESC");
@@ -937,25 +925,25 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
       show id_track [,,0,] { data:_track.id_track }
       menu { type:'context'
         item { title:'vrátit nastavenou opravu'
-          proc onclick() {
-            lst.selected('clear'); lst.selected('toggle',1); revert }}
+          func onclick() {
+            lst.selected('clear'); lst.selected('toggle',1); revert() }}
         item { title:'vrátit i související opravy'
-          proc onclick() { var ret:object
+          func onclick() { var ret:object
             lst.selected('clear');
-            ret.set(ask('track_like',lst.browse_key));
-            { ret.ok; lst.selected('set',ret.ids); [ revert ]
-            | alert(ret.msg) }
+            ret= php.track_like(lst.browse_key());
+            if (ret.ok) { lst.selected('set',ret.ids); revert() }
+            else alert(ret.msg)
           }}
       }
-      proc revert() { var ret:object
-        confirm('mám zkusit vrátit opravy označených řádků?');
-        ret.set(ask('track_revert',lst.selected('get',0)));
-        { ret.ok; warning("změny byly vráceny");
+      func revert() { var ret:object
+        if (!confirm('mám zkusit vrátit opravy označených řádků?')) return;
+        ret= php.track_revert(lst.selected('get',0));
+        if (ret.ok) { warning("změny byly vráceny");
 //          reverted_table.set(ret.tab); reverted_key.set(ret.klic);
-          lst.browse_refresh;
-        | alert(ret.msg) }
+          lst.browse_refresh();
+        } else alert(ret.msg);
       }
-    },
+    }
     label [0,250,545,] { title:"ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<div style='float:right'>V=vrácení spojených záznamů</div><br>ZÁZNAM: x=smazano, o=obnoveno, d=vzniklo spojením duplicitních záznamů, r=různé od uvedeného záznamu" }
   }
 }
@@ -965,11 +953,11 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
       id_akce:number, pecouni:number,       // metoda=akce - id akce a počet pečounů
       id_mailist:number,                    // metoda=mail
       mrop_par:object, mrop_body:number     // metoda=mrop
-  proc onfirstfocus() { 
+  func onfirstfocus() { 
     spinner(1); 
 //    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
     f.cr.init('ROADMAP',0,'smap'); 
-    [ ukaz_psc ]; 
+    ukaz_psc(); 
     spinner(0) 
   }
   func onfocus() { 
@@ -1021,34 +1009,41 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
 }
 # =======================================================================================> formuláře
 # společné procedury
-proc obligatory(elem) { elem.enable(1); elem.change(1) }
+func obligatory(elem:ezer) { elem.enable(1); elem.change(1) }
 # -----------------------------------------------------------------------------------------==> OSOBA
 panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='ZKAS', var ucast:object
-  proc start() {
-    grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
-    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
-    [ has_skill('yaa:c;faa:c;caa:c') | grp.set(replace(grp.get,'C','')) ];
-    [ has_skill('a') | grp.set(replace(grp.get,'W','')) ];
-    cnfg._back; }
+  func start() {
+    grp= get_cookie(conc(sys('root'),'_conf_osoba'),grp);
+    if (!contains('Z',grp)) grp= conc('Z',grp);
+    if (!has_skill('yaa:c;faa:c;caa:c')) grp= replace(grp,'C','');
+    if (!has_skill('a')) grp= replace(grp,'W','');
+    cnfg._back(); 
+  }
+//  proc start() {
+//    grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
+//    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+//    [ has_skill('yaa:c;faa:c;caa:c') | grp.set(replace(grp.get,'C','')) ];
+//    [ has_skill('a') | grp.set(replace(grp.get,'W','')) ];
+//    cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
     check z [ 0,  0,100,] { title:"základní údaje",      format:'d', value:'1'}
-    check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', proc onchange() { _tuned }}
-    check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
-    check g [100,20,110,] { title:"konference",          format:'t', proc onchange() { _tuned }}
-    check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
+    check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', func onchange() { _tuned() }}
+    check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', func onchange() { _tuned() }}
+    check g [100,20,110,] { title:"konference",          format:'t', func onchange() { _tuned() }}
+    check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', func onchange() { _tuned() }}
     check v [100,40,110,] { title:"web, souhlasy",       format:'t', skill:'a|a'
-                                                                     proc onchange() { _tuned }}
-    check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
+                                                                     func onchange() { _tuned() }}
+    check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', func onchange() { _tuned() }}
     check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c;caa|caa:c'
-                                                                     proc onchange() { _tuned }}
+                                                                     func onchange() { _tuned() }}
     check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
-                                                         format:'t', proc onchange() { _tuned }}
-    button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.hide(1) }}
+                                                         format:'t', func onchange() { _tuned() }}
+    button  [ 0,130,,] { type:'submit', title:'Nastav', func onclick() {
+      set_cookie(conc(sys('root'),'_conf_osoba'),grp); panel.hide(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('osoby_show'); panel.hide(1) }}
     proc _tuned() {
@@ -1056,28 +1051,39 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
       [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
       [ form.part('v'); v.get; grp.set(conc(grp.get,'W')) ];
       ucast.call('osoby_show') }
-    proc _back() { z.set(1); s.set(contains('S',grp.get));
-      k.set(contains('K',grp.get)); g.set(contains('G',grp.get));
-      a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
-      [ form.part('c'); c.set(contains('C',grp.get)) ];
-      [ form.part('v'); v.set(contains('W',grp.get)) ];
-      p.set(contains('P',grp.get)); }
+    func _back() { z= 1; s= contains('S',grp);
+      k= contains('K',grp); g= contains('G',grp);
+      a= contains('A',grp); o= contains('O',grp);
+      if (form.part('c')) c= contains('C',grp);
+      if (form.part('v')) v= contains('W',grp);
+      p= contains('P',grp); 
+    }
+//    proc _back() { z.set(1); s.set(contains('S',grp.get));
+//      k.set(contains('K',grp.get)); g.set(contains('G',grp.get));
+//      a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
+//      [ form.part('c'); c.set(contains('C',grp.get)) ];
+//      [ form.part('v'); v.set(contains('W',grp.get)) ];
+//      p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
 }
 form _osoba2x [,,244,322] {css:'ae_frame'
-  proc onclick() { on_click }
+  func onclick() { on_click() }
   var host=''           // 'U' - použito z Uživatelé, 'E' - použito z Evidence
   var idr=0             // klíč rodiny pro rodinné údaje (pro akce2_osoba2)
   var mode=0            // 0 zobrazit jen osobní kontakt a adresu, rodinnou skrýt
                         // 2 zobrazí pro adresa=0 kopie rodinných údajů uvozené ®
                         // 1 (jen EVID) zobrazí i pro adresa=0 osobní údaje (měly by být prázdné)
-  proc onstart() { stat.selects(staty.get,',',1); prisl.selects(staty.get,',',1) }
+  func onstart() { stat.selects(staty,',',1); prisl.selects(staty,',',1) }
   # ==> . globální procedury
-  proc set_mode(_mode,_host) { var x:object
-    mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
-    [ form.part('detail.r'); x.set(form.part('detail.r')); x.get.enable(eq(_host,'U')) ];
+  func set_mode(_mode,_host) { var x:ezer
+    mode= _mode; host= _host; form.enable(1,'a|b|j|k');
+    if (form.part('detail.r')) { x= form.part('detail.r'); x.enable(_host=='U'); }
   }
+//  proc set_mode(_mode,_host) { var x:object
+//    mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
+//    [ form.part('detail.r'); x.set(form.part('detail.r')); x.get.enable(eq(_host,'U')) ];
+//  }
   func save_osoba() { var removed:number, geo:object, ido:number
     ido= form.key();
     if (adresa.changed()||ulice.changed()||stat.changed()||psc.changed()||obec.changed()) {
@@ -1094,22 +1100,27 @@ form _osoba2x [,,244,322] {css:'ae_frame'
     }
   }
   # ==> . přepisované procedury
-  proc onchanged() { }
-  proc elim_kopie() { }
-  proc see_new_osoba() { }
-  proc see_old_osoba() { }
-  proc correct() { var ok:number
-    ok.set(1);
-    adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
+  func onchanged() { }
+  func elim_kopie() { }
+  func see_new_osoba() { }
+  func see_old_osoba() { }
+  func correct() { var ok:number
+    ok= 1;
+    if (adresa && ulice=='' && obec=='') { warning("osobní adresa nesmí být prázdná"); ok= 0; }
     return(ok);
   }
-  proc clear_osoba() { form.init; role.display(0);
-    kontakt_r.set(''); adresa_r.set('');
-    kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
-    adresa.enable(0);  adresa.set(1);  form.enable(1,'b');
+//  proc correct() { var ok:number
+//    ok.set(1);
+//    adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
+//    return(ok);
+//  }
+  func clear_osoba() { form.init(); role.display(0);
+    kontakt_r= ''; adresa_r= '';
+    kontakt.enable(0); kontakt= 1; form.enable(1,'k');
+    adresa.enable(0);  adresa= 1;  form.enable(1,'b');
   }
-  proc on_click() {}
-  proc init_osoba() {
+  func on_click() {}
+  func init_osoba() {
     form.display(0,'[^f]'); access.display(1);
   }
   proc refresh() { eq(host.get,'U');
@@ -1163,10 +1174,10 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   // kontextové menu
   menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
-    item { title:'ukázat změny os. údajů',proc onclick () { 
-      track.back_osoba_rodina(key_osoba.get,cconc(eq(host.get,'E'),id_kmen.get,kmen.get)) }}
-    item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
-    item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
+    item { title:'ukázat změny os. údajů',func onclick () { 
+      track.back_osoba_rodina(key_osoba,cconc(host=='E',id_kmen,kmen)) }}
+    item r { title:'-zobrazovat ®rodinné údaje',  func onclick () { set_mode(2,host); refresh() }}
+    item o { title:'nezobrazovat ®rodinné údaje', func onclick () { set_mode(0,host); refresh() }}
     item { title:'-aktualizovat GPS z mapy.cz', skill:'m', 
       func onclick() { var gps:text, msg:text
         gps= prompt2("souřadnice GPS z mapy.cz");
@@ -1235,14 +1246,15 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   #==> . hledání dle příjmení a jména
   select prijmeni1 [5,32,106,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_prijmeni'}
     format:'n', title:'^příjmení?', format:'T'
-    proc onchanged() {
+    func onchanged() {
       // předej nalezené příjmení jako parametr pro hledání jmen
-      this.get; jmeno1.add_attrib('par.prijmeni',this.get);
-      jmeno1.get; see.see_show(1);
+      if (this) jmeno1.add_attrib('par.prijmeni',this);
+      if (jmeno1) see.see_show(1);
   }}
   select jmeno1 [120,32,83,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_jmeno2',prijmeni:''}
     format:'n', title:'^jméno?', format:'T'
-    proc onchanged() { prijmeni1.get; this.get; see.see_show(1);
+    func onchanged() { if (prijmeni1 && this) see.see_show(1);
+//    proc onchanged() { prijmeni1.get; this.get; see.see_show(1);
   }}
   label see [41,2,72,22] { tag:'W', css:'ae_parm search', format:'n'
     const css_all = 'ezer_ys ezer_fa ezer_db'
@@ -1271,24 +1283,24 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   }
   button see_back [44,6,16,16] {tag:'W', type:'html', title:"[fa-chevron-left]", format:'n'
     css:"search fa", help:"předchozí osoba se stejným příjmením a jménem"
-    proc onclick() {
-      see.see_show(sum(see.see_n.get,-1))
+    func onclick() {
+      see.see_show(see.see_n-1)
   }}
   button see_next [61,6,16,16] {tag:'W', type:'html', title:"[fa-chevron-right]", format:'n'
     css:"search fa", help:"následující osoba se stejným příjmením a jménem"
-    proc onclick() {
-      see.see_show(sum(see.see_n.get,1))
+    func onclick() {
+      see.see_show(see.see_n+1)
   }}
   button see_use [78,6,16,16] {tag:'W', type:'html', title:"[fa-plug]", format:'n'
     css:"search fa", help:"potvrzení nalezené osoby a její přidání k pobytu"
-    proc onclick() { var ret:object
-      see.see_end;
-      warning; see_old_osoba                             // dokončení v účastnících nebo evidenci
+    func onclick() { var ret:object
+      see.see_end();
+      warning(); see_old_osoba()                             // dokončení v účastnících nebo evidenci
   }}
   button see_new [95,6,16,16] {tag:'W', type:'html', title:"[fa-heart]", format:'n'
     css:"search fa", help:'Vytvoření nové osoby s daným příjmením a jménem'
-    proc onclick() {
-      warning; see_new_osoba                             // dokončení v účastnících nebo evidenci
+    func onclick() {
+      warning(); see_new_osoba()                             // dokončení v účastnících nebo evidenci
   } }
   #==> . základní údaje: i,y (jsou vždy vidět)
   field prijmeni [5,32,106,] {tag:'i,I', data:o.prijmeni, format:'n', help:'příjmení', title:'^příjmení' }
@@ -1300,7 +1312,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   radio sex      [73,54,46,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
     case [0,2,47,] { title:'muž', expr:'1' }
     case [0,15,47,] { title:'žena', expr:'2' }
-    proc onchange() { }
+    func onchange() { }
   }
   label vek      [210,52,24,] {tag:'i', format:'nr'}
   field narozeni [120,66,85,] {tag:'i,I', type:'date', data:o.narozeni, format:'nrR:e',title:'^narození'}
@@ -1332,7 +1344,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   check nomail   [48,19,169,] {tag:'k', title:"neposílat hromadné informace", data:o.nomail,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací",
     format:'n', tabindex:0
-    proc onchange() {
+    func onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
   field email    [5,38,233,] {tag:'k', type:'list', data:o.email, format:'n', title:'^e-mail'}
@@ -1343,21 +1355,33 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   radio adresa [50,0,189,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
-    proc onchange() { var yes:number
-      yes.set(1);
+    func onchange() { var yes:number
+      yes= 1;
       // varovné confirm při existenci osobního adresy a pokusu přepnutí na rodinnou
-      [ and(not(this.get),or(ulice.get,obec.get));
-        { yes.set(confirm("Opravdu mám zneplatnit osobní adresu?")); yes
-        | this.set(function('x',"return x.original.value",this)); this.plain
-      }];
-      yes;
-      { eq(host.get,'E'); show_osoba(0)
-      | eq(host.get,'U'); rodinna
-    }}
-    proc rodinna() { var r:object
-      r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty adres
-      [ this.get; copy_by_name(r.o_adresa,form,'',1) | copy_by_name(r.r_adresa,form,'',1) ];
-      [ eq(form_mode.get,'new'); form.enable(this.get,'b') | show_osoba(0) ]
+      if (!this && (ulice || obec)) {
+        yes= confirm("Opravdu mám zneplatnit osobní adresu?");
+        if (!yes) { this= function('x',"return x.original.value",this); this.plain() }
+      };
+      if (yes) {
+        if (host=='E') show_osoba(0)
+        elseif (host=='U') rodinna()
+      }
+    }
+//    proc onchange() { var yes:number
+//      yes.set(1);
+//      // varovné confirm při existenci osobního adresy a pokusu přepnutí na rodinnou
+//      [ and(not(this.get),or(ulice.get,obec.get));
+//        { yes.set(confirm("Opravdu mám zneplatnit osobní adresu?")); yes
+//        | this.set(function('x',"return x.original.value",this)); this.plain
+//      }];
+//      yes;
+//      { eq(host.get,'E'); show_osoba(0)
+//      | eq(host.get,'U'); rodinna
+//    }}
+    func rodinna() { var r:object
+      r= php.akce2_osoba2x(key_osoba,idr); // varianty adres
+      if (this) copy_by_name(r.o_adresa,form,'',1) else copy_by_name(r.r_adresa,form,'',1);
+      if (form_mode=='new') form.enable(this,'b') else show_osoba(0);
     }
   }
   field geo_ok   [39,2,12,12] {tag:'a', css:'Label3', format:'no' }
@@ -1367,7 +1391,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   select stat    [195,2,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát'}
   check noadresa [104,19,126,] {tag:'b', title:"nespolehlivá adresa", data:o.noadresa,
     help:"pošta vrací zásilky", format:'n', tabindex:0
-    proc onchange() {
+    func onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'
@@ -1420,7 +1444,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   field pin      [186,14,54,] {tag:'g', type:'list', title:'^pin/YS', format:'n',
       expr:"CONCAT(pin,',',date_format(pin_vydan,'%e.%c.%y'),',',date_format(pin_vydan,'%H:%i'))" }
   button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden', skill:'mrop|mrop'
-    proc visible() { this.set_css('visible','hidden') }
+    func visible() { this.set_css('visible','hidden') }
     proc onclick() { var old:text
       old.set(function('x',"return x.original.value",gmail));
       eq(old,gmail.get)
@@ -1444,21 +1468,25 @@ form _osoba2x [,,244,322] {css:'ae_frame'
 # ----------------------------------------------------------------------------------------==> RODINA
 panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='Z', var ucast:object
-  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
-    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
-    cnfg._back;  }
+  func start() { 
+    grp= get_cookie(conc(sys('root'),'_conf_rodina'),grp);
+    if (contains('Z',grp)) grp= conc('Z',grp);
+    cnfg._back();  }
+//  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
+//    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+//    cnfg._back;  }
   proc tune(from) { ucast.set(from); _old.set(grp.get);
     [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
     check z [ 0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
-    check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', proc onchange() { _tuned }}
-    button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.hide(1) }}
+    check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', func onchange() { _tuned() }}
+    button  [ 0,40,,] { type:'submit', title:'Nastav', func onclick() {
+      set_cookie(conc(sys('root'),'_conf_rodina'),grp); panel.hide(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('rodina_show'); panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.call('rodina_show') }
-    proc _back() { z.set(1); p.set(contains('P',grp.get)); }
+    func _back() { z= 1; p= contains('P',grp); }
   }
   var _old= 'Z'
 }
@@ -1467,16 +1495,16 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   const Ts=190; Tp=0 // 0
   view r: table rodina
   view t: table tvori
-  proc onstart() { r_stat.selects(staty.get,',',1) }
-  proc onclick() { on_click }
-  proc onchanged() { }
-  proc show_rodina() { var tags:text
+  func onstart() { r_stat.selects(staty,',',1) }
+  func onclick() { on_click() }
+  func onchanged() { }
+  func show_rodina() { var tags:text
     form.display(0,'[^f]'); access.display(1);
-    spolu.set('datum svatby');
-    tags.set(cconc(1,'a,r',contains('P',rodina_config.grp.get),',p'));
+    spolu= 'datum svatby';
+    tags= cconc(1,'a,r',contains('P',rodina_config.grp),',p');
     form.stacks(tags,'down',0,0,10);
   }
-  proc on_click() {}
+  func on_click() {}
   func od_svatby() {
     if (r_rozvod) spolu= "<span style='background:yellow'>jsou rozvedeni</span>"
     elseif (r_datsvatba) spolu= `od svatby ${js.roku(r_datsvatba,r_svatba)} let`
@@ -1491,16 +1519,16 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
 
   // výběr rodiny
-  proc rodina_changed() {}
-  proc rodina_edit() {}
+  func rodina_changed() {}
+  func rodina_edit() {}
   field  rodiny0 [Lp+0,Ts+32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
-    proc onchanged() { rodina_changed }}
+    func onchanged() { rodina_changed() }}
   button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button', skill:'yaa|yaa+;faa|faa+;caa|caa+'
     help:"oprava názvu zobrazené rodiny"
-    proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
-      rodiny1.change; rodina_edit }}
+    func onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1= rodiny;
+      rodiny1.change(); rodina_edit() }}
 
   // role v rodině
   select t_role    [Lp+141,Ts+32,35,] {tag:'a,N', type:'map', data:t.role
@@ -1519,7 +1547,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   check noadresa   [Lp+75,Tp+72,126,] {tag:'r', title:"nespolehlivá adr.", data:r.noadresa,
     help:"pošta vrací zásilky", format:'n', tabindex:0
-    proc onchange() {
+    func onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'
@@ -1532,7 +1560,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   check nomaily    [Lp+38,Tp+142,140,] {tag:'r', title:"neposílat hromadné info.", data:r.nomaily, tabindex:0
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
-    proc onchange() {
+    func onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
   field r_emaily   [Lp+0,Tp+160,176,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
@@ -1546,8 +1574,9 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   edit  r_note     [Lp+ 0,56,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
   // menu
   menu detail { type:'context', skill:'yae;fae;cae'
-    item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
-    item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
+    item { title:'konfigurace formuláře',  func onclick () { rodina_config.tune(evi) } }
+    item { title:'ukázat změny rod. údajů',func onclick () { 
+      if (key_rodina) track.back_show('rodina',key_rodina) }}
     item { title:'=zazurovění dětí a rodiny', skill:'daea', proc onclick () {
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
     item { title:'-ukázat data', skill:'m|mm', 
@@ -1559,7 +1588,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
 # ==========================================================================================> MODULY
 group foto { include:'onload,db2.akce2.foto'
   form _alb {
-    proc galery(fotka,id) {}
+    func galery(fotka,id) {}
   }
 }
 group fio { include:'onload,db2/db2.fio'

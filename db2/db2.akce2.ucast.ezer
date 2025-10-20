@@ -222,7 +222,7 @@ func narrow() { curr_w= 1024; evid.c_change(1); w_change_all() }
 func wide()   { curr_w= 1280; evid.c_change(2); w_change_all() }
 proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   // pro CR|MS necháme ms_akce_dita_kat
-  eq(my_org.get,4,8,16)
+  eq(my_org.get,4,8,16,32)
 | // objednávek si nebudeme všímat
   eq(the_cenik.get,2)
   // podle YS/FA zvol kategorii dětí: ys_akce_dite_kat / fa_akce_dite_kat v options, map_pipe
