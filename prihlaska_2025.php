@@ -7,6 +7,9 @@
 
  */
 
+require_once("prihlaska_2025.4.php"); // TEST kompatibility s ASC
+exit;
+
 if ($_SERVER['REMOTE_ADDR']??0 == '127.0.0.1') {
 //  $_GET['test']= 2; // NEZAPISOVAT! a trasovat
   $_GET['test']= 1; // zapisovat a trasovat

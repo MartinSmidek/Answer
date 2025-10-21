@@ -722,7 +722,8 @@ form _page [,,275,360] {
         : "V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.";
     }
     if (!p_json.web_prihlaska) {
-      web_prihlaska= 'prihlaska_2025'; web_prihlaska.change();
+      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2025'; 
+      web_prihlaska.change();
       p_json.web_prihlaska= web_prihlaska;
     }
     copy_by_name(p_json,form);

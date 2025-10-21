@@ -2014,7 +2014,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
       tags= `{tags},x`;
     };
     form.stacks(tags,'down',0,0,10);
-    t_role.display(key_rodina); form.display(key_rodina,'o');
+    t_role.display(key_rodina>0); 
+    form.display(key_rodina>0,'o');
   }
 //  proc show_rodina() { var tags:text
 //    form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
