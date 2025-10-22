@@ -454,6 +454,8 @@ table pobyt { key_id:'id_pobyt'
   number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
   text   duvod_text	// vlastní text zdůvodňující cenu
   date   rozpis_poslan     { sql_pipe:'sql_date1'}  // datum odeslání rozpisu platby
+  // online položky
+  number zadost
 }
 //table pobyt_wp { db:'ezer_db2', key_id:'id_pobyt_wp'
 //  number id_pobyt_wp

@@ -704,7 +704,9 @@ form _page [,,275,360] {
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; p_json.p_obnova= 1; 
         break;
       case 'R': akci= 'akci pro rodiny'; 
+        p_json.p_reg_single= 0;
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
+        p_json.p_zadost= 0; p_json.veta_zadost= '';
         break;
       case 'J': akci= 'akci pro jednotlivce'; 
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
@@ -771,6 +773,10 @@ form _page [,,275,360] {
     check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
     field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+  label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
+    check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
+    check p_zadost [30,430,103,] { tag:'pri,R', title:'umožnit žádost: '}
+    field veta_zadost [139,431,305,] { tag:'pri,R', help:' [ ] text žádosti' }
   field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
     label [217,437,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
     check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
@@ -809,6 +815,7 @@ form _page [,,275,360] {
       }
       p_json.tp_pracovni= tp_pracovni;
       p_json.veta_potvrzeni= veta_potvrzeni;
+      p_json.veta_zadost= p_zadost ? veta_zadost : '';
 //      echo(debug(p_json));
       if (form.key()) {
         web_online= json_encode(p_json); web_online.change();

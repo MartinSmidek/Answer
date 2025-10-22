@@ -909,7 +909,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
-    show p_poznamka, show p_pracovni, show funkce, show hnizdo, 
+    show p_poznamka, show p_pracovni, show zadost, show funkce, show hnizdo, 
     show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu,
@@ -1700,7 +1700,10 @@ form _pobyt [,,360,62] {
   // t = pracovní poznámka
   edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
-  label [5,74,1,18] { tag:'t' } // oprava
+//  label [5,74,1,18] { tag:'t' } // oprava
+  check zadost [5,80,200,20] {tag:'t', data:p.zadost, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
+      title:'má speciální požadavek k pobytu' }
+  label [5,100,1,18] { tag:'t' } // oprava
   // u = úhrada
   // p = poznámka
   edit  p_poznamka [5,0,349,74] {tag:'p', data:p.poznamka, title:'^poznámka k pobytu'}
