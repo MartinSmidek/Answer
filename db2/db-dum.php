@@ -1,5 +1,5 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
+//define("EZER_VERSION","3.3");  
 
 define('org_ds',64);
 define ('POZOR',"<br><span style='color:red;background:yellow'>POZOR</span>");

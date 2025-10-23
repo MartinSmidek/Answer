@@ -1,5 +1,5 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
+//define("EZER_VERSION","3.3");  
 
 # ------------------------------------------------------------------------------------- db2 rod_show
 # BROWSE ASK
