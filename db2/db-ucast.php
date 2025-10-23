@@ -723,7 +723,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,"
           . "r_ulice=ulice,r_psc=psc,r_obec=obec,r_stat=stat,r_geo_ok,"
           . "r_telefony=telefony,r_emaily=emaily,r_ms,r_umi,r_note=note");
-    $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
+    $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,zadost,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
           . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,"
           . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4," /*datplatby,*/

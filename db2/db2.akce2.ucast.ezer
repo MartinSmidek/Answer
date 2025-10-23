@@ -222,7 +222,7 @@ func narrow() { curr_w= 1024; evid.c_change(1); w_change_all() }
 func wide()   { curr_w= 1280; evid.c_change(2); w_change_all() }
 proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   // pro CR|MS necháme ms_akce_dita_kat
-  eq(my_org.get,4,8,16)
+  eq(my_org.get,4,8,16,32)
 | // objednávek si nebudeme všímat
   eq(the_cenik.get,2)
   // podle YS/FA zvol kategorii dětí: ys_akce_dite_kat / fa_akce_dite_kat v options, map_pipe
@@ -909,7 +909,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
-    show p_poznamka, show p_pracovni, show funkce, show hnizdo, 
+    show p_poznamka, show p_pracovni, show zadost, show funkce, show hnizdo, 
     show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu,
@@ -1700,7 +1700,10 @@ form _pobyt [,,360,62] {
   // t = pracovní poznámka
   edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
-  label [5,74,1,18] { tag:'t' } // oprava
+//  label [5,74,1,18] { tag:'t' } // oprava
+  check zadost [5,80,200,20] {tag:'t', data:p.zadost, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
+      title:'má speciální požadavek k pobytu' }
+  label [5,100,1,18] { tag:'t' } // oprava
   // u = úhrada
   // p = poznámka
   edit  p_poznamka [5,0,349,74] {tag:'p', data:p.poznamka, title:'^poznámka k pobytu'}
@@ -2014,7 +2017,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
       tags= `{tags},x`;
     };
     form.stacks(tags,'down',0,0,10);
-    t_role.display(key_rodina); form.display(key_rodina,'o');
+    t_role.display(key_rodina>0); 
+    form.display(key_rodina>0,'o');
   }
 //  proc show_rodina() { var tags:text
 //    form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');

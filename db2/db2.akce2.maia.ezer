@@ -616,6 +616,21 @@ form _esady  {
           + (Proces.problem ? `, s chybou ${Proces.problem}` : '');
       texty.browse_refresh();
     }
+//    proc x_onclick () { var foot:text, par:object
+//      msg.set(''); foot.set('');
+//      confirm(conc('Opravdu postupně po ',davka.get,' mailech "z adresy" ',from.get,'?'));
+//      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+//      par.set(object(
+//          'id_dopis',dopis_id.get,'davka',davka.get,
+//          'from',from.get,'name',name.get,'foot',foot.get));
+//      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
+//      Proces.parent.set(panel);
+//      Proces.refresh.set('mail_refresh');
+//      [ Proces.Start(par,"Postupné odesílání připravených mailů") ];
+//      msg.set(conc("Bylo odesláno ",Proces.sent.get," mailů",
+//          cconc(Proces.problem.get,conc(", s chybou ",Proces.problem.get))));
+//      texty.browse_refresh;
+//    }
   }
   // postupné odesílání - staré 
   label  [0,306,364,31] { css:'ae_parm' }
