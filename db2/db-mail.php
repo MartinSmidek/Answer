@@ -1,5 +1,4 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-//define("EZER_VERSION","3.3");  
 
 # =====================================================================================> . potvrzení
 # ---------------------------------------------------------------------------------------- ucet_potv
@@ -1549,8 +1548,7 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
 # nastavení parametrů pro SMTP server podle user.options.smtp
 # nebo přímo zadáním parametrů
 function mail2_new_PHPMailer($smtp=null) {  
-//  global $ezer_path_serv;
-//  global $ezer_root;
+  global $ezer_version;
   $mail= null;
   if (!$smtp) {
     // získání parametrizace SMTP
@@ -1573,7 +1571,7 @@ function mail2_new_PHPMailer($smtp=null) {
   }
   // inicializace Ezer_PHPMailer
   global $abs_root;
-  $server= "$abs_root/ezer".EZER_VERSION."/server";
+  $server= "$abs_root/ezer$ezer_version/server";
   require_once "$server/ezer_mailer.php";
   $mail= new Ezer_PHPMailer($smtp);
 end:  
@@ -1586,9 +1584,8 @@ function mail2_smtp() {
   $i_smtp= sys_user_get($idu,'opt','smtp');
   $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
   $smtp= json_decode($smtp_json);
-  if ( json_last_error() != JSON_ERROR_NONE ) {
-    $smtp->err= "chyba ve volbe SMTP serveru" . json_last_error_msg();
-  }
+  $smtp->err= json_last_error() == JSON_ERROR_NONE ? ''
+      : "chyba ve volbe SMTP serveru" . json_last_error_msg();
   return $smtp;
 }
 # -------------------------------------------------------------------------------- mail2 mai_sending
@@ -2276,14 +2273,14 @@ function mail2_lst_read($parm) { //trace();
 # $to může být seznam adres oddělený čárkou
 function kasa_send_mail($subject,$html,$from='',$to='',$fromname='',$typ='',$replyto='',$lognote='') { //trace();
   
-  global $abs_root;
+  global $abs_root, $ezer_version;
   $msg= 'ok';
   $smtp= (object)[
     'Host'       => 'smtp.gmail.com',
     'Username'   => 'answer@setkani.org',
     'files_path' => __DIR__.'/../../files/setkani4'
   ];
-  require_once "$abs_root/ezer".EZER_VERSION."/server/ezer_mailer.php";
+  require_once "$abs_root/ezer$ezer_version/server/ezer_mailer.php";
   $mail= new Ezer_PHPMailer($smtp);
   if ( $mail->Ezer_error ) { 
     $msg= $mail->Ezer_error;

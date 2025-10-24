@@ -1,5 +1,4 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-//define("EZER_VERSION","3.3");  
 
 # ------------------------------------------------------------------------------------- db2 rod_show
 # BROWSE ASK
@@ -280,68 +279,6 @@ function sql2xls($datum) {
   }
   return $text;
 }
-//# ----------------------------------------------------------------------------------------- git make
-//# provede git par.cmd>.git.log a zobrazí jej
-//# fetch pro lokální tj. vývojový server nepovolujeme
-//function git_make($par) {
-//  global $abs_root, $ezer_version;
-//  $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
-//  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
-//  if ($ezer_version!='3.1') { fce_error("POZOR není aktivní jádro 3.1 ale $ezer_version"); }
-//  $cmd= $par->cmd;
-//  $folder= $par->folder;
-//  $lines= array();
-//  $msg= "";
-//  // nastav složku pro Git
-//  if ( $folder=='ezer') 
-//    chdir("./ezer$ezer_version");
-//  elseif ( $folder=='skins') 
-//    chdir("./skins");
-//  elseif ( $folder=='.') 
-//    chdir(".");
-//  else
-//    fce_error('chybná aktuální složka');
-//  // proveď příkaz Git
-//  $state= 0;
-//  $branch= $folder=='ezer' ? 'ezer'.EZER_VERSION : 'master';
-//  switch ($cmd) {
-//    case 'log':
-//    case 'status':
-//      $exec= "git $cmd";
-//      display($exec);
-//      exec($exec,$lines,$state);
-//      $msg.= "$state:$exec\n";
-//      break;
-//    case 'pull':
-//      $exec= "git pull origin $branch";
-//      display($exec);
-//      exec($exec,$lines,$state);
-//      $msg.= "$state:$exec\n";
-//      break;
-//    case 'fetch':
-//      if ( $bean) 
-//        $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
-//      else {
-//        $exec= "git pull origin $branch";
-//        display($exec);
-//        exec($exec,$lines,$state);
-//        $msg.= "$state:$exec\n";
-//        $exec= "git reset --hard origin/$branch";
-//        display($exec);
-//        exec($exec,$lines,$state);
-//        $msg.= "$state:$exec\n";
-//      }
-//      break;
-//  }
-//  // případně se vrať na abs-root
-//  if ( $folder=='ezer'||$folder=='skins') 
-//    chdir($abs_root);
-//  // zformátuj výstup
-//  $msg= nl2br(htmlentities($msg));
-//  $msg= "<i>Synology: musí být spuštěný Git Server (po aktualizaci se vypíná)</i><hr>$msg";
-//  $msg.= $lines ? '<hr>'.implode('<br>',$lines) : '';
-//  return $msg;
-//}
 # --------------------------------------------------------------------------------==> . sta2 ms stat
 /** https://stackoverflow.com/questions/4563539/how-do-i-improve-this-linear-regression-function
  * linear regression function

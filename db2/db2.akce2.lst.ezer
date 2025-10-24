@@ -774,7 +774,7 @@ form _page [,,275,360] {
     field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
-    check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
+    check p_reg_single [30,410,350,] { tag:'pri,R', format:'d', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
     check p_zadost [30,430,103,] { tag:'pri,R', title:'umožnit žádost: '}
     field veta_zadost [139,431,305,] { tag:'pri,R', help:' [ ] text žádosti' }
   field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
