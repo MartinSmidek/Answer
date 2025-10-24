@@ -1,5 +1,4 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
 
 define('org_ds',64);
 define ('POZOR',"<br><span style='color:red;background:yellow'>POZOR</span>");
@@ -1846,7 +1845,7 @@ function dum_kniha_hostu($par,$export=0) {
   $clmn_if= []; // i -> format
   $clmn_in= []; // i -> nazev
   foreach ($clmn as $fld=>$desc) {
-    list($i,$f,$w,$s,$n)= explode(':',$desc);
+    list($i,$f,$w,$s,$n)= explode(':',$desc.'::::');
     $clmn_i[$fld]= 0 + $i;
     $clmn_if[0+$i]= $f;
     $clmn_iw[0+$i]= $w;
@@ -1873,7 +1872,7 @@ function dum_kniha_hostu($par,$export=0) {
   $n= $nf= 0;
   $rok= $par->rok;
   $AND_MESIC= $par->mes ? " AND MONTH(od)=$par->mes" : '';
-  $AND_TEST= $par->obj ? " AND d.id_order=$par->obj" : '';
+  $AND_TEST= $par->obj??0 ? " AND d.id_order=$par->obj" : '';
   // projdeme všechny objednávky
   $ro= pdo_qry("
     SELECT d.id_order,id_akce,
@@ -2074,9 +2073,10 @@ function dum_kniha_castka($castka,$platba,$ne_ubyt=0) {
 // konverze tabulky na html
 // pokud je zadáno excel udělá XLS
 function dum_kniha_hostu_tab2html($tab,$excel) {
-  global $clmn_in, $clmn_if, $clmn_iw, $row_class, $legenda;
+  global $clmn_in, $clmn_if, $clmn_iw, $row_class, $legenda, $ezer_version;
   $res= (object)['html'=>'','ref'=>'','err'=>''];
   $clmn= $iclmn= []; // nn -> A 
+  $c= 0; $r1= 0;
   if ($excel) { // zahájení
     $xls= "|open kniha\nsheet kniha;;L;page\n";
     $r1= 1;
@@ -2095,7 +2095,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
 //  debug($legenda,"legenda");                                                              /*DEBUG*/
 //  debug($iclmn,"iclmn");                                                                /*DEBUG*/
   foreach ($legenda as $desc) {
-    list($i,$r,$iclass,$popis,$span)= explode(':',$desc);
+    list($i,$r,$iclass,$popis,$span)= explode(':',$desc.'::::');
     $r1= max($r1,$r);
     $class= $row_class[$iclass][0];
     $colspan= $span ? " colspan='".($span+1)."'" : '';
@@ -2204,7 +2204,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
     $r2= $r1+1;
     $xls.= "\n\n|A$r1:$A$r border=+h\n|A$r1:$A$r1 border=t|A$r2:$A$r border=t\n|close";
     file_put_contents("docs/kniha.txt",$xls);
-    require_once "ezer".EZER_VERSION."/server/vendor/autoload.php";
+//    require_once "ezer$ezer_version/server/vendor/autoload.php";
     $res->err= Excel2007($xls,1);
     if ( !$res->err ) 
       $res->ref= "<a href='docs/kniha.xlsx' target='xls'>zde</a>.";
