@@ -20,6 +20,7 @@ $MINOR= '3'; // verze přihlášek: release
 $CORR_JS= '4'; // verze přihlášek: oprava JS nebo CSS části pro vynucený reload
 $MYSELF= "prihlaska_$VERZE.$MINOR"; // $CORR_JS se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
+$ezer_version= '3.3';
 //error_reporting(E_ALL);
 // session
 $SID= count($_POST) ? ($_POST['sid']??'') : ($_GET['sid']??'');
