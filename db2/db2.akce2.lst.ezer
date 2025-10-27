@@ -773,10 +773,12 @@ form _page [,,275,360] {
     check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
     field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+//  label [13,390,200,20] { tag:'pri,J' title:'<b>Nastavení pro akce jednotlivců</b>' }
+//    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
-    check p_reg_single [30,410,350,] { tag:'pri,R', format:'d', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
-    check p_zadost [30,430,103,] { tag:'pri,R', title:'umožnit žádost: '}
-    field veta_zadost [139,431,305,] { tag:'pri,R', help:' [ ] text žádosti' }
+    check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
+    check p_zadost [30,430,103,] { tag:'pri,R,J', title:'umožnit žádost: '}
+    field veta_zadost [139,431,305,] { tag:'pri,R,J', help:' [ ] text žádosti' }
   field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
     label [217,437,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
     check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
@@ -793,6 +795,11 @@ form _page [,,275,360] {
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
       akce_lock('off'); 
+      // p_reg_single a p_zadost je zatím jen pro ASC
+      if ((p_reg_single || p_zadost) && web_prihlaska=='prihlaska_2025') {
+        alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
+        return;
+      } 
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");

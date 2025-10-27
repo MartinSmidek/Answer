@@ -221,6 +221,9 @@ function prihl_show($idp,$idw) { trace();
       case '2025.3': 
         $html= prihl_show_2025($idp,$idw,3); 
         break;
+      case '2025.4': 
+        $html= prihl_show_2025($idp,$idw,4); 
+        break;
       case '': 
         $html= 'pobyt nevznikl online přihláškou';
         break;
@@ -259,7 +262,7 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
       $stav= select('stav','prihlaska',"id_prihlaska=$older");
     }
   }
-  // údaje z verze minor=2,3
+  // údaje z verze minor=2,3,4
   $full= tisk2_ukaz_prihlasku($idpr,$ida,$idp,'','','úplná data');
   $html= "<div style='text-align:right;width:100%'>$full$olds &nbsp; </div>"; 
 //  $html= "<div style='text-align:right;width:100%;padding-right:30px'>$full$olds &nbsp; </div>"; 
@@ -322,6 +325,10 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     }
     if ($pobyt->Xvps??0) {
       $html.= "<p><b>Služba VPS: </b>".($pobyt->Xvps==1 ? 'ano' : 'odpočinek').'</p>';
+    }
+    // volitelná žádost?
+    if (isset($pobyt->zadost)) {
+      $html.= "<p><b>Požadavek: </b>".($pobyt->zadost ? 'ano' : 'ne').'</p>';
     }
   }
   $html.= "</div>";
