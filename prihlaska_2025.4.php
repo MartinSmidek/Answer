@@ -2,6 +2,8 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
+ * 2025-10-22 do R přidáno zaskrtávací položka p_zadost s textem veta_zadost
  * 2025-10-21 v $_GET['org'] se při startu předá odkaz na složku s parametrizací podle organizace
  * verze 2025.4
  * 2025-08-29 parametr p_css určuje vzhled vč. loga a (c) podle _cis*akce_prihl_css
@@ -17,10 +19,10 @@
 // debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 $VERZE= '2025'; // verze přihlášek: rok
 $MINOR= '4'; // verze přihlášek: release
-$CORR_JS= '4'; // verze přihlášek: oprava JS nebo CSS části pro vynucený reload
-$EZER= '3.3'; 
+$CORR_JS= '1'; // verze přihlášek: oprava JS nebo CSS části pro vynucený reload
 $MYSELF= "prihlaska_$VERZE.$MINOR"; // $CORR_JS se používá pro vynucené natažení javascriptu
 $TEST_mail= '';
+$ezer_version= '3.3';
 //error_reporting(E_ALL);
 // session
 $SID= count($_POST) ? ($_POST['sid']??'') : ($_GET['sid']??'');
@@ -62,11 +64,12 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_dokument'    =>  0, // M: LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
   // -- jen pro jednotlivce
     'p_oso_adresa'  =>  0, // zadání osobní adresy, pokud není použije se rodinná ale změna se poptá zda jde o rodinnou nebo jen vlastní
-  // OBSOLETE
-    //'p_pro_LK'      =>  0, // pro manželský pár s dětmi a osobními pečovateli na LK MS
-    //'p_vps'         =>  0, // OBNOVA MS: nastavit funkci VPS podle letního kurzu
-    //'p_ukladat'     =>  0, // povolit znovunačtení při přihlášení
-    //'p_kontrola'    =>  0, // vynutit kontrolu dat před uložením
+  // -- jen pro registraci na akci J
+//    'p_reg_rodina'  =>  0, // je povolena registrace rodiny ... TODO
+  // -- jen pro registraci na akci R
+    'p_reg_single'  =>  0, // je povolena registrace single 
+    'p_zadost'      =>  0, //  
+    'veta_zadost'   =>  '',
   ]; 
 
 try {
@@ -206,7 +209,7 @@ catch (Throwable $e) {
   }
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
-  . "<br><br>Přihlaste se na akci  mailem zaslaným na kancelar@setkani.org."
+  . "<br><br>Přihlaste se na akci  mailem zaslaným na {$ORG->info->mail}."
   . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
       . "<br>$errpos" : '');
@@ -345,6 +348,9 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
+    typ_akce('R') && ($akce->p_zadost??0) ? [
+      'zadost'      =>[ 0,$akce->veta_zadost,'check'],
+    ] : [],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
     ] : [],
@@ -584,15 +590,37 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
     } // nejednoznačný mail      
   }
 end:  
-} // overit pin
+} // kontrola_pinu
 // -------------------------------------------------------------------------------------- registrace
 function registrace($gender) { trace();
 # $ano=1/2 pokračujeme s registrací jako muž nebo žena
 # $ano=0 pokračujeme s žádostí o jiný mail
-  global $DOM;
+# pokud je povolena akce poptá se single/rodina
+  global $DOM, $akce;
   $DOM->usermail= 'hide';
-  return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
+  // je umožněna změna typu akce rodina/jednotlivec?
+  if (
+//      $akce->p_reg_rodina && typ_akce('J') ||  ... TODO
+      $akce->p_reg_single && typ_akce('R') ) {
+    vyber('Chci registrovat',[
+        "jen sebe:registrace_jako:=J,=$gender",
+        "také členy rodiny:registrace_jako:=R,=$gender"]);
+  }
+  else {
+    return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
+  }
 } // registrace
+// ------------------------------------------------------------------ registrace se změnou typu akce
+function registrace_jako($typ_akce,$gender) { trace();
+  global $vars, $akce;
+  $vars->typ_akce= $typ_akce;
+//  if ($typ_akce=='R' && $akce->p_oso_adresa) {
+//    $akce->p_rod_adresa= 1;
+//    $akce->p_oso_adresa= 0;
+//  }
+  polozky();
+  return klient("-$gender/0",1); // nová přihláška + zvolený gender přihlašovaného
+}
 // ------------------------------------------------------------------------------------------ klient
 function klient($idor,$nova_prihlaska=1) { trace();
 # $id je nositelem přihlašovacího mailu
@@ -1427,6 +1455,7 @@ function form_R($new) { trace();
         'rodina'=>$akce->p_rod_adresa,
         'strava'=>$akce->p_strava,  // 0=akce bez stravy, 1=tlačítko Objednávka, 2=seznam strav
         'pozn'=>1,
+        'zadost'=>$akce->p_zadost,
         'souhlas'=>$akce->p_souhlas,
     ];
     log_write_changes();  // zapiš počáteční skeleton form
@@ -1444,7 +1473,10 @@ function form_R($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
-    $pobyt= elem_input('p',0,['pracovni']);
+    $pobyt.= elem_input('p',0,['pracovni']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= elem_input('p',0,['zadost']);
   }
   // žádost o slevu
   if ($akce->p_sleva) {
@@ -1736,10 +1768,9 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 function page() {
   global $MYSELF, $SID, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root,
-      $VERZE, $MINOR, $CORR_JS, $EZER, $ORG;
+      $VERZE, $MINOR, $CORR_JS, $ezer_version, $ORG;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
-  $icon= "akce$_TEST.png";
   $hide= "style='display:none'";
   $hide_2002= "style='display:none;z-index:2002'";
   $info= $DOM_default->info=='hide' ? '' : $DOM_default->info;
@@ -1757,12 +1788,12 @@ function page() {
     <meta http-equiv="X-UA-Compatible" content="IE=11" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci $ORG->name</title>
-    <link rel="shortcut icon" href="/db2/img/$icon" />
+    <link rel="shortcut icon" href="$ORG->icon" />
     <link rel="stylesheet" href="/less/$css$_TEST.css?verze=$CORR_JS" type="text/css" media="screen" charset='utf-8'>
-    <script src="/ezer$EZER/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="$MYSELF.js?patch=$CORR_JS" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
-    <link rel="stylesheet" href="/ezer$EZER/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="/ezer$ezer_version/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <script>
       var myself_url= "$rel_root/$MYSELF.php", myself_sid= "$SID";
       window.addEventListener('load', function() { 
@@ -1834,7 +1865,7 @@ __EOD;
 }
 
 function connect_db() { // -------------------------------------------------------------- connect db
- global $ezer_server, $dbs, $db, $ezer_db, $USER, $EZER, $ORG,
+ global $ezer_server, $dbs, $db, $ezer_db, $USER, $ezer_version, $ORG,
      $kernel, $ezer_path_serv, $mysql_db_track, 
      $ezer_path_root, $abs_root, $answer_db, $mysql_tracked, $totrace, 
      $y; // $y je obecná stavová proměnná Ezer
@@ -1844,7 +1875,7 @@ function connect_db() { // -----------------------------------------------------
   ini_set('display_errors', 'On');
   // prostředí Ezer
   $USER= (object)['abbr'=>'WEB'];
-  $kernel= "ezer$EZER";
+  $kernel= "ezer$ezer_version";
   $ezer_path_serv= "$kernel/server";
   // testovací nebo ostrá databáze a cesty např. $path_files_h
   require_once("../files/$ORG->deep"); 
@@ -1898,11 +1929,18 @@ function read_akce() { // ------------------------------------------------------
   $akce->dnu= $dnu+1;
   $akce->strava_oddo= $strava_oddo;
   $akce->cenik_verze= $cv; 
-  $MarketaZelinkova= 6849;
+//  $MarketaZelinkova= 6849;
+  if ($garant) {
   list($akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select_2("CONCAT(jmeno,' ',prijmeni),telefon,email",
           "osoba LEFT JOIN _cis ON druh='akce_garant' AND data='$garant'",
-          "id_osoba=IFNULL(ikona,$MarketaZelinkova)");
+          "id_osoba=ikona");
+  }
+  else {
+    $akce->garant_jmeno=   $ORG->info->name;
+    $akce->garant_telefon= $ORG->info->tlfn;
+    $akce->garant_mail=    $ORG->info->mail;
+  }
   list($akce->garant_mail)= preg_split("/[,;]/",str_replace(' ','',$akce->garant_mail));
   $akce->help_kontakt= "$akce->garant_jmeno <a href='mailto:$akce->garant_mail'>$akce->garant_mail</a>"; 
   $akce->form_pata= "Je možné, že se vám během vyplňování objeví nějaká chyba, 
@@ -1941,8 +1979,8 @@ end:
   }
 } // doplnění infromací o akci
 function typ_akce($typs) { // ------------------------------------- vrátí 1 pokud je p_typ v řetězci
-  global $akce;
-  return strpos($typs,$akce->p_typ)===false ? 0 : 1;
+  global $akce, $vars;
+  return strpos($typs,$vars->typ_akce??$akce->p_typ)===false ? 0 : 1;
 } // vrátí 1 pokud je p_typ v řetězci
 # ------------------------------------------------------------------------------- formulářové funkce
 function get_role($id) { // --------------------------------------------------------------- get role
@@ -2949,14 +2987,13 @@ function log_close() { // ------------------------------------------------------
   log_write('close','NOW()');
 }
 function append_log($msg) { // ------------------------------------------------------ append error
-  global $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $EZER;
+  global $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $ezer_version;
   $file= "prihlaska.log.php";
-  $akce= $AKCE??'?';
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
   $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-  $ida= strlen($akce)==6 ? substr($akce,2) : '????';
+  $ida= str_pad(substr($AKCE,2),4,' ',STR_PAD_LEFT);
   $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email ip=$ip";
   if (!file_exists($file)) {
     global $MYSELF;
@@ -2967,8 +3004,8 @@ function append_log($msg) { // -------------------------------------------------
   if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
 ?>
 <html><head><title>přihlášky</title>
-<link rel="shortcut icon" href="img/letter.png">
-<script src="/ezer$EZER/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
+<link rel="shortcut icon" href="img/log_icon.png">
+<script src="/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="$MYSELF.js?corr=$CORR_JS" type="text/javascript" charset="utf-8"></script>
 <script type="text/javascript">window.addEventListener('load', function() { pretty_log();});</script>  
 </script>
@@ -3072,8 +3109,11 @@ function souhrn($ucel) {
   if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
     $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu VPS.</p>" : '';
   }
-  // doplnění poznámky a případné žádosti o slevu
+  // případné žádosti, poznámky a žádosti o slevu
   $pozn= get('p','pracovni');
+  if ($akce->p_zadost && get('p','zadost')) {
+    $pozn= $pozn ? "$akce->veta_zadost, $pozn" : $akce->veta_zadost;
+  }
   // přípony plurál/singulár
   $eme= $ucel=='kontrola'? (typ_akce('J') ? 'i' : 'eme') : 'ete'; 
   $ame= $ucel=='kontrola'? (typ_akce('J') ? 'ám' : 'áme') : 'áte'; 
@@ -3290,7 +3330,7 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
 # odeslání mailu
 # $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
 # $_TEST zabrání posílání na garanta přes replyTo 
-  global $abs_root, $MAIL, $TEST, $_TEST, $DOM, $EZER, $ORG;
+  global $abs_root, $MAIL, $TEST, $_TEST, $DOM, $ezer_version, $ORG;
   $msg= 'ok';
   $serverConfig= get_smtp($ORG->smtp);
   if ($ORG->code==1) $serverConfig->files_path= __DIR__.'/../files/setkani4';
@@ -3311,7 +3351,7 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
     $msg= 'ok'; // TEST bez odeslání
   }
   else {
-    require_once "$abs_root/ezer$EZER/server/ezer_mailer.php";
+    require_once "$abs_root/ezer$ezer_version/server/ezer_mailer.php";
     $mail= new Ezer_PHPMailer($serverConfig);
     if ( $mail->Ezer_error ) { 
       $msg= $mail->Ezer_error;
