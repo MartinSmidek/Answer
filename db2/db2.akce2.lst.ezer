@@ -795,6 +795,11 @@ form _page [,,275,360] {
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
       akce_lock('off'); 
+      // p_reg_single a p_zadost je zatím jen pro ASC
+      if ((p_reg_single || p_zadost) && web_prihlaska=='prihlaska_2025') {
+        alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
+        return;
+      } 
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
