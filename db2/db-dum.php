@@ -52,8 +52,8 @@ function ds_ceny_uprava($par) { trace('','win1250');
       $res= pdo_qry($qry);
       $ok= 1; $n= 0;
       while ( $res && $c= pdo_fetch_object($res) ) {
-        $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dph)
-               VALUES ($na,'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
+        $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dotovana,dph)
+               VALUES ($na,'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dotovana},{$c->dph})";
         display(/*w*u*/($ins));
         $n++;
         $ires= pdo_qry($ins);
