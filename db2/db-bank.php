@@ -141,23 +141,28 @@ function ds2_corr_platba($id_platba,$typ,$on,$c=null) {
         query_track("UPDATE platba SET stav=stav+1 WHERE id_platba=$id_platba");
       break;
     case 'akce':
-      query_track("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=6
+      if ($c->ucast->osoba && $c->ucast->pobyt)
+        query_track("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=6
         WHERE id_platba=$id_platba");
       break;
     case 'evi':
-      query_track("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7 WHERE id_platba=$id_platba");
+      if ($c->evi->osoba)
+        query_track("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7 WHERE id_platba=$id_platba");
       break;
     case 'order':
-      query_track("UPDATE platba SET id_ord={$c->dum->order}, stav=8 WHERE id_platba=$id_platba");
+      if ($c->dum->order)
+        query_track("UPDATE platba SET id_ord={$c->dum->order}, stav=8 WHERE id_platba=$id_platba");
       break;
     case 'faktura':
       $idf= $c->dum->faktura;
-      $idjp= select('id_join_platba','join_platba',"id_platba=$id_platba");
-      if ($idjp) {
-        query_track("UPDATE join_platba SET id_faktura=$idf WHERE id_join_platba=$idjp");
-      }
-      else { // nebylo propojení
-        query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($id_platba,$idf)");
+      if ($idf) {
+        $idjp= select('id_join_platba','join_platba',"id_platba=$id_platba");
+        if ($idjp) {
+          query_track("UPDATE join_platba SET id_faktura=$idf WHERE id_join_platba=$idjp");
+        }
+        else { // nebylo propojení
+          query_track("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($id_platba,$idf)");
+        }
       }
       break;
   }

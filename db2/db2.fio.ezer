@@ -307,13 +307,13 @@ form _ucty [,,640,*] {
   label [40,381,1000,3] { tag:'F', title:'<hr>' }
   label x_evid [40,392,348,18] {tag:'F', style:'font-size:10pt;color:black',     skill:'yae;fae;cae' 
       title:'... nastav osobu na kartě EVIDENCE a stiskni ?'}
-  button [397,390,,] {tag:'F', title:'přepiš osobu',                             skill:'yae;fae;cae' 
+  button [397,390,,] {tag:'F', title:'přepiš osobu',                 skill:'yae|yae;fae|fae;cae|cae' 
     func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
     func onclick_(c:object) { 
       php.ds2_corr_platba(id_platba,'evi',1,c);
       refresh();
   }}
-  button [480,390,,] {tag:'F', title:'a dar',                                    skill:'yae;fae;cae' 
+  button [480,390,,] {tag:'F', title:'a dar',                        skill:'yae|yae;fae|fae;cae|cae' 
     func onclick() { 
       php.ds2_corr_platba(id_platba,'dar',1);
       refresh();
@@ -323,7 +323,7 @@ form _ucty [,,640,*] {
   label [40,406,1000,3] { tag:'F', title:'<hr>' }
   label x_dum [40,417,347,18] {tag:'F', style:'font-size:10pt;color:black',               skill:'yd'
       title:'... nastav objednávku na kartě AKCE a stiskni ?'}
-  button [397,416,,] {tag:'F', title:'přepiš objednávku',                                 skill:'yd'
+  button [397,416,,] {tag:'F', title:'přepiš objednávku',                              skill:'yd|yd'
     func onclick() { var nazev:text
       nazev= php.select('nazev','join_platba JOIN faktura USING (id_faktura)',
           `id_platba=${fio.id_platba}`);
@@ -341,7 +341,7 @@ form _ucty [,,640,*] {
   label [40,432,1000,3] { tag:'F', title:'<hr>' }
   label x_fak [40,442,347,18] {tag:'F', style:'font-size:10pt;color:black',               skill:'yd'
       title:'... nastav fakturu na kartě FAKTURY a stiskni ?'}
-  button [397,441,,] {tag:'F', title:'přepiš fakturu',                                    skill:'yd'
+  button [397,441,,] {tag:'F', title:'přepiš fakturu',                                  skill:'yd|yd'
     func onclick() { 
       js.call_root_func('akce2_curr',&this,'onclick_')
     }
