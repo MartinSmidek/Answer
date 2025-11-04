@@ -154,16 +154,10 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
   menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad;cad'
-    item   {title:'[fa-chain] stejné maily',par:°{lst:'o',tip:'mail'}
-              help:'zobrazí lidi s nejednoznačným osobním mailem'}
-    item   {title:'[fa-chain] stejné telefony',par:°{lst:'o',tip:'telefon'}
-              help:'zobrazí lidi s nejednoznačným osobním telefonem'}
-    item   {title:'[fa-chain] stejné narození a jméno',par:°{lst:'o',tip:'narozeni'}
-              help:'zobrazí lidi se stejným jménem,příjmením a datem narození'}
-    item   {title:'[fa-chain] stejné příjmení a jméno',par:°{lst:'o',tip:'prijmeni'}
-              help:'zobrazí lidi se stejným jménem a příjmením'}
-    item ich {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop'},skill:'#cad'
-              help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
+    item   {title:'[fa-chain] stejné jméno a mail',par:{lst:'o',tip:'jmeno,email'}}
+    item   {title:'[fa-chain] stejné jméno a telefon',par:{lst:'o',tip:'jmeno,telefon'}}
+    item   {title:'[fa-chain] stejné jméno a narození',par:{lst:'o',tip:'jmeno,narozeni'}}
+//    item   {title:'[fa-chain] stejné jméno a příjmení',par:{lst:'o',tip:'jmeno,prijmeni'}}
   }
   func onclick (i:ezer) { menu_click (i,0,0) }
   func menu_click(i:ezer,_ido,_idr) { var ret:object, cnd:text, sel: text
@@ -181,8 +175,9 @@ menu m {type:'left', format:'f-'
         page.mapa.onclick();
       }
       if (i.par.tip) { 
+        clear();
         page.oso.chain.display(1);
-        ret= php.evid2_elim_tips(i.par.tip);
+        ret= php.evid2_elim_fld_tips(i.par.tip);
         lst.bo.tips.set_attrib('expr',ret.tip);
         cnd= ret.ids;
       };
