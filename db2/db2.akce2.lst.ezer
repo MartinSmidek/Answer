@@ -540,7 +540,7 @@ form _page [,,275,360] {
   }
   check xp_pozde [16,362,214,21] { tag:'cor', format:'d'
       title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
-      help:"a to i tehdy, když akce není ještě naplněná",                  skill:'yaa|yaaw;faa|faaw' 
+      help:"a to i tehdy, když akce není ještě naplněná",                 // skill:'yaa|yaaw;faa|faaw' 
   }
 //  // online přihlašování přes plugin ve Wordpressu
 //  check [16,380,243,] { tag:'cor', data:akce.web_wordpress, format:'d'
@@ -789,7 +789,10 @@ form _page [,,275,360] {
   const prihl_top= 571
   label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
   button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
-    func onclick() { akce_zpet(); p_show(); }
+    func onclick() { 
+      echo(xp_pozde);
+      akce_zpet(); p_show(); 
+    }
   }
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }

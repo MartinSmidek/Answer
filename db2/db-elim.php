@@ -1,93 +1,102 @@
 <?php
-
-# ---------------------------------------------------------------------------------- evid2 elim_tips
-# tipy na duplicitu ve formě CASE ... END, type= 
-#   mrop - pro iniciované muže
-#   mail - lidi se stejným meilem
-function evid2_elim_tips($type) {
-  $ret= (object)array('ids'=>0,'tip'=>"''");
-  if ($type=='mail') {
-    $ret= evid2_elim_fld_tips('email');
-    goto end;
-  }
-  elseif ($type=='telefon') {
-    $ret= evid2_elim_fld_tips('telefon');
-    goto end;
-  }
-  switch ($type) {
-  case 'mrop': $qry= "
-      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
-      FROM osoba AS o
-      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
-      WHERE o.iniciace>0 AND d.iniciace=0 
-        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
-      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
-    ";
-    break;
-  case 'narozeni': $qry= "
-      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
-      FROM osoba AS o
-      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
-      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
-      --  AND o.iniciace=0 AND d.iniciace=0 
-        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
-      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
-    ";
-    break;
-  case 'prijmeni': $qry= "
-      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
-      FROM osoba AS o
-      JOIN osoba AS d USING (prijmeni,jmeno)
-      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
-      --  AND o.iniciace=0 AND d.iniciace=0 
-        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
-      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
-    ";
-    break;
-  case 'mail': $qry= "
-      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _maily
-      FROM osoba AS o
-      JOIN osoba AS d USING (email)
-      WHERE o.kontakt=1 AND d.kontakt=1 AND o.email!='' 
-        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
-      GROUP BY o.email HAVING LOCATE(',',_maily)>0    
-    ";
-    break;
-  case 'telefon': $qry= "
-      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _telefony
-      FROM osoba AS o
-      JOIN osoba AS d USING (telefon)
-      WHERE o.kontakt=1 AND d.kontakt=1 AND o.telefon!='' 
-        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
-      GROUP BY o.telefon HAVING LOCATE(',',_telefony)>0    ";
-    break;
-  }
-  if ( !$qry ) goto end;
-  // vlastní prohledání
-  $ids= ""; $del= "(";
-  $tip= "";
-  $zs= pdo_qry($qry);
-  while ($zs && (list($id,$tips)= pdo_fetch_row($zs))) {
-    $ids.= "$del $id,$tips"; $del= ",";
-    $tip.= " WHEN $id THEN '$tips'";
-    foreach (explode(',',$tips) as $tp) {
-      $tip.= " WHEN $tp THEN '$id'";
-    }
-  }
-  $ret->ids= $ids ? "o.id_osoba IN $ids )" : '0';
-  $ret->tip= $tip ? "CASE id_osoba $tip ELSE 0 END" : 0;
-end:
-  return $ret;
-}
+/*
+//# ---------------------------------------------------------------------------------- evid2 elim_tips
+//# tipy na duplicitu ve formě CASE ... END, type= 
+//#   mrop - pro iniciované muže
+//#   mail - lidi se stejným meilem
+//function evid2_elim_tips($type) {
+//  $ret= (object)array('ids'=>0,'tip'=>"''");
+//  if ($type=='mail') {
+//    $ret= evid2_elim_fld_tips('email');
+//    goto end;
+//  }
+//  elseif ($type=='telefon') {
+//    $ret= evid2_elim_fld_tips('telefon');
+//    goto end;
+//  }
+//  elseif ($type=='narozeni') {
+//    $ret= evid2_elim_fld_tips('narozeni','jmeno');
+//    goto end;
+//  }
+//  switch ($type) {
+//  case 'mrop': $qry= "
+//      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+//      FROM osoba AS o
+//      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
+//      WHERE o.iniciace>0 AND d.iniciace=0 
+//        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+//      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+//    ";
+//    break;
+//  case 'narozeni': $qry= "
+//      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+//      FROM osoba AS o
+//      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
+//      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
+//      --  AND o.iniciace=0 AND d.iniciace=0 
+//        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+//      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+//    ";
+//    break;
+//  case 'prijmeni': $qry= "
+//      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+//      FROM osoba AS o
+//      JOIN osoba AS d USING (prijmeni,jmeno)
+//      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
+//      --  AND o.iniciace=0 AND d.iniciace=0 
+//        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+//      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+//    ";
+//    break;
+//  case 'mail': $qry= "
+//      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _maily
+//      FROM osoba AS o
+//      JOIN osoba AS d USING (email)
+//      WHERE o.kontakt=1 AND d.kontakt=1 AND o.email!='' 
+//        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+//      GROUP BY o.email HAVING LOCATE(',',_maily)>0    
+//    ";
+//    break;
+//  case 'telefon': $qry= "
+//      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _telefony
+//      FROM osoba AS o
+//      JOIN osoba AS d USING (telefon)
+//      WHERE o.kontakt=1 AND d.kontakt=1 AND o.telefon!='' 
+//        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+//      GROUP BY o.telefon HAVING LOCATE(',',_telefony)>0    ";
+//    break;
+//  }
+//  if ( !$qry ) goto end;
+//  // vlastní prohledání
+//  $ids= ""; $del= "(";
+//  $tip= "";
+//  $zs= pdo_qry($qry);
+//  while ($zs && (list($id,$tips)= pdo_fetch_row($zs))) {
+//    $ids.= "$del $id,$tips"; $del= ",";
+//    $tip.= " WHEN $id THEN '$tips'";
+//    foreach (explode(',',$tips) as $tp) {
+//      $tip.= " WHEN $tp THEN '$id'";
+//    }
+//  }
+//  $ret->ids= $ids ? "o.id_osoba IN $ids )" : '0';
+//  $ret->tip= $tip ? "CASE id_osoba $tip ELSE 0 END" : 0;
+//end:
+//  return $ret;
+//}
+*/
 # ---------------------------------------------------------------------------------- evid2 elim_tips
 # tipy na duplicitu mailů nebo telefonů - vrací seznam
 #   mail - lidi se stejným mailem
-function evid2_elim_fld_tips($fld) {
+function evid2_elim_fld_tips($flds) {
   $ret= (object)array('ids'=>0,'tip'=>"''");
+  list($fld1,$fld2)= explode(',',$flds);
   $m_os= [];
-  $zs= pdo_qry("SELECT id_osoba,$fld FROM osoba WHERE kontakt=1 AND $fld!='' AND deleted='' "
-//      . "AND prijmeni='Červeň'"
-      . "ORDER BY id_osoba ");
+  $cond= "$fld1!=''".($fld2 ? " AND $fld2!=''" : '');
+  $match= $fld2 ? "CONCAT($fld1,$fld2)" : $fld1;
+  $zs= pdo_qry("SELECT id_osoba,$match FROM osoba WHERE kontakt=1 AND $cond AND deleted='' "
+//      . "AND prijmeni IN ('xDrašnar','Drašnar','Koňarik','Šikulová','Sikulová','Vítková','- Vítková')"
+//      . "ORDER BY tip -- id_osoba "
+      );
   while ($zs && (list($ido,$mails)= pdo_fetch_row($zs))) {
     foreach (preg_split('/\s*[,;]\s*/',trim($mails," \n\r\t;,#")) as $m) {
       $m= str_replace(' ','',$m);
@@ -97,6 +106,7 @@ function evid2_elim_fld_tips($fld) {
         $m_os[$m][]= $ido;
     }
   }
+  // zkusíme filtr
   // projdeme duplicity
   $n= 0;
   $ids= ""; $del= "(";

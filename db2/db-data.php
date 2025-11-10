@@ -188,13 +188,15 @@ function db2_stav($db) {
     $html.= "</tr>";
   }
   $html.= "</table></div>";
-  $vidi= array('ZMI','GAN','HAN');
-  if ( in_array($USER->abbr,$vidi) ) {
-    $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
-//     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
-//       "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
+  // volitelný výpis
+//  if ($abbr) {
+//    $html.= "<br><hr><h3>$abbr - upravené </h3>";
+//  }
+  $skills= explode(' ',$USER->skills);
+  if ( in_array('yad',$skills) || in_array('fad',$skills) ){
+    $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ty co umí yad|fad)</h3>";
     $html.= db2_prubeh_kdo($db,'2015-11',
-      "Sjednocování Setkání & Familia - od teď do prosince 2015");
+      "Sjednocování duplicit Setkání & Familia - od teď do prosince 2015");
     $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
       "<br><br>... a do prosince 2015 - sjednocení v oddělených databázích");
   }
@@ -203,10 +205,10 @@ function db2_stav($db) {
   foreach ($ezer_db as $db=>$desc) {
     $dbs[$db]= $desc[5];
   }
-  $stav= array(
-    "ezer_root"=>$ezer_root,
-    "dbs"=>$dbs
-  );
+//  $stav= array(
+//    "ezer_root"=>$ezer_root,
+//    "dbs"=>$dbs
+//  );
 //                                        debug($stav);
   return $html;
 }
@@ -224,6 +226,7 @@ function db2_prubeh_kdo($db,$od,$tit) {
   }
   // sjednotitelé - výpočet
   $sje= $mes= array();
+  $url= "ezer://akce2.evi.evid_vyber_osob";
   $rt= pdo_qry("
     SELECT kdo,LEFT(kdy,7) as _ym,
       SUM(IF(kde='osoba',IF(op='d',1,-1),0)) AS _osob,
@@ -232,7 +235,10 @@ function db2_prubeh_kdo($db,$od,$tit) {
     GROUP BY kdo,_ym ORDER BY _ym ASC
   ");
   while ( $rt && (list($kdo,$kdy,$osob,$rodin)= pdo_fetch_row($rt)) ) {
-    $sje[$kdy][$kdo]= "$osob ($rodin)";
+    list($idos,$idrs)= select(
+        "GROUP_CONCAT(IF(kde='osoba',CONCAT(klic,',',val),0)),GROUP_CONCAT(IF(kde='rodina',CONCAT(klic,',',val),0))",
+        "ezer_$db._track","kdo='$kdo' AND kdy LIKE '$kdy%' AND op='d'"); 
+    $sje[$kdy][$kdo]= "<a href='$url/$idos/O'>$osob</a> (<a href='$url/$idrs/R'>$rodin</a>)";
     $mes[$kdy]+= $osob + $rodin;
   }
   // maxima :-)
@@ -420,6 +426,79 @@ function update_web_changes () {
   return 1;
 }
 # =======================================================================> db2 kontrola a oprava dat
+# --------------------------------------------------------------------------------------- db2 survey
+# přehled nových záznamů v tabulce $par->table
+function db2_survey($par) {
+  $table= $par->table;
+  $kdos= [];
+  $tab= [];   // abbr ->rok -> mesic -> n
+  $sum= [];   // rok -> mesic -> n
+  $del= [];   // rok -> mesic -> n ... aktuálně smazané
+  $roky= 1;
+  $letos= date('Y');
+  $rt= pdo_qry("SELECT op,kdo,YEAR(kdy),MONTH(kdy),val,deleted
+    FROM _track 
+    LEFT JOIN $table ON id_$table=klic
+    WHERE YEAR(kdy) BETWEEN YEAR(NOW())-$roky AND YEAR(NOW()) AND kde='$table' 
+      AND op='I' AND fld='access'
+      -- AND (op IN ('i','I') AND fld='access' OR op='X' AND fld='')
+    ORDER BY id_track DESC  ");
+  while ($rt && (list($op,$kdo,$y,$m,$access,$deleted)= pdo_fetch_array($rt))) {
+    if ($op=='I') {
+      if (!in_array($kdo,$kdos)) $kdos[]= $kdo;
+      if (!isset($tab[$kdo][$y][$m])) $tab[$kdo][$y][$m]= 0;
+      $tab[$kdo][$y][$m]++;
+      // suma
+      if (!isset($sum[$y][$m])) $sum[$y][$m]= 0;
+      $sum[$y][$m]++;
+      // aktuálně smazané
+      if ($deleted) {
+        if (!isset($del[$y][$m])) $del[$y][$m]= 0;
+        $del[$y][$m]++;
+      }
+    }
+    else {
+      display($op);
+    }
+  }
+  // redakce 
+  $t= "<table class='stat'>";
+  $t.= "<tr><th>kdo</th>";
+  for ($y= $letos; $y>=$letos-$roky; $y--) {
+    for ($m= 12; $m>=1; $m--) {
+      $t.= "<th>$y.$m</th>";
+    }
+  }
+  $t.= "</tr>";
+  $t.= "<tr><th>&Sigma;</th>";
+  for ($y= $letos; $y>=$letos-$roky; $y--) {
+    for ($m= 12; $m>=1; $m--) {
+      $n= $sum[$y][$m]??'';
+      $t.= "<td>$n</td>";
+    }
+  }
+  $t.= "</tr>";
+  $t.= "<tr><th>X</th>";
+  for ($y= $letos; $y>=$letos-$roky; $y--) {
+    for ($m= 12; $m>=1; $m--) {
+      $n= $del[$y][$m]??'';
+      $t.= "<td>$n</td>";
+    }
+  }
+  $t.= "</tr>";
+  foreach($kdos as $kdo) {
+    $t.= "<tr><th>$kdo</th>";
+    for ($y= $letos; $y>=$letos-$roky; $y--) {
+      for ($m= 12; $m>=1; $m--) {
+        $n= $tab[$kdo][$y][$m]??'';
+        $t.= "<td>$n</td>";
+      }
+    }
+    $t.= "</tr>";
+  }
+  $t.= "</table>";
+  return $t;
+}
 # --------------------------------------------------------------------------- db2 kontrola_dat_spolu
 # kontrola vazby rodina-tvori-osoba
 function db2_kontrola_spolu($par) { trace();

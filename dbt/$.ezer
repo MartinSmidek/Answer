@@ -182,6 +182,13 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
+        menu t {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'stav sjednocování kopií', par:{db:'db2_test'}
+            func onclick (i:ezer) {
+              panel.display(2,'i'); info.display(0,'t'); info.header(i);
+              info.append('... probíhá výpočet ...');
+              info.append(php.db2_stav(i.par.db)) }}
+        }
 //        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
 //          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
 //          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
@@ -192,19 +199,6 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 //            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
 //            info.fill('',ask('db2_kontrola_dat',i.par));
 //          }
-//        }
-//        menu t {title:'Testovací databáze',type:'group', _sys:'*'
-//          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
-//            proc onclick (i) {
-//              panel.display(2,'i'); info.display(0,'t');
-//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-//              info.fill('',ask('db2_stav',i.par.db)) }}
-//          item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
-//            proc onclick (i) {
-//              panel.display(2,'i'); info.display(0,'t');
-//              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
-//              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
 //        }
       }
       use info: form right [12,4,,] { tag:'i' 
