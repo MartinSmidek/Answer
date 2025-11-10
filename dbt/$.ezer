@@ -183,11 +183,13 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           }
         }
         menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav sjednocování kopií', par:{db:'db2_test'}
-            func onclick (i:ezer) {
-              panel.display(2,'i'); info.display(0,'t'); info.header(i);
-              info.append('... probíhá výpočet ...');
-              info.append(php.db2_stav(i.par.db)) }}
+          item d {title:'Sjednocování duplicit - letos',  par:{db:'db2_test',let:1}}
+          item {title:'... - loni',                       par:{db:'db2_test',let:2}}
+          func onclick (i:ezer) {
+            panel.display(2,'i'); info.display(0,'t'); info.header(i);
+            info.append('... probíhá výpočet ...');
+            info.fill(' ',php.db2_stav(i.par)) 
+          }
         }
 //        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
 //          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
