@@ -74,13 +74,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       }
       func tab_id_show(tab,idt) {}
     }
-    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
-      proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
-      proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }
-      proc smaz_tvori(idt)   {
-        confirm("smazat záznam ",idt," v tabulce tvori?");
-        ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a;aa'
+//      var mod_par= {db:'db2',kdo:'',kdy:''}
+      func track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
+      func track_rodina(idr) { akce2.track.back_show('rodina',idr) }
+      func smaz_tvori(idt)   {
+        if (confirm("smazat záznam ",idt," v tabulce tvori?"))
+          php.query(`DELETE FROM tvori WHERE id_tvori=${idt}`);
       }
+//      func syst_dupl(abbr,kdy) { mod_par.kdo= abbr; mod_par.kdy= kdy; m.o.d.onclick(m.o.d); }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
@@ -133,19 +135,24 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //          }
 //        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
-          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-              info.fill('',ask('db2_stav',i.par.db)) }}
-          item {title:'obnova pobyt.web_changes' 
-            func onclick() { 
-              panel.display(2,'i'); info.display(0,'t'); clear();
-              if (confirm('opravit pobyt.web_changes ?')) php.update_web_changes();
-          }}
-//          item {title:'smazat platební údaje LK2019' skill:'m'
-//            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
-//          }
+          item {title:'Letošní nové záznamy - osoba', par:{table:'osoba'}}
+          item {title:'Letošní nové záznamy - rodina', par:{table:'rodina'}}
+          item d {title:'Stav sjednocování kopií', par:{db:'db2'}
+            func onclick (i:ezer) {
+              panel.display(2,'i'); info.display(0,'t'); info.header(i);
+//              mod_par.db= i.par.db;
+              info.append('... probíhá výpočet ...');
+              info.append(php.db2_stav(i.par.db)) }}
+//              info.append(php.db2_stav(mod_par)) }}
+//          item {title:'obnova pobyt.web_changes' 
+//            func onclick() { 
+//              panel.display(2,'i'); info.display(0,'t'); clear();
+//              if (confirm('opravit pobyt.web_changes ?')) php.update_web_changes();
+//          }}
+          func onclick (i:ezer) {
+            panel.display(2,'i'); info.display(0,'t'); info.header(i);
+            info.append(php.db2_survey(i.par)) 
+          }
         }
         menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
           item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
@@ -179,17 +186,18 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           }
         }
         menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-              info.fill('',ask('db2_stav',i.par.db)) }}
-          item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t'); clear;
-              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
-              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
+          item {title:'stav sjednocování kopií', par:{db:'db2_test'}
+            func onclick (i:ezer) {
+              panel.display(2,'i'); info.display(0,'t'); info.header(i);
+              info.append('... probíhá výpočet ...');
+              info.append(php.db2_stav(i.par.db)) }}
+          item {title:'obnovit testovací db z ostré', par:{db:'db2'}
+            func onclick (i:ezer) {
+              panel.display(2,'i'); info.display(0,'t'); info.header(i); clear();
+              if (confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?")) {
+              info.append(' ... probíhá update ...');
+              info.append(php.db2_copy_test_db(i.par.db)); }}
+          }
         }
       }
       use info: form right [12,4,,] { tag:'i' 
