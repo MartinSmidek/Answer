@@ -136,11 +136,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Letošní nové záznamy - osoba', par:{table:'osoba'}}
           item {title:'Letošní nové záznamy - rodina', par:{table:'rodina'}}
-          item d {title:'Sjednocování duplicit - letos',  par:{db:'db2',let:1}}
-          item {title:'... - loni',                       par:{db:'db2',let:2}}
-          item {title:'... - před 2 roky',                par:{db:'db2',let:3}}
-          item {title:'... - před 3 roky',                par:{db:'db2',let:4}}
-          item {title:'... - před 4 roky',                par:{db:'db2',let:5}}
+          item d {title:'[fa-chain]Sjednocování duplicit - letos', par:{db:'db2',let:1}}
+          item {title:'[fa-chain]... - loni',                      par:{db:'db2',let:2}}
+          item {title:'[fa-chain]... - před 2 roky',               par:{db:'db2',let:3}}
+          item {title:'[fa-chain]... - před 3 roky',               par:{db:'db2',let:4}}
+          item {title:'[fa-chain]... - před 4 roky',               par:{db:'db2',let:5}}
 //            func onclick (i:ezer) {
 //              panel.display(2,'i'); info.display(0,'t'); info.header(i);
 ////              mod_par.db= i.par.db;
