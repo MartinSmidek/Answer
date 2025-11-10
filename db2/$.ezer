@@ -82,7 +82,6 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         if (confirm("smazat záznam ",idt," v tabulce tvori?"))
           php.query(`DELETE FROM tvori WHERE id_tvori=${idt}`);
       }
-//      func syst_dupl(abbr,kdy) { mod_par.kdo= abbr; mod_par.kdy= kdy; m.o.d.onclick(m.o.d); }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
@@ -137,21 +136,31 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Letošní nové záznamy - osoba', par:{table:'osoba'}}
           item {title:'Letošní nové záznamy - rodina', par:{table:'rodina'}}
-          item d {title:'Stav sjednocování kopií', par:{db:'db2'}
-            func onclick (i:ezer) {
-              panel.display(2,'i'); info.display(0,'t'); info.header(i);
-//              mod_par.db= i.par.db;
-              info.append('... probíhá výpočet ...');
-              info.append(php.db2_stav(i.par.db)) }}
-//              info.append(php.db2_stav(mod_par)) }}
-//          item {title:'obnova pobyt.web_changes' 
-//            func onclick() { 
-//              panel.display(2,'i'); info.display(0,'t'); clear();
-//              if (confirm('opravit pobyt.web_changes ?')) php.update_web_changes();
-//          }}
+          item d {title:'Sjednocování duplicit - letos',  par:{db:'db2',let:1}}
+          item {title:'... - loni',                       par:{db:'db2',let:2}}
+          item {title:'... - před 2 roky',                par:{db:'db2',let:3}}
+          item {title:'... - před 3 roky',                par:{db:'db2',let:4}}
+          item {title:'... - před 4 roky',                par:{db:'db2',let:5}}
+//            func onclick (i:ezer) {
+//              panel.display(2,'i'); info.display(0,'t'); info.header(i);
+////              mod_par.db= i.par.db;
+//              info.append('... probíhá výpočet ...');
+//              info.append(php.db2_stav(i.par.db)) }}
+////              info.append(php.db2_stav(mod_par)) }}
+////          item {title:'obnova pobyt.web_changes' 
+////            func onclick() { 
+////              panel.display(2,'i'); info.display(0,'t'); clear();
+////              if (confirm('opravit pobyt.web_changes ?')) php.update_web_changes();
+////          }}
           func onclick (i:ezer) {
             panel.display(2,'i'); info.display(0,'t'); info.header(i);
-            info.append(php.db2_survey(i.par)) 
+            if (i.par.db) {
+              info.append('... probíhá výpočet ...');
+              info.fill(' ',php.db2_stav(i.par));
+            }
+            else {
+              info.append(php.db2_survey(i.par));
+            }
           }
         }
         menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
@@ -186,11 +195,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           }
         }
         menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav sjednocování kopií', par:{db:'db2_test'}
-            func onclick (i:ezer) {
-              panel.display(2,'i'); info.display(0,'t'); info.header(i);
-              info.append('... probíhá výpočet ...');
-              info.append(php.db2_stav(i.par.db)) }}
+//          item {title:'stav sjednocování kopií', par:{db:'db2_test'}
+//            func onclick (i:ezer) {
+//              panel.display(2,'i'); info.display(0,'t'); info.header(i);
+//              info.append('... probíhá výpočet ...');
+//              info.append(php.db2_stav(i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:{db:'db2'}
             func onclick (i:ezer) {
               panel.display(2,'i'); info.display(0,'t'); info.header(i); clear();

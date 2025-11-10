@@ -137,8 +137,10 @@ function db2_info_dupl($tab,$fld,$cond) {
   return $dup;
 }
 # ----------------------------------------------------------------------------------------- db2 stav
-function db2_stav($db) {
-  global $ezer_root,$ezer_db,$USER;
+function db2_stav($par) {
+  global $ezer_db,$USER;
+  $db= $par->db;
+  $let= $par->let;
   $tabs= array(
     '_user'  => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
     'rodina' => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
@@ -193,12 +195,14 @@ function db2_stav($db) {
 //    $html.= "<br><hr><h3>$abbr - upravené </h3>";
 //  }
   $skills= explode(' ',$USER->skills);
-  if ( in_array('yad',$skills) || in_array('fad',$skills) ){
-    $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ty co umí yad|fad)</h3>";
-    $html.= db2_prubeh_kdo($db,'2015-11',
-      "Sjednocování duplicit Setkání & Familia - od teď do prosince 2015");
-    $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
-      "<br><br>... a do prosince 2015 - sjednocení v oddělených databázích");
+  if ( in_array('yad',$skills) || in_array('fad',$skills) ) {
+    $rok= date('Y')-$let+1;
+    $html.= "<br><hr><h3>Sjednocování v roce $rok (informace pro ty co to umí dělat (yad|fad)</h3>";
+    $html.= db2_prubeh_kdo($db,"$rok");
+    $html.= db2_stav_kdo($db,"1",
+      "<br><br>... celkem");
+//    $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
+//      "<br><br>... a do prosince 2015 - sjednocení v oddělených databázích");
   }
   // technický stav
   $dbs= array();
@@ -212,12 +216,12 @@ function db2_stav($db) {
 //                                        debug($stav);
   return $html;
 }
-function db2_prubeh_kdo($db,$od,$tit) {
+function db2_prubeh_kdo($db,$rok) { trace();
   // sjednotitelé - seznam
   $kdos= $kolik= array();
   $rt= pdo_qry("
     SELECT kdo,SUM(IF(kde IN ('osoba','rodina'),IF(op='d',1,-1),0)) AS _osob
-    FROM ezer_$db._track WHERE op IN ('d','V') AND kdy>'$od'
+    FROM ezer_$db._track WHERE op IN ('d','V') AND YEAR(kdy)=$rok
     GROUP BY kdo ORDER BY _osob DESC
   ");
   while ( $rt && (list($kdo,$celkem)= pdo_fetch_row($rt)) ) {
@@ -226,12 +230,13 @@ function db2_prubeh_kdo($db,$od,$tit) {
   }
   // sjednotitelé - výpočet
   $sje= $mes= array();
+  $kdo_n= [];
   $url= "ezer://akce2.evi.evid_vyber_osob";
   $rt= pdo_qry("
     SELECT kdo,LEFT(kdy,7) as _ym,
       SUM(IF(kde='osoba',IF(op='d',1,-1),0)) AS _osob,
       SUM(IF(kde='rodina',IF(op='d',1,-1),0)) AS _rodin
-    FROM ezer_$db._track WHERE op IN ('d','V') AND kdy>'$od'
+    FROM ezer_$db._track WHERE op IN ('d','V') AND YEAR(kdy)=$rok
     GROUP BY kdo,_ym ORDER BY _ym ASC
   ");
   while ( $rt && (list($kdo,$kdy,$osob,$rodin)= pdo_fetch_row($rt)) ) {
@@ -240,6 +245,7 @@ function db2_prubeh_kdo($db,$od,$tit) {
         "ezer_$db._track","kdo='$kdo' AND kdy LIKE '$kdy%' AND op='d'"); 
     $sje[$kdy][$kdo]= "<a href='$url/$idos/O'>$osob</a> (<a href='$url/$idrs/R'>$rodin</a>)";
     $mes[$kdy]+= $osob + $rodin;
+    if ($osob + $rodin) $kdo_n[$kdo]= 1;
   }
   // maxima :-)
   $kdys= array_keys($sje);
@@ -257,27 +263,29 @@ function db2_prubeh_kdo($db,$od,$tit) {
   // čas
   $do= date("Y-m");
   foreach ($kdos as $kdo) {
+    $je= $kdo_n[$kdo]??0;
     $grf= "<tr><td style='border:0'></td>";
     $top= "<tr><th>osob (rodin)</th>";
-    $row.= "<tr><th>$kdo</th>";
-    for ($y=substr($do,0,4); $y>= 2015; $y--) {
+    $row.= $je ? "<tr><th>$kdo</th>" : '';
+//    for ($y=substr($do,0,4); $y>= 2015; $y--) {
+    $y= $rok;
       for ($m= 12; $m>=1; $m--) {
         $ym= "$y-".str_pad($m,2,'0',STR_PAD_LEFT);
-        if ( $od<$ym && $ym<=$do ) {
+//        if ( $od<$ym && $ym<=$do ) {
           $styl= $maxi[$ym]==$kdo ? " style='background-color:yellow'" : '';
           $h= $mes[$ym] / 5;
           $g= "<div class='curr_akce' style='height:{$h}px;width:30px;'>";
           $grf.= "<td style='vertical-align:bottom;border:0'>$g</td>";
           $top.= "<th>$y.$m</th>";
-          $row.= "<td align='right'$styl>{$sje[$ym][$kdo]}</td>";
-        }
+          $row.= $je ? "<td align='right'$styl>{$sje[$ym][$kdo]}</td>" : '';
+//        }
       }
-    }
+//    }
     $row.= "</tr>";
     $top.= "</tr>";
-    $grf.= "</tr>";
+    $grf.= $je ? "</tr>" : '';
   }
-  $html.= "$tit<br><br>";
+//  $html.= "$tit<br><br>";
   $html.= "<div class='stat'><table class='stat'>$grf$top$row</table></div>";
   return $html;
 }
