@@ -2987,7 +2987,27 @@ function log_error($msg) { // --------------------------------------------------
   append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
+  global $VERZE, $MINOR, $CORR_JS, $TEST;
   log_write('close','NOW()');
+  // pokud v logu není aktuální akce přidáme její popis
+  $file= "prihlaska.log.php";
+  if (file_exists($file)) {
+    $idas= [];
+    $lines= file($file);
+    foreach ($lines as $line) {
+      $ida= substr($line,9,4);
+      if (is_numeric($ida) && !in_array($ida,$idas)) {
+        $idas[]= $ida;
+        list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',"id_duakce='$ida' AND datum_od>NOW()");
+        if ($nazev) {
+          $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
+          $_ida= str_pad($ida,4,' ',STR_PAD_LEFT);
+          $msg= "$x $_ida ".date('Y-m-d H:i:s')."      <b style='color:green'>$nazev, $rok</b>";
+          file_put_contents($file, "$msg\n", FILE_APPEND);
+        }
+      }
+    }
+  }
 }
 function append_log($msg) { // ------------------------------------------------------ append error
   global $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $ezer_version;
