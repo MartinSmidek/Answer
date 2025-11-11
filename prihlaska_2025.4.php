@@ -2,6 +2,7 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
  * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
  * 2025-10-22 do R přidáno zaskrtávací položka p_zadost s textem veta_zadost
