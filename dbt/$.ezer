@@ -183,8 +183,8 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           }
         }
         menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item d {title:'Sjednocování duplicit - letos',  par:{db:'db2_test',let:1}}
-          item {title:'... - loni',                       par:{db:'db2_test',let:2}}
+          item d {title:'[fa-chain]Sjednocování duplicit - letos', par:{db:'db2_test',let:1}}
+          item {title:'[fa-chain]... - loni',                      par:{db:'db2_test',let:2}}
           func onclick (i:ezer) {
             panel.display(2,'i'); info.display(0,'t'); info.header(i);
             info.append('... probíhá výpočet ...');

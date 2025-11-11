@@ -48,22 +48,24 @@ func evid_rodina(_idr) {
 }
 
 func evid_vyber_osob(_idxs,_mode)  { // mode=O|R
-  var order: text, ido: number, n: number, idos: array
+  var order: text, idx: number, n: number, idxs: array
+  // vyrobíme položky ?dup s uspořádáním podle vyřešených duplicit
+  order= `CASE ${_mode=='O'?'id_osoba':'id_rodina'} `; n= 0;
+  idxs= split(_idxs,',');
+  for (idx of idxs) {
+    n++;
+    order= `${order} WHEN ${idx} THEN ${n} `;
+  }
+  order= `${order} ELSE 0 END`;
   if (_mode=='O') {
     menu_vyber_osob= _idxs; 
-    order= "CASE id_osoba "; n= 0;
-    idos= split(_idxs,',');
-    for (ido of idos) {
-      n++;
-      order= `${order} WHEN ${ido} THEN ${n} `;
-    }
-    order= `${order} ELSE 0 END`;
     lst.bo.tips.set_attrib('expr',order);
-    m.menu_click(m.o.v,0,0);
+    m.o.v.click();
   }
-  else {
+  else { // _mode=='R'
     menu_vyber_rodin= _idxs; 
-    m.menu_click(m.r.v,0,0);
+    lst.br.tips.set_attrib('expr',order);
+    m.r.v.click();
   }
 }
 proc osoby_show()      { page.oso.show_osoba(2); }     // obnova údajů o osobě  (z konfigurace)
@@ -72,7 +74,7 @@ proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
 func onfirstfocus() { 
   curr_h= sys('screen','height') - min_h; // zamezení úvodního onresize
-  firstfocus(0); 
+  firstfocus(1); 
 }
 proc firstfocus(_click) {
   echo('--- onfirstfocus(',_click,') virgin=',virgin.get);
@@ -104,11 +106,17 @@ var menu_item=0,                // běžný item
     menu_title='',              // ... a browse rodin: r/f a osob: o/h a mail-listů: m
     menu_vyber_osob='0',        // seznam osob pro zobrazení vytvořený Sustem/data
     menu_vyber_rodin='0'        // ... rodin ...
-menu m {type:'left', format:'f-'
+menu m {type:'left', format:'f+'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item m {title:'[fa-send-o] podle mail-listu'par:{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'}  skill:'#crz' }
-    item v {title:'[fa-chain fa-red]výběr rodin'par:{lst:'r',tit:'vybrané rodiny, co ',vyber:1,skill:'yad;fad'}}
+    item v {title:'[fa-chain fa-red]výběr rodin'par:{lst:'r',tit:'vybrané rodiny vč. smazaných ',cnd:'0',skill:'yad;fad'}
+      func onclick(i:ezer) {
+        menu_item= i; menu_par= i.par; menu_title= i.title;
+        lst.display(2,i.par.lst);
+        lst.br.browse_load(`r.id_rodina IN (${menu_vyber_rodin})`,'tips',1);
+      }
+    }
     item t {title:'[fa-wrench fa-red](test)'    par:{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
@@ -126,7 +134,13 @@ menu m {type:'left', format:'f-'
                                                 cnd:"o.iniciace>0"}, skill:'mrop;yaa:c;faa:c'}
     item   {title:'[fa-male fa-green]brána dospělosti'  par:{lst:'o',tit:'muži za branou, co ',
                                                 cnd:"o.brana>0"}, skill:'mrop;yaa:c;faa:c'}
-    item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby, co ',vyber:1,skill:'yad;fad'}}
+    item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby vč. smazaných ',cnd:'0',skill:'yad;fad'}
+      func onclick(i:ezer) {
+        menu_item= i; menu_par= i.par; menu_title= i.title;
+        lst.display(2,i.par.lst);
+        lst.bo.browse_load(`o.id_osoba IN (${menu_vyber_osob})`,'tips',1);
+      }
+    }
     item w {title:'[fa-beer fa-red]s webovými právy'   par:{lst:'o',tit:'práva pro úpravu webů',
                                                 cnd:"o.web_level!=''"},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:{lst:'o',tit:'testovací osoby, co ',
@@ -184,15 +198,13 @@ menu m {type:'left', format:'f-'
   }
   func onclick (i:ezer) { menu_click (i,0,0) }
   func menu_click(i:ezer,_ido,_idr) { var ret:object, cnd:text, sel: text
+    if (i._id=='v') { return; } // volá se při resize
     menu_item= i; menu_par= i.par; menu_title= i.title;
     if (i.par.lst) { // podmenu s browse
       echo('--- menu_item virgin=',virgin);
       lst.brow_mapa_clear();
       lst.prijmeni_jmeno.display(eq(i.par.lst,'o')); // řazení na žádost podle příjmení+jméno 
       cnd= i.par.cnd;
-      if (i.par.vyber) {
-        cnd= i.par.lst=='o' ? `o.id_osoba IN (${menu_vyber_osob})` : `r.id_rodina IN (${menu_vyber_rodin})`;
-      }
       panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
       page.oso.set_mode(0,'E');
       if (i.par.tit=='MAILIST') {
@@ -497,7 +509,7 @@ form _lst [,,370,*] {
     show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show iniciace [,,0,] { data:o.iniciace, title:'MROP',help:'rok iniciace', format:'tq%s' }
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
-    show tips [,,0,] { title:'dup?', expr:'', format:'trsq*' }
+    show tips [,,0,] { title:'dup?', expr:"'0'", format:'trsq*' }
     // počítané položky
 //    var lat:number, lng:number
     proc onrowclick() { bo_show }
@@ -658,6 +670,7 @@ form _lst [,,370,*] {
     // volitelná položka
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
     show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq=s' }
+    show tips [,,0,] { title:'dup?', expr:"'0'", format:'trsq*' }
     func onrowclick() {  var ll:array, lat:number, lng:number
       idr= id_r; 
       page.evid_load(0,idr); 

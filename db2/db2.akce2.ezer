@@ -192,7 +192,8 @@ panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akc
   func mail_hnizda() {}                          // nastavení pro akci v hnízdech
 }
 # ======================================================================================> . EVIDENCE
-panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop#T',
+panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', 
+    include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop#T'
   func curr() {return {rodina:0,osoba:0}}
   func reaccess() {}
   func rodina_show() {}
