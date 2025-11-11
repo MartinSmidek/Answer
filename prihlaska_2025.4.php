@@ -2,6 +2,8 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
+ * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
  * 2025-10-22 do R přidáno zaskrtávací položka p_zadost s textem veta_zadost
  * 2025-10-21 v $_GET['org'] se při startu předá odkaz na složku s parametrizací podle organizace
@@ -612,7 +614,7 @@ function registrace($gender) { trace();
 } // registrace
 // ------------------------------------------------------------------ registrace se změnou typu akce
 function registrace_jako($typ_akce,$gender) { trace();
-  global $vars, $akce;
+  global $vars; //, $akce;
   $vars->typ_akce= $typ_akce;
 //  if ($typ_akce=='R' && $akce->p_oso_adresa) {
 //    $akce->p_rod_adresa= 1;
@@ -634,7 +636,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
         select_2("SELECT CONCAT(jmeno,' ',prijmeni),sex FROM osoba WHERE id_osoba=$ido");
     // osobu známe  - zjistíme zda již není přihlášen
     $DOM->user= ["show","<i class='fa fa-user'></i> $jmena<br>$vars->email"];
-    list($idp,$kdy,$kdo)= select_2("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
+    list($idp,$funkce,$kdy,$kdo)= select_2("id_pobyt,funkce,IFNULL(kdy,''),IFNULL(kdo,'')",
         "pobyt JOIN spolu USING (id_pobyt) "
         . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
         "(id_osoba={$ido} $OR) AND id_akce=$akce->id_akce "
@@ -642,6 +644,7 @@ function klient($idor,$nova_prihlaska=1) { trace();
     if ($idp) { // ------------------------------- už jsou zapsaní 
       $od_kdy= $kdy ? ' od '.sql_time1($kdy) : '';
       $kym= $kdo=='WEB' ? ' online přihláškou.' : '';
+      $jako= $funkce==9 ? ' mezi náhradníky' : '';
       if ($kdo && $kdo!='WEB') {
         list($jmeno,$prijmeni)= select_2('forename,surname','_user',"abbr='$kdo'");
         $kym= ". $jmeno $prijmeni";
@@ -653,8 +656,8 @@ function klient($idor,$nova_prihlaska=1) { trace();
       if (isset($vars->idw_old)) {
         $_SESSION[$AKCE]->id_prihlaska= $vars->idw_old;
       }
-      append_log("DOTAZ= ... už je přihlášen $jmena ");
-      hlaska("Na tuto akci jste již $od_kdy <br>přihlášeni$kym","start");
+      append_log("DOTAZ= ... už je přihlášen$jako $jmena ");
+      hlaska("Na tuto akci jste již $od_kdy <br>přihlášeni$jako$kym","start");
       goto end;
     }
   }  // známý klient - je přihlášen na akci?
@@ -1779,6 +1782,7 @@ function page() {
   list($css,$logo)= select_2('hodnota,ikona','_cis',"druh='akce_prihl_css' AND data='$p_css' ");    
   $css= $css??'akce';
   $logo= $logo??'husy_ymca.png';
+  $verze= "$MINOR.$CORR_JS";
   echo <<<__EOD
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -1789,9 +1793,9 @@ function page() {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci $ORG->name</title>
     <link rel="shortcut icon" href="$ORG->icon" />
-    <link rel="stylesheet" href="/less/$css$_TEST.css?verze=$CORR_JS" type="text/css" media="screen" charset='utf-8'>
+    <link rel="stylesheet" href="/less/$css$_TEST.css?verze=$verze" type="text/css" media="screen" charset='utf-8'>
     <script src="/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-    <script src="$MYSELF.js?patch=$CORR_JS" type="text/javascript" charset="utf-8"></script>
+    <script src="$MYSELF.js?patch=$verze" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <link rel="stylesheet" href="/ezer$ezer_version/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <script>
@@ -2984,7 +2988,27 @@ function log_error($msg) { // --------------------------------------------------
   append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
+  global $VERZE, $MINOR, $CORR_JS, $TEST;
   log_write('close','NOW()');
+  // pokud v logu není aktuální akce přidáme její popis
+  $file= "prihlaska.log.php";
+  if (file_exists($file)) {
+    $idas= [];
+    $lines= file($file);
+    foreach ($lines as $line) {
+      $ida= substr($line,9,4);
+      if (is_numeric($ida) && !in_array($ida,$idas)) {
+        $idas[]= $ida;
+        list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',"id_duakce='$ida' AND datum_od>NOW()");
+        if ($nazev) {
+          $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
+          $_ida= str_pad($ida,4,' ',STR_PAD_LEFT);
+          $msg= "$x $_ida ".date('Y-m-d H:i:s')."      <b style='color:green'>$nazev, $rok</b>";
+          file_put_contents($file, "$msg\n", FILE_APPEND);
+        }
+      }
+    }
+  }
 }
 function append_log($msg) { // ------------------------------------------------------ append error
   global $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $ezer_version;
