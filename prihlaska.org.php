@@ -8,9 +8,9 @@
 
 $ORG= (object)[
   'code'  => 1,
-  'smtp'  => 6,
+  'smtp'  => 2,
   'name'  => 'YMCA Setkání',
-  'deep'  => 'answer/dbt.dbs.php',
+  'deep'  => 'answer/db2.dbs.php',
   'icon'  => '/db2/img/akce_test.png',
    // default pro garanta akce, pokud není dostupný z AKCE/Úprava
   'info'  => ['name'=>'Markéta Zelinková',
