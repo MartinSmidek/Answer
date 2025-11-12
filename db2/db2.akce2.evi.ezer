@@ -101,7 +101,7 @@ proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # ------------------------------------------------------------------------------------------==> MENU
-var menu_item=0,                // běžný item
+var menu_item:ezer,             // běžný item
     menu_par= {},               // ... jeho parametry
     menu_title='',              // ... a browse rodin: r/f a osob: o/h a mail-listů: m
     menu_vyber_osob='0',        // seznam osob pro zobrazení vytvořený Sustem/data
@@ -987,10 +987,18 @@ form _page {
 //          confirm(`nejsou vybrány právě 2 osoby (ale ${array_length(sel)})`)
     }}
     item c { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
-      func onclick () { 
+      func onclick () { var it:ezer
         if ( idr ) {
           idr= elim.cleni(idr); 
-          if ( idr ) lst.br.browse_refresh(idr);
+          if ( idr ) {
+            it= menu_item;
+            if (it==m.o.v) {
+              lst.bo.browse_refresh(ido);
+              lst.bo.bo_show();
+            }
+            else 
+              lst.br.browse_refresh(idr);
+          }
         }
     }} 
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
