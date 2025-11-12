@@ -1277,10 +1277,10 @@ form _rodiny [,,Wr,Hr] {
   }
   func show_osoba() {
     oso.enable(oso.kontakt,'k');
-    oso.kontakt_r= oso.kontakt ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso.kontakt_r= oso.kontakt ? '' : conc(kmen,'/',id_kmen);
     oso.enable(oso.adresa,'b');
-    oso.adresa_r= oso.adresa ? '' : conc(oso.kmen,'/',oso.id_kmen);
-    oso._deleted.display(oso.deleted);  
+    oso.adresa_r= oso.adresa ? '' : conc(kmen,'/',id_kmen);
+//    oso._deleted.display(oso.deleted);  
   }
 //  proc show_osoba() {
 //    oso.enable(oso.kontakt.get,'k');
