@@ -1129,50 +1129,101 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   proc refresh() { eq(host.get,'U');
     ucast.call('osoby_show')
   | evi.call('osoby_show') }
-  proc show_osoba(even) { var tags:text
+  func show_osoba(even) { var tags:text
     form.display(0,'[^f]'); access.display(1);             // even=2 pro evidenci
-    [ has_skill('T') 
-    | go_evi.display(lt(even,2)); chain.display(eq(even,1)); // 0,1=jen pro účastníky, 1=zobrazí chain
-      { keys_osoba.get; chain.set_css('db_chain','db_evidence')
-      | chain.set_css('db_evidence','db_chain') };
-    ];
+    _deleted.display(deleted);  
+    if (!has_skill('T')) {
+      go_evi.display(lt(even,2)); chain.display(eq(even,1)); // 0,1=jen pro účastníky, 1=zobrazí chain
+      if (keys_osoba) chain.set_css('db_chain','db_evidence')
+      else chain.set_css('db_evidence','db_chain');
+    };
     kontakt.enable(1); adresa.enable(1);
-    frame.set(osoba_config.tit.get);
-    tags.set('i,ii');
-    [ contains('K',osoba_config.grp.get);
-      { eq(form_mode.get,'new');
-        kontakt.set(0); kontakt_r.set('');
-        tags.set(conc(tags,',j,k')); form.enable(1,'k');
-      | [ kontakt.get; kontakt_r.set('') | kontakt_r.set(kmen.get) ];
-        eq(mode.get,0);   // 0: pro kontakt=0 jen kontakt_r
-        [ kontakt.get; tags.set(conc(tags,',j,k')) | tags.set(conc(tags,',j,J')) ]
-      | // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
-        tags.set(conc(tags,',j,k')); form.enable(kontakt.get,'k');
+    frame= osoba_config.tit;
+    tags= 'i,ii';
+    if (contains('K',osoba_config.grp)) {
+      if (form_mode=='new') {
+        kontakt= 0; kontakt_r= '';
+        tags= conc(tags,',j,k'); form.enable(1,'k');
       }
-    ];
-    [ contains('A',osoba_config.grp.get);
-      { eq(form_mode.get,'new');
-        adresa.set(0); adresa_r.set('');
-        tags.set(conc(tags,',a,b')); form.enable(1,'b');
-      | [ adresa.get; adresa_r.set('') | adresa_r.set(kmen.get) ];
-        eq(mode.get,0);   // 0: pro adresa=0 jen adresa_r
-        [ adresa.get; tags.set(conc(tags,',a,b')) | tags.set(conc(tags,',a,A')) ]
-      | // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
-        tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
+      else { 
+        kontakt_r= kontakt ? '' : kmen;
+        if (mode==0)    // 0: pro kontakt=0 jen kontakt_r
+          tags= kontakt ? conc(tags,',j,k') : conc(tags,',j,J');
+        else { // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
+          tags= conc(tags,',j,k'); form.enable(kontakt,'k');
+        }
       }
-    ];
-    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new'));
-      [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
-      [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
-      [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
-      [ contains('G',osoba_config.grp.get); tags.set(conc(tags,',g')) ];
-      [ contains('W',osoba_config.grp.get); tags.set(conc(tags,',v')) ];
-    ];
-    [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
-    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
+    };
+    if (contains('A',osoba_config.grp)) {
+      if (form_mode=='new') {
+        adresa= 0; adresa_r= '';
+        tags= conc(tags,',a,b'); form.enable(1,'b');
+      }
+      else {
+        adresa_r= adresa ? '' : kmen;
+        if (mode==0)   // 0: pro adresa=0 jen adresa_r
+          tags= adresa ? conc(tags,',a,b') : conc(tags,',a,A');
+        else { // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
+          tags= conc(tags,',a,b'); form.enable(adresa,'b');
+        }
+      }
+    };
+    if ( even==2 || key_spolu || form_mode=='new') {
+      if (contains('O',osoba_config.grp)) tags= conc(tags,',o');
+      if (contains('C',osoba_config.grp)) tags= conc(tags,',c');
+      if (contains('P',osoba_config.grp)) tags= conc(tags,',p');
+      if (contains('G',osoba_config.grp)) tags= conc(tags,',g');
+      if (contains('W',osoba_config.grp)) tags= conc(tags,',v');
+    }
+    if (contains('S',osoba_config.grp)) form.set_css('db_hr','','S') else form.set_css('','db_hr','S');
+    if (even==2 || key_spolu || form_mode=='new') tags= conc(tags,',x');
     form.stacks(tags,'down',0,0,10);
-//    rc.enable(0);
   }
+//  proc show_osoba(even) { var tags:text
+//    form.display(0,'[^f]'); access.display(1);             // even=2 pro evidenci
+//    _deleted.display(deleted.get);  
+//    [ has_skill('T') 
+//    | go_evi.display(lt(even,2)); chain.display(eq(even,1)); // 0,1=jen pro účastníky, 1=zobrazí chain
+//      { keys_osoba.get; chain.set_css('db_chain','db_evidence')
+//      | chain.set_css('db_evidence','db_chain') };
+//    ];
+//    kontakt.enable(1); adresa.enable(1);
+//    frame.set(osoba_config.tit.get);
+//    tags.set('i,ii');
+//    [ contains('K',osoba_config.grp.get);
+//      { eq(form_mode.get,'new');
+//        kontakt.set(0); kontakt_r.set('');
+//        tags.set(conc(tags,',j,k')); form.enable(1,'k');
+//      | [ kontakt.get; kontakt_r.set('') | kontakt_r.set(kmen.get) ];
+//        eq(mode.get,0);   // 0: pro kontakt=0 jen kontakt_r
+//        [ kontakt.get; tags.set(conc(tags,',j,k')) | tags.set(conc(tags,',j,J')) ]
+//      | // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
+//        tags.set(conc(tags,',j,k')); form.enable(kontakt.get,'k');
+//      }
+//    ];
+//    [ contains('A',osoba_config.grp.get);
+//      { eq(form_mode.get,'new');
+//        adresa.set(0); adresa_r.set('');
+//        tags.set(conc(tags,',a,b')); form.enable(1,'b');
+//      | [ adresa.get; adresa_r.set('') | adresa_r.set(kmen.get) ];
+//        eq(mode.get,0);   // 0: pro adresa=0 jen adresa_r
+//        [ adresa.get; tags.set(conc(tags,',a,b')) | tags.set(conc(tags,',a,A')) ]
+//      | // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
+//        tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
+//      }
+//    ];
+//    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new'));
+//      [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
+//      [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
+//      [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
+//      [ contains('G',osoba_config.grp.get); tags.set(conc(tags,',g')) ];
+//      [ contains('W',osoba_config.grp.get); tags.set(conc(tags,',v')) ];
+//    ];
+//    [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
+//    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
+//    form.stacks(tags,'down',0,0,10);
+////    rc.enable(0);
+//  }
 
   // kontextové menu
   menu detail { type:'context', skill:'yae;fae;cae'
@@ -1198,6 +1249,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   view o: table osoba
 
   label frame [0,2,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
+  label _deleted [82,1,,] { title:"<b style='background:black;color:white;padding:1px 5px;'>smazáno</b>", format:'n' }
   button chain [102,1,,] {tag:'f', title:'[fa-chain]', css:'db_evidence', skill:'#T' 
     func onclick() {
       elim_kopie()
@@ -1518,6 +1570,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
 //  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
 //  | spolu.set('datum svatby') }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
+  label _deleted   [82,1,,] { title:"<b style='background:black;color:white;padding:1px 5px;'>smazáno</b>", format:'n' }
   field access     [130,0,10,] {tag:'f,N', format:'or', css:'Label', data:r.access, tabindex:0  }
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
 

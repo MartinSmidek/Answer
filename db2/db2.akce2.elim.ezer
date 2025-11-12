@@ -273,8 +273,13 @@ form _cmd [,,425,30] { css:'ae_parm'
   button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() { var ret:object
       eq(mode.get,'osoba','osoba_lst','cleni_lst');
-      { not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+      { 
+//        not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
+//        alert("Pozor! Nelze sjednocovat se smazanou kopií! a")
+                
+        not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
+        not(confirm("Pozor! Chceš sjednocovat se smazanou kopií?"))
+                
       | [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
@@ -295,7 +300,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       }
     | eq(mode.get,'cleni');
       { not(and(c1.bs.nesmazan.get,c2.bs.nesmazan.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+        alert("Pozor! Nelze sjednocovat se smazanou kopií! b")
       | [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
@@ -310,7 +315,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       }
     | eq(mode.get,'rodina','rodina_lst');
       { not(and(r1.br.nesmazana.get,r2.br.nesmazana.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+        alert("Pozor! Nelze sjednocovat se smazanou kopií! c")
       | [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
@@ -430,13 +435,12 @@ form _osoby [,,Wr,Hr] {
     oso.set_helps(ret.chng,'zluty','oranzovy');
     rs.browse_load(conc("id_osoba=",ido," AND ",smazane_r.get));
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k');
-    [ oso.kontakt.get; oso.kontakt_r.set('')
-    | oso.kontakt_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
-    oso.enable(oso.adresa.get,'b');
-    [ oso.adresa.get; oso.adresa_r.set('')
-    | oso.adresa_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k');
+    oso.kontakt_r= oso.kontakt ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso.enable(oso.adresa,'b');
+    oso.adresa_r= oso.adresa ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso._deleted.display(oso.deleted);  
   }
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
@@ -456,9 +460,9 @@ form _osoby [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  údaje osoby
   use oso: form _osoba2x  [230,20,,] {          // view o:osoba
-    proc on_click() { }
-    proc onchanged() { }
-    proc show_osoba() { }
+    func on_click() { }
+    func onchanged() { }
+    func show_osoba() { }
   }
   # -----------------------------------------------==>  nejčerstvější údaje
   label           [6,450,214,70] {tag:'r2', css:'ae_part' }
@@ -583,14 +587,21 @@ form _rodiny [,,Wr,Hr] {
     show_osoba;
     oso.set_helps(ret.chng,'zluty','oranzovy');
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k');
-    [ oso.kontakt.get; oso.kontakt_r.set('')
-    | oso.kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) ];
-    oso.enable(oso.adresa.get,'b');
-    [ oso.adresa.get; oso.adresa_r.set('')
-    | oso.adresa_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k');
+    oso.kontakt_r= oso.kontakt ? '' : conc(kmen,'/',id_kmen);
+    oso.enable(oso.adresa,'b');
+    oso.adresa_r= oso.adresa ? '' : conc(kmen,'/',id_kmen);
+//    oso._deleted.display(oso.deleted);  
   }
+//  proc show_osoba() {
+//    oso.enable(oso.kontakt.get,'k');
+//    [ oso.kontakt.get; oso.kontakt_r.set('')
+//    | oso.kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+//    oso.enable(oso.adresa.get,'b');
+//    [ oso.adresa.get; oso.adresa_r.set('')
+//    | oso.adresa_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+//  }
   use oso: form _oso [Lc,260,,] { tag:'rr' }
   form _oso [,,249,285] {
     # -----------------------------------------------==> . vybrané údaje člena
@@ -675,12 +686,13 @@ form _cleni [,,Wr,Hr] {
     last_chng.set(sql2date(ret.last_chng,'.'));
     oso.set_helps(ret.chng,'zluty','oranzovy');
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k'); [ oso.kontakt.get | oso.kontakt_r.set(oso.kmen.get) ];
-    oso.enable(oso.adresa.get,'b');  [ oso.adresa.get  | oso.adresa_r.set(oso.kmen.get) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k'); if (!oso.kontakt) oso.kontakt_r= oso.kmen;
+    oso.enable(oso.adresa,'b');  if (!oso.adresa)  oso.adresa_r= oso.kmen;
+    oso._deleted.display(oso.deleted);  
   }
-  proc br_load(idr) {
-    rs.browse_load(conc("id_rodina=",idr," AND ",smazane_r.get));
+  func br_load(idr) {
+    rs.browse_load(conc("id_rodina=",idr," AND ",smazane_r));
   }
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
@@ -700,9 +712,9 @@ form _cleni [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  údaje osoby
   use oso: form _osoba2x  [230,20,,] {          // view o:osoba
-    proc on_click() { }
-    proc onchanged() { }
-    proc show_osoba() { }
+    func on_click() { }
+    func onchanged() { }
+    func show_osoba() { }
   }
   # -----------------------------------------------==>  nejčerstvější údaje
   label           [6,450,214,70] {tag:'r2', css:'ae_part' }
@@ -920,7 +932,7 @@ form _cmd [,,425,30] { css:'ae_parm'
     proc onclick() { var ret:object
       eq(mode.get,'osoba','osoba_lst','cleni_lst');
       { not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+        alert("Pozor! Nelze sjednocovat se smazanou kopií! d")
       | [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
@@ -941,7 +953,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       }
     | eq(mode.get,'cleni');
       { not(and(c1.bs.nesmazan.get,c2.bs.nesmazan.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+        alert("Pozor! Nelze sjednocovat se smazanou kopií! e")
       | [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
@@ -956,7 +968,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       }
     | eq(mode.get,'rodina','rodina_lst');
       { not(and(r1.br.nesmazana.get,r2.br.nesmazana.get));
-        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+        alert("Pozor! Nelze sjednocovat se smazanou kopií! f")
       | [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
@@ -1103,14 +1115,21 @@ form _osoby [,,Wr,Hr] {
     oso.set_helps(ret.chng,'zluty','oranzovy');
     rs.browse_load(conc("id_osoba=",ido," AND ",smazane_r.get));
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k');
-    [ oso.kontakt.get; oso.kontakt_r.set('')
-    | oso.kontakt_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
-    oso.enable(oso.adresa.get,'b');
-    [ oso.adresa.get; oso.adresa_r.set('')
-    | oso.adresa_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k');
+    oso.kontakt_r= oso.kontakt ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso.enable(oso.adresa,'b');
+    oso.adresa_r= oso.adresa ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso._deleted.display(oso.deleted);  
   }
+//  proc show_osoba() {
+//    oso.enable(oso.kontakt.get,'k');
+//    [ oso.kontakt.get; oso.kontakt_r.set('')
+//    | oso.kontakt_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
+//    oso.enable(oso.adresa.get,'b');
+//    [ oso.adresa.get; oso.adresa_r.set('')
+//    | oso.adresa_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
+//  }
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
   browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'nesmazan,0:neucast'
@@ -1129,9 +1148,9 @@ form _osoby [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  údaje osoby
   use oso: form _osoba2x  [230,20,,] {          // view o:osoba
-    proc on_click() { }
-    proc onchanged() { }
-    proc show_osoba() { }
+    func on_click() { }
+    func onchanged() { }
+    func show_osoba() { }
   }
   # -----------------------------------------------==>  nejčerstvější údaje
   label           [6,450,214,70] {tag:'r2', css:'ae_part' }
@@ -1256,14 +1275,21 @@ form _rodiny [,,Wr,Hr] {
     show_osoba;
     oso.set_helps(ret.chng,'zluty','oranzovy');
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k');
-    [ oso.kontakt.get; oso.kontakt_r.set('')
-    | oso.kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) ];
-    oso.enable(oso.adresa.get,'b');
-    [ oso.adresa.get; oso.adresa_r.set('')
-    | oso.adresa_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k');
+    oso.kontakt_r= oso.kontakt ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso.enable(oso.adresa,'b');
+    oso.adresa_r= oso.adresa ? '' : conc(oso.kmen,'/',oso.id_kmen);
+    oso._deleted.display(oso.deleted);  
   }
+//  proc show_osoba() {
+//    oso.enable(oso.kontakt.get,'k');
+//    [ oso.kontakt.get; oso.kontakt_r.set('')
+//    | oso.kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+//    oso.enable(oso.adresa.get,'b');
+//    [ oso.adresa.get; oso.adresa_r.set('')
+//    | oso.adresa_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+//  }
   use oso: form _oso [Lc,260,,] { tag:'rr' }
   form _oso [,,249,285] {
     # -----------------------------------------------==> . vybrané údaje člena
@@ -1348,10 +1374,15 @@ form _cleni [,,Wr,Hr] {
     last_chng.set(sql2date(ret.last_chng,'.'));
     oso.set_helps(ret.chng,'zluty','oranzovy');
   }
-  proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k'); [ oso.kontakt.get | oso.kontakt_r.set(oso.kmen.get) ];
-    oso.enable(oso.adresa.get,'b');  [ oso.adresa.get  | oso.adresa_r.set(oso.kmen.get) ];
+  func show_osoba() {
+    oso.enable(oso.kontakt,'k'); if (!oso.kontakt) oso.kontakt_r= oso.kmen;
+    oso.enable(oso.adresa,'b');  if (!oso.adresa)  oso.adresa_r= oso.kmen;
+    oso._deleted.display(oso.deleted);  
   }
+//  proc show_osoba() {
+//    oso.enable(oso.kontakt.get,'k'); [ oso.kontakt.get | oso.kontakt_r.set(oso.kmen.get) ];
+//    oso.enable(oso.adresa.get,'b');  [ oso.adresa.get  | oso.adresa_r.set(oso.kmen.get) ];
+//  }
   proc br_load(idr) {
     rs.browse_load(conc("id_rodina=",idr," AND ",smazane_r.get));
   }
@@ -1373,9 +1404,9 @@ form _cleni [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  údaje osoby
   use oso: form _osoba2x  [230,20,,] {          // view o:osoba
-    proc on_click() { }
-    proc onchanged() { }
-    proc show_osoba() { }
+    func on_click() { }
+    func onchanged() { }
+    func show_osoba() { }
   }
   # -----------------------------------------------==>  nejčerstvější údaje
   label           [6,450,214,70] {tag:'r2', css:'ae_part' }

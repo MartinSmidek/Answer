@@ -807,6 +807,7 @@ form _page {
     rod.r_geo_ok= lst.mode=='r' && lst.brow.lat ? 'ok' : '';
     // přepínání mezi mazat/obnovit
     mazat= page.rod.r_deleted ? 0 : 1; 
+    page.rod._deleted.display(!mazat);
     if (has_skill('yaa+|faa+|caa+')) {
       cmd.r_smaz.display(mazat);
       cmd.r_obnov.display(!mazat);
