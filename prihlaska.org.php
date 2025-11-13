@@ -13,7 +13,8 @@ $ORG= (object)[
   'deep'  => 'answer/dbt.dbs.php',
   'icon'  => '/db2/img/akce_test.png',
    // default pro garanta akce, pokud není dostupný z AKCE/Úprava
-  'info'  => ['name'=>'Markéta Zelinková',
-              'mail'=>'kancelar@setkani.org',
-              'tlfn'=>''],
+  'info'  => (object)[
+      'name'=>'Markéta Zelinková',
+      'mail'=>'kancelar@setkani.org',
+      'tlfn'=>''],
 ];

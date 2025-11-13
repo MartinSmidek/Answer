@@ -5,7 +5,7 @@
  * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
  * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
- * 2025-10-22 do R přidáno zaskrtávací položka p_zadost s textem veta_zadost
+ * 2025-10-22 do R přidáno zaškrtávací položka p_zadost s textem veta_zadost
  * 2025-10-21 v $_GET['org'] se při startu předá odkaz na složku s parametrizací podle organizace
  * verze 2025.4
  * 2025-08-29 parametr p_css určuje vzhled vč. loga a (c) podle _cis*akce_prihl_css
@@ -70,8 +70,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //    'p_reg_rodina'  =>  0, // je povolena registrace rodiny ... TODO
   // -- jen pro registraci na akci R
     'p_reg_single'  =>  0, // je povolena registrace single 
-    'p_zadost'      =>  0, //  
-    'veta_zadost'   =>  '',
+  // -- pro registraci na akci R|J
+    'p_zadost'      =>  0, // speciální žádost typu ano/ne 
+    'veta_zadost'   =>  '',// ... a její popis
   ]; 
 
 try {
@@ -350,8 +351,8 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
-    typ_akce('R') && ($akce->p_zadost??0) ? [
-      'zadost'      =>[ 0,$akce->veta_zadost,'check'],
+    typ_akce('RJ') && ($akce->p_zadost??0) ? [
+      'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
@@ -1516,6 +1517,7 @@ function form_J($new) { trace();
         'kontrola'=>[], // seznam položek s chybou
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
+        'zadost'=>$akce->p_zadost,
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
@@ -1524,7 +1526,10 @@ function form_J($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
-    $pobyt= elem_input('p',0,['pracovni']);
+    $pobyt.= elem_input('p',0,['pracovni']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= elem_input('p',0,['zadost']).'<br>';
   }
   // žádost o slevu
   if ($akce->p_sleva) {
