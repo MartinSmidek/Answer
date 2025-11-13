@@ -3002,7 +3002,7 @@ function log_close() { // ------------------------------------------------------
         list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',"id_duakce='$ida' AND datum_od>NOW()");
         if ($nazev) {
           $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-          $_ida= str_pad($ida,4,' ',STR_PAD_LEFT);
+          $_ida= "<b style='color:green'>".str_pad($ida,4,' ',STR_PAD_LEFT)."</b>";
           $msg= "$x $_ida ".date('Y-m-d H:i:s')."      <b style='color:green'>$nazev, $rok</b>";
           file_put_contents($file, "$msg\n", FILE_APPEND);
         }
