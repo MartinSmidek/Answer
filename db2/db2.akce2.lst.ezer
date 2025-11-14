@@ -763,9 +763,11 @@ form _page [,,275,360] {
     check p_rod_adresa [30,220,253,] { tag:'pri,M,O,R', title:'umožnit kontrolu a úpravu rodinné adresy'}
   label [13,250,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
   label [13,250,400,] { tag:'pri,J', title:'<b>přihlášení jednotlivce</b>'}
-    check p_obcanky [30,270,200,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
+    check p_obcanky [30,270,170,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
+    check p_akt_stav [200,270,78,] { tag:'pri,J', title:'?rodinný stav'}
+    check p_akt_deti [279,270,51,] { tag:'pri,J', title:'?dětí'}
     check p_kontakt [30,290,151,] { tag:'pri,M,O,R,J', title:'osobní email a telefon'}
-    check p_oso_adresa [210,290,246,] { tag:'pri,J', title:'osobní adresa'}
+    check p_oso_adresa [201,290,246,] { tag:'pri,J', title:'osobní adresa'}
   label [13,330,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }
     check p_registrace [30,350,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem'}
     check p_souhlas [250,350,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}

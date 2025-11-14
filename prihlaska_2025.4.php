@@ -70,6 +70,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //    'p_reg_rodina'  =>  0, // je povolena registrace rodiny ... TODO
   // -- jen pro registraci na akci R
     'p_reg_single'  =>  0, // je povolena registrace single 
+    'p_akt_deti'    =>  0, // je povolen dotaz na počet dětí
+    'p_akt_stav'    =>  0, // je povolen dotaz na aktuální rodinný stav
   // -- pro registraci na akci R|J
     'p_zadost'      =>  0, // speciální žádost typu ano/ne 
     'veta_zadost'   =>  '',// ... a její popis
@@ -311,6 +313,7 @@ function polozky() { // --------------------------------------------------------
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'naše dítě','p'=>'jiný vztah'],
       'role_dite' => [''=>'vztah k rodině?','d'=>'naše dítě','p'=>'jiný vztah'],
+      'Xstav'     => [''=>'?',1=>'svobodný',2=>'ženatý',3=>'rozvedený',4=>'vdovec'],
       'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
                       4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
                       24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
@@ -372,7 +375,9 @@ function polozky() { // --------------------------------------------------------
       'stat'      =>[ 0,'stát',''],
       'telefony'  =>[ 0,'',''], // jen kvůli případnému odkazu z osoba
       'emaily'    =>[ 0,'',''], // jen kvůli případnému odkazu z osoba
-      'spz'       =>[12,'SPZ auta na akci','']],
+      'spz'       =>[12,'SPZ auta na akci',''],
+      'rozvod'    =>[ 0,'',''], // jen kvůli případnému dotazu p_akt_stav
+    ],
     typ_akce('MO') ? [
       'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS
     ] : [],
@@ -404,6 +409,10 @@ function polozky() { // --------------------------------------------------------
       'obec'      =>[20,'* obec/město','','abp'],
       'stat'      =>[ 0,'stát','','abp'],
       ] : [],
+    typ_akce('J') && ($akce->p_akt_stav??0) ? [
+      'Xstav'     =>[20,'* rodinný stav','select','ab'],
+      'Xdeti'     =>[5,'počet dětí','','ab'],
+    ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
       'zamest'    =>[35,'* povolání, obor, ve kterém pracujete/budete pracovat','','ab'],
@@ -430,7 +439,7 @@ function polozky() { // --------------------------------------------------------
     ] : [],
     typ_akce('MO') && ($akce->p_nocleh??0) ? [
       'Xnocleh'   =>[20,'nocleh','select','abdp'],
-    ] : []
+    ] : [],
   );
   // případné opravy podle akce
   foreach ($akce as $key=>$val) {
@@ -1369,6 +1378,9 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
       . elem_input('o',$id,['email','telefon']) 
       . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
       . ($akce->p_oso_adresa ? '<br>'.elem_input('o',$id,['ulice','psc','obec']) : '')
+      . ($akce->p_akt_stav || $akce->p_akt_deti ? '<br>' : '')
+      . ($akce->p_akt_stav ? elem_input('o',$id,['Xstav']) : '')
+      . ($akce->p_akt_deti ? elem_input('o',$id,['Xdeti']) : '')
       . "</div>";
   return $part;
 } // form osoba
@@ -1518,6 +1530,8 @@ function form_J($new) { trace();
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
         'zadost'=>$akce->p_zadost,
+//        'stav'=>$akce->p_akt_stav,
+//        'deti'=>$akce->p_akt_deti,
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
@@ -2424,7 +2438,7 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
   }
 }
 function db_nacti_cleny_rodiny($idr) { // ------------------------------------ db nacti_cleny_rodiny
-//  global $vars;
+  global $vars;
   $roles= []; // role členů rodiny
   $ido_a= $ido_b= 0; // nositelé rolí
   $ro= pdo_query_2(
@@ -2436,19 +2450,16 @@ function db_nacti_cleny_rodiny($idr) { // ------------------------------------ d
     $roles[]= $role;
     if ($role=='a') $ido_a= $ido;
     if ($role=='b') $ido_b= $ido;
-    nacti_clena($ido,$role,in_array($role,['a','b'])?1:0);
+    // spolu je nastaveno pro klienta a pokud je typ_akce=MO tak i pro partnera
+    $spolu= in_array($role,['a','b']) ? (typ_akce('MO') || $ido==$vars->ido ? 1: 0) : 0;
+    nacti_clena($ido,$role,$spolu);
   }
-//  // pokud ten $prvni_ido nemá email je mu vnucen ten přihlašovací
-//  if (isset($vars->cleni[$prvni_ido])) {
-//    if (!get('o','email',$prvni_ido)) {
-//      set('o','email',$vars->email,$prvni_ido);
-//    }
-//  }
   return [$roles,$ido_a,$ido_b];
 }
 function kompletuj_pobyt_ucastnik($idr,$ido) { // ----- kompletuj jednotlivce a vytvoř prázdný pobyt
 # zajisti aby ve vars->cleni byl záznam (byť s prázdnými položkami)
 # načti i jeho rodinu, pokud je k dispozici 
+  global $akce, $vars;
   if ($ido>0) { // načteme klienta 
     $sex= select_2('sex','osoba',"id_osoba=$ido");
     $role= $sex==2 ? 'b' : 'a';
@@ -2459,8 +2470,25 @@ function kompletuj_pobyt_ucastnik($idr,$ido) { // ----- kompletuj jednotlivce a 
   } // nový klient
   if ($idr>0) { // rodina existuje - načti rodinné údaje 
     nacti_rodinu($idr);        
-//    db_nacti_cleny_rodiny($idr);
   } // rodina existuje - jen klient
+  // pokud je typ_akce=J a známe rodinu, vypočítej položky p_akt_stav a p_akt_deti
+  if (typ_akce('J') && $idr>0 && ($akce->p_akt_stav || $akce->p_akt_deti)) {
+    db_nacti_cleny_rodiny($idr);
+    $deti= 0; $partner= 0; 
+    foreach (array_keys($vars->cleni) as $id) {
+      if ($id==$ido) continue;
+      if (in_array(get_role($id),['a','b'])) $partner= $id;
+      if (get_role($id)=='d') $deti++;
+    }
+    if ($akce->p_akt_stav) {
+      $rozvod= get('r','rozvod');
+      $umrti= $partner ? get('o','umrti',$partner) : 0;
+      set('o','Xstav',$rozvod ? 3 : ($partner ? ($umrti ? 4 : 2) : 1),$ido);
+    }
+    if ($akce->p_akt_deti) {
+      set('o','Xdeti',$deti?:'',$ido);
+    }
+  }
   // vytvoř pobyt
   vytvor_pobyt();
 }
@@ -2993,24 +3021,26 @@ function log_error($msg) { // --------------------------------------------------
   append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
-  global $VERZE, $MINOR, $CORR_JS, $TEST;
+  global $VERZE, $MINOR, $CORR_JS, $TEST, $akce, $vars;
   log_write('close','NOW()');
   // pokud v logu není aktuální akce přidáme její popis
   $file= "prihlaska.log.php";
+  $nazev_akce= 0;
   if (file_exists($file)) {
-    $idas= [];
     $lines= file($file);
     foreach ($lines as $line) {
-      $ida= substr($line,9,4);
-      if (is_numeric($ida) && !in_array($ida,$idas)) {
-        $idas[]= $ida;
-        list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',"id_duakce='$ida' AND datum_od>NOW()");
-        if ($nazev) {
-          $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-          $_ida= "<b style='color:green'>".str_pad($ida,4,' ',STR_PAD_LEFT)."</b>";
-          $msg= "$x $_ida ".date('Y-m-d H:i:s')."      <b style='color:green'>$nazev, $rok</b>";
-          file_put_contents($file, "$msg\n", FILE_APPEND);
-        }
+      if (substr($line,9,6)=="$vars->id_akce =") {
+        $nazev_akce= 1;
+        break;
+      }
+    }
+    if (!$nazev_akce) { // aktuální akce ještě nemá popis
+      list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',
+          "id_duakce='$vars->id_akce' AND datum_od>NOW()");
+      if ($nazev) {
+        $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
+        $msg= "$x $vars->id_akce = <b style='color:green'>$akce->nazev ($akce->oddo)</b>";
+        file_put_contents($file, "$msg\n", FILE_APPEND);
       }
     }
   }
