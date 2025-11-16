@@ -13,9 +13,9 @@ function pretty_log(patt) {
   if (!pretty_log.called) {
     // vložení pole pro dotaz - jen porvé
     let html= `<label for="inputField" style="font-weight:bold;font-family:monospace">
-        Vyber řádky vyhovující regulárnímu výrazu:</label>
+        Vyber řádky vyhovující regulárnímu výrazu:
       <input type="text" id="inputField" placeholder="například ID.*POBYT" 
-        style="font-family:monospace">`;
+        style="font-family:monospace">, prázdné pole a Enter zobrazí vše</label>`;
     document.body.insertAdjacentHTML('afterbegin', html);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
@@ -43,6 +43,7 @@ function pretty_log(patt) {
       lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
     }
     pretty_log.called= true;
+    
     pretty_log.lines= lines;
   }
   // zobrazení s filtrem

@@ -3038,11 +3038,13 @@ function log_close() { // ------------------------------------------------------
       }
     }
     if (!$nazev_akce) { // aktuální akce ještě nemá popis
-      list($nazev)= select('nazev','akce',
+      $ok= select_2('COUNT(*)','akce',
           "id_duakce='$vars->id_akce' AND datum_od>NOW()");
-      if ($nazev) {
+      if ($ok) {
         $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-        $msg= "$x $vars->id_akce = <b style='color:green'>$akce->nazev ($akce->oddo)</b>";
+        $url= "prihlaska.log.php?itsme=1&akce=$vars->id_akce";
+        $msg= "$x $vars->id_akce = <a style='color:green;font-weight:bold' href='$url'>"
+            . "$akce->nazev ($akce->oddo)</a>";
         file_put_contents($file, "$msg\n", FILE_APPEND);
       }
     }
@@ -3062,15 +3064,16 @@ function append_log($msg) { // -------------------------------------------------
     $prefix= 
 <<<__EOS
 <?php 
-  session_start(); 
-  if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
-?>
+session_start(); 
+if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
+\$akce=\$_GET['akce']??''; echo "
 <html><head><title>přihlášky</title>
-<link rel="shortcut icon" href="img/log_icon.png">
-<script src="/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="$MYSELF.js?corr=$CORR_JS" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript">window.addEventListener('load', function() { pretty_log();});</script>  
-</script>
+<link rel='shortcut icon' href='img/log_icon.png'>
+<script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
+<script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
+<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce');});</script>  
+</script>";
+?>
 </head><body><pre id="log"
 ><b>VERZE/JS  AKCE DATUM      ČAS      PŘIHLÁŠKA       KLIENT </b>\n
 __EOS;
@@ -3208,7 +3211,7 @@ function souhrn($ucel) {
 //      . "<p>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď.</p>"
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
       . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-      . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
+      . "<br>$akce->garant_telefon</p>"
       . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
   // konec: text, maily, úščastníci
   return [$html,$emails,$ucastnici];
