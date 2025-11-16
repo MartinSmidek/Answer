@@ -678,7 +678,7 @@ form _page [,,275,360] {
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
-  func p_show() { var ch:ezer, akci:text, tp_default:text
+  func p_show() { var ch:ezer, akci:text, tp_default:text, ret: object
     p_tag= php.select1('barva','_cis',`druh='ms_akce_typ' AND data=${druh.key()}`);
     if (!p_tag) return;
     form.display(1,p_tag);
@@ -729,13 +729,18 @@ form _page [,,275,360] {
       p_json.web_prihlaska= web_prihlaska;
     }
     copy_by_name(p_json,form);
-    p_href= p_enable ? php.akce_prihlaska(page.a_akce,web_prihlaska,
-        conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0')) : '';
+    p_href= ''; 
+    QR= "<p style='text-align:center'>(QR kód se zobrazuje až je povoleno online přihlašování)</p>";
+    if (p_enable) {
+      ret= php.akce_prihlaska(page.a_akce,web_prihlaska,
+          conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0'));
+      p_href= ret.link;
+      // zobrazení QR kódu
+      QR= php.akce_qr_prihlasky(page.a_akce,ret.url);
+    }
     // součinnost s Úprava
     if (has_skill('yaa+|yaaw'))         p_enable= xp_enable; // = web_prihlasky
     if (has_skill('yaa|yaaw;faa|faaw')) p_pozde= xp_pozde;  // = web_obsazeno
-    // zobrazení QR kódu
-    QR= php.akce_qr_prihlasky(page.a_akce);
   }
   label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
       style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
@@ -764,8 +769,8 @@ form _page [,,275,360] {
   label [13,250,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
   label [13,250,400,] { tag:'pri,J', title:'<b>přihlášení jednotlivce</b>'}
     check p_obcanky [30,270,170,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
-    check p_akt_stav [200,270,78,] { tag:'pri,J', title:'?rodinný stav'}
-    check p_akt_deti [279,270,51,] { tag:'pri,J', title:'?dětí'}
+    check p_akt_stav [200,270,78,] { tag:'pri,J', title:'? rod. stav'}
+    check p_akt_deti [279,270,51,] { tag:'pri,J', title:'? dětí'}
     check p_kontakt [30,290,151,] { tag:'pri,M,O,R,J', title:'osobní email a telefon'}
     check p_oso_adresa [201,290,246,] { tag:'pri,J', title:'osobní adresa'}
   label [13,330,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }

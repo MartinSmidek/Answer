@@ -2,6 +2,8 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
+ * 2025-11-14 do J je přidána možnost dotazu na rodinný stav a na počet dětí
  * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
  * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
@@ -87,19 +89,24 @@ try {
 // hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
 //   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 //   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-  $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
+  $m= null;
+  preg_match('/(answer|asc)(-test|)/',$_SERVER["SERVER_NAME"],$m);
+  $_TEST= strtolower($m[2])=='-test' ? '_test' : '';
+  $domain= strtolower($m[1]);
   global $ORG;
-  require_once("prihlaska.org.php"); 
   $virgin= true;
   if (!count($_POST)) { // zde se proběhne jen poprvé
     $virgin= false;
-    if (!isset($_GET['akce']) ) {
+    if (!isset($_GET['akce']) || !isset($_GET['org'])) {
       die("Online přihlašování není k dispozici."); 
     }
+    require_once("prihlaska.org.php"); 
+    $ORG= $access2org[$_GET['org']];
+    $ORG->code= $_GET['org'];
     // detekce varianty: normální nebo testovací - buďto přihlášení do Answer nebo volání z webu
     $ANSWER= $SID ? 1 : ($_SESSION[
-        $_TEST ? ($ORG->code==32 ? 'asc' : 'dbt') 
-               : ($ORG->code==32 ? 'asc' : 'db2') 
+        $_TEST ? ($domain=='asc' ? 'asc' : 'dbt') 
+               : ($domain=='asc' ? 'asc' : 'db2') 
         ]['user_id']??0);
     // odvození požadavku na test a ostrý mail
     $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
@@ -114,6 +121,7 @@ try {
   $vars= $_SESSION[$AKCE]??(object)[];
   $TEST= $vars->TEST;
   $MAIL= $vars->MAIL;
+  $ORG=  $vars->ORG;
   $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
 //  $_TEST= '_test'; $TEST= $ANSWER= 1; $MAIL= 0; // ---------------------- SETKANI.ORG ----------------
 
@@ -224,14 +232,14 @@ catch (Throwable $e) {
 // -------------------------------------------------------------------- obnova počátečního nastavení
 function initialize($id_akce) { 
 # zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní a zapomene všechny hodnoty
-  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL, $ANSWER;
+  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL, $ORG, $ANSWER;
   do_session_restart();
   if ($id_akce) {
     $_SESSION['A_akce']= $id_akce;
     $AKCE= "A_$id_akce"; // ID akce pro SESSION
     $_SESSION[$AKCE]= (object)[
       'id_akce'=>$id_akce,
-      'TEST'=>$TEST, 'MAIL'=>$MAIL, 
+      'TEST'=>$TEST, 'MAIL'=>$MAIL, 'ORG'=>$ORG,
       'ANSWER'=>$ANSWER,  // při zahájení (nebo po ctrl-r) bylo přihlášeno do Answeru
       'ido'=>0, 'idr'=>0, 'pin'=>'', 'klient'=>'', // ověřený klient jeho id je v prihlaska.id_osoba
       'form'=>(object)[],
@@ -1790,7 +1798,7 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 function page() {
   global $MYSELF, $SID, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root,
-      $VERZE, $MINOR, $CORR_JS, $ezer_version, $ORG;
+      $MINOR, $CORR_JS, $ezer_version, $ORG;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $hide= "style='display:none'";
@@ -1877,7 +1885,7 @@ function page() {
       <footer>
         <div class="footer" style="display: flex;justify-content: space-between">
           <span>© $ORG->name</span>
-          <span>verze $VERZE.$MINOR.$CORR_JS </span>
+          <span>verze $MINOR.$CORR_JS </span>
         </div>
       </footer>
     </div>
@@ -1982,12 +1990,7 @@ function read_akce() { // ------------------------------------------------------
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
   $akce->oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům 
       - je potřeba, abyste ji vyplňovali společně.</i></p>";
-  $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
-      osobních údajů pro potřeby organizace akcí $ORG->name v souladu s Nařízením 
-      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
-      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR. Na našem webu naleznete 
-      <a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>
-      podrobnou informací o zpracování osobních údajů v $ORG->name</a>.";
+  $akce->form_souhlas= $ORG->gdpr;
   $akce->upozorneni= "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu, 
       že kurz není určen osobám závislým na alkoholu, drogách nebo jiných omamných látkách, ani
       osobám zatíženým neukončenou nevěrou, těžkou duševní nemocí či jiným omezením, která neumožňují 
@@ -3035,7 +3038,7 @@ function log_close() { // ------------------------------------------------------
       }
     }
     if (!$nazev_akce) { // aktuální akce ještě nemá popis
-      list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',
+      list($nazev)= select('nazev','akce',
           "id_duakce='$vars->id_akce' AND datum_od>NOW()");
       if ($nazev) {
         $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
@@ -3394,12 +3397,6 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
   $serverConfig= get_smtp($ORG->smtp);
   if ($ORG->code==1) $serverConfig->files_path= __DIR__.'/../files/setkani4';
   $serverConfig->FromName= $ORG->name;
-//  $serverConfig= (object)[
-//      'Host'       => 'smtp.gmail.com',
-//      'Username'   => 'answer@setkani.org',
-//      'files_path' => __DIR__.'/../files/setkani4',
-//      'FromName'   => 'YMCA Setkání'
-//    ];
   if ($TEST>1 || !$MAIL) {
     $DOM->mailbox= ['show',
         "<h3>Simulace odeslání mailu z adresy $serverConfig->Username &lt;$serverConfig->FromName&gt;</h3>"

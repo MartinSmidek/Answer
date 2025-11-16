@@ -2,19 +2,45 @@
 /*
   (c) 2025 Martin Smidek <martin@smidek.eu>
 
-  konfigurace online přihlašování pro YMCA Setkání - testování
+  konfigurace online přihlašování podle pořadatele akce
 
  */
 
-$ORG= (object)[
-  'code'  => 1,
+$access2org= [
+ 1 => (object)[ // YMCA Setkání - testovací databáze
   'smtp'  => 6,
   'name'  => 'YMCA Setkání',
   'deep'  => 'answer/dbt.dbs.php',
   'icon'  => '/db2/img/akce_test.png',
+  'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
+      osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
+      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
+      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR. Na našem webu naleznete 
+      <a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>
+      podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.",
    // default pro garanta akce, pokud není dostupný z AKCE/Úprava
   'info'  => (object)[
       'name'=>'Markéta Zelinková',
       'mail'=>'kancelar@setkani.org',
+      'tlfn'=>''
+    ],
+  ],
+ 2 => (object)[ // YMCA Familia - testovací databáze
+  'smtp'  => 6,
+  'name'  => 'YMCA Familia',
+  'deep'  => 'answer/dbt.dbs.php',
+  'icon'  => '/db2/img/akce_fa_test.png',
+  'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
+      osobních údajů a fotografií z akce pro potřeby organizace YMCA Familia v souladu 
+      s Nařízením Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 
+      o ochraně fyzických osob a zákonem č. 110/2019 Sb. ČR. Podrobnou Informaci 
+      o zpracování osobních údajů v YMCA Familia naleznete na našem webu:
+      <a href='http://www.familia.cz/familia/odkazy/' target='show'>
+      http://www.familia.cz/familia/odkazy/</a>.",
+   // default pro garanta akce, pokud není dostupný z AKCE/Úprava
+  'info'  => (object)[
+      'name'=>'Carlos Plechl',
+      'mail'=>'akce@familia.cz',
       'tlfn'=>''],
+  ],
 ];
