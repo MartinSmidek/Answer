@@ -246,6 +246,7 @@ html body div.popup {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  min-width: 220px;
   text-align: center;
   padding: 20px;
   border-left: 20px solid red;
