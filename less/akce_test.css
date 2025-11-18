@@ -20,7 +20,7 @@ html body div.wrapper header {
   color: #000000;
 }
 html body div.wrapper header div.header {
-  max-width: 800px;
+  max-width: 840px;
   height: calc(120px - 40px);
   margin: 0 auto;
 }
@@ -58,7 +58,7 @@ html body div.wrapper header div.intro {
   /*text-wrap: nowrap;*/
 }
 html body div.wrapper main {
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
   height: calc(100% - 120px - 50px);
   overflow: auto;
@@ -87,8 +87,8 @@ html body div.wrapper main button .fa-green {
 }
 html body div.wrapper main div.box {
   display: block;
-  margin: 20px;
-  padding: 20px;
+  margin: 10px;
+  padding: 10px;
   background-color: #FDEFF1;
 }
 html body div.wrapper main div.box div.clen,
@@ -235,7 +235,7 @@ html body div.wrapper footer {
   color: #f4f5f7;
 }
 html body div.wrapper footer div.footer {
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
   padding: 15px;
   color: #f4f5f7;
@@ -246,6 +246,7 @@ html body div.popup {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  min-width: 220px;
   text-align: center;
   padding: 20px;
   border-left: 20px solid red;

@@ -2,10 +2,12 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
+ * 2025-11-14 do J je přidána možnost dotazu na rodinný stav a na počet dětí
  * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
  * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
- * 2025-10-22 do R přidáno zaskrtávací položka p_zadost s textem veta_zadost
+ * 2025-10-22 do R přidáno zaškrtávací položka p_zadost s textem veta_zadost
  * 2025-10-21 v $_GET['org'] se při startu předá odkaz na složku s parametrizací podle organizace
  * verze 2025.4
  * 2025-08-29 parametr p_css určuje vzhled vč. loga a (c) podle _cis*akce_prihl_css
@@ -70,8 +72,11 @@ set_error_handler(function ($severity, $message, $file, $line) {
 //    'p_reg_rodina'  =>  0, // je povolena registrace rodiny ... TODO
   // -- jen pro registraci na akci R
     'p_reg_single'  =>  0, // je povolena registrace single 
-    'p_zadost'      =>  0, //  
-    'veta_zadost'   =>  '',
+    'p_akt_deti'    =>  0, // je povolen dotaz na počet dětí
+    'p_akt_stav'    =>  0, // je povolen dotaz na aktuální rodinný stav
+  // -- pro registraci na akci R|J
+    'p_zadost'      =>  0, // speciální žádost typu ano/ne 
+    'veta_zadost'   =>  '',// ... a její popis
   ]; 
 
 try {
@@ -84,19 +89,24 @@ try {
 // hodnoty pro test a mail musí být navržené přes GET - uplatní se jen při během přihlášení do Answeru
 //   $MAIL:  1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 //   $TEST:  0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-  $_TEST=  preg_match('/-test/',$_SERVER["SERVER_NAME"]) ? '_test' : '';
+  $m= null;
+  preg_match('/(answer|asc)(-test|)/',$_SERVER["SERVER_NAME"],$m);
+  $_TEST= strtolower($m[2])=='-test' ? '_test' : '';
+  $domain= strtolower($m[1]);
   global $ORG;
-  require_once("prihlaska.org.php"); 
   $virgin= true;
   if (!count($_POST)) { // zde se proběhne jen poprvé
     $virgin= false;
-    if (!isset($_GET['akce']) ) {
+    if (!isset($_GET['akce']) || !isset($_GET['org'])) {
       die("Online přihlašování není k dispozici."); 
     }
+    require_once("prihlaska.org.php"); 
+    $ORG= $access2org[$_GET['org']];
+    $ORG->code= $_GET['org'];
     // detekce varianty: normální nebo testovací - buďto přihlášení do Answer nebo volání z webu
     $ANSWER= $SID ? 1 : ($_SESSION[
-        $_TEST ? ($ORG->code==32 ? 'asc' : 'dbt') 
-               : ($ORG->code==32 ? 'asc' : 'db2') 
+        $_TEST ? ($domain=='asc' ? 'asc' : 'dbt') 
+               : ($domain=='asc' ? 'asc' : 'db2') 
         ]['user_id']??0);
     // odvození požadavku na test a ostrý mail
     $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
@@ -111,6 +121,7 @@ try {
   $vars= $_SESSION[$AKCE]??(object)[];
   $TEST= $vars->TEST;
   $MAIL= $vars->MAIL;
+  $ORG=  $vars->ORG;
   $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
 //  $_TEST= '_test'; $TEST= $ANSWER= 1; $MAIL= 0; // ---------------------- SETKANI.ORG ----------------
 
@@ -221,14 +232,14 @@ catch (Throwable $e) {
 // -------------------------------------------------------------------- obnova počátečního nastavení
 function initialize($id_akce) { 
 # zobrazí id.mail a cmd.zadost_o_pin, skryje vše ostatní a zapomene všechny hodnoty
-  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL, $ANSWER;
+  global $DOM, $DOM_default, $AKCE, $vars, $TEST, $MAIL, $ORG, $ANSWER;
   do_session_restart();
   if ($id_akce) {
     $_SESSION['A_akce']= $id_akce;
     $AKCE= "A_$id_akce"; // ID akce pro SESSION
     $_SESSION[$AKCE]= (object)[
       'id_akce'=>$id_akce,
-      'TEST'=>$TEST, 'MAIL'=>$MAIL, 
+      'TEST'=>$TEST, 'MAIL'=>$MAIL, 'ORG'=>$ORG,
       'ANSWER'=>$ANSWER,  // při zahájení (nebo po ctrl-r) bylo přihlášeno do Answeru
       'ido'=>0, 'idr'=>0, 'pin'=>'', 'klient'=>'', // ověřený klient jeho id je v prihlaska.id_osoba
       'form'=>(object)[],
@@ -310,6 +321,7 @@ function polozky() { // --------------------------------------------------------
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'naše dítě','p'=>'jiný vztah'],
       'role_dite' => [''=>'vztah k rodině?','d'=>'naše dítě','p'=>'jiný vztah'],
+      'Xstav'     => [''=>'?',1=>'svobodný',2=>'ženatý',3=>'rozvedený',4=>'vdovec'],
       'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
                       4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
                       24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
@@ -350,8 +362,8 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
-    typ_akce('R') && ($akce->p_zadost??0) ? [
-      'zadost'      =>[ 0,$akce->veta_zadost,'check'],
+    typ_akce('RJ') && ($akce->p_zadost??0) ? [
+      'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
@@ -371,7 +383,9 @@ function polozky() { // --------------------------------------------------------
       'stat'      =>[ 0,'stát',''],
       'telefony'  =>[ 0,'',''], // jen kvůli případnému odkazu z osoba
       'emaily'    =>[ 0,'',''], // jen kvůli případnému odkazu z osoba
-      'spz'       =>[12,'SPZ auta na akci','']],
+      'spz'       =>[12,'SPZ auta na akci',''],
+      'rozvod'    =>[ 0,'',''], // jen kvůli případnému dotazu p_akt_stav
+    ],
     typ_akce('MO') ? [
       'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS
     ] : [],
@@ -403,6 +417,10 @@ function polozky() { // --------------------------------------------------------
       'obec'      =>[20,'* obec/město','','abp'],
       'stat'      =>[ 0,'stát','','abp'],
       ] : [],
+    typ_akce('J') && ($akce->p_akt_stav??0) ? [
+      'Xstav'     =>[20,'* rodinný stav','select','ab'],
+      'Xdeti'     =>[5,'počet dětí','','ab'],
+    ] : [],
     typ_akce('M') ? [
       'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
       'zamest'    =>[35,'* povolání, obor, ve kterém pracujete/budete pracovat','','ab'],
@@ -429,7 +447,7 @@ function polozky() { // --------------------------------------------------------
     ] : [],
     typ_akce('MO') && ($akce->p_nocleh??0) ? [
       'Xnocleh'   =>[20,'nocleh','select','abdp'],
-    ] : []
+    ] : [],
   );
   // případné opravy podle akce
   foreach ($akce as $key=>$val) {
@@ -1368,6 +1386,9 @@ function form_solo($id) { trace(); // -------------------------------- zobrazen�
       . elem_input('o',$id,['email','telefon']) 
       . ($akce->p_obcanky ? elem_input('o',$id,['obcanka']) : '')
       . ($akce->p_oso_adresa ? '<br>'.elem_input('o',$id,['ulice','psc','obec']) : '')
+      . ($akce->p_akt_stav || $akce->p_akt_deti ? '<br>' : '')
+      . ($akce->p_akt_stav ? elem_input('o',$id,['Xstav']) : '')
+      . ($akce->p_akt_deti ? elem_input('o',$id,['Xdeti']) : '')
       . "</div>";
   return $part;
 } // form osoba
@@ -1516,6 +1537,9 @@ function form_J($new) { trace();
         'kontrola'=>[], // seznam položek s chybou
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
+        'zadost'=>$akce->p_zadost,
+//        'stav'=>$akce->p_akt_stav,
+//        'deti'=>$akce->p_akt_deti,
     ];
     log_write_changes();  // zapiš počáteční skeleton form
   }
@@ -1524,7 +1548,10 @@ function form_J($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
-    $pobyt= elem_input('p',0,['pracovni']);
+    $pobyt.= elem_input('p',0,['pracovni']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= elem_input('p',0,['zadost']).'<br>';
   }
   // žádost o slevu
   if ($akce->p_sleva) {
@@ -1771,7 +1798,7 @@ function read_elems($elems,&$errs) { // ----------------------------------------
 
 function page() {
   global $MYSELF, $SID, $_TEST, $TEST, $TEST_mail, $TEXT, $DOM_default, $akce, $rel_root,
-      $VERZE, $MINOR, $CORR_JS, $ezer_version, $ORG;
+      $MINOR, $CORR_JS, $ezer_version, $ORG;
   $if_trace= $TEST ? "style='overflow:auto'" : '';
   $TEST_mail= $TEST_mail??'';
   $hide= "style='display:none'";
@@ -1858,7 +1885,7 @@ function page() {
       <footer>
         <div class="footer" style="display: flex;justify-content: space-between">
           <span>© $ORG->name</span>
-          <span>verze $VERZE.$MINOR.$CORR_JS </span>
+          <span>verze $MINOR.$CORR_JS </span>
         </div>
       </footer>
     </div>
@@ -1963,12 +1990,7 @@ function read_akce() { // ------------------------------------------------------
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
   $akce->oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům 
       - je potřeba, abyste ji vyplňovali společně.</i></p>";
-  $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
-      osobních údajů pro potřeby organizace akcí $ORG->name v souladu s Nařízením 
-      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
-      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR. Na našem webu naleznete 
-      <a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>
-      podrobnou informací o zpracování osobních údajů v $ORG->name</a>.";
+  $akce->form_souhlas= $ORG->gdpr;
   $akce->upozorneni= "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu, 
       že kurz není určen osobám závislým na alkoholu, drogách nebo jiných omamných látkách, ani
       osobám zatíženým neukončenou nevěrou, těžkou duševní nemocí či jiným omezením, která neumožňují 
@@ -2419,7 +2441,7 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
   }
 }
 function db_nacti_cleny_rodiny($idr) { // ------------------------------------ db nacti_cleny_rodiny
-//  global $vars;
+  global $vars;
   $roles= []; // role členů rodiny
   $ido_a= $ido_b= 0; // nositelé rolí
   $ro= pdo_query_2(
@@ -2431,19 +2453,16 @@ function db_nacti_cleny_rodiny($idr) { // ------------------------------------ d
     $roles[]= $role;
     if ($role=='a') $ido_a= $ido;
     if ($role=='b') $ido_b= $ido;
-    nacti_clena($ido,$role,in_array($role,['a','b'])?1:0);
+    // spolu je nastaveno pro klienta a pokud je typ_akce=MO tak i pro partnera
+    $spolu= in_array($role,['a','b']) ? (typ_akce('MO') || $ido==$vars->ido ? 1: 0) : 0;
+    nacti_clena($ido,$role,$spolu);
   }
-//  // pokud ten $prvni_ido nemá email je mu vnucen ten přihlašovací
-//  if (isset($vars->cleni[$prvni_ido])) {
-//    if (!get('o','email',$prvni_ido)) {
-//      set('o','email',$vars->email,$prvni_ido);
-//    }
-//  }
   return [$roles,$ido_a,$ido_b];
 }
 function kompletuj_pobyt_ucastnik($idr,$ido) { // ----- kompletuj jednotlivce a vytvoř prázdný pobyt
 # zajisti aby ve vars->cleni byl záznam (byť s prázdnými položkami)
 # načti i jeho rodinu, pokud je k dispozici 
+  global $akce, $vars;
   if ($ido>0) { // načteme klienta 
     $sex= select_2('sex','osoba',"id_osoba=$ido");
     $role= $sex==2 ? 'b' : 'a';
@@ -2454,8 +2473,25 @@ function kompletuj_pobyt_ucastnik($idr,$ido) { // ----- kompletuj jednotlivce a 
   } // nový klient
   if ($idr>0) { // rodina existuje - načti rodinné údaje 
     nacti_rodinu($idr);        
-//    db_nacti_cleny_rodiny($idr);
   } // rodina existuje - jen klient
+  // pokud je typ_akce=J a známe rodinu, vypočítej položky p_akt_stav a p_akt_deti
+  if (typ_akce('J') && $idr>0 && ($akce->p_akt_stav || $akce->p_akt_deti)) {
+    db_nacti_cleny_rodiny($idr);
+    $deti= 0; $partner= 0; 
+    foreach (array_keys($vars->cleni) as $id) {
+      if ($id==$ido) continue;
+      if (in_array(get_role($id),['a','b'])) $partner= $id;
+      if (get_role($id)=='d') $deti++;
+    }
+    if ($akce->p_akt_stav) {
+      $rozvod= get('r','rozvod');
+      $umrti= $partner ? get('o','umrti',$partner) : 0;
+      set('o','Xstav',$rozvod ? 3 : ($partner ? ($umrti ? 4 : 2) : 1),$ido);
+    }
+    if ($akce->p_akt_deti) {
+      set('o','Xdeti',$deti?:'',$ido);
+    }
+  }
   // vytvoř pobyt
   vytvor_pobyt();
 }
@@ -2988,24 +3024,28 @@ function log_error($msg) { // --------------------------------------------------
   append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
-  global $VERZE, $MINOR, $CORR_JS, $TEST;
+  global $VERZE, $MINOR, $CORR_JS, $TEST, $akce, $vars;
   log_write('close','NOW()');
   // pokud v logu není aktuální akce přidáme její popis
   $file= "prihlaska.log.php";
+  $nazev_akce= 0;
   if (file_exists($file)) {
-    $idas= [];
     $lines= file($file);
     foreach ($lines as $line) {
-      $ida= substr($line,9,4);
-      if (is_numeric($ida) && !in_array($ida,$idas)) {
-        $idas[]= $ida;
-        list($nazev,$rok)= select('nazev,YEAR(datum_od)','akce',"id_duakce='$ida' AND datum_od>NOW()");
-        if ($nazev) {
-          $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-          $_ida= str_pad($ida,4,' ',STR_PAD_LEFT);
-          $msg= "$x $_ida ".date('Y-m-d H:i:s')."      <b style='color:green'>$nazev, $rok</b>";
-          file_put_contents($file, "$msg\n", FILE_APPEND);
-        }
+      if (substr($line,9,6)=="$vars->id_akce =") {
+        $nazev_akce= 1;
+        break;
+      }
+    }
+    if (!$nazev_akce) { // aktuální akce ještě nemá popis
+      $ok= select_2('COUNT(*)','akce',
+          "id_duakce='$vars->id_akce' AND datum_od>NOW()");
+      if ($ok) {
+        $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
+        $url= "prihlaska.log.php?itsme=1&akce=$vars->id_akce";
+        $msg= "$x $vars->id_akce = <a style='color:green;font-weight:bold' href='$url'>"
+            . "$akce->nazev ($akce->oddo)</a>";
+        file_put_contents($file, "$msg\n", FILE_APPEND);
       }
     }
   }
@@ -3024,15 +3064,16 @@ function append_log($msg) { // -------------------------------------------------
     $prefix= 
 <<<__EOS
 <?php 
-  session_start(); 
-  if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
-?>
+session_start(); 
+if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
+\$akce=\$_GET['akce']??''; echo "
 <html><head><title>přihlášky</title>
-<link rel="shortcut icon" href="img/log_icon.png">
-<script src="/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="$MYSELF.js?corr=$CORR_JS" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript">window.addEventListener('load', function() { pretty_log();});</script>  
-</script>
+<link rel='shortcut icon' href='img/log_icon.png'>
+<script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
+<script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
+<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce');});</script>  
+</script>";
+?>
 </head><body><pre id="log"
 ><b>VERZE/JS  AKCE DATUM      ČAS      PŘIHLÁŠKA       KLIENT </b>\n
 __EOS;
@@ -3170,7 +3211,7 @@ function souhrn($ucel) {
 //      . "<p>Zaslané údaje zpracujeme a do týdne vám pošleme odpověď.</p>"
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
       . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-      . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
+      . "<br>$akce->garant_telefon</p>"
       . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
   // konec: text, maily, úščastníci
   return [$html,$emails,$ucastnici];
@@ -3359,12 +3400,6 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
   $serverConfig= get_smtp($ORG->smtp);
   if ($ORG->code==1) $serverConfig->files_path= __DIR__.'/../files/setkani4';
   $serverConfig->FromName= $ORG->name;
-//  $serverConfig= (object)[
-//      'Host'       => 'smtp.gmail.com',
-//      'Username'   => 'answer@setkani.org',
-//      'files_path' => __DIR__.'/../files/setkani4',
-//      'FromName'   => 'YMCA Setkání'
-//    ];
   if ($TEST>1 || !$MAIL) {
     $DOM->mailbox= ['show',
         "<h3>Simulace odeslání mailu z adresy $serverConfig->Username &lt;$serverConfig->FromName&gt;</h3>"

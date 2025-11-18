@@ -8,7 +8,7 @@
 @page_b:  #ffffff;
 @popup_b: #ffeeaa;
 //
-@width:   800px;
+@width:   840px;
 @foot_h:   50px;
 @head_h:  120px;
 //
@@ -61,7 +61,7 @@ html {
           .fa-green { color:green; font-weight: bold; }
         }
         div.box {
-          display:block; margin: 20px; padding: 20px;
+          display:block; margin: 10px; padding: 10px;
           background-color: @form_b;
           div.clen, div.solo, div.rodina {
             display: table; padding: 5px; margin: 5px;
@@ -159,9 +159,9 @@ html {
     // ----------------------------------------------------------------------------- popup
     div.popup { 
       z-index:2001; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);    
+      min-width: 220px; 
       text-align: center; padding: 20px; border-left: 20px solid red;
-      background: @popup_b; 
-      box-shadow: 5px 5px 10px 10px rgba(0, 0, 0, 0.5);
+      background: @popup_b; box-shadow: 5px 5px 10px 10px rgba(0, 0, 0, 0.5);
     }
     #popup_mask {
       display: none;

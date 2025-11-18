@@ -20,18 +20,18 @@ use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 # vygeneruje QR kód url přihlášky akce $ida jako PNG uložený v docs/<aplikace>/qr
 # vrací html odkaz na PNG 
-function akce_qr_prihlasky(int $ida) {
-  global $rel_root;
+function akce_qr_prihlasky($ida,$url) {
+//  global $rel_root;
   $vendor_path= "./db2/vendor";
   require "$vendor_path/autoload.php";
   $html= '';
   // ochrana před nedostupným Endroid\QrCode
   if (!class_exists(Builder::class)) goto end; // nech prázdné místo
-  $scheme= $_SERVER['REQUEST_SCHEME'];
+//  $scheme= $_SERVER['REQUEST_SCHEME'];
   // generování QR
-  $base= "$scheme://$rel_root/prihlaska_2025.php";
-  $url= $base . '?akce=' . urlencode($ida);
-  $result= Builder::create()->writer(new PngWriter())->data($url)->size(120)->margin(2)->build();
+//  $base= "$scheme://$rel_root/prihlaska_2025.php";
+//  $url= $base . '?akce=' . urlencode($ida);
+  $result= Builder::create()->writer(new PngWriter())->data($url)->size(240)->margin(2)->build();
   // uložení 
   $png= $result->getString();
   $html= akce_qr_save($png,"qr-akce-$ida");
@@ -59,7 +59,7 @@ function akce_qr_platby(int $id_pobyt,
     $parts[] = 'MSG:'.spayd_escape($message); // nebo X-SELF jako zpráva "pro mě"
   }
   $data= implode('*', $parts);
-  $result= Builder::create()->writer(new PngWriter())->data($data)->size(120)->margin(2)->build();
+  $result= Builder::create()->writer(new PngWriter())->data($data)->size(240)->margin(2)->build();
   // uložení 
   $png= $result->getString();
   $html= akce_qr_save($png,"qr-platba-$id_pobyt");
@@ -80,7 +80,7 @@ function akce_qr_save($png,$png_name) {
     mkdir($abs_dir, 0775, true);
   }
   file_put_contents("$abs_dir/$png_name.png", $png);
-  return "<a href='$url' target='QR'><img src='$url' alt='klikni pro zobrazení QR kódu platby'></a>";
+  return "<a href='$url' target='QR'><img src='$url' width=120 alt='klikni pro zobrazení QR kódu platby'></a>";
 }
 # ------------------------------------------------------------------------------------- web zmena_ok
 # propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
@@ -199,14 +199,11 @@ function akce_prihlaska_load($ida=3094) {
 # ----------------------------------------------------------------------------------- akce prihlaska
 # vrátí URL přihlášky pro ostrou nebo testovací databázi
 function akce_prihlaska($id_akce,$prihlaska,$par='') {
-//  global $answer_db;
-//  $prihlaska= 
-//      $answer_db=='ezer_db2'      ? 'prihlaska_2025.php' : (
-//      $answer_db=='ezer_db2_test' ? 'prihlaska_2025.php'   : '???');
-  $goal= "$prihlaska.php?akce=$id_akce$par";
+  $org= select('access','akce',"id_duakce=$id_akce");
+  $goal= "$prihlaska.php?org=$org&akce=$id_akce$par";
   $url= "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['HTTP_HOST']}/$goal";
   $res= "<a href='$url' target='pri'>$goal</a>"; 
-  return $res;
+  return (object)['link'=>$res,'url'=>$url];
 }
 # --------------------------------------------------------------------------------------- prihl show
 # vrátí tabulku osobních otázek páru
