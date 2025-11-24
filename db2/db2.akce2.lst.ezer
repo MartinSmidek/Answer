@@ -535,7 +535,7 @@ form _page [,,275,360] {
   check xp_enable [16,344,243,] { tag:'cor', data:akce.web_prihlasky, format:'d', skill:'yaa+|yaaw' 
                         title:"ONLINE <span class='zluty'>přihlašování</span> na www.setkani.org"
   }
-  select garant [293,355,79,] {tag:'cor', type:'map', title:'garant' , data:akce.poradatel,
+  select garant [293,355,79,] {tag:'cor', type:'map0', title:'garant' , data:akce.poradatel,
       help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka,      skill:'#e' 
   }
   check xp_pozde [16,362,214,21] { tag:'cor', format:'d'
