@@ -707,6 +707,7 @@ form _page [,,275,360] {
         p_json.p_reg_single= 0;
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_zadost= 0; p_json.veta_zadost= '';
+        p_json.p_zadost2= 0; p_json.veta_zadost2= '';
         break;
       case 'J': akci= 'akci pro jednotlivce'; 
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
@@ -784,8 +785,10 @@ form _page [,,275,360] {
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
     check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
-    check p_zadost [30,430,103,] { tag:'pri,R,J', title:'umožnit žádost: '}
-    field veta_zadost [139,431,305,] { tag:'pri,R,J', help:' [ ] text žádosti' }
+    check p_zadost [30,430,108,] { tag:'pri,R,J', title:'umožnit 1.žádost: '}
+    check p_zadost2 [30,450,109,] { tag:'pri,R,J', title:'umožnit 2.žádost: '}
+    field veta_zadost [147,431,297,] { tag:'pri,R,J', help:' [ ] popis 1.žádosti' }
+    field veta_zadost2 [147,451,297,] { tag:'pri,R,J', help:' [ ] text 2.žádosti' }
   field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
     label [217,437,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
     check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
@@ -806,7 +809,7 @@ form _page [,,275,360] {
     func onclick_ulozit() { var elem:ezer, typ:text
       akce_lock('off'); 
       // p_reg_single a p_zadost je zatím jen pro ASC
-      if ((p_reg_single || p_zadost) && web_prihlaska=='prihlaska_2025') {
+      if ((p_reg_single || p_zadost || p_zadost2) && web_prihlaska=='prihlaska_2025') {
         alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
         return;
       } 
@@ -833,6 +836,7 @@ form _page [,,275,360] {
       p_json.tp_pracovni= tp_pracovni;
       p_json.veta_potvrzeni= veta_potvrzeni;
       p_json.veta_zadost= p_zadost ? veta_zadost : '';
+      p_json.veta_zadost2= p_zadost2 ? veta_zadost2 : '';
 //      echo(debug(p_json));
       if (form.key()) {
         web_online= json_encode(p_json); web_online.change();

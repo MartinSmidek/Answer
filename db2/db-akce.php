@@ -160,7 +160,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
     // zjistíme hodnoty hnízd u účastníků a 
     // pokud akce není v hnízdech simulujeme je - kvůli opravám (mohla být plánována do hnízd)
     $p_hnizda= select('GROUP_CONCAT(DISTINCT hnizdo ORDER BY hnizdo)','pobyt',"id_akce='$id_akce'");
-    $p_hnizda= explode(',',$p_hnizda);
+    $p_hnizda= explode(',',$p_hnizda??'');
 //                          debug($p_hnizda,"hnízda podle pobytů: ");
     if (count($a_hnizda)!=count($p_hnizda)) {
       $err_h++;
