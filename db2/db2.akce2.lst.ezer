@@ -331,11 +331,15 @@ form _page [,,275,360] {
     if (the_source=='sey') { if (info.sey.browse_count()) show_page(id_akce) else init_page() }
     if (the_source=='dum') { show_page(id_akce) }
   }
-  func show_page(id_akce) {
+  func show_page(id_akce) { var ret:object
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
     form.load(id_akce); 
     cen_ma.Init();
-    if (has_skill('y')) web_url= php.web_prihlaska_url(id_akce);
+    if (has_skill('y')) {
+      ret= php.web_prihlaska_url(id_akce);
+      web_url= ret.txt;
+      form.enable(ret.url?1:0,'url');
+    }
     ds_order= the_order ? 1 : 2;
     switch (zalozka) {
       case 'ord': 
@@ -532,13 +536,13 @@ form _page [,,275,360] {
     proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
   }}
   label web_url [19,330,331,] { tag:'cor' }
-  check xp_enable [16,344,243,] { tag:'cor', data:akce.web_prihlasky, format:'d', skill:'yaa+|yaaw' 
+  check xp_enable [16,344,243,] { tag:'cor,url', data:akce.web_prihlasky, format:'d', skill:'yaa+|yaaw' 
                         title:"ONLINE <span class='zluty'>přihlašování</span> na www.setkani.org"
   }
   select garant [293,355,79,] {tag:'cor', type:'map0', title:'garant' , data:akce.poradatel,
       help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka,      skill:'#e' 
   }
-  check xp_pozde [16,362,214,21] { tag:'cor', format:'d'
+  check xp_pozde [16,362,214,21] { tag:'cor,url', format:'d'
       title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
       help:"a to i tehdy, když akce není ještě naplněná",                 // skill:'yaa|yaaw;faa|faaw' 
   }
