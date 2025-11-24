@@ -2,12 +2,13 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-11-23 do RJ přidáno zaškrtávací položka p_zadost2 s textem veta_zadost2
  * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
  * 2025-11-14 do J je přidána možnost dotazu na rodinný stav a na počet dětí
  * 2025-11-11 do logu se přidává název akce kvůli výběru regulárním výrazem
  * 2025-11-11 v případě dotazu na účast se přidá 'mezi náhradníky' pokud tomu tak je
  * 2025-10-25 do R přidáno p_reg_single pro registraci jako single v rodinné přihlášce
- * 2025-10-22 do R přidáno zaškrtávací položka p_zadost s textem veta_zadost
+ * 2025-10-22 do RJ přidáno zaškrtávací položka p_zadost s textem veta_zadost
  * 2025-10-21 v $_GET['org'] se při startu předá odkaz na složku s parametrizací podle organizace
  * verze 2025.4
  * 2025-08-29 parametr p_css určuje vzhled vč. loga a (c) podle _cis*akce_prihl_css
@@ -75,7 +76,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_akt_deti'    =>  0, // je povolen dotaz na počet dětí
     'p_akt_stav'    =>  0, // je povolen dotaz na aktuální rodinný stav
   // -- pro registraci na akci R|J
-    'p_zadost'      =>  0, // speciální žádost typu ano/ne 
+    'p_zadost'      =>  0, // speciální žádost typu ano/ne č.1
+    'p_zadost2'     =>  0, // speciální žádost typu ano/ne č.2
     'veta_zadost'   =>  '',// ... a její popis
   ]; 
 
@@ -364,6 +366,9 @@ function polozky() { // --------------------------------------------------------
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
     typ_akce('RJ') && ($akce->p_zadost??0) ? [
       'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
+    ] : [],
+    typ_akce('RJ') && ($akce->p_zadost2??0) ? [
+      'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
@@ -1480,6 +1485,7 @@ function form_R($new) { trace();
         'strava'=>$akce->p_strava,  // 0=akce bez stravy, 1=tlačítko Objednávka, 2=seznam strav
         'pozn'=>1,
         'zadost'=>$akce->p_zadost,
+        'zadost2'=>$akce->p_zadost2,
         'souhlas'=>$akce->p_souhlas,
     ];
     log_write_changes();  // zapiš počáteční skeleton form
@@ -1538,6 +1544,7 @@ function form_J($new) { trace();
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
         'zadost'=>$akce->p_zadost,
+        'zadost2'=>$akce->p_zadost2,
 //        'stav'=>$akce->p_akt_stav,
 //        'deti'=>$akce->p_akt_deti,
     ];
@@ -3178,6 +3185,9 @@ function souhrn($ucel) {
   $pozn= get('p','pracovni');
   if ($akce->p_zadost && get('p','zadost')) {
     $pozn= $pozn ? "$akce->veta_zadost, $pozn" : $akce->veta_zadost;
+  }
+  if ($akce->p_zadost2 && get('p','zadost2')) {
+    $pozn= $pozn ? "$akce->veta_zadost2, $pozn" : $akce->veta_zadost2;
   }
   // přípony plurál/singulár
   $eme= $ucel=='kontrola'? (typ_akce('J') ? 'i' : 'eme') : 'ete'; 

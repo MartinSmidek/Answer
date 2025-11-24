@@ -325,7 +325,10 @@ function prihl_show_2025($idp,$idpr,$minor) { trace();
     }
     // volitelná žádost?
     if (isset($pobyt->zadost)) {
-      $html.= "<p><b>Požadavek: </b>".($pobyt->zadost ? 'ano' : 'ne').'</p>';
+      $html.= "<p><b>1.požadavek: </b>".($pobyt->zadost ? 'ano' : 'ne').'</p>';
+    }
+    if (isset($pobyt->zadost2)) {
+      $html.= "<p><b>2.požadavek: </b>".($pobyt->zadost2 ? 'ano' : 'ne').'</p>';
     }
   }
   $html.= "</div>";

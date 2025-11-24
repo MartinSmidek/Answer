@@ -457,6 +457,7 @@ table pobyt { key_id:'id_pobyt'
   date   rozpis_poslan     { sql_pipe:'sql_date1'}  // datum odeslání rozpisu platby
   // online položky
   number zadost
+  number zadost2
 }
 //table pobyt_wp { db:'ezer_db2', key_id:'id_pobyt_wp'
 //  number id_pobyt_wp
