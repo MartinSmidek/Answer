@@ -40,7 +40,7 @@ $access2org= [
    // default pro garanta akce, pokud není dostupný z AKCE/Úprava
   'info'  => (object)[
       'name'=>'Carlos Plechl',
-      'mail'=>'akce@familia.cz',
+      'mail'=>'akce@chlapi.cz',
       'tlfn'=>''],
   ],
 ];
