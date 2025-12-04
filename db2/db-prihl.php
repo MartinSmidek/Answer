@@ -1,17 +1,18 @@
 <?php
 
 # ------------------------------------------------------------------------------------ web prihlaska
-# propojení s www.setkani.org - vrátí url článku s popisem akce tzn. s nastaveným id_akce
+# propojení s www.setkani.org - vrátí text a url článku s popisem akce tzn. s nastaveným id_akce
 function web_prihlaska_url($ida) {  trace();
   global $web_setkani;
   $web= explode("//", $web_setkani)[1];
   $a= "nemá článek na $web";
+  $path= '';
   $uid= select("uid","tx_gncase_part","id_akce='$ida' AND !deleted AND !hidden",'setkani');
   if ($uid) {
     $path= "akce/nove/$uid";
     $a= "popis akce <a href='$web_setkani/$path#anchor$uid' target='web'>$web/$path</a>";
   }
-  return $a;
+  return (object)['txt'=>$a,'url'=>$path];
 }
 
 # ------------------------------------------------------------------------------- generování QR kódů

@@ -1508,6 +1508,9 @@ function form_R($new) { trace();
   if ($vars->form->zadost) {
     $pobyt.= elem_input('p',0,['zadost']);
   }
+  if ($vars->form->zadost2) {
+    $pobyt.= elem_input('p',0,['zadost2']);
+  }
   // žádost o slevu
   if ($akce->p_sleva) {
     $pobyt.= elem_input('p',0,['sleva_zada']) . elem_input('p',0,['sleva_duvod'],1);
