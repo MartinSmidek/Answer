@@ -364,10 +364,10 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
-    typ_akce('RJ') && ($akce->p_zadost??0) ? [
+    typ_akce('ORJ') && ($akce->p_zadost??0) ? [
       'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
     ] : [],
-    typ_akce('RJ') && ($akce->p_zadost2??0) ? [
+    typ_akce('ORJ') && ($akce->p_zadost2??0) ? [
       'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
@@ -1414,6 +1414,11 @@ function form_MO($new) { trace();
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
     ];
+    if (typ_akce('O')) {
+      $vars->form->zadost= $akce->p_zadost;
+      $vars->form->zadost2= $akce->p_zadost2;
+
+    }
     log_write_changes();  // zapiš počáteční skeleton form
   }
   // -------------------------------------------- úprava rodinné adresy
@@ -1430,6 +1435,12 @@ function form_MO($new) { trace();
   $pobyt= '';
   if ($vars->form->pozn) {
     $pobyt= elem_input('p',0,['pracovni']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= elem_input('p',0,['zadost']);
+  }
+  if ($vars->form->zadost2) {
+    $pobyt.= elem_input('p',0,['zadost2']);
   }
   // specifika pro VPS na MS
   $je_dotaz_vps= false;

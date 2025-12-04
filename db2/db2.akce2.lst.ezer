@@ -287,7 +287,9 @@ proc akce_vsechny(cond) {
 form _page [,,275,360] {
   var a_akce: number
   # ---------------------------==> . ochrana editace více uživateli
-  func onchanged() { akce_lock('on') }
+  func onchanged() { 
+    akce_lock('on') 
+  }
   func akce_lock(on) { var lock:object 
     if (key_akce) {
       lock= php.table_lock(on,'akce',key_akce); 
@@ -298,9 +300,10 @@ form _page [,,275,360] {
     }
   }
   func akce_zpet() { 
+    page.show_akce(page.a_akce); 
+//    form.plain();
+//    form.load(page.a_akce); 
     akce_lock('off'); 
-    form.plain();
-    form.load(page.a_akce); 
   }
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
@@ -567,7 +570,9 @@ form _page [,,275,360] {
   label  [193,493,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
   button [199,499,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
-    func onclick() { akce_zpet() }
+    func onclick() { 
+      akce_zpet() 
+    }
   }
   button [245,499,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
@@ -577,7 +582,6 @@ form _page [,,275,360] {
       if (form.same()) return;
       // oprava
       ida= form.key();
-      akce_lock('off'); 
       ucast.the_duakce_local= 0; // inicializace Účastníci
       if (ida) { // oprava
         if (has_skill('y') && (ds_order==1 || ds_order.changed())) {
@@ -623,6 +627,7 @@ form _page [,,275,360] {
         if (jiny_rok) { the_rok= rok; akce_roku(rok); }
         info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${ida}`));
       }
+      akce_lock('off'); 
     } 
     func missing(tg) { var miss:text, fld:ezer
       miss= '';
@@ -813,7 +818,6 @@ form _page [,,275,360] {
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
-      akce_lock('off'); 
       // p_reg_single a p_zadost je zatím jen pro ASC
       if ((p_reg_single || p_zadost || p_zadost2) && web_prihlaska=='prihlaska_2025') {
         alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
@@ -853,6 +857,7 @@ form _page [,,275,360] {
         if (p_pozde.changed()) { xp_pozde= p_pozde; xp_pozde.change(); }
         form.save(); form.load(); p_show();
       }
+      akce_lock('off'); 
   }}
   button [116,prihl_top+6,,] { tag:'pri,M,O,R,J', 
     title:"[fa-question] <a href='https://lite.evernote.com/note/a7d25a1b-835c-ebb6-d7c3-f655a1a2f9d1'
