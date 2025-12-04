@@ -2,6 +2,7 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-12-04 p_zadost a p_zadost2 jsou povoleny i pro typ O
  * 2025-11-23 do RJ přidáno zaškrtávací položka p_zadost2 s textem veta_zadost2
  * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
  * 2025-11-14 do J je přidána možnost dotazu na rodinný stav a na počet dětí
@@ -364,10 +365,10 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
-    typ_akce('RJ') && ($akce->p_zadost??0) ? [
+    typ_akce('ORJ') && ($akce->p_zadost??0) ? [
       'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
     ] : [],
-    typ_akce('RJ') && ($akce->p_zadost2??0) ? [
+    typ_akce('ORJ') && ($akce->p_zadost2??0) ? [
       'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
@@ -1414,6 +1415,11 @@ function form_MO($new) { trace();
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
     ];
+    if (typ_akce('O')) {
+      $vars->form->zadost= $akce->p_zadost;
+      $vars->form->zadost2= $akce->p_zadost2;
+
+    }
     log_write_changes();  // zapiš počáteční skeleton form
   }
   // -------------------------------------------- úprava rodinné adresy
@@ -1430,6 +1436,12 @@ function form_MO($new) { trace();
   $pobyt= '';
   if ($vars->form->pozn) {
     $pobyt= elem_input('p',0,['pracovni']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= elem_input('p',0,['zadost']);
+  }
+  if ($vars->form->zadost2) {
+    $pobyt.= elem_input('p',0,['zadost2']);
   }
   // specifika pro VPS na MS
   $je_dotaz_vps= false;

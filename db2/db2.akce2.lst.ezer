@@ -287,7 +287,9 @@ proc akce_vsechny(cond) {
 form _page [,,275,360] {
   var a_akce: number
   # ---------------------------==> . ochrana editace více uživateli
-  func onchanged() { akce_lock('on') }
+  func onchanged() { 
+    akce_lock('on') 
+  }
   func akce_lock(on) { var lock:object 
     if (key_akce) {
       lock= php.table_lock(on,'akce',key_akce); 
@@ -298,9 +300,10 @@ form _page [,,275,360] {
     }
   }
   func akce_zpet() { 
+    page.show_akce(page.a_akce); 
+//    form.plain();
+//    form.load(page.a_akce); 
     akce_lock('off'); 
-    form.plain();
-    form.load(page.a_akce); 
   }
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
@@ -567,7 +570,9 @@ form _page [,,275,360] {
   label  [193,493,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
   button [199,499,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
-    func onclick() { akce_zpet() }
+    func onclick() { 
+      akce_zpet() 
+    }
   }
   button [245,499,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
@@ -577,7 +582,6 @@ form _page [,,275,360] {
       if (form.same()) return;
       // oprava
       ida= form.key();
-      akce_lock('off'); 
       ucast.the_duakce_local= 0; // inicializace Účastníci
       if (ida) { // oprava
         if (has_skill('y') && (ds_order==1 || ds_order.changed())) {
@@ -623,6 +627,7 @@ form _page [,,275,360] {
         if (jiny_rok) { the_rok= rok; akce_roku(rok); }
         info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${ida}`));
       }
+      akce_lock('off'); 
     } 
     func missing(tg) { var miss:text, fld:ezer
       miss= '';
@@ -692,7 +697,9 @@ form _page [,,275,360] {
     // defaultní hodnoty - pokud je web-online prázdný, zapíšou se
     p_json= {};
     for (ch of form.tagged('pri')) {
-      if (js.get_type(ch)=='check') ch.init();
+//      if (js.get_type(ch)=='check') 
+      if (!js.get_type(ch)=='label') 
+        ch.init();
     }
     akci= '???';
     p_json.p_css= 1;
@@ -782,23 +789,23 @@ form _page [,,275,360] {
     check p_registrace [30,350,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem'}
     check p_souhlas [250,350,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}
   label [13,390,151,20] { tag:'pri,M,O' title:'<b>Nastavení pro akce MS</b>' }
-    check p_strava [30,410,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
-    field p_detska_od [251,412,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
-    field p_detska_do [312,412,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+    check p_strava [30,405,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
+    field p_detska_od [251,407,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
+    field p_detska_do [312,407,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
 //  label [13,390,200,20] { tag:'pri,J' title:'<b>Nastavení pro akce jednotlivců</b>' }
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
     check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
-    check p_zadost [30,430,108,] { tag:'pri,R,J', title:'umožnit 1.žádost: '}
-    check p_zadost2 [30,450,109,] { tag:'pri,R,J', title:'umožnit 2.žádost: '}
-    field veta_zadost [147,431,297,] { tag:'pri,R,J', help:' [ ] popis 1.žádosti' }
-    field veta_zadost2 [147,451,297,] { tag:'pri,R,J', help:' [ ] text 2.žádosti' }
-  field p_nocleh [173,432,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
-    label [217,437,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
-    check p_obnova [30,450,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
+    check p_zadost [30,465,108,] { tag:'pri,O,R,J', title:'umožnit 1.žádost: '}
+    check p_zadost2 [30,485,109,] { tag:'pri,O,R,J', title:'umožnit 2.žádost: '}
+    field veta_zadost [147,466,297,] { tag:'pri,O,R,J', help:' [ ] popis 1.žádosti' }
+    field veta_zadost2 [147,486,297,] { tag:'pri,O,R,J', help:' [ ] text 2.žádosti' }
+  field p_nocleh [173,427,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
+    label [217,432,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
+    check p_obnova [30,445,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
     check p_upozorneni [30,450,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
     check p_dokument [30,470,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
-  edit veta_potvrzeni [13,520,438,40] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
+  edit veta_potvrzeni [13,525,438,35] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
   const prihl_top= 571
   label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
@@ -811,7 +818,6 @@ form _page [,,275,360] {
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
-      akce_lock('off'); 
       // p_reg_single a p_zadost je zatím jen pro ASC
       if ((p_reg_single || p_zadost || p_zadost2) && web_prihlaska=='prihlaska_2025') {
         alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
@@ -851,6 +857,7 @@ form _page [,,275,360] {
         if (p_pozde.changed()) { xp_pozde= p_pozde; xp_pozde.change(); }
         form.save(); form.load(); p_show();
       }
+      akce_lock('off'); 
   }}
   button [116,prihl_top+6,,] { tag:'pri,M,O,R,J', 
     title:"[fa-question] <a href='https://lite.evernote.com/note/a7d25a1b-835c-ebb6-d7c3-f655a1a2f9d1'
