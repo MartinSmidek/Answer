@@ -9,14 +9,15 @@
 // -------------------------------------------------------------------------------------- pretty log
 // volá se z prihlaska.log.php -- upraví dynamicky HTML
 // pokud je zadán $patt zobrazí jen řádky, které jej obsahují
-function pretty_log(patt) { 
+// pokud je zadan akce dá se její název do nadpisu
+function pretty_log(patt,akce) { 
   if (!pretty_log.called) {
-    // vložení pole pro dotaz - jen porvé
-    let html= `<label for="inputField" style="font-weight:bold;font-family:monospace">
+    // vložení pole pro dotaz - jen poprvé
+    let head= `<label for="inputField" style="font-weight:bold;font-family:monospace">
         Vyber řádky vyhovující regulárnímu výrazu:
       <input type="text" id="inputField" placeholder="například ID.*POBYT" 
         style="font-family:monospace">, prázdné pole a Enter zobrazí vše</label>`;
-    document.body.insertAdjacentHTML('afterbegin', html);
+    document.body.insertAdjacentHTML('afterbegin', head);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         const inputValue = event.target.value; // Získání hodnoty z pole
@@ -38,9 +39,9 @@ function pretty_log(patt) {
         lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
           + lines[i].substr(31);
       }
-      lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
-      lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
-      lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
+//      lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
+//      lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
+//      lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
     }
     pretty_log.called= true;
     
@@ -48,13 +49,27 @@ function pretty_log(patt) {
   }
   // zobrazení s filtrem
   let ted= yms_hms();
-  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
-  let row= title;
+//  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
+  let nazev= '',  
+      mezer= 80,
+      row= '',
+      hlavicky= ''; 
   for (let i= pretty_log.lines.length-2; i>0; i--) {
-    if (patt && !pretty_log.lines[i].match(patt)) continue;
-    row+= '\n'+pretty_log.lines[i];
+    let hlavicka= pretty_log.lines[i].substr(14,1)=='=' ? 1 : 0;
+    if (hlavicka) {
+      if (akce && pretty_log.lines[i].substr(9,4)==akce) {
+        nazev= 'přihlašování na <big>'+pretty_log.lines[i].substr(16)+'</big>';
+      }
+      hlavicky+= '\n      vyber jen '+pretty_log.lines[i].substr(16);
+    }
+    else {
+      if (patt && !pretty_log.lines[i].match(patt)) continue;
+      row+= '\n'+pretty_log.lines[i];
+    }
   }
-  $('#log').html(row);
+  nazev+= hlavicky;
+  let title= nazev+"\n\n<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT"+' '.repeat(mezer)+"</u> ";
+  $('#log').html(title+row);
 }
 function yms_hms() {
   // aktuální datum

@@ -2,6 +2,7 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2025-12-04 p_zadost a p_zadost2 jsou povoleny i pro typ O
  * 2025-11-23 do RJ přidáno zaškrtávací položka p_zadost2 s textem veta_zadost2
  * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
  * 2025-11-14 do J je přidána možnost dotazu na rodinný stav a na počet dětí
@@ -3092,7 +3093,7 @@ if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !
 <link rel='shortcut icon' href='img/log_icon.png'>
 <script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
 <script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
-<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce');});</script>  
+<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce','\$akce');});</script>  
 </script>";
 ?>
 </head><body><pre id="log"
