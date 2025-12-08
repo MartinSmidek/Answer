@@ -57,10 +57,12 @@ function pretty_log(patt,akce) {
   for (let i= pretty_log.lines.length-2; i>0; i--) {
     let hlavicka= pretty_log.lines[i].substr(14,1)=='=' ? 1 : 0;
     if (hlavicka) {
-      if (akce && pretty_log.lines[i].substr(9,4)==akce) {
-        nazev= 'přihlašování na <big>'+pretty_log.lines[i].substr(16)+'</big>';
+      let akce_id= pretty_log.lines[i].substr(9,4),
+          akce_nazev= pretty_log.lines[i].substr(16);
+      if (akce && akce==akce_id) {
+        nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>';
       }
-      hlavicky+= '\n      vyber jen '+pretty_log.lines[i].substr(16);
+      hlavicky+= '\n      vyber jen '+akce_id+': '+akce_nazev;
     }
     else {
       if (patt && !pretty_log.lines[i].match(patt)) continue;
