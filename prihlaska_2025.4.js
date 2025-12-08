@@ -50,7 +50,7 @@ function pretty_log(patt,akce) {
   // zobrazení s filtrem
   let ted= yms_hms();
 //  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
-  let nazev= '',  
+  let nazev= 'nebo ',  
       mezer= 80,
       row= '',
       hlavicky= ''; 
