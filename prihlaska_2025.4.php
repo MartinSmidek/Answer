@@ -3093,7 +3093,7 @@ if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !
 <link rel='shortcut icon' href='img/log_icon.png'>
 <script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
 <script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
-<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce');});</script>  
+<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce','\$akce');});</script>  
 </script>";
 ?>
 </head><body><pre id="log"
