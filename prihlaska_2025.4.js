@@ -16,7 +16,8 @@ function pretty_log(patt,akce) {
     let head= `<label for="inputField" style="font-weight:bold;font-family:monospace">
         Vyber řádky vyhovující regulárnímu výrazu:
       <input type="text" id="inputField" placeholder="například ID.*POBYT" 
-        style="font-family:monospace">, prázdné pole a Enter zobrazí vše</label>`;
+        style="font-family:monospace">+Enter nebo 
+      <button onclick="pretty_log('');">zobraz vše</button></label>`;
     document.body.insertAdjacentHTML('afterbegin', head);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
@@ -39,9 +40,6 @@ function pretty_log(patt,akce) {
         lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
           + lines[i].substr(31);
       }
-//      lines[i]= lines[i].replaceAll(' 3094 ',"<b style='color:red'>   LK </b>");
-//      lines[i]= lines[i].replaceAll(' 3085 ',"<b style='color:green'> JO   </b>");
-//      lines[i]= lines[i].replaceAll(' 3095 ',"<b style='color:green'> PO   </b>");
     }
     pretty_log.called= true;
     
@@ -49,7 +47,6 @@ function pretty_log(patt,akce) {
   }
   // zobrazení s filtrem
   let ted= yms_hms();
-//  let title= "<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT "+' '.repeat(80)+"</b></u> ";
   let nazev= 'nebo ',  
       mezer= 80,
       row= '',
@@ -57,10 +54,12 @@ function pretty_log(patt,akce) {
   for (let i= pretty_log.lines.length-2; i>0; i--) {
     let hlavicka= pretty_log.lines[i].substr(14,1)=='=' ? 1 : 0;
     if (hlavicka) {
-      if (akce && pretty_log.lines[i].substr(9,4)==akce) {
-        nazev= 'přihlašování na <big>'+pretty_log.lines[i].substr(16)+'</big>';
+      let akce_id= pretty_log.lines[i].substr(9,4),
+          akce_nazev= pretty_log.lines[i].substr(16);
+      if (akce && akce==akce_id) {
+        nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>';
       }
-      hlavicky+= '\n      vyber jen '+pretty_log.lines[i].substr(16);
+      hlavicky+= '\n      vyber jen '+akce_id+': '+akce_nazev;
     }
     else {
       if (patt && !pretty_log.lines[i].match(patt)) continue;
