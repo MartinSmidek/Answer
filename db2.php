@@ -14,7 +14,7 @@
   #   $options    = doplnění Ezer.options
 
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.3'; 
 
   // server, databáze, cesty, klíče
   $deep_root= "../files/answer";
