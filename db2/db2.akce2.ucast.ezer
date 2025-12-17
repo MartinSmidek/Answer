@@ -573,12 +573,15 @@ form _cmd [,,623,30] {
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
     func onclick() { Init() }
-    proc Init() { var _prijmeni:text
-      set_state('new'); mode.set('osoby');
-      os1.clear_osoba; os2.clear_osoba;
-      [ _prijmeni.set(''); rod.cleni.browse_count; _prijmeni.set(rod.cleni.prijmeni.get) ];
-      os1.see_osoba(1,_prijmeni,'',rod.key_rodina.get);
-      [ rod.key; obligatory(os1.role) ]
+    func Init() { var _prijmeni:text
+      set_state('new'); mode= 'osoby';
+      os1.clear_osoba(); os2.clear_osoba();
+      _prijmeni= ''; 
+      if (rod.cleni.browse_count()) 
+        _prijmeni= rod.cleni.prijmeni;
+      os1.see_osoba(1,_prijmeni,'',rod.key_rodina);
+      if (rod.key())
+        obligatory(&os1.role);
   }}
   proc see_new_osoba() { // po rozhodnutí uživatele založit novou osobu
     form.enable(1,'s');

@@ -25,12 +25,12 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
   }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
-    proc reaccess() {}
+    func reaccess() {}
     // objekt obsahující aktuálně vybrané záznamy
     // {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
     func curr() {} 
     panel track { type:'popup'
-      proc back_show(kde,klic) {}
+      func back_show(kde,klic) {}
     }
     panel lst { type:'right' }
     panel ucast { type:'plain'
@@ -38,7 +38,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     }
   }
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
-    proc reaccess() {}
+    func reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;aa'
       par:{
@@ -75,11 +75,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       func tab_id_show(tab,idt) {}
     }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
-      proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
-      proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }
-      proc smaz_tvori(idt)   {
-        confirm("smazat záznam ",idt," v tabulce tvori?");
-        ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
+      func track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
+      func track_rodina(idr) { akce2.track.back_show('rodina',idr) }
+      func smaz_tvori(idt)   {
+        if (confirm("smazat záznam ",idt," v tabulce tvori?"))
+          php.query(conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
@@ -107,10 +107,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu { title:'Import a záloha databáze',type:'group',skill:'m'
           item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
           item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
-          proc onclick(i) {
-            clear; info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            info.append(ask('sys_backup_make',i.par)) 
+          func onclick(i:ezer) {
+            clear(); info.display(0,'t');
+            info.fill(replace_fa(conc(i.owner().title,' - ',i.title)),' ');
+            info.append(php.sys_backup_make(i.par))
           }
           item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
             proc onclick(i) { var heslo:text
