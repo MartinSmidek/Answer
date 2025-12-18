@@ -796,6 +796,7 @@ form _page [,,275,360] {
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
     check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
+    check p_ubyt_prg [30,437,370,] { tag:'pri,R', title:'umožnit nastavit účast na programu a ubytování po jednotlivých dnech'}
     check p_zadost [30,465,108,] { tag:'pri,O,R,J', title:'umožnit 1.žádost: '}
     check p_zadost2 [30,485,109,] { tag:'pri,O,R,J', title:'umožnit 2.žádost: '}
     field veta_zadost [147,466,297,] { tag:'pri,O,R,J', help:' [ ] popis 1.žádosti' }
