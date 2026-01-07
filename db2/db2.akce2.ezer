@@ -75,7 +75,7 @@ func akce_onstart() { var m:object
   if (has_skill('yd2') && my_access<org_ds) my_access= my_access | org_ds;
   m= match('(?:^|\s)(t|T)(?:\s|$)',sys('user','skills'));
   team_access= !m ? 0 : (m.s1=='T' ? 2 : 1);
-  echo(`team_access=${team_access}, my_org=${my_org}, my_access=${my_access}, get_cookie(${sys('root')}_akce',0);`);
+  echo(`team_access=${team_access}, my_org=${my_org}, my_access=${my_access}, get_cookie("${sys('root')}_akce",0);`);
 //  my_org= my_access==3 ? sys('user','org') : my_access;  ????????? 22/5/2024
   // hodnoty zapamatované pro navázání na předchozí session
   the_source= get_cookie(`${sys('root')}_akce_source`,'sey');
@@ -836,40 +836,71 @@ panel DnySpolu [,,235,205] { type:'popup', title:'Rozpis noclehů a stravy'
 }
 # ==========================================================================================> PROCES
 panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu' 
-  var parent:object,  // vstup - parent je panel, ve kterém je obsažena procedura se 
+  var parent:ezer,  // vstup - parent je panel, ve kterém je obsažena procedura se 
       refresh:text,   //         jménem v refresh volaná s id_mail po každé dávce
       sent:number,    // výstup - počet odeslaných mailů
       problem:text    //          text případné chyby
   use it: form _it 
   // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
-  proc Start(par,title) { 
+  func Start(par,title) { 
     // inicializace
-    clear; continue.set(1); it.msg.set(''); Show(0,1); it.display(1,'t'); 
-    panel.set_attrib('title',title); sent.set(0); problem.set(''); 
+    clear(); continue= 1; it.msg= ''; Show(0,1); it.display(1,'t'); 
+    panel.set_attrib('title',title); sent= 0; problem= ''; 
     // inicializace cyklu a předání prametrů
     // PHP procedura musí nastavit položky: todo, done, sent, last, error
-    y.set(object('par',par)); 
+    y= {par:par}; 
     // zahájení cyklu (rekurze je asi efektivnější než foreach s předávaným polem)
-    [ panel.call('Step') ]; // asynchronní spuštění, aby bylo provedeno panel.modal
-    panel.modal 
+    fork.panel.Step(); // asynchronní spuštění, aby bylo provedeno panel.modal
+    panel.modal();
   }
+//  proc Start(par,title) { 
+//    // inicializace
+//    clear; continue.set(1); it.msg.set(''); Show(0,1); it.display(1,'t'); 
+//    panel.set_attrib('title',title); sent.set(0); problem.set(''); 
+//    // inicializace cyklu a předání prametrů
+//    // PHP procedura musí nastavit položky: todo, done, sent, last, error
+//    y.set(object('par',par)); 
+//    // zahájení cyklu (rekurze je asi efektivnější než foreach s předávaným polem)
+//    [ panel.call('Step') ]; // asynchronní spuštění, aby bylo provedeno panel.modal
+//    panel.modal 
+//  }
   // Step - jeden krok procesu
-  proc Step() { 
-    continue.get;  // po Stop (třeba stisku Cancel) se výpočet přeruší
+  func Step() { 
+    if (!continue) return;  // po Stop (třeba stisku Cancel) se výpočet přeruší
     // odeslání dávky mailů - odpovídá  za done<=todo 
-    y.set(ask('mail2_mai_sending',y.get)); 
-    sent.set(sum(sent.get,y.get('sent')));
-    it.msg.set(conc('posláno ',sent.get,', zbývá ',y.get('msg'),
-        cconc(not(continue.get),' -- PŘERUŠENO!')));
-    [ y.get('error'); Stop; problem.set(y.get('error')); 
-      it.msg.set(conc('CHYBA: ',problem.get,' -- PŘERUŠENO!')) ];
-    [ y.get('max'); Stop; problem.set(y.get('max')); 
-      it.msg.set(conc('DOSAŽENO MAXIMA DNEŠNÍ dávky: ',problem.get,' -- PŘERUŠENO!')) ];
-    [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
-    Show(y.get('done'),y.get('todo')); // posune termometr
-    [ eq(y.get('done'),y.get('todo')); Stop ]; 
-    Step
+    y= php.mail2_mai_sending(y); 
+    sent= sent + y.sent;
+    it.msg= conc('posláno ',sent,', zbývá ',y.msg,cconc(!continue,' -- PŘERUŠENO!'));
+    if (y.error) { 
+      Stop(); problem= y.error;  
+      it.msg= conc('CHYBA: ',problem,' -- PŘERUŠENO!')
+    }
+    if (y.max) {
+      Stop(); problem= y.max; 
+      it.msg= conc('DOSAŽENO MAXIMA DNEŠNÍ dávky: ',problem,' -- PŘERUŠENO!')
+    };
+    if (y.last && refresh) 
+      parent.call(refresh,y.last);
+    Show(y.done,y.todo); // posune termometr
+    if (y.done==y.todo) Stop(); 
+    Step()
   }
+//  proc Step() { 
+//    continue.get;  // po Stop (třeba stisku Cancel) se výpočet přeruší
+//    // odeslání dávky mailů - odpovídá  za done<=todo 
+//    y.set(ask('mail2_mai_sending',y.get)); 
+//    sent.set(sum(sent.get,y.get('sent')));
+//    it.msg.set(conc('posláno ',sent.get,', zbývá ',y.get('msg'),
+//        cconc(not(continue.get),' -- PŘERUŠENO!')));
+//    [ y.get('error'); Stop; problem.set(y.get('error')); 
+//      it.msg.set(conc('CHYBA: ',problem.get,' -- PŘERUŠENO!')) ];
+//    [ y.get('max'); Stop; problem.set(y.get('max')); 
+//      it.msg.set(conc('DOSAŽENO MAXIMA DNEŠNÍ dávky: ',problem.get,' -- PŘERUŠENO!')) ];
+//    [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
+//    Show(y.get('done'),y.get('todo')); // posune termometr
+//    [ eq(y.get('done'),y.get('todo')); Stop ]; 
+//    Step
+//  }
   // stavové proměnné
   var y:object,     // střadač zajištující komunikaci mezi klientem a serverem
       continue=1
@@ -1015,8 +1046,8 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
 # společné procedury
 func obligatory(elem:ezer) { elem.enable(1); elem.change(1) }
 # -----------------------------------------------------------------------------------------==> OSOBA
-panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
-  var tit='osobní údaje', grp='ZKAS', var ucast:object
+panel osoba_config [,,210,150] { type:'popup', title:"Podrobnosti údajů"
+  var tit='osobní údaje', grp='ZKAS', ucast:ezer
   func start() {
     grp= get_cookie(conc(sys('root'),'_conf_osoba'),grp);
     if (!contains('Z',grp)) grp= conc('Z',grp);
@@ -1030,8 +1061,10 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
 //    [ has_skill('yaa:c;faa:c;caa:c') | grp.set(replace(grp.get,'C','')) ];
 //    [ has_skill('a') | grp.set(replace(grp.get,'W','')) ];
 //    cnfg._back; }
-  proc tune(calee) {
-    ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
+  func tune(calee:ezer) {
+    ucast= calee; _old= grp; ucast.call('evid.z_change','o'); panel.modal(500,200) }
+//  proc tune(calee) {
+//    ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
     check z [ 0,  0,100,] { title:"základní údaje",      format:'d', value:'1'}
@@ -1048,13 +1081,16 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
                                                          format:'t', func onchange() { _tuned() }}
     button  [ 0,130,,] { type:'submit', title:'Nastav', func onclick() {
       set_cookie(conc(sys('root'),'_conf_osoba'),grp); panel.hide(1) }}
-    button  [85,130,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; ucast.call('osoby_show'); panel.hide(1) }}
-    proc _tuned() {
-      grp.set(cconc(s.get,'S',k.get,'K',g.get,'G',a.get,'A',o.get,'O',p.get,'P','Z'));
-      [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
-      [ form.part('v'); v.get; grp.set(conc(grp.get,'W')) ];
-      ucast.call('osoby_show') }
+    button  [85,130,,] { title:'Zpět', 
+      func onclick() {
+        grp= _old; _back(); ucast.call('osoby_show'); panel.hide(1); 
+    }}
+    func _tuned() {
+      grp= cconc(s,'S',k,'K',g,'G',a,'A',o,'O',p,'P','Z');
+      if (form.part('c') && c) grp= conc(grp,'C'); 
+      if (form.part('v') && v) grp= conc(grp,'W');
+      ucast.call('osoby_show') 
+    }
     func _back() { z= 1; s= contains('S',grp);
       k= contains('K',grp); g= contains('G',grp);
       a= contains('A',grp); o= contains('O',grp);
@@ -1071,7 +1107,7 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _osoba2x [,,244,322] {css:'ae_frame'
+form _osoba2x [,,244,322] { css:'ae_frame'
   func onclick() { on_click() }
   var host=''           // 'U' - použito z Uživatelé, 'E' - použito z Evidence
   var idr=0             // klíč rodiny pro rodinné údaje (pro akce2_osoba2)
@@ -1127,9 +1163,15 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   func init_osoba() {
     form.display(0,'[^f]'); access.display(1);
   }
-  proc refresh() { eq(host.get,'U');
-    ucast.call('osoby_show')
-  | evi.call('osoby_show') }
+  func refresh() { 
+    if (host=='U')
+      ucast.osoby_show()
+    else
+      evi.osoby_show()
+  }
+//  proc refresh() { eq(host.get,'U');
+//    ucast.call('osoby_show')
+//  | evi.call('osoby_show') }
   func show_osoba(even) { var tags:text
     form.display(0,'[^f]'); access.display(1);             // even=2 pro evidenci
     _deleted.display(deleted);  
@@ -1228,7 +1270,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
 
   // kontextové menu
   menu detail { type:'context', skill:'yae;fae;cae'
-    item { title:'konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
+    item { title:'konfigurace formuláře', func onclick () { osoba_config.tune(panel) } }
     item { title:'ukázat změny os. údajů',func onclick () { 
       track.back_osoba_rodina(key_osoba,cconc(host=='E',id_kmen,kmen)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  func onclick () { set_mode(2,host); refresh() }}
@@ -1269,36 +1311,78 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   #==> . see+new_osoba
   # vytvoření osoby: 1.see_osoba 2.new_osoba
   # úprava formuláře pro prohledání db
-  proc see_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
-    idr.set(_idr);
-    prijmeni1.set(_prijmeni); jmeno1.set(_jmeno);
-    kontakt_r.set(''); adresa_r.set('');
-    [ _clen_rodiny; role.display(1);
-      kontakt.enable(1); kontakt.set(0);
-      adresa.enable(1); adresa.set(0);
-      [ idr; adresa.rodinna ];
+  func see_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { var elem:ezer
+    form.init();
+    idr= _idr;
+    prijmeni1= _prijmeni; jmeno1= _jmeno;
+    kontakt_r= ''; adresa_r= '';
+    if (_clen_rodiny) {
+      role.display(1);
+      kontakt.enable(1); kontakt= 0;
+      adresa.enable(1); adresa= 0;
+      if (idr) adresa.rodinna();
       jmeno1.add_attrib('par.prijmeni',_prijmeni);
-    | role.display(1);
-      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
-      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+    }
+    else {
+      role.display(1);
+      kontakt.enable(0); kontakt= 1; form.enable(1,'k');
+      adresa.enable(0);  adresa= 1;  form.enable(1,'b'); 
+    }
     show_osoba(1);
-    see.see_n.set(0); see.see_beg;
-    foreach(array(jmeno1,prijmeni1),obligatory);
+    see.see_n= 0; see.see_beg();
+    // označ povinné položky
+    for (elem of [&jmeno1,&prijmeni1]) {
+      obligatory(elem);
+    }
   }
+//  proc see_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
+//    idr.set(_idr);
+//    prijmeni1.set(_prijmeni); jmeno1.set(_jmeno);
+//    kontakt_r.set(''); adresa_r.set('');
+//    [ _clen_rodiny; role.display(1);
+//      kontakt.enable(1); kontakt.set(0);
+//      adresa.enable(1); adresa.set(0);
+//      [ idr; adresa.rodinna ];
+//      jmeno1.add_attrib('par.prijmeni',_prijmeni);
+//    | role.display(1);
+//      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+//      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+//    show_osoba(1);
+//    see.see_n.set(0); see.see_beg;
+//    foreach(array(jmeno1,prijmeni1),obligatory);
+//  }
   # úprava formuláře pro vytvoření osoby
-  proc new_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
-    see.see_end;
-    idr.set(_idr);
-    prijmeni.set(_prijmeni); jmeno.set(_jmeno);
-    kontakt_r.set(''); adresa_r.set(''); access.set(my_org.get);
-    [ _clen_rodiny; role.display(1);
-      kontakt.enable(1); kontakt.set(0);
-      adresa.enable(1); adresa.set(0);
-      [ idr; adresa.rodinna]
-    | role.display(1);
-      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
-      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+  func new_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { 
+    form.init();
+    see.see_end();
+    idr= _idr;
+    prijmeni= _prijmeni; jmeno= _jmeno;
+    kontakt_r= ''; adresa_r= ''; access= my_org;
+    if (_clen_rodiny) {
+      role.display(1);
+      kontakt.enable(1); kontakt= 0;
+      adresa.enable(1); adresa= 0;
+      if (idr) adresa.rodinna();
+    }
+    else {
+      role.display(1);                                                                        // ???
+      kontakt.enable(0); kontakt= 1; form.enable(1,'k');
+      adresa.enable(0);  adresa= 1;  form.enable(1,'b'); 
+    }
   }
+//  proc new_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
+//    see.see_end;
+//    idr.set(_idr);
+//    prijmeni.set(_prijmeni); jmeno.set(_jmeno);
+//    kontakt_r.set(''); adresa_r.set(''); access.set(my_org.get);
+//    [ _clen_rodiny; role.display(1);
+//      kontakt.enable(1); kontakt.set(0);
+//      adresa.enable(1); adresa.set(0);
+//      [ idr; adresa.rodinna]
+//    | role.display(1);
+//      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+//      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+//  }
   #==> . hledání dle příjmení a jména
   select prijmeni1 [5,32,106,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_prijmeni'}
     format:'n', title:'^příjmení?', format:'T'
@@ -1315,27 +1399,41 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   label see [41,2,72,22] { tag:'W', css:'ae_parm search', format:'n'
     const css_all = 'ezer_ys ezer_fa ezer_db'
     var see_n=0
-    proc see_show(n) { var ret:object
-      ret.set(ask('db2_oso_show',prijmeni1.get,jmeno1.get,n));
+    func see_show(n) { var ret:object
+      ret= php.db2_oso_show(prijmeni1,jmeno1,n);
       see_next.enable(ret.next); see_back.enable(ret.back); see_use.enable(ret.n); see_new.enable(1);
-      see_n.set(ret.n); form.set_css(ret.css,css_all.get,'w'); ret.n;
-      copy_by_name(ret.oso,form); form.key(key_osoba.get);
-      warning
-    | form.set_css('',css_all.get,'w');
-      warning("osoba '",prijmeni1.get,' ',jmeno1.get,"' ještě není v evidenci, použij ",
-        replace_fa('[fa-heart-o]')," pro založení");
+      see_n= ret.n; form.set_css(ret.css,css_all,'w'); 
+      if (ret.n) {
+        copy_by_name(ret.oso,form); form.key(key_osoba);
+        warning()
+      }
+      else {
+        form.set_css('',css_all,'w');
+        warning("osoba '",prijmeni1,' ',jmeno1,"' ještě není v evidenci, použij ",
+            replace_fa('[fa-heart-o]')," pro založení");
+      }
     }
-    proc see_beg() {
+//    proc see_show(n) { var ret:object
+//      ret.set(ask('db2_oso_show',prijmeni1.get,jmeno1.get,n));
+//      see_next.enable(ret.next); see_back.enable(ret.back); see_use.enable(ret.n); see_new.enable(1);
+//      see_n.set(ret.n); form.set_css(ret.css,css_all.get,'w'); ret.n;
+//      copy_by_name(ret.oso,form); form.key(key_osoba.get);
+//      warning
+//    | form.set_css('',css_all.get,'w');
+//      warning("osoba '",prijmeni1.get,' ',jmeno1.get,"' ještě není v evidenci, použij ",
+//        replace_fa('[fa-heart-o]')," pro založení");
+//    }
+    func see_beg() {
       function("return Ezer.Shield.show();"); form.set_css('search');
       form.enable(0,'[abiyjkocpsW]'); form.display(1,'[wW]');
       prijmeni.display(0); jmeno.display(0);
     }
-    proc see_end() {[
+    func see_end() {
       function("return Ezer.Shield.hide();"); form.set_css('','search');
-      form.set_css('',css_all.get,'w');
+      form.set_css('',css_all,'w');
       form.enable(1,'[abiyjkocp]'); form.display(0,'[wW]');
       prijmeni.display(1); jmeno.display(1);
-    ]}
+    }
   }
   button see_back [44,6,16,16] {tag:'W', type:'html', title:"[fa-chevron-left]", format:'n'
     css:"search fa", help:"předchozí osoba se stejným příjmením a jménem"
@@ -1380,19 +1478,39 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   radio kontakt [50,0,185,18] {tag:'j', format:'n', value:'0', data:o.kontakt
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinný:', expr:'0' }
-    proc onchange() { var r:object, yes:number
-      yes.set(1);
+    func onchange() { var r:object, yes:number
+      yes= 1;
       // varovné confirm při existenci osobního telefonu nebo emailu a pokusu přepnutí na rodinný
-      [ and(not(this.get),or(telefon.get,email.get));
-        { yes.set(confirm("Opravdu mám zneplatnit osobní kontakt?")); yes
-        | this.set(function('x',"return x.original.value",this)); this.plain
-      }];
-      yes;
-      { eq(host.get,'E'); show_osoba(0)
-      | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty kontaktu
-        [ this.get; copy_by_name(r.o_kontakt,form,'',1) | copy_by_name(r.r_kontakt,form,'',1) ];
-        [ eq(form_mode.get,'new') | show_osoba(0) ]
-    }}
+      if (!this && (telefon || email)) {
+        yes= confirm("Opravdu mám zneplatnit osobní kontakt?"); 
+        if (!yes) {
+          this= function('x',"return x.original.value",this); this.plain()
+        }
+      }
+      if (yes) {
+        if (host=='E')
+          show_osoba(0)
+        elseif (host=='U') {
+          r= php.akce2_osoba2x(key_osoba,idr); // varianty kontaktu
+          copy_by_name(this ? r.o_kontakt : r.r_kontakt,form,'',1);
+          if (form_mode!='new') show_osoba(0);
+        }
+      }
+    }
+//    proc onchange() { var r:object, yes:number
+//      yes.set(1);
+//      // varovné confirm při existenci osobního telefonu nebo emailu a pokusu přepnutí na rodinný
+//      [ and(not(this.get),or(telefon.get,email.get));
+//        { yes.set(confirm("Opravdu mám zneplatnit osobní kontakt?")); yes
+//        | this.set(function('x',"return x.original.value",this)); this.plain
+//      }];
+//      yes;
+//      { eq(host.get,'E'); show_osoba(0)
+//      | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty kontaktu
+//        [ this.get; copy_by_name(r.o_kontakt,form,'',1) | copy_by_name(r.r_kontakt,form,'',1) ];
+//        [ eq(form_mode.get,'new') | show_osoba(0) ]
+//      }
+//    }
   }
   label kontakt_r [169,3,75,] {tag:'j', format:'n'}
   label [0,0,,3] {tag:'J,S', format:'n', css:'db_sep' } // zarovnání
@@ -1451,7 +1569,8 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'
-    proc onchanged() { this.let(replace(this.get,' ','')) }
+    func onchanged() { this= replace(this,' ','') }
+//    proc onchanged() { this.let(replace(this.get,' ','')) }
   }
   field obec     [59,38,179,] {tag:'b', data:o.obec, format:'n', title:'^obec'}
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
@@ -1501,14 +1620,23 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       expr:"CONCAT(pin,',',date_format(pin_vydan,'%e.%c.%y'),',',date_format(pin_vydan,'%H:%i'))" }
   button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden', skill:'mrop|mrop'
     func visible() { this.set_css('visible','hidden') }
-    proc onclick() { var old:text
-      old.set(function('x',"return x.original.value",gmail));
-      eq(old,gmail.get)
-    | ask('evid2_upd_gmail',key_osoba.get,old,gmail.get);
-      { eq(host.get,'E'); evi.ulozen_gmail
-      | eq(host.get,'U'); gmail.plain
+    func onclick() { var old:text
+      old= function('x',"return x.original.value",gmail);
+      if (old!=gmail) {
+        php.evid2_upd_gmail(key_osoba,old,gmail);
+        if (host=='E') evi.ulozen_gmail()
+        elseif (host=='U') gmail.plain()
       }
-  }}
+    }
+//    proc onclick() { var old:text
+//      old.set(function('x',"return x.original.value",gmail));
+//      eq(old,gmail.get)
+//    | ask('evid2_upd_gmail',key_osoba.get,old,gmail.get);
+//      { eq(host.get,'E'); evi.ulozen_gmail
+//      | eq(host.get,'U'); gmail.plain
+//      }
+//    }
+  }
   label [0,34,,6] {tag:'g,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . údaje související s weby: v
@@ -1523,7 +1651,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
 }
 # ----------------------------------------------------------------------------------------==> RODINA
 panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
-  var tit='osobní údaje', grp='Z', var ucast:object
+  var tit='osobní údaje', grp='Z', var ucast:ezer
   func start() { 
     grp= get_cookie(conc(sys('root'),'_conf_rodina'),grp);
     if (contains('Z',grp)) grp= conc('Z',grp);
@@ -1531,17 +1659,27 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
 //  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
 //    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
 //    cnfg._back;  }
-  proc tune(from) { ucast.set(from); _old.set(grp.get);
-    [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
+  func tune(from:ezer) { 
+    ucast= from; _old= grp;
+    ucast.call('evid.z_change','o'); 
+    panel.modal(500,200) }
+//  proc tune(from) { ucast.set(from); _old.set(grp.get);
+//    [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
     check z [ 0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
     check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', func onchange() { _tuned() }}
     button  [ 0,40,,] { type:'submit', title:'Nastav', func onclick() {
       set_cookie(conc(sys('root'),'_conf_rodina'),grp); panel.hide(1) }}
-    button  [85,40,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; ucast.call('rodina_show'); panel.hide(1) }}
-    proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.call('rodina_show') }
+    button  [85,40,,] { title:'Zpět', 
+      func onclick() {
+        grp= _old; _back(); ucast.call('rodina_show'); panel.hide(1) 
+      }
+//      proc onclick() {
+//        grp.set(_old.get); _back; ucast.call('rodina_show'); panel.hide(1) 
+//      }
+    }
+    func _tuned() { grp= cconc(p.get,'P','Z'); ucast.call('rodina_show') }
     func _back() { z= 1; p= contains('P',grp); }
   }
   var _old= 'Z'
@@ -1608,7 +1746,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'
-    proc onchanged() { this.let(replace(this.get,' ','')) }
+    func onchanged() { this= replace(this,' ','') }
   }
   field r_geo_ok   [Lp+29,Tp+76,12,12] {tag:'r', css:'Label3', format:'no' }
   field r_obec     [Lp+47,Tp+90,128,] {tag:'r', data:r.obec, title:'^obec'}
@@ -1634,8 +1772,8 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     item { title:'konfigurace formuláře',  func onclick () { rodina_config.tune(evi) } }
     item { title:'ukázat změny rod. údajů',func onclick () { 
       if (key_rodina) track.back_show('rodina',key_rodina) }}
-    item { title:'=zazurovění dětí a rodiny', skill:'daea', proc onclick () {
-      ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
+    item { title:'=zazurovění dětí a rodiny', skill:'daea', func onclick () {
+      php.evid2_deti_access(key_rodina,3); panel.call('page.page_load');  } }
     item { title:'-ukázat data', skill:'m|mm', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',['rodina',key_rodina],&this,'onclick_')}
       func onclick_() {}

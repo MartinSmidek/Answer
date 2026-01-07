@@ -11,63 +11,105 @@ var the_duakce_local: number,   // zobrazená akce - pokud se liší od the_duak
     the_vypis: text,
     the_hnizdo: number, the_hnizdo_name: text  // >0 znamená filtr na účastníky v i-tém hnízdě
 # -------------------------------------------------------------------------==> . inicializace panelu
-proc onfocus() {
-  [ dirty.get | akce_onstart ];
-  eq(the_duakce_local.get,the_duakce.get)
-| the_duakce_local.set(the_duakce.get);
-  info.msg.set('');
-  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+func onfocus() {
+  if (dirty) akce_onstart();
+  if (the_duakce_local==the_duakce) return;
+  the_duakce_local= the_duakce;
+  info.msg= '';
+  info.fill(conc(the_title,' / ',the_vypis),' ');
   // volba správné akce a příslušného menu
-  { eq(the_soubeh.get,2);
-    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click 
-  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click 
-  };
+  if (the_soubeh==2) {
+    the_akce= the_hlavni; m.display(2,'d'); m.d.i.click()
+  }
+  else {
+    the_akce= the_duakce; m.display(2,'a'); m.n.i.click()
+  }
   // případně nastavení hnízd
-  tisk_hnizda;
+  tisk_hnizda()
 }
+//proc onfocus() {
+//  [ dirty.get | akce_onstart ];
+//  eq(the_duakce_local.get,the_duakce.get)
+//| the_duakce_local.set(the_duakce.get);
+//  info.msg.set('');
+//  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+//  // volba správné akce a příslušného menu
+//  { eq(the_soubeh.get,2);
+//    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click 
+//  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click 
+//  };
+//  // případně nastavení hnízd
+//  tisk_hnizda;
+//}
 # ----------------------------------------------------------------------------==> globální procedury
-proc reaccess() { #==> . reaccess - změna
-  onfocus
+func reaccess() { #==> . reaccess - změna
+  onfocus()
 }
 # nastavení pro akci v hnízdech
-proc tisk_hnizda() { var opts:object
-  echo("tisk HNIZDA=",the_hnizda.get);
-  { the_hnizdo.set(0);
-    the_hnizda.get; 
+func tisk_hnizda() { var opts:object
+  echo("tisk HNIZDA=",the_hnizda);
+  the_hnizdo= 0;
+  if (the_hnizda) {
     info.hnizdo.set_attrib('options','ms_akce_hnizda_tisk.nazev');
     info.hnizdo.key(0);
     info.hnizdo.display(1);
-  | info.hnizdo.display(0);
-  };
+  }
+  else 
+    info.hnizdo.display(0);
 }
 # -------------------------------------------------------------------------------------------==> use
 use info: form right [12,4,,] {
   button export2 [-80,4,,] { title:'PDF...', style:'display:block;zIndex:2',
-    proc onclick() {
-      var res: object
-      clear;
-      switch(export2.get,
-      'PDF-stitky',{
-        sti_jmeno.report_init; sti_jmeno.report_check;
-        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_jmeno.get_json));
-        form.msg.set(res.html);
-      },
-      'PDF-jmenovky',{
-        sti_V.report_init; sti_V.report_check;
-        res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json,the_hnizdo.get));
-        form.msg.set(res.html);
-      },
-      'PDF-chaty',{
-        sti_chaty.report_init; sti_chaty.report_check;
-        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_chaty.get_json));
-        form.msg.set(res.html);
-      },
-      'PDF-obalky',{
-        sti_mrop.report_init; sti_mrop.report_check;
-        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_mrop.get_json));
-        form.msg.set(res.html);
-      })
+    func onclick() { var res: object
+      clear();
+      switch(export2) {
+        case 'PDF-stitky':
+          sti_jmeno.report_init(); sti_jmeno.report_check();
+          res= php.tisk2_pdf_mrop(the_akce,the_par,the_title,the_vypis,sti_jmeno.get_json());
+          form.msg= res.html;
+          break;
+        case 'PDF-jmenovky':
+          sti_V.report_init(); sti_V.report_check();
+          res= php.tisk2_pdf_jmenovky(the_akce,the_par,the_title,the_vypis,sti_V.get_json(),the_hnizdo);
+          form.msg= res.html;
+          break;
+        case 'PDF-chaty':
+          sti_chaty.report_init(); sti_chaty.report_check();
+          res= php.tisk2_pdf_mrop(the_akce,the_par,the_title,the_vypis,sti_chaty.get_json());
+          form.msg= res.html;
+          break;
+        case 'PDF-obalky':
+          sti_mrop.report_init(); sti_mrop.report_check();
+          res= php.tisk2_pdf_mrop(the_akce,the_par,the_title,the_vypis,sti_mrop.get_json());
+          form.msg= res.html;
+          break;
+      }
     }
+//    proc onclick() {
+//      var res: object
+//      clear;
+//      switch(export2.get,
+//      'PDF-stitky',{
+//        sti_jmeno.report_init; sti_jmeno.report_check;
+//        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_jmeno.get_json));
+//        form.msg.set(res.html);
+//      },
+//      'PDF-jmenovky',{
+//        sti_V.report_init; sti_V.report_check;
+//        res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json,the_hnizdo.get));
+//        form.msg.set(res.html);
+//      },
+//      'PDF-chaty',{
+//        sti_chaty.report_init; sti_chaty.report_check;
+//        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_chaty.get_json));
+//        form.msg.set(res.html);
+//      },
+//      'PDF-obalky',{
+//        sti_mrop.report_init; sti_mrop.report_check;
+//        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_mrop.get_json));
+//        form.msg.set(res.html);
+//      })
+//    }
   }
   var mezery=''
 //  button [-150,4,,] { title:'TEST' func onclick() { var x:object 
@@ -75,61 +117,108 @@ use info: form right [12,4,,] {
 //      x= php.akce2_strava(the_akce,{typ:'vjp',cnd:1},the_title,the_vypis,0,the_hnizdo); 
 //      info.fill('',x.html); }}
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
-    proc onclick() { var tit:text 
-      var res: object
-      clear;
-      tit.set(cconc(the_hnizdo.get,
-        conc(the_title.get," pro účastníky v ",the_hnizdo_name.get),
-        the_title.get));
-      switch(export.get,
-      // verze 2
-      'Excel2',{ // ==> export Excel
-        res.set(ask('tisk2_vyp_excel',the_akce.get,the_par.get,tit,the_vypis.get,0,the_hnizdo.get));
-        form.msg.set(res.html);
-      },
-      'Excel-plachta',{
-        res.set(ask('akce2_plachta',the_akce.get,the_par.get,tit,the_vypis.get,1,the_hnizdo.get));
-        form.note.set('');
-        form.msg.set(res.xhref);
-      },
-      'PDF-adresy',{ // ==> export PDF
-        sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce2_pdf_stitky',the_akce.get,the_par.get,sti_A.get_json,the_hnizdo.get));
-        form.msg.set(res.html);
-      },
-#       'PDF-adresy',{ // ==> export PDF OLD
-#         sti_A.report_init; sti_A.report_check;
-#         res.set(ask('akce2_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
-#         form.msg.set(res.html);
-#       },
-      'PDF-prijem',{
-        sti_B.report_init; sti_B.report_check;
-        sti_D.report_init; sti_D.report_check;
-        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json,sti_D.get_json,the_hnizdo.get));
-        form.msg.set(res.html);
-      },
-      'PDF-stravenky',{
-        sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce2_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json,the_hnizdo.get));
-        form.msg.set(res.html);
-      },
-      'PDF-plachta',{
-        mezery.set(prompt2(conc("zadej případné mezery mezi štítky: <hr>řádků;index+mezera,...",
-            "<hr>první číslo udává počet řádků (párů nad sebou) na stránce, po středníku následují ",
-            "dvojice oddělené čárkou udávající odkud se má přidat (+) kolik mezer ",
-            "(vynechaného místa pro zpřehlednění)")
-          ,mezery.get));
-        sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json,the_hnizdo.get,mezery.get));
-        form.note.set(res.html);
-        form.msg.set(res.msg);
-      },
-      'PDF-plachta0',{
-        sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk2_pdf_plachta0',sti_P.get_json));
-        form.msg.set(res.html);
-      })
+    func onclick() { var tit:text, res:object
+      clear();
+      tit= cconc(the_hnizdo,conc(the_title," pro účastníky v ",the_hnizdo_name),the_title);
+      switch (export) {
+        case 'Excel2': // ==> export Excel
+          res= php.tisk2_vyp_excel(the_akce,the_par,tit,the_vypis,0,the_hnizdo);
+          form.msg= res.html;
+          break;
+        case 'Excel-plachta':
+          res= php.akce2_plachta(the_akce,the_par,tit,the_vypis,1,the_hnizdo);
+          form.note= '';
+          form.msg= res.html;
+          break;
+        case 'PDF-adresy':  // ==> export PDF
+          sti_A.report_init(); sti_A.report_check();
+          res= php.akce2_pdf_stitky(the_akce,the_par,sti_A.get_json(),the_hnizdo);
+          form.msg= res.html;
+          break;
+        case 'PDF-prijem':
+          sti_B.report_init(); sti_B.report_check();
+          sti_D.report_init(); sti_D.report_check();
+          res= php.tisk2_pdf_prijem(the_akce,the_par,sti_B.get_json(),sti_D.get_json(),the_hnizdo);
+          form.msg= res.html;
+          break;
+        case 'PDF-stravenky':
+          sti_C.report_init(); sti_C.report_check();
+          res= php.akce2_pdf_stravenky(the_akce,the_par,sti_C.get_json(),the_hnizdo);
+          form.msg= res.html;
+          break;
+        case 'PDF-plachta':
+          mezery= prompt2(conc("zadej případné mezery mezi štítky: <hr>řádků;index+mezera,...",
+              "<hr>první číslo udává počet řádků (párů nad sebou) na stránce, po středníku následují ",
+              "dvojice oddělené čárkou udávající odkud se má přidat (+) kolik mezer ",
+              "(vynechaného místa pro zpřehlednění)")
+            ,mezery);
+          sti_P.report_init(); sti_P.report_check();
+          res= php.tisk2_pdf_plachta(the_akce,sti_P.get_json(),the_hnizdo,mezery);
+          form.note= res.html;
+          form.msg= res.msg;
+          break;
+        case 'PDF-plachta0':
+          sti_P.report_init(); sti_P.report_check();
+          res= php.tisk2_pdf_plachta0(sti_P.get_json());
+          form.msg= res.html;
+          break;
+      }
     }
+//    proc onclick() { var tit:text 
+//      var res: object
+//      clear;
+//      tit.set(cconc(the_hnizdo.get,
+//        conc(the_title.get," pro účastníky v ",the_hnizdo_name.get),
+//        the_title.get));
+//      switch(export.get,
+//      // verze 2
+//      'Excel2',{ // ==> export Excel
+//        res.set(ask('tisk2_vyp_excel',the_akce.get,the_par.get,tit,the_vypis.get,0,the_hnizdo.get));
+//        form.msg.set(res.html);
+//      },
+//      'Excel-plachta',{
+//        res.set(ask('akce2_plachta',the_akce.get,the_par.get,tit,the_vypis.get,1,the_hnizdo.get));
+//        form.note.set('');
+//        form.msg.set(res.xhref);
+//      },
+//      'PDF-adresy',{ // ==> export PDF
+//        sti_A.report_init; sti_A.report_check;
+//        res.set(ask('akce2_pdf_stitky',the_akce.get,the_par.get,sti_A.get_json,the_hnizdo.get));
+//        form.msg.set(res.html);
+//      },
+//#       'PDF-adresy',{ // ==> export PDF OLD
+//#         sti_A.report_init; sti_A.report_check;
+//#         res.set(ask('akce2_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+//#         form.msg.set(res.html);
+//#       },
+//      'PDF-prijem',{
+//        sti_B.report_init; sti_B.report_check;
+//        sti_D.report_init; sti_D.report_check;
+//        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json,sti_D.get_json,the_hnizdo.get));
+//        form.msg.set(res.html);
+//      },
+//      'PDF-stravenky',{
+//        sti_C.report_init; sti_C.report_check;
+//        res.set(ask('akce2_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json,the_hnizdo.get));
+//        form.msg.set(res.html);
+//      },
+//      'PDF-plachta',{
+//        mezery.set(prompt2(conc("zadej případné mezery mezi štítky: <hr>řádků;index+mezera,...",
+//            "<hr>první číslo udává počet řádků (párů nad sebou) na stránce, po středníku následují ",
+//            "dvojice oddělené čárkou udávající odkud se má přidat (+) kolik mezer ",
+//            "(vynechaného místa pro zpřehlednění)")
+//          ,mezery.get));
+//        sti_P.report_init; sti_P.report_check;
+//        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json,the_hnizdo.get,mezery.get));
+//        form.note.set(res.html);
+//        form.msg.set(res.msg);
+//      },
+//      'PDF-plachta0',{
+//        sti_P.report_init; sti_P.report_check;
+//        res.set(ask('tisk2_pdf_plachta0',sti_P.get_json));
+//        form.msg.set(res.html);
+//      })
+//    }
   }
   select hnizdo [-183,5,80,] { title:'výběr hnízda' format:'t' type:'map' css:'bila'
     proc onchanged() { 

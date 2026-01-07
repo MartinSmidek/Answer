@@ -131,18 +131,19 @@ func akce_work(id_akce) {
 func ukaz_hnizda(ida) { 
   HNIZDA.prehled(ida)
 }                          
-proc reaccess() { #==> . reaccess - změna
+func reaccess() { #==> . reaccess - změna
   # přenastav pracovní akci podle my_org
-  { eq(my_org.get,1);
-    akce_work(the_akce_ys.get)
-  | eq(my_org.get,2);
-    akce_work(the_akce_fa.get)
-  | akce_work(the_duakce.get)
-  };
+  if (my_org==1)
+    akce_work(the_akce_ys)
+  elseif (my_org==2)
+    akce_work(the_akce_fa)
+  else 
+    akce_work(the_duakce);
   # překresli aktivní kartu
-  menu_item.get;
-  m.onclick(menu_item.get);
-  info.sey.pracovni
+  if (menu_item) {
+    m.onclick(menu_item);
+    info.sey.pracovni()
+  }
 }
 # -----------------------------------------------------------------------------==> lokální procedury
 //# vrátí hodnotu položky z google resp. sey
@@ -150,41 +151,53 @@ proc reaccess() { #==> . reaccess - změna
 //  return info.sey.part(_fld)
 //}
 # zapíše hodnotu akce.archiv (a zapíše ji i do google resp. sey)
-proc akce_set_archiv(cloud,folder) { var path:text
-  path.set(conc(cloud,folder));
-  ask('query',conc("UPDATE akce SET archiv='",path,"' WHERE id_duakce=",page.a_akce.get));
+func akce_set_archiv(cloud,folder) { var path:text
+  path= conc(cloud,folder);
+  php.query(conc("UPDATE akce SET archiv='",path,"' WHERE id_duakce=",page.a_akce));
   info.sey.archiv.let(path)
 }
+//proc akce_set_archiv(cloud,folder) { var path:text
+//  path.set(conc(cloud,folder));
+//  ask('query',conc("UPDATE akce SET archiv='",path,"' WHERE id_duakce=",page.a_akce.get));
+//  info.sey.archiv.let(path)
+//}
 # obnoví zobrazení seznamu
-proc lst_refresh() {
-  eq(the_source.get,'sey');    [ info.sey.browse_refresh ]
+func lst_refresh() {
+  if (the_source=='sey')
+    info.sey.browse_refresh();
 }
+//proc lst_refresh() {
+//  eq(the_source.get,'sey');    [ info.sey.browse_refresh ]
+//}
 # -----------------------------------------------------==> . reakce na změny rozměrů okna prohlížeče
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 var   curr_h: number      // výška nad základní výšku
 var   curr_w: number      // 1024 nebo 1280
 
-proc onresize(w,h) { // echo('lst onresize(',w,',',h,')');
-  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
-    curr_h.set(0); h_change_all()
-  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
-    curr_h.set(minus(h,min_h.get)); h_change_all() ];
-  [ lt(w,1220); m.click(2,1) | m.click(1,1) ];
-  [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
-  | and(gt(w,1279),eq(curr_w.get,1024)); wide ];
+func onresize(w,h) { // echo('lst onresize(',w,',',h,')');
+  if (h<min_h && curr_h!=min_h) {
+    curr_h= 0; h_change_all()
+  }
+  elseif (h>min_h && h!=curr_h+min_h) {
+    curr_h= h - min_h; h_change_all() 
+  }
+  m.click(w<1220 ? 2 : 1,1);
+  if (w<1280 && curr_w==1280)
+    narrow()
+  elseif (w>1279 && curr_w==1024) 
+    wide()
 }
 
 # změna šířky 1024/1280
-proc narrow() { curr_w.set(1024); w_change_all  }
-proc wide() { curr_w.set(1280); w_change_all }
-proc w_change_all() {}
+func narrow() { curr_w= 1024; w_change_all()  }
+func wide() { curr_w= 1280; w_change_all() }
+func w_change_all() {}
 
 # změna výšky oproti základní min_h
-proc h_change_all() {
-  page.frame.property(object('stretch',curr_h.get)); // protažení proti původnímu
-  h_change_b;
+func h_change_all() {
+  page.frame.property({stretch:curr_h}); // protažení proti původnímu
+  h_change_b();
 }
-# změna počtu řádků browse oproti aktuálním řádkům
 func h_change_b() { var r:number, h:number
   h= sys('screen','height');
   r= (h-173)/17;
@@ -213,10 +226,10 @@ menu m {type:'left', format:'f+'
     item m {title:'[MS] program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
     item r {title:'[R] programy Rodina mimo MS',    skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
     item a {title:'[...] bez omezení',              skill:'a',    par:°{omez:'1'} }
-      proc onclick (i) {
+      func onclick (i:ezer) {
         info.rok.display(1); info.sey.display(1); 
-        the_omezeni.set(i.par.omez);
-        the_source.set('sey'); akce_roku(info.rok.get);
+        the_omezeni= i.par.omez;
+        the_source= 'sey'; akce_roku(info.rok);
   } }
   menu g {title:'Akce zadaného roku',type:'group',                                 skill:'y;f;s;e;crz'
     item {title:'[fa-file-excel-o] aktuální číselník akcí',                        skill:'y'
@@ -279,9 +292,9 @@ func akce_roku(rok) {
     info.dum.Load(info.sey.browse_count() && info.sey.isds ? ds_order==1 : 0);
   }
 }
-proc akce_vsechny(cond) {
-  the_source.set('sey');
-  [ info.sey.browse_load(cond) ];
+func akce_vsechny(cond) {
+  the_source= 'sey';
+  info.sey.browse_load(cond);
 }
 # ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
@@ -306,28 +319,28 @@ form _page [,,275,360] {
     akce_lock('off'); 
   }
   # ---------------------------==> . záložky
-  proc tags(a,on,off) {
+  func tags(a:ezer,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','x');
     a.set_css('ae_butt_on','ae_butt_off');
     form.display(0,off); form.display(1,on);
   }
   label ord [ 12,0,80,20] {tag:'x', title:'<b>Pobyt DS</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'ord','inf|cor|cen|pri|syn'); zalozka.set('ord'); 
+    func onclick() { tags(&this,'ord','inf|cor|cen|pri|syn'); zalozka= 'ord'; 
   } }
   label inf [ 12,0,80,20] {tag:'x', title:'<b>Info</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'inf','cor|cen|pri|syn|ord'); zalozka.set('inf'); show_akce(a_akce.get)
+    func onclick() { tags(&this,'inf','cor|cen|pri|syn|ord'); zalozka= 'inf'; show_akce(a_akce)
   } }
   label cor [100,0,80,20] {tag:'x', title:'<b>Úprava</b>', format:'c'
-    proc onclick() { tags(this,'cor','inf|cen|pri|syn|ord'); zalozka.set('cor'); show_akce(a_akce.get)
+    func onclick() { tags(&this,'cor','inf|cen|pri|syn|ord'); zalozka= 'cor'; show_akce(a_akce)
   } }
   label cen [188,0,80,20] {tag:'x', title:'<b>Ceník</b>', format:'c',
-    proc onclick() { tags(this,'cen','inf|cor|pri|syn|ord'); zalozka.set('cen'); show_akce(a_akce.get)
+    func onclick() { tags(&this,'cen','inf|cor|pri|syn|ord'); zalozka= 'cen'; show_akce(a_akce)
   } }
   label pri [276,0,80,20] {tag:'x', title:'<b>Přihláška</b>', format:'c', skill:'yo'
-    proc onclick() { tags(this,'pri','inf|cor|cen|syn|ord'); zalozka.set('pri'); show_akce(a_akce.get)
+    func onclick() { tags(&this,'pri','inf|cor|cen|syn|ord'); zalozka= 'pri'; show_akce(a_akce)
   } }
   label syn [364,0,80,20] {tag:'x', title:'<b>Dokumenty</b>', format:'c', skill:'yas'
-    proc onclick() { tags(this,'syn','inf|cor|cen|pri|ord'); zalozka.set('syn'); show_akce(a_akce.get)
+    func onclick() { tags(&this,'syn','inf|cor|cen|pri|ord'); zalozka= 'syn'; show_akce(a_akce)
   } }
   func show_akce(id_akce) {
     page.a_akce= id_akce;
@@ -434,7 +447,7 @@ form _page [,,275,360] {
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
-    proc onchange() {} //echo('strava=',this.get) }
+    func onchange() {} //echo('strava=',this.get) }
   }
   // účetní symbol s nápovědou
   field ss [96,202,54,] { tag:'cor,!', title:'účetní symbol:', data:akce.ciselnik_akce }
@@ -450,12 +463,22 @@ form _page [,,275,360] {
   }}
   // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
   check soubezna [213,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faan',
-    proc onchange() {
-      { info.sey.id_hlavni.get;
-        [ confirm("opravdu zrušit souběh této akce?"); ask('akce2_soubeh_nastav',form.key,0) ]
-      | alert(ask('akce2_soubeh_nastav',form.key)) };
-      info.sey.browse_seek; show_akce(form.key);
-  }}
+    func onchange() {
+      if (info.sey.id_hlavni) {
+        if (confirm("opravdu zrušit souběh této akce?"))
+          php.akce2_soubeh_nastav(form.key(),0)
+      }
+      else 
+        alert(php.akce2_soubeh_nastav(form.key()));
+      info.sey.browse_seek(); show_akce(form.key());
+    }
+//    proc onchange() {
+//      { info.sey.id_hlavni.get;
+//        [ confirm("opravdu zrušit souběh této akce?"); ask('akce2_soubeh_nastav',form.key,0) ]
+//      | alert(ask('akce2_soubeh_nastav',form.key)) };
+//      info.sey.browse_seek; show_akce(form.key);
+//    }
+  }
   // Změna ceníku: 
   // - ma_cenik=0 .. bez ceníku
   // - ma_cenik=1 a ma_cenik_verze=0/2 ... 1,0 verze 1 ... 1,2 verze 2
@@ -536,7 +559,7 @@ form _page [,,275,360] {
       title:" součinnost s www.setkani.org - od dubna 2025 na kartě Přihlášky" }
   button [381,316,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw'
     help:'pokyny pro přihlašování na www.setkani.org'
-    proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
+    func onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce)
   }}
   label web_url [19,330,331,] { tag:'cor' }
   check xp_enable [16,344,243,] { tag:'cor,url', data:akce.web_prihlasky, format:'d', skill:'yaa+|yaaw' 
@@ -563,8 +586,9 @@ form _page [,,275,360] {
   }
   button [290,436,109,40] { tag:'cor', title:'Upravit upoutávku na webu chlapi.cz', skill:'yaa+|yaaw;faa+|faaw'
       help:'úprava textu v kalendáři chlapi.online', style:"white-space:normal"
-    proc onclick() { 
-      page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
+    func onclick() { 
+      if (page.a_akce) 
+        ANOTACE.oprava(page.a_akce);
   }}
   // ------------------------------------- Zpět a Uložit
   label  [193,493,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
@@ -667,23 +691,48 @@ form _page [,,275,360] {
   // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1 
   label  [310,493,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
   button [316,499,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
-    proc onclick() { var ret:object
-      has_skill('faa:m');
-      ret.set(ask('akce2_confirm_mrop',form.key,0));
-      { ret.ok;
-        [ confirm(ret.msg); ret.set(ask('akce2_confirm_mrop',form.key,1)); alert(ret.msg) ]
-      | alert(ret.msg)
+    func onclick() { var ret:object
+      if (!has_skill('faa:m')) return;
+      ret= php.akce2_confirm_mrop(form.key(),0);
+      if (ret.ok) {
+        if (confirm(ret.msg)) {
+          ret= php.akce2_confirm_mrop(form.key(),1); alert(ret.msg);
+        }
       }
-  } }
+      else 
+        alert(ret.msg)
+    }
+//    proc onclick() { var ret:object
+//      has_skill('faa:m');
+//      ret.set(ask('akce2_confirm_mrop',form.key,0));
+//      { ret.ok;
+//        [ confirm(ret.msg); ret.set(ask('akce2_confirm_mrop',form.key,1)); alert(ret.msg) ]
+//      | alert(ret.msg)
+//      }
+//    } 
+  }
   button [316,499,,] {tag:'corf', title:'Potvrzení firmingu', format:'nc', style:'z-index:1', skill:'faan|faa:m'
-    proc onclick() { var ret:object
-      has_skill('faa:m');
-      ret.set(ask('akce2_confirm_firm',form.key,0));
-      { ret.ok;
-        [ confirm(ret.msg); ret.set(ask('akce2_confirm_firm',form.key,1)); alert(ret.msg) ]
-      | alert(ret.msg)
+    func onclick() { var ret:object
+      if (!has_skill('faa:m')) return;
+      ret= php.akce2_confirm_firm(form.key(),0);
+      if (ret.ok) {
+        if (confirm(ret.msg)) {
+          ret= php.akce2_confirm_firm(form.key(),1); 
+          alert(ret.msg);
+        }
       }
-  } }
+      else
+        alert(ret.msg)
+    }
+//    proc onclick() { var ret:object
+//      has_skill('faa:m');
+//      ret.set(ask('akce2_confirm_firm',form.key,0));
+//      { ret.ok;
+//        [ confirm(ret.msg); ret.set(ask('akce2_confirm_firm',form.key,1)); alert(ret.msg) ]
+//      | alert(ret.msg)
+//      }
+//    } 
+  }
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
@@ -716,6 +765,7 @@ form _page [,,275,360] {
         break;
       case 'R': akci= 'akci pro rodiny'; 
         p_json.p_reg_single= 0;
+        p_json.p_ubyt_prg= 0;
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_zadost= 0; p_json.veta_zadost= '';
         p_json.p_zadost2= 0; p_json.veta_zadost2= '';
@@ -724,6 +774,10 @@ form _page [,,275,360] {
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
         break;
+    }
+    // speciality pro ASC - program a ubytování po dnech
+    if (web_prihlaska!='prihlaska_asc') {
+      p_ubyt_prg.display(0);
     }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
@@ -736,7 +790,7 @@ form _page [,,275,360] {
         : "V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.";
     }
     if (!p_json.web_prihlaska) {
-      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2025'; 
+      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2026'; 
       web_prihlaska.change();
       p_json.web_prihlaska= web_prihlaska;
     }
@@ -819,11 +873,6 @@ form _page [,,275,360] {
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
-      // p_reg_single a p_zadost je zatím jen pro ASC
-      if ((p_reg_single || p_zadost || p_zadost2) && web_prihlaska=='prihlaska_2025') {
-        alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
-        return;
-      } 
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
@@ -902,44 +951,44 @@ form _page [,,275,360] {
     show id_akce  { data:cenik.id_akce }
     show polozka  { data:cenik.polozka }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show druh [,,0,] { title:'.', help:'druh položky: u/s/p/d/x', data:cenik.druh, format:'ruq*s'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show pol [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'tuq*s'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // pro c a y;f verze 2016
     show za_2016 [,,0,] { title:'za', data:cenik.za, format:'urq=s',
       help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P, slevy:S'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // pro c
     show typ [,,0,] { title:'typ', data:cenik.typ, map_pipe:ms_akce_ubytovan.zkratka,
       format:'urq#s', help:'typ ubytování: 1,2,3,...'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // pro y;f;c
     show cena [,,43,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s:e'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // pro y verze 2025
     show co_2025 [,,0,] { title:'x', data:cenik.krat, format:'urq=s',
       help:'Pobyt nebo x-krát Noc, Snídaně, Oběd, Večeře '
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show pro_2025 [,,0,] { title:'t', data:cenik.t, format:'urq=s',
       help:'typ účasti Učastník, Vps, Dítě, Pečoun, Tým (kněz,psych,hudba)'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show noc_2025 [,,0,] { title:'n', data:cenik.n, format:'urq=s',
       help:'kategorie noclehu'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show porce_2025 [,,0,] { title:'p', data:cenik.p, format:'urq=s',
       help:'kategorie porce Celá, Poloviční'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // jen y;f
     show dph [,,0,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s:e'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // pro y;f;c
     show od [,,21,] { title:'≥', data:cenik.od, format:'urq=:e', help:'od tohoto věku (včetně narozenin)'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     show do [,,21,] { title:'<', data:cenik.do, format:'urq=:e', help:'do tohoto věku (do narozenin)'
-      proc onsubmit() { this.save } }
+      func onsubmit() { this.save() } }
     // funkce a menu
     func Load() {
       if (hnizda)
@@ -961,11 +1010,21 @@ form _page [,,275,360] {
           }
       } }
     }
-    proc onclick() {
-      eq(access.get,1,2);
-      od.width; od.width(0); do.width(0); dph.width(43)
-    | od.width(21); do.width(21); dph.width(0)
+    func onclick() {
+      if (eq(access.get,1,2)) {
+        if (od.width()) {
+          od.width(0); do.width(0); dph.width(43)
+        }
+      }
+      else { 
+        od.width(21); do.width(21); dph.width(0) 
+      }
     }
+//    proc onclick() {
+//      eq(access.get,1,2);
+//      od.width; od.width(0); do.width(0); dph.width(43)
+//    | od.width(21); do.width(21); dph.width(0)
+//    }
   }
   // export ceníku a výběr hnízda
   const bc=40, lc=335
@@ -976,7 +1035,7 @@ form _page [,,275,360] {
     }
   }
   button cenik_xls [10,20,,20] { tag:'b,cen', title:'Export ceníku', format:'c'
-    proc onclick() {
+    func onclick() {
 //      var ret: object
 //      ret.set(ask('akce2_platby_xls',a_akce.get));
 //      ret.ok; alert(ret.xhref);
@@ -1069,14 +1128,14 @@ form _page [,,275,360] {
   # složky - tree area
   area _folders { title:"<div id='files' style='left:530px;top:112px;width:160px;height:370px;border-right:1px solid grey;position:absolute;z-index:1'></div>"
     var click_path:text
-    proc tree_onclick(fid,id,dat,com,x,path,txt) { var i:text
-      page.dfold.set(replace(path,'\|','/'));
-      page.fdrop.Init;
-      page.files.Load;
+    func tree_onclick(fid,id,dat,com,x,path,txt) { var i:text
+      page.dfold= replace(path,'\|','/');
+      page.fdrop.Init();
+      page.files.Load();
     }
-    proc tree_oncontextmenu(fid,id,dat,com,x,path,txt) { 
-      click_path.set(replace(path,'\|','/'));
-      echo('tree:',click_path.get);
+    func tree_oncontextmenu(fid,id,dat,com,x,path,txt) { 
+      click_path= replace(path,'\|','/');
+      echo('tree:',click_path);
     }
     menu { type:'context'
       item { title:'vložit podsložku', 
@@ -1087,13 +1146,20 @@ form _page [,,275,360] {
         }
       }
     }
-    proc Load(_a,_b) { 
-      this.tree_show(ask('tut_dir',_a,_b),'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+    func Load(_a,_b) { 
+      this.tree_show(php.tut_dir(_a,_b),'files',0,{mode:'folders',theme:'mootree.gif'}); 
       this.tree_expand(1) 
     }
-    proc Init() { 
-      this.tree_show(°{prop:°{id:'<žádný dokument>'}},'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+//    proc Load(_a,_b) { 
+//      this.tree_show(ask('tut_dir',_a,_b),'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+//      this.tree_expand(1) 
+//    }
+    func Init() { 
+      this.tree_show({prop:{id:'<žádný dokument>'}},'files',0,{mode:'folders',theme:'mootree.gif'}); 
     }
+//    proc Init() { 
+//      this.tree_show(°{prop:°{id:'<žádný dokument>'}},'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+//    }
   }
   # soubory - seznam
   label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;padding:5px"
@@ -1265,8 +1331,9 @@ form _info [,,*,50] {
       elseif (zen.width()) { zen.width(0); stat.width(0); id_akce.width(32); idd.width(32);  }
       else { id_akce.width(0); idd.width(0); do.width(65) }
     }
-    proc onchange() {
-      [ has_skill('yas'); page.DocBrowse ]
+    func onchange() {
+      if (has_skill('yas')) 
+        page.DocBrowse()
     }
     func onsubmit() { 
       pracovni() 
@@ -1278,13 +1345,13 @@ form _info [,,*,50] {
       if (has_skill('yas')) page.DocBrowse();
     }
     menu { type:'context'
-      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
+      item { title:'Vybrat akci jako pracovní', func onclick() { pracovni() }}
     }
     // označení akce jako pracovní
-    proc pracovni() { #==> .. pracovní
-      not(accessed(org.get));
-      alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
-    | pracovni_curr
+    func pracovni() { #==> .. pracovní
+      if (!accessed(org))
+        alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
+      else pracovni_curr()
     }
     func pracovni_curr() {
       if (volba_akce(id_akce)) {
@@ -1374,8 +1441,8 @@ form _info [,,*,50] {
       }
     }
   }
-  proc fill(x) {
-    [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
+  func fill(x) {
+    if (x) head= conc("<div class='karta' style='padding-left:60px'>",x,"</div>");
   }
 }
 # ==========================================================================================> akce
@@ -1401,21 +1468,22 @@ panel AKCE [0,0,600,400] { title:' ', type:'popup', css:'dialog'
 }
 # =========================================================================================> anotace
 # oprava textu anotace na webu
-panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:'dialog'
+panel ANOTACE [0,0,660,530] { title:' Úprava textu anotace', type:'popup', css:'dialog'
   use d: form _d [0,0,,],
-  proc oprava(_ida) {
-    _ida;
-    d.load(_ida);
-    [ panel.modal ] 
-  | alert("napřed novou akci ulož");
-  }
-  form _d [10,10,600,460] {
-    button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
-      proc onclick() { form.save; panel.hide(1); } }
-    button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
-      proc onclick() { panel.hide(0); }
+  func oprava(_ida) {
+    if (_ida) {
+      d.load(_ida);
+      panel.modal();
     }
-    edit html [0,40,655,480] {type:'html', data:akce.web_anotace, par:°{toolbar:'EzerLetter'} },
+    else alert("napřed novou akci ulož");
+  }
+  form _d [,,665,460] {
+    button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+      func onclick() { form.save(); panel.hide(1); } }
+    button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+      func onclick() { panel.hide(0); }
+    }
+    edit html [0,40,660,480] {type:'html', data:akce.web_anotace, par:°{toolbar:'EzerLetter'} },
   }
 }
 # ==========================================================================================> hnízda
