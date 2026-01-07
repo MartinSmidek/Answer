@@ -765,6 +765,7 @@ form _page [,,275,360] {
         break;
       case 'R': akci= 'akci pro rodiny'; 
         p_json.p_reg_single= 0;
+        p_json.p_ubyt_prg= 0;
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_zadost= 0; p_json.veta_zadost= '';
         p_json.p_zadost2= 0; p_json.veta_zadost2= '';
@@ -773,6 +774,10 @@ form _page [,,275,360] {
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
         break;
+    }
+    // speciality pro ASC - program a ubytování po dnech
+    if (web_prihlaska!='prihlaska_asc') {
+      p_ubyt_prg.display(0);
     }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
@@ -785,7 +790,7 @@ form _page [,,275,360] {
         : "V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.";
     }
     if (!p_json.web_prihlaska) {
-      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2025'; 
+      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2026'; 
       web_prihlaska.change();
       p_json.web_prihlaska= web_prihlaska;
     }
@@ -845,6 +850,7 @@ form _page [,,275,360] {
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
     check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
+    check p_ubyt_prg [30,437,370,] { tag:'pri,R', title:'umožnit nastavit účast na programu a ubytování po jednotlivých dnech'}
     check p_zadost [30,465,108,] { tag:'pri,O,R,J', title:'umožnit 1.žádost: '}
     check p_zadost2 [30,485,109,] { tag:'pri,O,R,J', title:'umožnit 2.žádost: '}
     field veta_zadost [147,466,297,] { tag:'pri,O,R,J', help:' [ ] popis 1.žádosti' }
@@ -867,11 +873,6 @@ form _page [,,275,360] {
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text
-      // p_reg_single a p_zadost je zatím jen pro ASC
-      if ((p_reg_single || p_zadost || p_zadost2) && web_prihlaska=='prihlaska_2025') {
-        alert(`Nové možnosti pro rodinné akce nejsou pro ${web_prihlaska} umožněny`);
-        return;
-      } 
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");

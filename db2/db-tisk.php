@@ -3083,7 +3083,7 @@ __XLS;
 __XLS;
   // výstup
 //  /**/                                                              display($xls);
-  require_once "ezer$ezer_version/server/vendor/autoload.php";
+//  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";

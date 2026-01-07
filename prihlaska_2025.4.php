@@ -1414,12 +1414,9 @@ function form_MO($new) { trace();
         'strava'=>$akce->p_strava,  // 0=akce bez stravy, 1=tlačítko Objednávka, 2=seznam strav
         'pozn'=>1,
         'souhlas'=>$akce->p_souhlas,
+        'zadost'=> $akce->p_zadost,
+        'zadost2'=> $akce->p_zadost2,
     ];
-    if (typ_akce('O')) {
-      $vars->form->zadost= $akce->p_zadost;
-      $vars->form->zadost2= $akce->p_zadost2;
-
-    }
     log_write_changes();  // zapiš počáteční skeleton form
   }
   // -------------------------------------------- úprava rodinné adresy
