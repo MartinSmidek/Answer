@@ -453,7 +453,7 @@ function polozky() { // --------------------------------------------------------
     ] : [],
     typ_akce('MO') && ($akce->p_nocleh??0) ? [
       'Xnocleh'   =>[20,'nocleh','select','abdp'],
-    ] : [],
+    ] : []
   );
   // případné opravy podle akce
   foreach ($akce as $key=>$val) {

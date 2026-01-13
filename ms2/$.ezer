@@ -131,6 +131,17 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
 //            info.append('',ask('db2_info',i.par))
 //          }
 //        }
+        menu t {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'obnovit testovací db z ostré', par:{db:'ms'}
+            func onclick (i:ezer) {
+              panel.display(2,'i'); info.display(0,'t'); clear();
+              if (confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?")) {
+                info.fill(replace_fa(conc(i.owner().title,' - ',i.title)),' ... probíhá update ...');
+                info.fill('',php.db2_copy_test_db(i.par.db)); 
+              }
+            }
+          }
+        }
       }
       use info: form right [12,4,,] {
 //        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
