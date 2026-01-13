@@ -3069,8 +3069,9 @@ function log_close() { // ------------------------------------------------------
     }
   }
 }
-function append_log($msg) { // ------------------------------------------------------ append error
+function append_log($msg) { // ---------------------------------------------------------- append log
   global $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $ezer_version;
+  append_org_log($msg);
   $file= "prihlaska.log.php";
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
@@ -3097,6 +3098,20 @@ if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !
 ><b>VERZE/JS  AKCE DATUM      ČAS      PŘIHLÁŠKA       KLIENT </b>\n
 __EOS;
       file_put_contents($file, $prefix);
+  }
+  file_put_contents($file, "$msg\n", FILE_APPEND);
+}
+function append_org_log($msg) { // -------------------------------------------------- append org_log
+  global $ORG, $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST;
+  $file= "prihlaska.log.{$ORG->code}.php";
+  $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
+  $email= $_SESSION[$AKCE]->email??'?';
+  $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
+  $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
+  $ida= str_pad(substr($AKCE,2),4,' ',STR_PAD_LEFT);
+  $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email ip=$ip";
+  if (!file_exists($file)) {
+    file_put_contents($file, "<?php die('Sorry, no access');?>\n");
   }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
