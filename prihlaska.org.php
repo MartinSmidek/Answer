@@ -10,7 +10,7 @@ $access2org= [
  8 => (object)[ // Šance pro manželství
   'smtp'  => 1,
   'name'  => 'Šance pro manželství',
-  'deep'  => 'answer/ms2.dbs.php',
+  'deep'  => 'answer/ms2_test.dbs.php',
   'icon'  => '/db2/img/akce.png',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí Šance pro manželství v souladu s Nařízením 
