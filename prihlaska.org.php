@@ -11,6 +11,7 @@ $access2org= [
   'smtp'  => 1,
   'name'  => 'Šance pro manželství',
   'deep'  => 'answer/ms2_test.dbs.php',
+  'sess'  => 'ms2',
   'icon'  => '/db2/img/akce.png',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí Šance pro manželství v souladu s Nařízením 
@@ -28,6 +29,7 @@ $access2org= [
   'name'  => 'YMCA Setkání',
   'deep'  => 'answer/db2.dbs.php',
   'icon'  => '/db2/img/akce.png',
+  'sess'  => 'dbt',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
       Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
@@ -45,6 +47,7 @@ $access2org= [
   'smtp'  => 6,
   'name'  => 'YMCA Familia',
   'deep'  => 'answer/db2.dbs.php',
+  'sess'  => 'dbt',
   'icon'  => '/db2/img/akce_fa.png',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů a fotografií z akce pro potřeby organizace YMCA Familia v souladu 

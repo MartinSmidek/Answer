@@ -107,10 +107,10 @@ try {
     $ORG= $access2org[$_GET['org']];
     $ORG->code= $_GET['org'];
     // detekce varianty: normální nebo testovací - buďto přihlášení do Answer nebo volání z webu
-    $ANSWER= $SID ? 1 : ($_SESSION[
-        $_TEST ? ($domain=='asc' ? 'asc' : 'dbt') 
-               : ($domain=='asc' ? 'asc' : 'db2') 
-        ]['user_id']??0);
+    $ANSWER= $SID ? 1 : ($_SESSION[$ORG->sess]['user_id']??0);
+//        $_TEST ? ($domain=='asc' ? 'asc' : 'dbt') 
+//               : ($domain=='asc' ? 'asc' : 'db2') 
+//        ]['user_id']??0);
     // odvození požadavku na test a ostrý mail
     $TEST= $_GET['test']??0 ? ($ANSWER?(0+$_GET['test']):0) : 0;
     $MAIL= $_GET['mail']??1 ? 1 : ($ANSWER?0:1);
@@ -2960,7 +2960,7 @@ function log_write_changes() { // ----------------------------------------------
   elseif ($TRACE)
       display("LOG_WRITE_VARS fail - no sesssion");
 } // zapíše změněné $vars před zobrazením formuláře 
-function log_find_saved($email) { // ------------------------------------------------ log find_saved
+function log_find_saved($email) { trace(); // --------------------------------------- log find_saved
   global $vars;
   // zkusíme najít poslední verzi přihlášky - je ve fázi (c)
   $found= '';
@@ -2974,7 +2974,7 @@ function log_find_saved($email) { // -------------------------------------------
   } // už se povedlo přihlásit
   list($idpr,$open)= select_2("SELECT id_prihlaska,open FROM prihlaska 
       WHERE id_pobyt=0 AND id_akce=$vars->id_akce AND email='$email' AND vars_json!='' 
-      AND id_prihlaska>110 ORDER BY id_prihlaska DESC LIMIT 1");
+      ORDER BY id_prihlaska DESC LIMIT 1");
   if (!$idpr) goto end;
   $vars->continue= $idpr;
   list($vars->ido,$vars->idr)= select_2(
