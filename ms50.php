@@ -1,4 +1,4 @@
-<?php # Systém An(w)er/YMCA Setkání/YMCA Familia, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
+<?php # Systém An(w)er/YMCA Setkání/YMCA Familia/YMCA MS/YMCA CR/YMCA MS50+ (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
 
   // časová značka při spuštění
   date_default_timezone_set("Europe/Prague");
