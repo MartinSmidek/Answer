@@ -15,15 +15,15 @@
 
   // verze použitého jádra Ezeru
   $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.3'; 
+  $test= '-TEST';
 
   // server, databáze, cesty, klíče
   $deep_root= "../files/answer";
-  require_once("$deep_root/ms2_test.dbs.php");
+  require_once($test?"$deep_root/ms2t.dbs.php":"$deep_root/ms2.dbs.php");
 
   // parametry aplikace Answer/ms2
-  $test= '-TEST';
   $app_name=  "Answer$test";
-  $ezer_root= $app= $app_root=  'ms2';
+  $ezer_root= $app= $app_root=  'ms2'.($test?'t':'');
   
   // nastav jako default PDO=2
   $_GET['pdo']= 2;

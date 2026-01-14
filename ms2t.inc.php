@@ -6,6 +6,8 @@
   #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
   #   $php_lib    = pole s *.php - pro 'ini'
 
+  $test= '-TEST';
+
   global // import 
     $ezer_root; 
   global // export
@@ -21,7 +23,7 @@
   chdir($abs_root);
 
   // živá větev v github
-  $git_app_branch= 'test';   // místo defaultu 'master'
+  $git_app_branch= $test?'test':'master';   // místo defaultu 'master'
 
   // informace pro debugger o poloze ezer modulů
   $dbg_info= (object)array(
@@ -32,7 +34,7 @@
 
   // databáze
   $deep_root= "../files/answer";
-  require_once("$deep_root/ms2_test.dbs.php");
+  require_once($test?"$deep_root/ms2t.dbs.php":"$deep_root/ms2.dbs.php");
   
   $path_backup= "$deep_root/sql";
   
