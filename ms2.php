@@ -56,7 +56,7 @@
     . $title_flag
     . "$app_name$new  MS"
     ."</span>";
-  $skin= "tt";
+  $skin= $test ? 'tt' : 'ch';
 
   $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
 
