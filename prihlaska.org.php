@@ -43,4 +43,21 @@ $access2org= [
       'mail'=>'akce@chlapi.cz',
       'tlfn'=>''],
   ],
+ 8 => (object)[ // Šance pro manželství
+  'smtp'  => 1,
+  'name'  => 'Šance pro manželství',
+  'deep'  => 'answer/ms2.dbs.php',
+  'sess'  => 'ms2',
+  'icon'  => '/db2/img/akce.png',
+  'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
+      osobních údajů pro potřeby organizace akcí Šance pro manželství v souladu s Nařízením 
+      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
+      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR.",
+   // default pro garanta akce, pokud není dostupný z AKCE/Úprava
+  'info'  => (object)[
+      'name'=>'Ondřej Lednický',
+      'mail'=>'info@manzelskasetkani.cz',
+      'tlfn'=>'+420 734 647 785'
+    ],
+  ],   
 ];
