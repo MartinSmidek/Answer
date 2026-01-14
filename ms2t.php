@@ -42,21 +42,24 @@
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
 
-  // upozornění na testovací verzi
-  $click= "jQuery('#DEMO').fadeOut(500);";
-  $dstyle= "left:-50px; bottom:0; position:fixed; transform:rotate(40deg) translate(-107px,-14px); "
-      . "width:500px;height:80px;background:orange; color:white; font-weight: bolder; "
-      . "text-align: center; font-size: 40px; line-height: 75px; z-index: 16; opacity: .5;";
-  $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
+  if ($test) {
+    // upozornění na testovací verzi
+    $click= "jQuery('#DEMO').fadeOut(500);";
+    $dstyle= "left:-50px; bottom:0; position:fixed; transform:rotate(40deg) translate(-107px,-14px); "
+        . "width:500px;height:80px;background:orange; color:white; font-weight: bolder; "
+        . "text-align: center; font-size: 40px; line-height: 75px; z-index: 16; opacity: .5;";
+    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
+  }
+  else $demo= '';
 
   // skin a css
   $new= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
   $title= "$demo
     <span $title_style>"
     . $title_flag
-    . "$app_name$new  MS"
+    . "$app_name$new  Šance pro manželství"
     ."</span>";
-  $skin= "tt";
+  $skin= $test ? 'tt' : 'ch';
 
   $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
 
