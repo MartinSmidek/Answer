@@ -1,7 +1,7 @@
 # Systém Ans(w)er pro CPR Ostrava
 # (c) 2008-2021 Martin Šmídek <martin@smidek.eu>
 
-menu db2 { type:'main', title:'cr2', active:*, _sys:'*'
+menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'ca'

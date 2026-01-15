@@ -23,7 +23,7 @@
  * 
  */
 // <editor-fold defaultstate="collapsed" desc=" -------------------------------------------------------- inicializace + seznam emailů pro ladění">
-// debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
+// debuger je lokálne nastaven pro verze PHP: 7.4.33 
 $VERZE= '2025'; // verze přihlášek: rok
 $MINOR= '4'; // verze přihlášek: release
 $CORR_JS= '1'; // verze přihlášek: oprava JS nebo CSS části pro vynucený reload
