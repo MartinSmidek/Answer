@@ -3114,13 +3114,15 @@ function append_org_log($msg) { // ---------------------------------------------
   $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email ip=$ip";
   if (!file_exists($file)) {
     global $MYSELF;
+    $orgs= [0=>'',1=>'YS',2=>'FA',8=>'ŠM'];
+    $org= $orgs[$ORG->code]??'';
     $prefix= 
 <<<__EOS
 <?php 
 session_start(); 
 if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
 \$akce=\$_GET['akce']??''; echo "
-<html><head><title>přihlášky</title>
+<html><head><title>přihlášky $org</title>
 <link rel='shortcut icon' href='img/log_icon.$ORG->code.png'>
 <script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
 <script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
