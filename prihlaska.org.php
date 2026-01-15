@@ -11,6 +11,7 @@ $access2org= [
   'smtp'  => 2,
   'name'  => 'YMCA Setkání',
   'deep'  => 'answer/db2.dbs.php',
+  'sess'  => 'db2',
   'icon'  => '/db2/img/akce.png',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
@@ -29,6 +30,7 @@ $access2org= [
   'smtp'  => 6,
   'name'  => 'YMCA Familia',
   'deep'  => 'answer/db2.dbs.php',
+  'sess'  => 'db2',
   'icon'  => '/db2/img/akce_fa.png',
   'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů a fotografií z akce pro potřeby organizace YMCA Familia v souladu 
