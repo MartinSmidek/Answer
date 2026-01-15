@@ -45,7 +45,7 @@ $access2org= [
       'mail'=>'akce@chlapi.cz',
       'tlfn'=>''],
   ],
- 8 => (object)[ // Šance pro manželství
+ 8 => (object)[ // Šance pro manželství - ostrá databáze
   'smtp'  => 1,
   'name'  => 'Šance pro manželství',
   'deep'  => 'answer/ms2.dbs.php',
