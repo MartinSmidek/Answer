@@ -63,7 +63,7 @@ function pretty_log(patt,akce) {
       let akce_id= pretty_log.lines[i].substr(9,4),
           akce_nazev= pretty_log.lines[i].substr(16);
       if (akce && akce==akce_id) {
-        nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>';
+        nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>\n';
       }
       hlavicky+= '\n      vyber jen '+akce_id+': '+akce_nazev;
     }
