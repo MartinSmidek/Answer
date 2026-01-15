@@ -13,11 +13,17 @@
 function pretty_log(patt,akce) { 
   if (!pretty_log.called) {
     // vložení pole pro dotaz - jen poprvé
-    let head= `<label for="inputField" style="font-weight:bold;font-family:monospace">
+    let orgs= {0:'', 1:'YMCA Setkání',2:'YMCA Familia',8:'Šance pro manželství'},
+        url= (new URL(window.location.href)).toString(),
+        m= url.match(/prihlaska\.log\.(\d+)\.php/),
+        org= orgs[m ? m[1] : 0]??'';
+    let head= `
+        <h3>Online přihlášky na akce ${org}</h3>
+        <label for="inputField" style="font-weight:bold;font-family:monospace">
         Vyber řádky vyhovující regulárnímu výrazu:
       <input type="text" id="inputField" placeholder="například ID.*POBYT" 
         style="font-family:monospace">+Enter nebo 
-      <button onclick="pretty_log('');">zobraz vše</button></label>`;
+      <button onclick="reload_bez_akce();">zobraz vše</button></label>`;
     document.body.insertAdjacentHTML('afterbegin', head);
     document.getElementById('inputField').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
@@ -69,6 +75,11 @@ function pretty_log(patt,akce) {
   nazev+= hlavicky;
   let title= nazev+"\n\n<u><b>VERZE/JS AKCE "+ted+"  PŘIHLÁŠKA      KLIENT"+' '.repeat(mezer)+"</u> ";
   $('#log').html(title+row);
+}
+function reload_bez_akce() {
+  const url= new URL(window.location.href);
+  url.searchParams.delete("akce");
+  window.location.href = url.toString();
 }
 function yms_hms() {
   // aktuální datum

@@ -2,6 +2,7 @@
 /**
  * (c) 2025 Martin Smidek <martin@smidek.eu> - online přihlašování pro YMCA Setkání a ASC
  * 
+ * 2026-01-15 log rozdělen do prihlaska.log.<org-code>.php a vylepšen
  * 2025-12-04 p_zadost a p_zadost2 jsou povoleny i pro typ O
  * 2025-11-23 do RJ přidáno zaškrtávací položka p_zadost2 s textem veta_zadost2
  * 2025-11-15 prihlaska.org.php obsahuje texty a vzhledové prvky specifické pro pořádající organizaci
@@ -225,7 +226,7 @@ catch (Throwable $e) {
   }
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
-  . "<br><br>Přihlaste se na akci  mailem zaslaným na {$ORG->info->mail}."
+  . "<br><br>Zkuste to prosím později nebo se na akci přihlaste mailem zaslaným na {$ORG->info->mail}."
   . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
       . "<br>$errpos" : '');
@@ -3043,15 +3044,16 @@ function log_error($msg) { // --------------------------------------------------
   append_log("<b style='color:red'>ERROR</b> $msg");
 }
 function log_close() { // ---------------------------------------------------------------- log close
-  global $VERZE, $MINOR, $CORR_JS, $TEST, $akce, $vars;
+  global $ORG, $VERZE, $MINOR, $CORR_JS, $TEST, $akce, $vars;
   log_write('close','NOW()');
   // pokud v logu není aktuální akce přidáme její popis
-  $file= "prihlaska.log.php";
+  $file= "prihlaska.log.$ORG->code.php";
   $nazev_akce= 0;
+  $ida= str_pad($vars->id_akce,4,' ',STR_PAD_LEFT);
   if (file_exists($file)) {
     $lines= file($file);
     foreach ($lines as $line) {
-      if (substr($line,9,6)=="$vars->id_akce =") {
+      if (substr($line,9,6)=="$ida =") {
         $nazev_akce= 1;
         break;
       }
@@ -3061,8 +3063,8 @@ function log_close() { // ------------------------------------------------------
           "id_duakce='$vars->id_akce' AND datum_od>NOW()");
       if ($ok) {
         $x= $TEST==2 ? " TEST=2 " : "$VERZE.$MINOR/$CORR_JS";
-        $url= "prihlaska.log.php?itsme=1&akce=$vars->id_akce";
-        $msg= "$x $vars->id_akce = <a style='color:green;font-weight:bold' href='$url'>"
+        $url= "$file?itsme=1&akce=$vars->id_akce";
+        $msg= "$x $ida = <a style='color:green;font-weight:bold' href='$url'>"
             . "$akce->nazev ($akce->oddo)</a>";
         file_put_contents($file, "$msg\n", FILE_APPEND);
       }
@@ -3102,8 +3104,8 @@ __EOS;
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
 function append_org_log($msg) { // -------------------------------------------------- append org_log
-  global $ORG, $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST;
-  $file= "prihlaska.log.{$ORG->code}.php";
+  global $ORG, $AKCE, $VERZE, $MINOR, $CORR_JS, $TEST, $ezer_version;
+  $file= "prihlaska.log.$ORG->code.php";
   $idw= $_SESSION[$AKCE]->id_prihlaska??'?';
   $email= $_SESSION[$AKCE]->email??'?';
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
@@ -3111,7 +3113,24 @@ function append_org_log($msg) { // ---------------------------------------------
   $ida= str_pad(substr($AKCE,2),4,' ',STR_PAD_LEFT);
   $msg= "$x $ida ".date('Y-m-d H:i:s').str_pad($idw,5,' ',STR_PAD_LEFT)." $msg mail=$email ip=$ip";
   if (!file_exists($file)) {
-    file_put_contents($file, "<?php die('Sorry, no access');?>\n");
+    global $MYSELF;
+    $prefix= 
+<<<__EOS
+<?php 
+session_start(); 
+if(!(\$_SESSION['ast']['user_id']??0) && !(\$_SESSION['db2']['user_id']??0) && !(\$_SESSION['dbt']['user_id']??0) && !isset(\$_GET['itsme'])) exit; 
+\$akce=\$_GET['akce']??''; echo "
+<html><head><title>přihlášky</title>
+<link rel='shortcut icon' href='img/log_icon.$ORG->code.png'>
+<script src='/ezer$ezer_version/client/licensed/jquery-3.3.1.min.js' type='text/javascript' charset='utf-8'></script>
+<script src='$MYSELF.js?corr=$CORR_JS' type='text/javascript' charset='utf-8'></script>
+<script type='text/javascript'>window.addEventListener('load', function() { pretty_log('\$akce','\$akce');});</script>  
+</script>";
+?>
+</head><body><pre id="log"
+><b>VERZE/JS  AKCE DATUM      ČAS      PŘIHLÁŠKA       KLIENT </b>\n
+__EOS;
+      file_put_contents($file, $prefix);
   }
   file_put_contents($file, "$msg\n", FILE_APPEND);
 }
