@@ -60,6 +60,34 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
     info.append(y.html);
   }
   menu m {type:'left', format:'f', active:*
+    menu {title:'Kniha hostů 2026',type:'group'
+      item {title:'[fa-calendar] leden',        par:{rok:'2026',mes:1} }
+      item {title:'... podrobně', par:{rok:'2026',mes:1,spolu:1} }
+      item {title:'[fa-calendar] únor',         par:{rok:'2026',mes:2} }
+      item {title:'... podrobně', par:{rok:'2026',mes:2,spolu:1} }
+      item {title:'[fa-calendar] březen',       par:{rok:'2026',mes:3} }
+      item {title:'... podrobně', par:{rok:'2026',mes:3,spolu:1} }
+      item {title:'[fa-calendar] duben',        par:{rok:'2026',mes:4} }
+      item {title:'... podrobně', par:{rok:'2026',mes:4,spolu:1} }
+      item {title:'[fa-calendar] květen',       par:{rok:'2026',mes:5} }
+      item {title:'... podrobně', par:{rok:'2026',mes:5,spolu:1} }
+      item {title:'[fa-calendar] červen',       par:{rok:'2026',mes:6} }
+      item {title:'... podrobně', par:{rok:'2026',mes:6,spolu:1} }
+      item {title:'[fa-calendar] červenec',     par:{rok:'2026',mes:7} }
+      item {title:'... podrobně', par:{rok:'2026',mes:7,spolu:1} }
+      item {title:'[fa-calendar] srpen',        par:{rok:'2026',mes:8} }
+      item {title:'... podrobně', par:{rok:'2026',mes:8,spolu:1} }
+      item {title:'[fa-calendar] září',         par:{rok:'2026',mes:9} }
+      item {title:'... podrobně', par:{rok:'2026',mes:9,spolu:1} }
+      item {title:'[fa-calendar] říjen',        par:{rok:'2026',mes:10} }
+      item {title:'... podrobně', par:{rok:'2026',mes:10,spolu:1} }
+      item {title:'[fa-calendar] listopad',     par:{rok:'2026',mes:11} }
+      item {title:'... podrobně', par:{rok:'2026',mes:11,spolu:1} }
+      item {title:'[fa-calendar] prosinec',     par:{rok:'2026',mes:12} }
+      item {title:'... podrobně', par:{rok:'2026',mes:12,spolu:1} }
+      item {title:'Celý rok -------------', par:{rok:'2026',mes:0} }
+      item {title:'... podrobně',           par:{rok:'2026',mes:0,spolu:1} }
+    }
     menu roky {title:'Kniha hostů 2025',type:'group'
       item {title:'[fa-calendar] leden',        par:{rok:'2025',mes:1} }
       item {title:'... podrobně', par:{rok:'2025',mes:1,spolu:1} }
@@ -87,34 +115,6 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
       item {title:'... podrobně', par:{rok:'2025',mes:12,spolu:1} }
       item {title:'Celý rok -------------', par:{rok:'2025',mes:0} }
       item {title:'... podrobně',           par:{rok:'2025',mes:0,spolu:1} }
-    }
-    menu {title:'Kniha hostů 2024',type:'group'
-      item {title:'[fa-calendar] leden',        par:{rok:'2024',mes:1} }
-      item {title:'... podrobně', par:{rok:'2024',mes:1,spolu:1} }
-      item {title:'[fa-calendar] únor',         par:{rok:'2024',mes:2} }
-      item {title:'... podrobně', par:{rok:'2024',mes:2,spolu:1} }
-      item {title:'[fa-calendar] březen',       par:{rok:'2024',mes:3} }
-      item {title:'... podrobně', par:{rok:'2024',mes:3,spolu:1} }
-      item {title:'[fa-calendar] duben',        par:{rok:'2024',mes:4} }
-      item {title:'... podrobně', par:{rok:'2024',mes:4,spolu:1} }
-      item {title:'[fa-calendar] květen',       par:{rok:'2024',mes:5} }
-      item {title:'... podrobně', par:{rok:'2024',mes:5,spolu:1} }
-      item {title:'[fa-calendar] červen',       par:{rok:'2024',mes:6} }
-      item {title:'... podrobně', par:{rok:'2024',mes:6,spolu:1} }
-      item {title:'[fa-calendar] červenec',     par:{rok:'2024',mes:7} }
-      item {title:'... podrobně', par:{rok:'2024',mes:7,spolu:1} }
-      item {title:'[fa-calendar] srpen',        par:{rok:'2024',mes:8} }
-      item {title:'... podrobně', par:{rok:'2024',mes:8,spolu:1} }
-      item {title:'[fa-calendar] září',         par:{rok:'2024',mes:9} }
-      item {title:'... podrobně', par:{rok:'2024',mes:9,spolu:1} }
-      item {title:'[fa-calendar] říjen',        par:{rok:'2024',mes:10} }
-      item {title:'... podrobně', par:{rok:'2024',mes:10,spolu:1} }
-      item {title:'[fa-calendar] listopad',     par:{rok:'2024',mes:11} }
-      item {title:'... podrobně', par:{rok:'2024',mes:11,spolu:1} }
-      item {title:'[fa-calendar] prosinec',     par:{rok:'2024',mes:12} }
-      item {title:'... podrobně', par:{rok:'2024',mes:12,spolu:1} }
-      item {title:'Celý rok -------------', par:{rok:'2024',mes:0} }
-      item {title:'... podrobně',           par:{rok:'2024',mes:0,spolu:1} }
     }
 //    menu {title:'... testy ...',type:'group',skill:'m'
 //      item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
