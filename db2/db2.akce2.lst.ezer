@@ -736,12 +736,12 @@ form _page [,,275,360] {
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
-  func p_show() { var ch:ezer, akci:text, tp_default:text, ret: object
+  func p_show() { var ch:ezer, akci:text, tp_default:text, ret: object, mode:text
     p_tag= php.select1('barva','_cis',`druh='ms_akce_typ' AND data=${druh.key()}`);
     if (!p_tag) return;
     form.display(1,p_tag);
     if (has_skill('m')) {
-      p_TEST.enable(1); p_MAIL.enable(1); web_online.enable(1); web_prihlaska.enable(1);
+      p_mode.enable(1); web_online.enable(1); web_prihlaska.enable(1);
     }
     // defaultní hodnoty - pokud je web-online prázdný, zapíšou se
     p_json= {};
@@ -759,6 +759,7 @@ form _page [,,275,360] {
       case 'M': akci= 'Letní kurz MS'; 
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; 
         p_json.p_upozorneni= 1; p_json.p_dokument= 1; 
+        p_json.p_diety= {};
         break;
       case 'O': akci= 'obnovu MS'; 
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; p_json.p_obnova= 1; 
@@ -784,6 +785,9 @@ form _page [,,275,360] {
       web_online= json_encode(p_json); web_online.change();
     }
     p_json= json_decode(web_online);
+    p_diety= p_json.p_diety;
+    p_diety_but.set_attrib('help',p_diety);
+//    p_diety= p_json.p_diety ? json_encode(p_json.p_diety) : '';
     if (!p_json.veta_potvrzeni) {
       p_json.veta_potvrzeni= eq(p_tag,'M','O')
         ? "Zaslané údaje zpracujeme a do týdne vám pošleme odpověď." 
@@ -794,12 +798,17 @@ form _page [,,275,360] {
       web_prihlaska.change();
       p_json.web_prihlaska= web_prihlaska;
     }
+    if (!p_json.p_mode) {
+      p_mode.key(1); 
+      p_mode.change();
+    }
     copy_by_name(p_json,form);
     p_href= ''; 
     QR= "<p style='text-align:center'>(QR kód se zobrazuje až je povoleno online přihlašování)</p>";
     if (p_enable) {
-      ret= php.akce_prihlaska(page.a_akce,web_prihlaska,
-          conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0'));
+      mode= php.select1('ikona','_cis',`druh='akce_prihl_mode' AND data=${p_mode.key()}`);
+      ret= php.akce_prihlaska(page.a_akce,web_prihlaska,mode);
+//          conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0'));
       p_href= ret.link;
       // zobrazení QR kódu
       QR= php.akce_qr_prihlasky(page.a_akce,ret.url);
@@ -815,10 +824,12 @@ form _page [,,275,360] {
   label p_href [156,37,300,20] { tag:'pri,M,O,R,J', style:'text-align:right' }
   select p_css [392,52,68,] {  tag:'pri,M,O,R,J', type:'map', 
       help:'výběr loga, (c), zabarvení)', options:akce_prihl_css.zkratka }
-  check p_TEST [294,50,50,] { tag:'pri,M,O,R,J', title:'TEST', value:'0', format:'dn',
-      help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' }
-  check p_MAIL [343,50,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
-      help:'MAIL=1 (dflt) posílá maily, MAIL=0 je pouze zobrazuje (pro chráněné IP adresy)' }
+  select p_mode [264,52,120,] {  tag:'pri,M,O,R,J', type:'map', 
+      help:'ostré nebo testovací přihlašování', options:akce_prihl_mode.zkratka }
+//  check p_TEST [294,50,50,] { tag:'pri,M,O,R,J', title:'TEST', value:'0', format:'dn',
+//      help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' }
+//  check p_MAIL [343,50,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
+//      help:'MAIL=1 (dflt) posílá maily, MAIL=0 je pouze zobrazuje (pro chráněné IP adresy)' }
 # ==> .. QR kód přihlášky
   label [340,160,200,30] { tag:'pri,M,O,R,J', title:"QR adresy přihlášky<br>(klikni pro stažení)"  }
   label QR [335,185,80,80] { tag:'pri,M,O,R,J' }
@@ -846,6 +857,14 @@ form _page [,,275,360] {
     check p_strava [30,405,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
     field p_detska_od [251,407,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,407,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+    field p_diety { value:'' }
+    button p_diety_but [360,407,,] { tag:'pri,M,O', title:'možné diety' 
+      func onclick() { 
+        p_diety= prompt2(`zapiš možné diety poskytnuté mimo normální stravu ve tvaru 
+              zkratka:název (zkratku na 2 velká písmena), více možných diet odděl středníkem. Například 
+              <br>BL:bezlepková;BM:bezmasá`,p_diety);
+//        this.set_attrib('help',p_diety);
+    }}
 //  label [13,390,200,20] { tag:'pri,J' title:'<b>Nastavení pro akce jednotlivců</b>' }
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
@@ -868,22 +887,26 @@ form _page [,,275,360] {
     func onclick() { 
       echo(xp_pozde);
       akce_zpet(); p_show(); 
+      akce_lock('off'); 
     }
   }
   button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
-    func onclick_ulozit() { var elem:ezer, typ:text
+    func onclick_ulozit() { var elem:ezer, typ:text, js_diety:text, diety:object
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
         return;
       }
       elseif (p_strava && ma_cenik_verze!=2) {
-        alert("specifikace stravy v online přihlášce vyžaduje ceník verze 2");
-        return;
+        warning("je nastavena specifikace stravy a není zvolen ceník verze 2 - nebudou dostupné ceny");
       }
       // uložení změn
       p_json= {p_typ:p_tag}; // základní typ: M,O,R,J
+      p_json.p_diety= p_diety; 
+//      echo(`p_diety=${p_diety}`);
+//      debug(json_decode(p_diety),'json_decode(p_diety)');
+//      p_json.p_diety= p_diety ? json_decode(p_diety) : {}; 
       for (elem of form.tagged(p_tag)) {
         typ= js.get_type(elem);
         if (eq(typ,'check','field')) {
@@ -897,7 +920,7 @@ form _page [,,275,360] {
       p_json.veta_potvrzeni= veta_potvrzeni;
       p_json.veta_zadost= p_zadost ? veta_zadost : '';
       p_json.veta_zadost2= p_zadost2 ? veta_zadost2 : '';
-//      echo(debug(p_json));
+      echo(debug(p_json));
       if (form.key()) {
         web_online= json_encode(p_json); web_online.change();
         if (p_enable.changed()) { 
@@ -1521,3 +1544,4 @@ map ms_akce_stat:   table _cis {where:"druh='ms_akce_stat'", order:'poradi', key
 map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}
 map akce_tym:      table _user {where:"skills REGEXP '(\\s|^)(t|T)(\\s|$)'", order:'surname', key_id:'id_user'}
 map akce_prihl_css: table _cis {where:"druh='akce_prihl_css'", order:'poradi', key_id:'data'}
+map akce_prihl_mode: table _cis {where:"druh='akce_prihl_mode'", order:'poradi', key_id:'data'}

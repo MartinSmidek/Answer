@@ -1835,7 +1835,8 @@ form _spolu [,,0,270] {
     };
     frame= tit;
     height= sum(stack_forms(form,tags,10,'up'),0);
-    if (the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
+    // pro FA ukaž vždy dětské kategorie
+    if (the_org!=2 && the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
     frame.property({top: 265-height, height: height+10});
   }
   // globální procedury
