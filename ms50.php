@@ -9,7 +9,7 @@
   #   $add_pars   = doplnění $EZER->options
 
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.3'; 
 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 

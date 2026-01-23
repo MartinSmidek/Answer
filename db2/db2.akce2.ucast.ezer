@@ -461,7 +461,7 @@ form _cmd [,,623,30] {
     edited= '';
     switch(_mode) {
       case 'new':  form.enable(1,'z'); form.enable(0,'x'); form_mode= 'new'; break; // blok umístění role
-      case 'edit': form.enable(1,'s'); form.enable(0,'x'); edited= u.b._nazev; break;
+      case 'edit': form.enable(1,'s'); form.enable(0,'x'); edited= u.b.browse_count() ? u.b._nazev : ''; break;
       case 'none': form.enable(0,'s|r|x'); form.enable(1,'n'); break;
       case 'show': form.enable(0,'s'); form.enable(1,'x'); form_mode= 'show'; break;
     }
@@ -1030,6 +1030,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       cmd.b_display(1);
 //      page.oform_show('show'); // pokud je text
     }
+    func onempty() {}
     func onrowclick() { // ==> . onrowclick
       if (!b.browse_count()) {
         return;
@@ -1835,7 +1836,8 @@ form _spolu [,,0,270] {
     };
     frame= tit;
     height= sum(stack_forms(form,tags,10,'up'),0);
-    if (the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
+    // pro FA ukaž vždy dětské kategorie
+    if (the_org!=2 && the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
     frame.property({top: 265-height, height: height+10});
   }
   // globální procedury
