@@ -81,7 +81,7 @@
   ];
 
   // (re)definice Ezer.options
-  $title= "$demo<span $title_style>$title_flag$app_name<sub>3.2</sub> MS50+</span>";
+  $title= "$demo<span $title_style>$title_flag$app_name<sub>$ezer_version</sub> MS50+</span>";
   $add_pars= array(
     'favicon' => array("{$app}_local.png","{$app}.png","{$app}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
