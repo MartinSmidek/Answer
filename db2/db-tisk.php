@@ -811,7 +811,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
-    SELECT
+    SELECT p.zadost,p.zadost2,p.id_pobyt,
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
       o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,
@@ -983,6 +983,26 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case '_narozeniY':
         $clmn[$n][$f]= str_replace('-','/',$x->narozeni);
+        break;
+      case 'zadost':
+      case 'zadost2':
+        $clmn[$n][$f]= $x->$f ? 'x' : '';
+        break;
+      // ---------------------------------------------------------- informace z tabulky prihlaska.
+      case '^jmeno':
+        $value= '';
+        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
+        if ($vars_json) {
+          $vars_json= str_replace("\n", "\\n", $vars_json);
+          $vars= json_decode($vars_json);
+          if ($vars!==null) {
+            $ido= $x->id_osoba;
+            $value= $vars->cleni;
+            $value= $value->$ido;
+            $value= $value->jmeno??'?';
+          }
+        }
+        $clmn[$n][$f]= $value;
         break;
       default: $clmn[$n][$f]= $x->$f;
       }

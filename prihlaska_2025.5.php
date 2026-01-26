@@ -9,6 +9,7 @@
  *   8 - Šance pro manželství
  *  32 - ASC
  * 
+ * 2026-01-24 umožnění typu E pro EROP (doplňující otázky, žádosti, PDF)
  * 2026-01-19 typ má odlišnou interpretaci podle organizace - typ_akce(typs[,org])
  * 2026-01-19 cis*akce_prihl_css může obsahovat adresu odlišnou od prihlaska.org.php info->mail
  * verze 2026.5
@@ -319,6 +320,8 @@ function polozky() { // --------------------------------------------------------
           'Přejeme Vám hezký den.',
       'rozlouceni2' => 
           'Přejeme Vám příjemný pobyt.',
+      'EROP_1' => 
+          '<b>U následujících otázek žádná odpověď není předem správná nebo špatná</b>',
     ];
 
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
@@ -389,20 +392,25 @@ function polozky() { // --------------------------------------------------------
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
       'Xsouhlas'    =>[ 0,'*'.$akce->form_souhlas,'check_souhlas']],
-    typ_akce('ORJ') && ($akce->p_zadost??0) ? [
+    typ_akce('ORJE') && ($akce->p_zadost??0) ? [
       'zadost'      =>[ 0,$akce->veta_zadost,'check_sleva'],
     ] : [],
-    typ_akce('ORJ') && ($akce->p_zadost2??0) ? [
+    typ_akce('ORJE') && ($akce->p_zadost2??0) ? [
       'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
     ] : [],
-//    typ_akce('MO') && ($akce->p_strava??0) ? [ ... asi nepatří pod pobyt
-//      'Xstrava_s'   =>[ 0,'snídaně','check'],
-//      'Xstrava_o'   =>[ 0,'obědy','check'],
-//      'Xstrava_v'   =>[ 0,'večeře','check'],
-//    ] : []
+    typ_akce('E') ? [
+      'Xerop_g' =>['70/2','+ Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
+      'Xerop_1a'  =>[ 0,'Účastnil ses již setkání pro muže?','check_sleva'],
+      'Xerop_1b' =>['64/2','+ kterých akcí pro muže ses zúčastnil?','area'],
+      'Xerop_2' =>['64/4','+ Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
+      'Xerop_3' =>['64/4',"+ Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
+          ."<br>Existuje někdo nebo něco, kdo nebo co Tě k účasti vyzval(o)?",'area'],
+      'Xerop_4' =>['64/4','Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším? Pokud ano, uveď.','area'],
+      'Xerop_5' =>['64/4','+ Jakým způsobem se angažuješ v chlapském hnutí? <br>Například v místní chlapské skupině, při organizaci MROP nebo jiné akce pro muže?','area'],
+    ] : [],
   );
   $r_fld= array_merge(
     [ // položky tabulky RODINA
@@ -766,7 +774,8 @@ function formular(/*$nova=1*/) { trace();
     $new= 0;
   }
   // specifická část formuláře 
-  $form= typ_akce('MO') ? form_MO($new) : (typ_akce('R') ? form_R($new) : form_J($new));
+  $form= typ_akce('MO') ? form_MO($new) : (typ_akce('R') ? form_R($new) : (
+      typ_akce('E') ? form_E($new) : form_J($new)));
   // doplnění spodních tlačítek a souhlasu GDPR
   $red_x= 'fa fa-times fa-red';
   $red_h= 'fa fa-hourglass-half fa-red';
@@ -1015,8 +1024,9 @@ function prihlasit() { trace();
   // ------------------------------ vše zapiš a uzavři formulář závěrečnou zprávou a mailem
   db_close_pobyt($fld);
   // generování PDF s osobními a citlivými údaji pro Letní kurz
-  if (($akce->p_dokument??0) && $TEST<2) {
-    $msg= gen_html(1);
+  if (($akce->p_dokument??0)) {
+    $to_save= $TEST>1 ? 0 : 1;
+    $msg= typ_akce('M') ? gen_html_M($to_save) : gen_html_E($to_save);
     if ($TEST) display($msg);
   }
   log_write_changes(); // po zápisu do pobytu
@@ -1123,6 +1133,11 @@ function DOM_zmena_slevy($on) { // ---------------------------------------------
   global $DOM;
   $DOM->p_0_sleva_duvod= $on ? 'show' : 'hide';
 } // změna volby slevy
+function DOM_zmena_Xerop_1a($on) { // ----------------------------- změna volby byl na akci pro muže
+# volá se z read_elem při změně položky sleva_zada
+  global $DOM;
+  $DOM->p_0_Xerop_1b= $on ? 'show' : 'hide';
+} // změna volby byl na akci pro muže
 function DOM_unknown($ids,$in_function) { // chybějící id v DOM
 # pokud je to v kontrolách, tak umožni doplnit položky zobrazené jak jako text 
 # jde o: jmeno, prijmeni, rodne, narozeni
@@ -1556,7 +1571,7 @@ function form_MO($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
-    $pobyt= elem_input('p',0,['pracovni']);
+    $pobyt.= elem_input('p',0,['pracovni']);
   }
   if ($vars->form->zadost) {
     $pobyt.= elem_input('p',0,['zadost']);
@@ -1696,6 +1711,9 @@ function form_J($new) { trace();
   if ($vars->form->zadost) {
     $pobyt.= elem_input('p',0,['zadost']).'<br>';
   }
+  if ($vars->form->zadost2) {
+    $pobyt.= elem_input('p',0,['zadost2']).'<br>';
+  }
   // žádost o slevu
   if ($akce->p_sleva) {
     $pobyt.= elem_input('p',0,['sleva_zada']) . elem_input('p',0,['sleva_duvod'],1);
@@ -1706,6 +1724,50 @@ function form_J($new) { trace();
 __EOF;
   return $form;
 } // form J - základní skeleton jednotlivce
+
+function form_E($new) { trace();
+# pokud je new=1 nastaví se složky na default
+  global $vars, $akce, $TEXT;
+  if ($new) {
+    // části a počáteční nastavení formuláře
+    $vars->form= (object)[
+        'typ'=>$akce->p_typ, // E
+        'kontrola'=>[], // seznam položek s chybou
+        'pozn'=>1,
+        'souhlas'=>$akce->p_souhlas,
+        'zadost'=>$akce->p_zadost,
+        'zadost2'=>$akce->p_zadost2,
+//        'stav'=>$akce->p_akt_stav,
+//        'deti'=>$akce->p_akt_deti,
+    ];
+    log_write_changes();  // zapiš počáteční skeleton form
+  }
+  // -------------------------------------------- účastník
+  $osoba= form_solo($vars->ido);
+  // -------------------------------------------- poznámky k pobytu
+  $pobyt= '';
+  if ($vars->form->pozn) {
+    $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni',
+          "<br><br>$TEXT->EROP_1",'Xerop_1a']) . '<br><br>' 
+        . elem_input('p',0,['Xerop_1b'],1)
+        . elem_input('p',0,['Xerop_2','Xerop_3','Xerop_4','Xerop_5']);
+  }
+  if ($vars->form->zadost) {
+    $pobyt.= '<br>' . elem_input('p',0,['zadost']).'<br>';
+  }
+  if ($vars->form->zadost2) {
+    $pobyt.= elem_input('p',0,['zadost2']).'<br>';
+  }
+  // žádost o slevu
+  if ($akce->p_sleva) {
+    $pobyt.= elem_input('p',0,['sleva_zada']) . elem_input('p',0,['sleva_duvod'],1);
+  }
+  $form= <<<__EOF
+    $osoba
+    <div class='rodina'>$pobyt</div>
+__EOF;
+  return $form;
+} // form E - základní skeleton pro EROP
 
 // ============================================================================ interakce s klientem
 function hlaska($text,$continue='') { // --------------------------------- hláška
@@ -1929,6 +1991,10 @@ function read_elem($elem_ID,$val,&$errs) { // ----------------------------------
     // reakce na změnu položky sleva
     if ($t=='p' && $fld=='sleva_zada') { 
       DOM_zmena_slevy($val);
+    }
+    // reakce na změnu položky Xerop_1a
+    if ($t=='p' && $fld=='Xerop_1a') { 
+      DOM_zmena_Xerop_1a($val);
     }
   }
 } // převod do $vars, může volat DOM_zmena_*
@@ -3428,7 +3494,7 @@ function souhrn($ucel) {
   // konec: text, maily, úščastníci
   return [$html,$emails,$ucastnici];
 } // souhrn přihlášky pro kontrolu a vložení do mailu
-function gen_html($to_save=0) {
+function gen_html_M($to_save=0) {
 # vygeneruje textový tvar přihlášky, pro to_save=1 uloží do pobyt to_save=2 uloží do prihlasky
   global $ORG, $akce, $vars;
   $inits= function($table) { // --     ---------------------------------------------------------- init s
@@ -3597,7 +3663,86 @@ function gen_html($to_save=0) {
     }
   }
   return $html;
-}
+} // vytvoření PDF pro Manželská setkání / LK
+function gen_html_E($to_save=0) {
+# vygeneruje textový tvar přihlášky, pro to_save=1 uloží do pobyt to_save=2 uloží do prihlasky
+  global $akce, $vars, $TEXT;
+  $ted= date("j.n.Y H:i:s");
+  $html= '';
+  $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$akce->nazev\"</h3>";
+  $html.= "<p style=\"text-align:center;\"><i>vyplněné $ted a doplněné dříve svěřenými osobními údaji</i></p>";
+  $p= gets('p');
+  $m= gets('o',$vars->ido);
+  $udaje= [
+    ['Jméno a příjmení', "$m->jmeno $m->prijmeni"], 
+    ['Adresa',           "$m->ulice, $m->psc $m->obec"], 
+    ['Telefon',           $m->telefon ],
+    ['E-mail',            $m->email], 
+    ['Datum narozeni',    $m->narozeni],
+    ['Č. OP nebo cest. dokladu', $m->obcanka ],
+    ['Kontaktní údaje pro případ nouze', $p->Xerop_g ],
+  ];
+  $html.= "
+    <style>
+      table.prihlaska { width:100%; border-collapse: collapse; }
+      table.prihlaska td { border: 1px solid grey; }
+      table.prihlaska th { text-align:center; }
+    </style>
+    ";
+  $table_attr= "class=\"prihlaska\" cellpadding=\"7\"";
+  $td= "td colspan=\"2\"";
+  $html.= "<table $table_attr>";
+  foreach ($udaje as $u) {
+    $html.= "<tr><th>$u[0]</th><$td>$u[1]</td></tr>";
+  }
+  $html.= "</table>";
+  $html.= "<p>$TEXT->EROP_1</p>";
+  // redakce citlivých údajů
+  $udaje= [
+    ['1. Účastnil se setkání pro muže',     $p->Xerop_1a ? $p->Xerop_1b : 'ne'],
+    ['2. Proč se chceš zúčastnit ...',      $p->Xerop_2],
+    ['3. Jak ses o EROP dozvěděl ...',      $p->Xerop_2],
+    ['4. Společenství, ve kterém ...',      $p->Xerop_2],
+    ['5. Jakým způsobem se angažuješ ...',  $p->Xerop_2],
+  ];
+  $html.= "<table $table_attr>";
+  $td= "td colspan=\"2\"";
+  foreach ($udaje as $u) {
+    $html.= "<tr><th>$u[0]</th><$td>$u[1]</td></tr>";
+  }
+  $html.= "</table>";
+  // vložit přihlášku jako PDF do záložky Dokumenty daného pobytu
+  $html= strtr($html,['&quot;'=>'"',"&apos;"=>"'"]);
+  if ($to_save) {
+    global $path_files_h;
+    $foot= '';
+    if ($to_save==1) {
+      $fname= "online-prihlaska.pdf";
+      $idp= $vars->pobyt->id_pobyt;
+      $f_abs= "{$path_files_h}pobyt/{$fname}_$idp";
+      tc_html($f_abs,$html,$foot);
+      $html= "Přihláška byla vložena do záložky Dokumenty jako soubor $fname ";
+    }
+    else {
+      global $AKCE;
+      $idp= $vars->id_prihlaska;
+      $fname= "{$AKCE}_prihlaska_$idp";
+      $fdir= "{$path_files_h}prihlaska";
+      if (file_exists($fdir)) {
+        $f_abs= "$fdir/{$fname}.pdf";
+        if (file_exists($f_abs)) {
+          rename($f_abs,"$f_abs.pdf");
+        }
+        tc_html($f_abs,$html,$foot);
+        $html= "Přihláška byla skrytě vložena do ../files/(root)/prihlaska jako soubor {$fname}_$idp ";
+      }
+      else {
+        log_error("nepřístupná složka '$fdir'");
+      }
+    }
+  }
+  return $html;
+} // vytvoření PDF pro EROP
 function do_session_restart() { // ---------------------------------------------- do session_restart
   global $AKCE;
   unset($_SESSION[$AKCE]);
