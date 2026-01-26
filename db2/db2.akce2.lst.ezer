@@ -784,11 +784,6 @@ form _page [,,275,360] {
         p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
         break;
     }
-    echo(debug(p_json,'defaults')); 
-    // speciality pro ASC - program a ubytování po dnech
-    if (web_prihlaska!='prihlaska_asc') {
-      p_ubyt_prg.display(0);
-    }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
       web_online= json_encode(p_json); web_online.change();
@@ -814,6 +809,10 @@ form _page [,,275,360] {
     copy_by_name(p_json,form);
     p_href= ''; 
     QR= "<p style='text-align:center'>(QR kód se zobrazuje až je povoleno online přihlašování)</p>";
+    // speciality pro ASC - program a ubytování po dnech
+    if (web_prihlaska!='prihlaska_asc') {
+      p_ubyt_prg.display(0);
+    }
     if (p_enable) {
       mode= php.select1('ikona','_cis',`druh='akce_prihl_mode' AND data=${p_mode.key()}`);
       ret= php.akce_prihlaska(page.a_akce,web_prihlaska,mode);
