@@ -476,11 +476,11 @@ function polozky() { // --------------------------------------------------------
 //      'Xpecuje_o' =>[12,'* bude pečovat o ...','','p'],
       'Xpovaha'    =>['70/2','* popiš svoji povahu','area','ab'],
       'Xmanzelstvi'=>['70/2','* vyjádři se o vašem manželství','area','ab'],
-      'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
       'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : [],
     typ_akce('M',[1,8]) ? [
       'Xocekavani' =>['70/2','* co očekáváš od účasti na MS','area','ab'],
+      'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
     ] : [],
     typ_akce('MO') && ($akce->p_strava??0) ? [
       'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
@@ -1161,9 +1161,8 @@ function form_manzele() { trace(); // ------------------------------------------
         $vlastnosti= typ_akce('M') 
           ? elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
             'aktivita','cirkev','Xpovaha','Xmanzelstvi']) : '';
-        $vlastnosti.= typ_akce('M',[2]) 
-          ? elem_input('o',$id,['Xrozveden']) 
-          : elem_input('o',$id,['Xocekavani','Xrozveden']);
+        $vlastnosti.= typ_akce('M',[1,8]) 
+          ? elem_input('o',$id,['Xocekavani','Xrozveden']) : '';
         $upozorneni= $akce->p_upozorneni
           ? "<p class='souhlas'>"
             . "<input type='checkbox' id='o_{$id}_Xupozorneni' value='' onchange='elem_changed(this);' "
@@ -2015,7 +2014,8 @@ function page() {
   $info= $DOM_default->info=='hide' ? '' : $DOM_default->info;
   // nalezení CSS, IMG, ... podle p_css nebo default
   $p_css= $akce->p_css??'?';
-  list($css,$logo,$logo2)= select_2('hodnota,ikona,barva','_cis',"druh='akce_prihl_css' AND data='$p_css' ");    
+  list($css,$loga)= select_2('hodnota,ikona','_cis',"druh='akce_prihl_css' AND data='$p_css' ");    
+  list($logo,$logo2)= explode(';',"$loga;");
   $css= $css??'akce';
   $logo= $logo??'husy_ymca.png';
   $logo2= $logo2 ? "<img class='logo2' src='/img/$logo2' alt=''>" : '';
@@ -3496,7 +3496,7 @@ function souhrn($ucel) {
 } // souhrn přihlášky pro kontrolu a vložení do mailu
 function gen_html_M($to_save=0) {
 # vygeneruje textový tvar přihlášky, pro to_save=1 uloží do pobyt to_save=2 uloží do prihlasky
-  global $ORG, $akce, $vars;
+  global $ORG, $akce, $vars, $o_fld;
   $inits= function($table) { // --     ---------------------------------------------------------- init s
   # vrátí iniciální hodnotu všech položek jako objekt
     global $p_fld, $r_fld, $o_fld, $options;
@@ -3610,7 +3610,7 @@ function gen_html_M($to_save=0) {
     ['Zájmy; znalost jazyků',"$m->zajmy$jm", "$z->zajmy$jz"],
     ['Popiš svoji povahu',    $m->Xpovaha, $z->Xpovaha],
     ['Vyjádři se o vašem manželství', $m->Xmanzelstvi, $z->Xmanzelstvi],
-    isset($m->Xocekavani)
+    isset($o_fld->Xocekavani)
       ? ['Co od účasti očekávám', $m->Xocekavani, $z->Xocekavani] : null,
     ['Příslušnost k církvi',  $m->cirkev, $z->cirkev],
     ['Aktivita v církvi, společnosti', $m->aktivita, $z->aktivita],
@@ -3623,11 +3623,13 @@ function gen_html_M($to_save=0) {
       $html.= "<tr><th>$u[0]</th><$td>$u[1]</td><$td>$u[2]</td></tr>";
   }
   $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
+  $if_rozvody= isset($o_fld->Xrozveden)
+      ? "<td>Předchozí manželství? "
+        . "<br>muž: ".($m->Xrozveden?:'-').", žena: ".($z->Xrozveden?:'-')."</td>" : '';
   $html.= "<tr>
     <th>Rodinné údaje</th><td>SPZ auta na kurzu: <br>$r->spz</td>
     <td>Datum svatby: $r->datsvatba</td>
-    <td>Předchozí manželství? <br>muž: "
-      .($m->Xrozveden?:'-').", žena: ".($z->Xrozveden?:'-')."</td>
+    $if_rozvody
     <td>$ucasti</td></tr>";
   $html.= "</table>";
   if ($akce->p_upozorneni)
