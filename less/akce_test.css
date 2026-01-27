@@ -27,9 +27,16 @@ html body div.wrapper header div.header {
 html body div.wrapper header div.header a.logo {
   position: absolute;
   margin-top: 15px;
+  padding-left: 15px;
 }
 html body div.wrapper header div.header a.logo img {
   max-height: 50px;
+}
+html body div.wrapper header div.header img.logo2 {
+  margin-top: 15px;
+  max-height: 50px;
+  float: right;
+  padding-right: 30px;
 }
 html body div.wrapper header div.header div.user {
   position: relative;

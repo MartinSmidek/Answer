@@ -811,7 +811,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
-    SELECT
+    SELECT p.zadost,p.zadost2,p.id_pobyt,
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
       o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,
@@ -983,6 +983,10 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case '_narozeniY':
         $clmn[$n][$f]= str_replace('-','/',$x->narozeni);
+        break;
+      case 'zadost':
+      case 'zadost2':
+        $clmn[$n][$f]= $x->$f ? 'x' : '';
         break;
       default: $clmn[$n][$f]= $x->$f;
       }

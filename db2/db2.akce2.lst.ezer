@@ -438,8 +438,9 @@ form _page [,,275,360] {
   }
   check [213,157,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
   check [213,177,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
-  check mrop [300,157,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
-  check firm [300,177,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
+  check mrop [310,157,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
+  check firm [310,177,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
+  check erop [310,197,60,] { tag:'cor', title:'erop', data:akce.erop, title:'erop', skill:'faan|faa:m' }
   select [367,167,89,] { tag:'cor', title:'^statistika muži', type:'map0', data:akce.statistika,
     options:ms_akce_stat.zkratka, format:'n', skill:'f|f' }
   select druh [71,169,139,] { tag:'cor,!', title:'typ akce *', type:'map', data:akce.druh,
@@ -462,7 +463,7 @@ form _page [,,275,360] {
     `)
   }}
   // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
-  check soubezna [213,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faan',
+  check soubezna [213,197,96,] { tag:'cor', title:'souběžná akce', skill:'faa|faan',
     func onchange() {
       if (info.sey.id_hlavni) {
         if (confirm("opravdu zrušit souběh této akce?"))
@@ -736,18 +737,21 @@ form _page [,,275,360] {
   # ------------------------==> . online přihlášky
   var p_json: object, // dekódovaný obsah akce.web_online
       p_tag: text     // tag přihlášky - O:obnovy, M:letní kurz, R: rodiče s dětmi, J: jednotlivce
-  func p_show() { var ch:ezer, akci:text, tp_default:text, ret: object
+  func p_show() { var ch:ezer, akci:text, tp_default:text, ret: object, mode:text
     p_tag= php.select1('barva','_cis',`druh='ms_akce_typ' AND data=${druh.key()}`);
-    if (!p_tag) return;
+    p_no_title.display(0);
+    if (!p_tag) {
+      p_no_title.display(1);
+      return;
+    }
     form.display(1,p_tag);
     if (has_skill('m')) {
-      p_TEST.enable(1); p_MAIL.enable(1); web_online.enable(1); web_prihlaska.enable(1);
+      p_mode.enable(1); web_online.enable(1); web_prihlaska.enable(1);
     }
     // defaultní hodnoty - pokud je web-online prázdný, zapíšou se
     p_json= {};
     for (ch of form.tagged('pri')) {
-//      if (js.get_type(ch)=='check') 
-      if (!js.get_type(ch)=='label') 
+      if (!eq(js.get_type(ch),'label','button') && &ch!=&web_online) 
         ch.init();
     }
     akci= '???';
@@ -759,6 +763,7 @@ form _page [,,275,360] {
       case 'M': akci= 'Letní kurz MS'; 
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; 
         p_json.p_upozorneni= 1; p_json.p_dokument= 1; 
+        p_json.p_diety= {};
         break;
       case 'O': akci= 'obnovu MS'; 
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; p_json.p_obnova= 1; 
@@ -774,16 +779,19 @@ form _page [,,275,360] {
         p_json.tp_pracovni= "poznámka pro pořadatele"; 
         p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
         break;
-    }
-    // speciality pro ASC - program a ubytování po dnech
-    if (web_prihlaska!='prihlaska_asc') {
-      p_ubyt_prg.display(0);
+      case 'E': akci= 'EROP'; 
+        p_json.tp_pracovni= "poznámka pro pořadatele"; 
+        p_json.p_rod_adresa= 0; p_json.p_oso_adresa= 1; p_json.p_deti= 0; 
+        break;
     }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
       web_online= json_encode(p_json); web_online.change();
     }
     p_json= json_decode(web_online);
+    p_diety= p_json.p_diety;
+    p_diety_but.set_attrib('help',p_diety);
+//    p_diety= p_json.p_diety ? json_encode(p_json.p_diety) : '';
     if (!p_json.veta_potvrzeni) {
       p_json.veta_potvrzeni= eq(p_tag,'M','O')
         ? "Zaslané údaje zpracujeme a do týdne vám pošleme odpověď." 
@@ -794,12 +802,21 @@ form _page [,,275,360] {
       web_prihlaska.change();
       p_json.web_prihlaska= web_prihlaska;
     }
+    if (!p_json.p_mode) {
+      p_mode.key(1); 
+      p_mode.change();
+    }
     copy_by_name(p_json,form);
     p_href= ''; 
     QR= "<p style='text-align:center'>(QR kód se zobrazuje až je povoleno online přihlašování)</p>";
+    // speciality pro ASC - program a ubytování po dnech
+    if (web_prihlaska!='prihlaska_asc') {
+      p_ubyt_prg.display(0);
+    }
     if (p_enable) {
-      ret= php.akce_prihlaska(page.a_akce,web_prihlaska,
-          conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0'));
+      mode= php.select1('ikona','_cis',`druh='akce_prihl_mode' AND data=${p_mode.key()}`);
+      ret= php.akce_prihlaska(page.a_akce,web_prihlaska,mode);
+//          conc(p_TEST?`&test=${p_json.p_TEST}`:'',p_MAIL?'':'&mail=0'));
       p_href= ret.link;
       // zobrazení QR kódu
       QR= php.akce_qr_prihlasky(page.a_akce,ret.url);
@@ -808,24 +825,23 @@ form _page [,,275,360] {
     if (has_skill('yaa+|yaaw'))         p_enable= xp_enable; // = web_prihlasky
     if (has_skill('yaa|yaaw;faa|faaw')) p_pozde= xp_pozde;  // = web_obsazeno
   }
-  label p_enable_title [10,28,250,16] { tag:'pri,M,O,R,J', css:'ae_parm', 
+  label p_no_title [10,28,250,16] { tag:'pri', title:'tento typ akce nemá možnost online přihlášky'}
+  label p_enable_title [10,23,250,16] { tag:'pri,M,O,R,J,E', css:'ae_parm', 
       style:'z-index:2;padding: 7px 5px 3px 24px;color:white;font-weight:bold' }
-  check p_enable [13,30,10,] { tag:'pri,M,O,R,J', title:'', format:'n', value:'0', 
+  check p_enable [13,25,10,] { tag:'pri,M,O,R,J,E', title:'', format:'n', value:'0', 
       style:'padding-bottom:2px;z-index:2'}  
-  label p_href [156,37,300,20] { tag:'pri,M,O,R,J', style:'text-align:right' }
-  select p_css [392,52,68,] {  tag:'pri,M,O,R,J', type:'map', 
+  label p_href [14,55,300,20] { tag:'pri,M,O,R,J,E' }
+  select p_css [391,60,68,] {  tag:'pri,M,O,R,J,E', type:'map', 
       help:'výběr loga, (c), zabarvení)', options:akce_prihl_css.zkratka }
-  check p_TEST [294,50,50,] { tag:'pri,M,O,R,J', title:'TEST', value:'0', format:'dn',
-      help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' }
-  check p_MAIL [343,50,50,] { tag:'pri,M,O,R,J', title:'MAIL', value:'1', format:'dn', 
-      help:'MAIL=1 (dflt) posílá maily, MAIL=0 je pouze zobrazuje (pro chráněné IP adresy)' }
+  select p_mode [339,37,120,] {  tag:'pri,M,O,R,J,E', type:'map', 
+      help:'ostré nebo testovací přihlašování', options:akce_prihl_mode.zkratka }
 # ==> .. QR kód přihlášky
-  label [340,160,200,30] { tag:'pri,M,O,R,J', title:"QR adresy přihlášky<br>(klikni pro stažení)"  }
-  label QR [335,185,80,80] { tag:'pri,M,O,R,J' }
+  label [340,160,200,30] { tag:'pri,M,O,R,J,E', title:"QR adresy přihlášky<br>(klikni pro stažení)"  }
+  label QR [335,185,80,80] { tag:'pri,M,O,R,J,E' }
   # -----------==> .. zobrazení varianty přihlášky podle p_tag
-  check p_pozde [13,71,300,] { tag:'pri,M,O,R,J', title:'od teď přihlášené brát jen jako náhradníky'}
-  check p_sleva [250,71,241,] { tag:'pri,M,O,R,J', title:'žádost o slevu'}
-  edit tp_pracovni [13,110,438,40] { tag:'pri,M,O,R,J', title:"^Nápovědný text nad poznámkou k pobytu na akci (hvězdičkou učiníte poznámku povinnou)"}
+  check p_pozde [13,71,231,] { tag:'pri,M,O,R,J,E', title:'od teď přihlášené brát jen jako náhradníky'}
+  check p_sleva [250,71,124,] { tag:'pri,M,O,R,J,E', title:'žádost o slevu'}
+  edit tp_pracovni [13,110,438,40] { tag:'pri,M,O,R,J,E', title:"^Nápovědný text nad poznámkou k pobytu na akci (hvězdičkou učiníte poznámku povinnou)"}
   label [13,160,131,] { tag:'pri,M,O', title:'<b>rodinné přihlášení</b>'}
   label [13,160,131,] { tag:'pri,R', title:'<b>přihlášení rodiče s dětmi</b>'}
     check p_deti [30,180,78,] { tag:'pri,M,O,R', title:'včetně dětí'} 
@@ -833,57 +849,67 @@ form _page [,,275,360] {
     check p_pecouni [30,200,258,] { tag:'pri,M,O', title:'umožnit vložení osobních pečovatelů '} 
     check p_rod_adresa [30,220,253,] { tag:'pri,M,O,R', title:'umožnit kontrolu a úpravu rodinné adresy'}
   label [13,250,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
-  label [13,250,400,] { tag:'pri,J', title:'<b>přihlášení jednotlivce</b>'}
-    check p_obcanky [30,270,170,] { tag:'pri,M,O,R,J', title:'číslo obč. průkazu nebo pasu'}
+  label [13,250,400,] { tag:'pri,J,E', title:'<b>přihlášení jednotlivce</b>'}
+    check p_obcanky [30,270,170,] { tag:'pri,M,O,R,J,E', title:'číslo obč. průkazu nebo pasu'}
     check p_akt_stav [200,270,78,] { tag:'pri,J', title:'? rod. stav'}
     check p_akt_deti [279,270,51,] { tag:'pri,J', title:'? dětí'}
-    check p_kontakt [30,290,151,] { tag:'pri,M,O,R,J', title:'osobní email a telefon'}
-    check p_oso_adresa [201,290,246,] { tag:'pri,J', title:'osobní adresa'}
-  label [13,330,207,20] { tag:'pri,M,O,R,J' title:'<b>Registrace a OOÚ</b>' }
-    check p_registrace [30,350,206,] { tag:'pri,M,O,R,J', title:'povolit registraci s novým mailem'}
-    check p_souhlas [250,350,194,] { tag:'pri,M,O,R,J', title:'vyžadovat souhlas (GDPR)'}
+    check p_kontakt [30,290,151,] { tag:'pri,M,O,R,J,E', title:'osobní email a telefon'}
+    check p_oso_adresa [201,290,246,] { tag:'pri,J,E', title:'osobní adresa'}
+  label [13,330,207,20] { tag:'pri,M,O,R,J,E' title:'<b>Registrace a OOÚ</b>' }
+    check p_registrace [30,350,206,] { tag:'pri,M,O,R,J,E', title:'povolit registraci s novým mailem'}
+    check p_souhlas [250,350,194,] { tag:'pri,M,O,R,J,E', title:'vyžadovat souhlas (GDPR)'}
+  label [13,390,151,20] { tag:'pri,E' title:'<b>Nastavení pro EROP</b>' }
   label [13,390,151,20] { tag:'pri,M,O' title:'<b>Nastavení pro akce MS</b>' }
-    check p_strava [30,405,339,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
-    field p_detska_od [251,407,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
-    field p_detska_do [312,407,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+    check p_strava [30,426,218,] { tag:'pri,M,O', title:'MS: specifikace stravy,'}
+    field p_detska_od [251,427,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
+    field p_detska_do [312,427,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
+    field p_diety { value:'' }
+    button p_diety_but [360,428,,] { tag:'pri,M,O', title:'možné diety' 
+      func onclick() { 
+        p_diety= prompt2(`zapiš možné diety poskytnuté mimo normální stravu ve tvaru 
+              zkratka:název (zkratku na 2 velká písmena), více možných diet odděl středníkem. Například 
+              <br>BL:bezlepková;BM:bezmasá`,p_diety);
+//        this.set_attrib('help',p_diety);
+    }}
 //  label [13,390,200,20] { tag:'pri,J' title:'<b>Nastavení pro akce jednotlivců</b>' }
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
   label [13,390,200,20] { tag:'pri,R' title:'<b>Nastavení pro rodinné akce</b>' }
     check p_reg_single [30,410,350,] { tag:'pri,R', title:'umožnit single registraci, vyžádat osobní adresu místo rodinné'}
     check p_ubyt_prg [30,437,370,] { tag:'pri,R', title:'umožnit nastavit účast na programu a ubytování po jednotlivých dnech'}
-    check p_zadost [30,465,108,] { tag:'pri,O,R,J', title:'umožnit 1.žádost: '}
-    check p_zadost2 [30,485,109,] { tag:'pri,O,R,J', title:'umožnit 2.žádost: '}
-    field veta_zadost [147,466,297,] { tag:'pri,O,R,J', help:' [ ] popis 1.žádosti' }
-    field veta_zadost2 [147,486,297,] { tag:'pri,O,R,J', help:' [ ] text 2.žádosti' }
-  field p_nocleh [173,427,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
-    label [217,432,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:zem -:mimo'}
-    check p_obnova [30,445,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
-    check p_upozorneni [30,450,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
-    check p_dokument [30,470,400,] { tag:'pri,M', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu'} 
-  edit veta_potvrzeni [13,525,438,35] { tag:'pri,M,O,R,J', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
+    check p_zadost [30,467,108,] { tag:'pri,O,R,J,E', title:'umožnit 1.žádost: '}
+    check p_zadost2 [30,488,109,] { tag:'pri,O,R,J,E', title:'umožnit 2.žádost: '}
+    field veta_zadost [147,468,297,] { tag:'pri,O,R,J,E', help:' [ ] popis 1.žádosti' }
+    field veta_zadost2 [147,489,297,] { tag:'pri,O,R,J,E', help:' [ ] text 2.žádosti' }
+  field p_nocleh [173,447,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
+    label [217,453,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:bez -:mimo'}
+    check p_obnova [30,405,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
+    check p_upozorneni [30,471,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
+    check p_dokument [30,405,400,] { tag:'pri,M,E', title:'vytvořit PDF přihlášky a uložit jako dokument k pobytu'} 
+  edit veta_potvrzeni [13,525,438,35] { tag:'pri,M,O,R,J,E', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
   const prihl_top= 571
-  label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J', css:'ae_parm', style:'z-index:1', skill:'yo' }
-  button [19,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
+  label  [13,prihl_top,160,30] { tag:'pri,M,O,R,J,E', css:'ae_parm', style:'z-index:1', skill:'yo' }
+  button [19,prihl_top+6,,] { tag:'pri,M,O,R,J,E', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { 
       echo(xp_pozde);
       akce_zpet(); p_show(); 
+      akce_lock('off'); 
     }
   }
-  button [65,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
+  button [65,prihl_top+6,,] { tag:'pri,M,O,R,J,E', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() { onclick_ulozit() }
-    func onclick_ulozit() { var elem:ezer, typ:text
+    func onclick_ulozit() { var elem:ezer, typ:text, js_diety:text, diety:object
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
         return;
       }
       elseif (p_strava && ma_cenik_verze!=2) {
-        alert("specifikace stravy v online přihlášce vyžaduje ceník verze 2");
-        return;
+        warning("je nastavena specifikace stravy a není zvolen ceník verze 2 - nebudou dostupné ceny");
       }
       // uložení změn
-      p_json= {p_typ:p_tag}; // základní typ: M,O,R,J
+      p_json= {p_typ:p_tag}; // základní typ: M,O,R,J,E
+      p_json.p_diety= p_diety; 
       for (elem of form.tagged(p_tag)) {
         typ= js.get_type(elem);
         if (eq(typ,'check','field')) {
@@ -897,30 +923,31 @@ form _page [,,275,360] {
       p_json.veta_potvrzeni= veta_potvrzeni;
       p_json.veta_zadost= p_zadost ? veta_zadost : '';
       p_json.veta_zadost2= p_zadost2 ? veta_zadost2 : '';
-//      echo(debug(p_json));
+      echo(debug(p_json));
       if (form.key()) {
         web_online= json_encode(p_json); web_online.change();
         if (p_enable.changed()) { 
-//          xp_enable= p_enable; xp_enable.change(); 
           if (has_skill('yaa+|yaaw')) { xp_enable= p_enable; xp_enable.change(); }
         }
         if (p_pozde.changed()) { xp_pozde= p_pozde; xp_pozde.change(); }
-        form.save(); form.load(); p_show();
+        form.save(); 
+        form.load(); 
+        p_show();
       }
       akce_lock('off'); 
   }}
-  button [116,prihl_top+6,,] { tag:'pri,M,O,R,J', 
+  button [116,prihl_top+6,,] { tag:'pri,M,O,R,J,E', 
     title:"[fa-question] <a href='https://lite.evernote.com/note/a7d25a1b-835c-ebb6-d7c3-f655a1a2f9d1'
       style='text-decoration:none' target='web'>Popis </a>" }
-  button [200,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'Přehled nedokončených ...', skill:'yo|yo'
+  button [200,prihl_top+6,,] { tag:'pri,M,O,R,J,E', title:'Přehled nedokončených ...', skill:'yo|yo'
     func onclick() { PRIHLASKY.prehled(0) }
   }
-  button [360,prihl_top+6,,] { tag:'pri,M,O,R,J', title:'... dokončených', skill:'yo|yo'
+  button [360,prihl_top+6,,] { tag:'pri,M,O,R,J,E', title:'... dokončených', skill:'yo|yo'
     func onclick() { PRIHLASKY.prehled(1) }
   }
   // ruční změna JSON
-  edit web_online [13,prihl_top+63,438,60] { tag:'pri,M,O,R,J', title:'^JSON popis přihlášky', data:akce.web_online, format:'dt'}
-  field web_prihlaska [338,prihl_top+32,112,18] { tag:'pri,M,O,R,J', title:'PHP přihlášky', data:akce.web_prihlaska, format:'d'}
+  edit web_online [13,prihl_top+63,438,60] { tag:'pri,M,O,R,J,E', title:'^JSON popis přihlášky', data:akce.web_online, format:'dt'}
+  field web_prihlaska [338,prihl_top+32,112,18] { tag:'pri,M,O,R,J,E', title:'PHP přihlášky', data:akce.web_prihlaska, format:'d'}
   # ------------------------==> . ceník
   func c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
     //                       lze měnit sloupce od-do za dph
@@ -1521,3 +1548,4 @@ map ms_akce_stat:   table _cis {where:"druh='ms_akce_stat'", order:'poradi', key
 map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}
 map akce_tym:      table _user {where:"skills REGEXP '(\\s|^)(t|T)(\\s|$)'", order:'surname', key_id:'id_user'}
 map akce_prihl_css: table _cis {where:"druh='akce_prihl_css'", order:'poradi', key_id:'data'}
+map akce_prihl_mode: table _cis {where:"druh='akce_prihl_mode'", order:'poradi', key_id:'data'}
