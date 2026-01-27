@@ -323,6 +323,8 @@ function polozky() { // --------------------------------------------------------
           'Přejeme Vám příjemný pobyt.',
       'EROP_1' => 
           '<b>U následujících otázek žádná odpověď není předem správná nebo špatná</b>',
+      'EROP_2' => 
+          '<b>Vítej znovu na EROPu jako navracející se starší!</b>',
     ];
 
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
@@ -352,6 +354,7 @@ function polozky() { // --------------------------------------------------------
       'Xvps'      => [''=>'něco prosím vyberte',1=>"počítáme se službou $VPS",
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [0=>'',1=>'celá',2=>'poloviční'], // ['','C','P'] ... 0 může být jen pro Familia
+      'Xtricko'   => [0=>'',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'],
       'Xdieta'    => [1=>'bez diety'],  // ['-','BL']
       'Xdieta_abbr' => [1=>'-'],  // zkratky diet
       // texty musí mít stejný význam jako v prihl_show_2025
@@ -384,8 +387,11 @@ function polozky() { // --------------------------------------------------------
   // seznam položek, které ovládají zviditelnění jiné položky
   $controling= [
     'p' => [
-      'Xerop_ha' => 'Xerop_hb',  // tričko? => velikost
-      'Xerop_1a' => 'Xerop_1b'   // účast na nějakém setkání? => popis setkání
+      'XtrickoQ' => 'Xtricko',    // tričko? => velikost
+      'XdietaQ'  => 'Xdieta',     // dieta? => jaká ...
+      'XakceQ'   => 'Xakce',      // účast na akcích? => jakých ...
+      'XspolcaQ' => 'Xspolca',    // společenství? =>jaká ...
+      'XzapojenQ'=> 'Xzapojen',   // zapojen? =>jak ...
     ]
   ];
   // definice obsahuje:  položka => [ délka , popis , formát, u osob možné role, role u kterých je * nepovinná ]
@@ -411,15 +417,19 @@ function polozky() { // --------------------------------------------------------
     ] : [],
     typ_akce('E') ? [
       'Xerop_g' =>['70/2','+ Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
-      'Xerop_ha' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check'],
-      'Xerop_hb' =>[10,'* Napiš svoji S/M/L/XL/XXL',''],
-      'Xerop_1a' =>[ 0,'Účastnil ses již setkání pro muže?','check'],
-      'Xerop_1b' =>['64/2','+ kterých akcí pro muže ses zúčastnil?','area'],
-      'Xerop_2' =>['64/4','+ Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
-      'Xerop_3' =>['64/4',"+ Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
+      'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check'],
+      'Xtricko'  =>[10,'* Vyber velikost','select'],
+      'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check'],
+      'Xdieta'   =>[10,'Nabízené možnosti','select'],
+      'XakceQ'   =>[ 0,'Účastnil ses již nějakých setkání pro muže?','check'],
+      'Xakce'    =>['64/2','+ napiš kterých akcí','area'],
+      'Xerop_2'  =>['64/4','+ Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
+      'Xerop_3'  =>['64/4',"+ Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
           ."<br>Existuje někdo nebo něco, kdo nebo co Tě k účasti vyzval(o)?",'area'],
-      'Xerop_4' =>['64/4','Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším? Pokud ano, uveď.','area'],
-      'Xerop_5' =>['64/4','* Jakým způsobem se angažuješ v chlapském hnutí? <br>Například v místní chlapské skupině, při organizaci MROP nebo jiné akce pro muže?','area'],
+      'XspolcaQ' =>[0,'Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším?','check'],
+      'Xspolca'  =>['64/4','Popiš jakých.','area'],
+      'XzapojenQ'=>[0,'Jsi nějak zapojen do chlapského hnutí (v místní skupině, v organizaci akce, ..)?','check'],
+      'Xzapojen' =>['64/4','+ Napiš kde ... ','area'],
     ] : []
   );
   $r_fld= array_merge(
@@ -1748,16 +1758,29 @@ function form_E($new) { trace();
   }
   // -------------------------------------------- účastník
   $osoba= form_solo($vars->ido);
+  $vars->kmet= select1_2('COUNT(*)',
+      "pobyt JOIN akce ON id_akce=id_duakce JOIN spolu USING (id_pobyt)",
+      "erop=1 && id_osoba=$vars->ido && funkce IN (0,12,3,4,5,12)");
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
-  if ($vars->form->pozn) {
-    $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni','Xerop_ha'])
-        . elem_input('p',0,['Xerop_hb'],1) . '<br>' 
-        . "<p>$TEXT->EROP_1</p>"
-        . elem_text_or_input('p',0,['Xerop_1a']) . '<br>' 
-        . elem_input('p',0,['Xerop_1b'],1)
-        . elem_input('p',0,['Xerop_2','Xerop_3','Xerop_4','Xerop_5']);
+  
+  $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni'])
+      . elem_input('p',0,['XtrickoQ']) . elem_input('p',0,['Xtricko'],1) . '<br>' 
+      . elem_input('p',0,['XdietaQ']) . elem_input('p',0,['Xdieta'],1);
+
+  if ($vars->kmet) {
+    $pobyt.= "<p>$TEXT->EROP_2</p>"
+        . elem_input('p',0,['XzapojenQ']) . elem_input('p',0,['Xzapojen'],1);
   }
+  else {
+    $pobyt.= "<p>$TEXT->EROP_1</p>"
+        . elem_text_or_input('p',0,['XakceQ']) . '<br>' 
+        . elem_input('p',0,['Xakce'],1)
+        . elem_input('p',0,['Xerop_2','Xerop_3'])
+        . elem_input('p',0,['XspolcaQ']) . elem_input('p',0,['Xspolca'],1) . '<br>' 
+        . elem_input('p',0,['XzapojenQ']) . elem_input('p',0,['Xzapojen'],1);
+  }
+  
   if ($vars->form->zadost) {
     $pobyt.= '<br>' . elem_input('p',0,['zadost']).'<br>';
   }
@@ -3364,7 +3387,7 @@ function souhrn($ucel) {
   // akce
   $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo";
   // účastníci
-  $ucastnici= ''; $del= ''; $jidlo= ''; $vps= ''; $vzkazy= ''; $pecovani= ''; $pece= [];
+  $ucastnici= ''; $del= ''; $jidlo= ''; $vps= ''; $pecovani= ''; $pece= [];
   $emails= [$vars->email]; 
   foreach (array_keys($vars->cleni) as $id) {
     $spolu= get('o','spolu',$id);
@@ -3463,6 +3486,7 @@ function souhrn($ucel) {
     $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu $VPS.</p>" : '';
   }
   // případné žádosti, poznámky a žádosti o slevu
+  $vzkazy= ''; 
   $pozn= get('p','pracovni');
   if ($akce->p_zadost && get('p','zadost')) {
     $pozn= $pozn ? "$akce->veta_zadost, $pozn" : $akce->veta_zadost;
@@ -3471,9 +3495,14 @@ function souhrn($ucel) {
     $pozn= $pozn ? "$akce->veta_zadost2, $pozn" : $akce->veta_zadost2;
   }
   // přípony plurál/singulár
-  $eme= $ucel=='kontrola'? (typ_akce('J') ? 'i' : 'eme') : 'ete'; 
-  $ame= $ucel=='kontrola'? (typ_akce('J') ? 'ám' : 'áme') : 'áte'; 
-  // přípony podle my-vy
+  $eme= $ucel=='kontrola'? (typ_akce('JE') ? 'i' : 'eme') : 'ete'; 
+  $ame= $ucel=='kontrola'? (typ_akce('JE') ? 'ám' : 'áme') : 'áte'; 
+  // kopie údajů pro EROP
+  if (typ_akce('E')) {
+    $p= gets('p');
+    $vzkazy.= $p->XtrickoQ ? " Objednáv$ame tričko velikosti $p->Xtricko <br>" : '';
+    $vzkazy.= $p->XdietaQ ? " Potřebuj$eme dietu: $p->Xdieta <br>" : '';
+  }
   $vzkazy.= $pozn ? "<p>Organizátorům vzkazuj$eme: $pozn</p>" : '';
   if (get('p','sleva_zada')) {
     $vzkazy.= "<p>Žád$ame o slevu, protože: ".get('p','sleva_duvod').'</p>';
@@ -3694,12 +3723,16 @@ function gen_html_E($to_save=0) {
     ['Telefon',           $m->telefon ],
     ['E-mail',            $m->email], 
     ['Datum narozeni',    $m->narozeni],
-    ['Č. OP nebo cest. dokladu', $m->obcanka ],
+    $akce->p_obcanky ? ['Č. OP nebo cest. dokladu', $m->obcanka ] : [],
     ['Kontaktní údaje pro případ nouze', $p->Xerop_g ],
+    ['Tričko', $p->XtrickoQ ? $p->Xtricko : '-' ],
+    ['Dieta', $p->XdietaQ ? $p->Xdieta : '-' ],
+//    ['Dieta', $p->XdietaQ ? $options['Xdieta'][$p->Xdieta] : '-' ],
   ];
+  $width= $to_save ? 'width:100%;' : '';
   $html.= "
     <style>
-      table.prihlaska { width:100%; border-collapse: collapse; }
+      table.prihlaska { $width border-collapse: collapse; }
       table.prihlaska td { border: 1px solid grey; }
       table.prihlaska th { text-align:center; }
     </style>
@@ -3708,18 +3741,28 @@ function gen_html_E($to_save=0) {
   $td= "td colspan=\"2\"";
   $html.= "<table $table_attr>";
   foreach ($udaje as $u) {
-    $html.= "<tr><th>$u[0]</th><$td>$u[1]</td></tr>";
+    if ($u) 
+      $html.= "<tr><th>$u[0]</th><$td>$u[1]</td></tr>";
   }
   $html.= "</table>";
-  $html.= "<p>$TEXT->EROP_1</p>";
-  // redakce citlivých údajů
-  $udaje= [
-    ['1. Účastnil se setkání pro muže',     $p->Xerop_1a ? $p->Xerop_1b : 'ne'],
-    ['2. Proč se chceš zúčastnit ...',      $p->Xerop_2],
-    ['3. Jak ses o EROP dozvěděl ...',      $p->Xerop_2],
-    ['4. Společenství, ve kterém ...',      $p->Xerop_2],
-    ['5. Jakým způsobem se angažuješ ...',  $p->Xerop_2],
-  ];
+  if ($vars->kmet) {
+    $html.= "<p>$TEXT->EROP_2</p>";
+    // redakce citlivých údajů
+    $udaje= [
+      ['5. Jakým způsobem se angažuješ ...',  $p->XzapojenQ ? $p->Xzapojen  : '-'],
+    ];
+  }
+  else {
+    $html.= "<p>$TEXT->EROP_1</p>";
+    // redakce citlivých údajů
+    $udaje= [
+      ['1. Účastnil se setkání pro muže',     $p->XakceQ ? $p->Xakce : '-'],
+      ['2. Proč se chceš zúčastnit ...',      $p->Xerop_2],
+      ['3. Jak ses o EROP dozvěděl ...',      $p->Xerop_3],
+      ['4. Existuje společenství, ve ...',    $p->XspolcaQ ? $p->Xspolca : '-'],
+      ['5. Jakým způsobem se angažuješ ...',  $p->XzapojenQ ? $p->Xzapojen  : '-'],
+    ];
+  }
   $html.= "<table $table_attr>";
   $td= "td colspan=\"2\"";
   foreach ($udaje as $u) {

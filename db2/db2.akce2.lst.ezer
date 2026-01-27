@@ -864,7 +864,7 @@ form _page [,,275,360] {
     field p_detska_od [251,427,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,427,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
     field p_diety { value:'' }
-    button p_diety_but [360,428,,] { tag:'pri,M,O', title:'možné diety' 
+    button p_diety_but [360,428,,] { tag:'pri,M,O,E', title:'možné diety' 
       func onclick() { 
         p_diety= prompt2(`zapiš možné diety poskytnuté mimo normální stravu ve tvaru 
               zkratka:název (zkratku na 2 velká písmena), více možných diet odděl středníkem. Například 
