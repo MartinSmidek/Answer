@@ -385,6 +385,7 @@ function polozky() { // --------------------------------------------------------
       'vzdelani'  => map_cis_2('ms_akce_vzdelani','ikona'),
     ];
   // seznam položek, které ovládají zviditelnění jiné položky
+  // [ p|r|o => [ check => text|area, ...], ...] 
   $controling= [
     'p' => [
       'XtrickoQ' => 'Xtricko',    // tričko? => velikost
