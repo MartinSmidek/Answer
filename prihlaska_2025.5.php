@@ -138,6 +138,7 @@ try {
   $TEST= $vars->TEST;
   $MAIL= $vars->MAIL;
   $ORG=  $vars->ORG;
+  $VPS= in_array($ORG->code,[1,8]) ? 'VPS' : 'PPS';
   $ANSWER= $vars->ANSWER; // na startu bylo přihlášení
 //  $_TEST= '_test'; $TEST= $ANSWER= 1; $MAIL= 0; // ---------------------- SETKANI.ORG ----------------
 
@@ -275,8 +276,8 @@ function initialize($id_akce) {
   }
 }
 function polozky() { // -------------------------------------------------------------------- položky
-  global $akce, $MAIL, $TEST, $TEST_mail, $TEXT, $DOM_default, $ORG, 
-         $options, $sub_options, $p_fld, $r_fld, $o_fld;
+  global $akce, $MAIL, $TEST, $TEST_mail, $TEXT, $DOM_default, $ORG, $VPS,
+         $options, $sub_options, $p_fld, $r_fld, $o_fld, $controling;
   // popisné texty
   $TEXT= (object)[
       'usermail_nad1' => 
@@ -348,7 +349,7 @@ function polozky() { // --------------------------------------------------------
                       24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
       'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
       'funkce'    => map_cis_2('ms_akce_funkce','zkratka'),
-      'Xvps'      => [''=>'něco prosím vyberte',1=>'počítáme se službou VPS',
+      'Xvps'      => [''=>'něco prosím vyberte',1=>"počítáme se službou $VPS",
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [0=>'',1=>'celá',2=>'poloviční'], // ['','C','P'] ... 0 může být jen pro Familia
       'Xdieta'    => [1=>'bez diety'],  // ['-','BL']
@@ -380,6 +381,13 @@ function polozky() { // --------------------------------------------------------
       'cirkev'    => map_cis_2('ms_akce_cirkev','ikona'),
       'vzdelani'  => map_cis_2('ms_akce_vzdelani','ikona'),
     ];
+  // seznam položek, které ovládají zviditelnění jiné položky
+  $controling= [
+    'p' => [
+      'Xerop_ha' => 'Xerop_hb',  // tričko? => velikost
+      'Xerop_1a' => 'Xerop_1b'   // účast na nějakém setkání? => popis setkání
+    ]
+  ];
   // definice obsahuje:  položka => [ délka , popis , formát, u osob možné role, role u kterých je * nepovinná ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
@@ -399,18 +407,20 @@ function polozky() { // --------------------------------------------------------
       'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
     typ_akce('MO') ? [
-      'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS
+      'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS/PPS
     ] : [],
     typ_akce('E') ? [
       'Xerop_g' =>['70/2','+ Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
-      'Xerop_1a'  =>[ 0,'Účastnil ses již setkání pro muže?','check_sleva'],
+      'Xerop_ha' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check'],
+      'Xerop_hb' =>[10,'* Napiš svoji S/M/L/XL/XXL',''],
+      'Xerop_1a' =>[ 0,'Účastnil ses již setkání pro muže?','check'],
       'Xerop_1b' =>['64/2','+ kterých akcí pro muže ses zúčastnil?','area'],
       'Xerop_2' =>['64/4','+ Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
       'Xerop_3' =>['64/4',"+ Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
           ."<br>Existuje někdo nebo něco, kdo nebo co Tě k účasti vyzval(o)?",'area'],
       'Xerop_4' =>['64/4','Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším? Pokud ano, uveď.','area'],
-      'Xerop_5' =>['64/4','+ Jakým způsobem se angažuješ v chlapském hnutí? <br>Například v místní chlapské skupině, při organizaci MROP nebo jiné akce pro muže?','area'],
-    ] : [],
+      'Xerop_5' =>['64/4','* Jakým způsobem se angažuješ v chlapském hnutí? <br>Například v místní chlapské skupině, při organizaci MROP nebo jiné akce pro muže?','area'],
+    ] : []
   );
   $r_fld= array_merge(
     [ // položky tabulky RODINA
@@ -437,7 +447,7 @@ function polozky() { // --------------------------------------------------------
       'r_ms'       =>[12,'počet účastí na jiném kurzu MS než Šance pro manželství','number'],
     ] : [],
     typ_akce('MO') ? [
-      'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS
+      'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS/PPS
     ] : []
   );
   $o_fld= array_merge(
@@ -906,8 +916,8 @@ function prihlasit() { trace();
   if (!$akce->p_pozde) {
     if (typ_akce('M')) {
       $umi_vps= in_array(1,explode(',',get('r','r_umi')));
-      if ($umi_vps) { // VPS bereme vždy
-        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS nebo účastník
+      if ($umi_vps) { // VPS/PPS bereme vždy
+        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS/PPS nebo účastník
       }
       else {
         $ucast= 13; // přihláška
@@ -915,7 +925,7 @@ function prihlasit() { trace();
     } 
     elseif (typ_akce('O') && $akce->p_obnova) {
       if (key($vars->rodina)>0 && byli_na_aktualnim_LK(key($vars->rodina))) {
-        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS nebo účastník
+        $ucast= isset($vars->pobyt->Xvps) && get('p','Xvps')==1 ? 1 : 0; // VPS/PPS nebo účastník
       }
       else {
         $ucast= 9; // náhradník 
@@ -1133,11 +1143,6 @@ function DOM_zmena_slevy($on) { // ---------------------------------------------
   global $DOM;
   $DOM->p_0_sleva_duvod= $on ? 'show' : 'hide';
 } // změna volby slevy
-function DOM_zmena_Xerop_1a($on) { // ----------------------------- změna volby byl na akci pro muže
-# volá se z read_elem při změně položky sleva_zada
-  global $DOM;
-  $DOM->p_0_Xerop_1b= $on ? 'show' : 'hide';
-} // změna volby byl na akci pro muže
 function DOM_unknown($ids,$in_function) { // chybějící id v DOM
 # pokud je to v kontrolách, tak umožni doplnit položky zobrazené jak jako text 
 # jde o: jmeno, prijmeni, rodne, narozeni
@@ -1578,7 +1583,7 @@ function form_MO($new) { trace();
   if ($vars->form->zadost2) {
     $pobyt.= elem_input('p',0,['zadost2']);
   }
-  // specifika pro VPS na MS
+  // specifika pro VPS/PPS na MS
   $je_dotaz_vps= false;
   if (typ_akce('MO')) {
     $umi= get('r','r_umi');
@@ -1746,8 +1751,10 @@ function form_E($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
-    $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni',
-          "<br><br>$TEXT->EROP_1",'Xerop_1a']) . '<br><br>' 
+    $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni','Xerop_ha'])
+        . elem_input('p',0,['Xerop_hb'],1) . '<br>' 
+        . "<p>$TEXT->EROP_1</p>"
+        . elem_text_or_input('p',0,['Xerop_1a']) . '<br>' 
         . elem_input('p',0,['Xerop_1b'],1)
         . elem_input('p',0,['Xerop_2','Xerop_3','Xerop_4','Xerop_5']);
   }
@@ -1940,7 +1947,7 @@ function hledej($faze,$id_dite,$ido=0,$jmeno='',$prijmeni='') { // -------------
 function read_elem($elem_ID,$val,&$errs) { // ------------------------------------------------- read elem
 # načte element změněný uživatelem a poslaný z JS
 # z hodnoty se odstraní levo i pravostranné mezery
-  global $vars, $p_fld, $r_fld, $o_fld;  
+  global $vars, $p_fld, $r_fld, $o_fld, $controling, $DOM;  
   $m= null;
   if (preg_match("/(.)_([\-\d]+)_(.*)/",$elem_ID,$m)) { // t_idt_name
     $tab= $fmt= false;
@@ -1983,6 +1990,11 @@ function read_elem($elem_ID,$val,&$errs) { // ----------------------------------
           break;      
       }
     }
+    // reakce na check-položky ovládající viditelnost jiné položky
+    if (isset($controling[$t][$fld])) {
+      $controled= "{$t}_{$idt}_{$controling[$t][$fld]}";
+      $DOM->$controled= $val ? 'show' : 'hide';      
+    }
     // reakce na změnu položky spolu
     if ($t=='o' && $fld=='spolu') { 
       DOM_zmena_spolu($idt);
@@ -1991,10 +2003,10 @@ function read_elem($elem_ID,$val,&$errs) { // ----------------------------------
     if ($t=='p' && $fld=='sleva_zada') { 
       DOM_zmena_slevy($val);
     }
-    // reakce na změnu položky Xerop_1a
-    if ($t=='p' && $fld=='Xerop_1a') { 
-      DOM_zmena_Xerop_1a($val);
-    }
+//    // reakce na změnu položky Xerop_1a
+//    if ($t=='p' && $fld=='Xerop_1a') { 
+//      DOM_zmena_Xerop_1a($val);
+//    }
   }
 } // převod do $vars, může volat DOM_zmena_*
 function read_elems($elems,&$errs) { // ------------------------------------------------- read elems
@@ -2334,18 +2346,29 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
 # $but je seznam neprohledávaných položek
   global $p_fld, $r_fld, $o_fld, $vars;
   $missed= [];
-  $prfx= "{$table}_{$id}_";
+//  $prfx= "{$table}_{$id}_";
+  //
+  $is_missing= function($f,$typ,$v) use ($table,$id,$but,&$missed) {
+    global $controling;
+    $to_control= !in_array($f,$but);
+    if ($to_control && isset($controling[$table])) {
+      $controller= array_search($f,$controling[$table]);
+      display("? $table $id $f - $controller");
+      if ($controller && !get($table,$controller,$id)) 
+        $to_control= 0;
+    }
+    if ($to_control && ($v=='' || in_array($typ,['check','select','sub_select']) && $v==0)) {
+      $prfx= "{$table}_{$id}_";
+      $missed[]= "$prfx$f";
+      display("chybí $table $id $f");
+    }
+  };
   if ($table=='p') {
     foreach ($p_fld as $f=>list(,$title,$typ)) {
       $v= $vars->pobyt->$f ?? '';
       if (is_array($v) && substr($title,0,1)=='*') { // je to povinné?
         $v= $v[1] ?? $v[0];
-        if ($v=='' || in_array($typ,['check','select','sub_select']) && $v==0) {
-          if (!in_array($f,$but)) {
-            $missed[]= "$prfx$f";
-            display("chybí $table $id $f");
-          }
-        }
+        $is_missing($f,$typ,$v);
       }
     }
   }
@@ -2356,12 +2379,7 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
       if (substr($title,0,1)=='*') { // je to povinné?
         if (is_array($rodina->$f??null)) {
           $v= $rodina->$f[1] ?? $rodina->$f[0];
-          if ($v=='' || in_array($typ,['check','select','sub_select']) && $v==0) {
-            if (!in_array($f,$but)) {
-              $missed[]= "$prfx$f";
-              display("chybí $table $id $f");
-            }
-          }
+          $is_missing($f,$typ,$v);
         }
       }
     }
@@ -2376,12 +2394,7 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
           && strpos($omez,$role)!==false) { // je to povinné?
         if (is_array($clen->$f)) { // nekontrolujeme ale načtené jako skalár
           $v= $clen->$f[1] ?? $clen->$f[0];
-          if ($v=='' || (in_array($typ,['check','select','sub_select']) && $v==0)) {
-            if (!in_array($f,$but)) {
-              $missed[]= "$prfx$f";
-              display("chybí $table $id $f");
-            }
-          }
+          $is_missing($f,$typ,$v);
         }
       }
     }
@@ -2571,7 +2584,7 @@ function init_value($typ) { // -------------------------------------------------
 # --------------------------------------------------------------------------------- čtení z databáze
 function byli_na_aktualnim_LK($rodina) { // ----------------------------------- byli na_aktualnim_LK
 # pro pobyt na obnově zjistí, zda rodina byla na jejím LK 
-# ... 0 nebyla vůbec | 1 byla jako účastník nebo VPS
+# ... 0 nebyla vůbec | 1 byla jako účastník nebo VPS/PPS
   global $ORG, $akce;
   $obnova_mesic= select_2('MONTH(datum_od)','akce',"id_duakce=$akce->id_akce");
   $rok_LK= $obnova_mesic>7 ? date('Y') : date('Y')-1;
@@ -3347,7 +3360,7 @@ __EOS;
 # ============================================================================= vytváření PDF obrazu
 function souhrn($ucel) {
 # ucel = kontrola | dopis
-  global $akce, $vars, $options;
+  global $akce, $vars, $options, $VPS;
   // akce
   $na= "na akci <b>$akce->nazev, $akce->misto</b> $akce->oddo";
   // účastníci
@@ -3445,9 +3458,9 @@ function souhrn($ucel) {
   if ($jidlo) {
     $jidlo= "<ul style='text-align:left'>$jidlo</ul>";
   }
-  // doplnění poděkování za přijetí služby VPS
+  // doplnění poděkování za přijetí služby VPS/PPS
   if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
-    $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu VPS.</p>" : '';
+    $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu $VPS.</p>" : '';
   }
   // případné žádosti, poznámky a žádosti o slevu
   $pozn= get('p','pracovni');

@@ -2691,7 +2691,7 @@ panel send_mail [,,450,400] {type:'popup', title:"Odeslání mailu podle vzoru"
     field id_dopis { data:dopis.id_dopis }
     field nazev    { data:dopis.nazev }
     field obsah    { data:dopis.obsah }
- }
+  }
   var dopisy: array,
       i_dopisy= -2,   // -2 neexistuje resp. chyba
       id_uhrada: number

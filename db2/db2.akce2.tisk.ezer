@@ -338,11 +338,11 @@ menu m {type:'left', //active:*
 //                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99"
 //                                        ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
 //                                        ,fld:'prijmeni,jmeno,_ar_note,platba'}}
-    item {title:'[fa-file-excel-o] Účastníci akce pro ubytování'                                              skill:'y;f;b'
+    item {title:'[fa-file-excel-o] Účastníci akce pro ubytování'                                              skill:'y;f'
         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'1'
         ,note:`Jsou zobrazeny všechni přítomní na akci mimo pečounů.`
-        ,tit:'příjmení:15,jméno:12,pokoj:5,st.přísl.:10,OP:12,narození:12:r,věk:4:r,obec:25,psč:7,ulice:25,stát:10,1:2,2:2,test:12'
-        ,fld:'prijmeni,jmeno,pokoj,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat,zadost,zadost2,^jmeno'}}
+        ,tit:'příjmení:15,jméno:12,pokoj:5,st.přísl.:10,OP:12,narození:12:r,věk:4:r,obec:25,psč:7,ulice:25,stát:10'
+        ,fld:'prijmeni,jmeno,pokoj,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat'}}
     item {title:'Účastníci akce pro ubytování'                                              skill:'c'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10,budova:10,pokoj:5'
