@@ -1269,8 +1269,13 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
         $ret= akce2_vzorec2_pobyt($id_pobyt);
         $tab= $ret->mail;
         $amount= (float)array_sum($ret->rozpis);
-        $account= "000000-2400465447/2010";
-        $account= "CZ2420100000002400465447"; // IBAN
+        // účet podle přihlášeného uživatele
+        switch ($USER->org) {
+          case 1: $account= "CZ2420100000002400465447"; break; // IBAN YMCA Setkání
+          case 2: $account= "CZ3420100000002400151181"; break; // IBAN YMCA Familia
+          default: fce_error("není nastaveno IBAN organizace č.$USER->org");
+        }
+        display(" $USER->abbr $USER->org $account");
         $ss= $ss_akce;
         $vs= '';
         $message= $nazev_akce;
