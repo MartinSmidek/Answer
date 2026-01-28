@@ -1131,7 +1131,7 @@ function DOM_zmena_spolu($idc) { // --------------------------------------------
   global $DOM, $vars, $akce;
   $spolu= get('o','spolu',$idc);
   // ukaž resp. schovej zobrazení osobního pečovatele
-  if (isset($vars->cleni[$idc]->o_pecoun)) {
+  if ($vars->form->pecouni && isset($vars->cleni[$idc]->o_pecoun)) {
     form_pecoun_show($idc); 
   }
   // zruš zvláštnost stravy člena při změně spolu
