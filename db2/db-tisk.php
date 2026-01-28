@@ -988,22 +988,6 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       case 'zadost2':
         $clmn[$n][$f]= $x->$f ? 'x' : '';
         break;
-      // ---------------------------------------------------------- informace z tabulky prihlaska.
-      case '^jmeno':
-        $value= '';
-        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
-        if ($vars_json) {
-          $vars_json= str_replace("\n", "\\n", $vars_json);
-          $vars= json_decode($vars_json);
-          if ($vars!==null) {
-            $ido= $x->id_osoba;
-            $value= $vars->cleni;
-            $value= $value->$ido;
-            $value= $value->jmeno??'?';
-          }
-        }
-        $clmn[$n][$f]= $value;
-        break;
       default: $clmn[$n][$f]= $x->$f;
       }
     }

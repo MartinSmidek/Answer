@@ -325,6 +325,9 @@ function polozky() { // --------------------------------------------------------
           '<b>U následujících otázek žádná odpověď není předem správná nebo špatná</b>',
       'EROP_2' => 
           '<b>Vítej znovu na EROPu jako navracející se starší!</b>',
+      'EROP_3' => 
+          '<b>V případě, že jsem v odborné péči psychologa nebo psychiatra, prohlašuji, že se akce
+          účastním s jeho souhlasem a konzultoval jsem náročnost akce s organizátory.</b>',
     ];
 
   $DOM_default= (object)[ // pro start aplikace s prázdným SESSION
@@ -418,19 +421,19 @@ function polozky() { // --------------------------------------------------------
     ] : [],
     typ_akce('E') ? [
       'Xerop_g' =>['70/2','+ Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
-      'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check'],
+      'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check_sleva'],
       'Xtricko'  =>[10,'* Vyber velikost','select'],
-      'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check'],
+      'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check_sleva'],
       'Xdieta'   =>[10,'Nabízené možnosti','select'],
-      'XakceQ'   =>[ 0,'Účastnil ses již nějakých setkání pro muže?','check'],
-      'Xakce'    =>['64/2','+ napiš kterých akcí','area'],
-      'Xerop_2'  =>['64/4','+ Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
-      'Xerop_3'  =>['64/4',"+ Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
+      'XakceQ'   =>[ 0,'Účastnil ses již nějakých setkání pro muže?','check_sleva'],
+      'Xakce'    =>['64/2','* napiš kterých akcí','area'],
+      'Xerop_2'  =>['64/4','* Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
+      'Xerop_3'  =>['64/4',"* Kde a od koho ses o tomto rituálu dozvěděl? (od známých, kteří podobným prošli, z webu, inzerátu, …)"
           ."<br>Existuje někdo nebo něco, kdo nebo co Tě k účasti vyzval(o)?",'area'],
-      'XspolcaQ' =>[0,'Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším?','check'],
-      'Xspolca'  =>['64/4','Popiš jakých.','area'],
-      'XzapojenQ'=>[0,'Jsi nějak zapojen do chlapského hnutí (v místní skupině, v organizaci akce, ..)?','check'],
-      'Xzapojen' =>['64/4','+ Napiš kde ... ','area'],
+      'XspolcaQ' =>[0,'Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším?','check_sleva'],
+      'Xspolca'  =>['64/4','* Popiš jakých.','area'],
+      'XzapojenQ'=>[0,'Jsi nějak zapojen do chlapského hnutí (v místní skupině, v organizaci akce, ..)?','check_sleva'],
+      'Xzapojen' =>['64/4','* Napiš kde ... ','area'],
     ] : []
   );
   $r_fld= array_merge(
@@ -807,6 +810,10 @@ function formular(/*$nova=1*/) { trace();
         . (get('p','Xsouhlas') ? 'checked' : '') . "><label for='p_0_Xsouhlas' class='souhlas'>"
       . $akce->form_souhlas
       . "</label></p>";
+  }
+  if (typ_akce('E')) {
+    global $TEXT;
+    $form.= "<p class='souhlas'>$TEXT->EROP_3</p>";
   }
   // -------------------------------------------- tlačítka ukončení
   $form.= "<button onclick=\"clear_css('chng');php2('kontrolovat');\"><i class='fa fa-green fa-send-o'></i>
@@ -1775,13 +1782,11 @@ function form_E($new) { trace();
   }
   else {
     $pobyt.= "<p>$TEXT->EROP_1</p>"
-        . elem_text_or_input('p',0,['XakceQ']) . '<br>' 
-        . elem_input('p',0,['Xakce'],1)
         . elem_input('p',0,['Xerop_2','Xerop_3'])
+        . elem_text_or_input('p',0,['XakceQ']) . '<br>' . elem_input('p',0,['Xakce'],1)
         . elem_input('p',0,['XspolcaQ']) . elem_input('p',0,['Xspolca'],1) . '<br>' 
         . elem_input('p',0,['XzapojenQ']) . elem_input('p',0,['Xzapojen'],1);
   }
-  
   if ($vars->form->zadost) {
     $pobyt.= '<br>' . elem_input('p',0,['zadost']).'<br>';
   }
