@@ -33,6 +33,15 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
     }}
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
+        menu {title:'Migrace do CRM',type:'group', _sys:'*'
+          item {title:'export 2020-2025 '
+            proc onclick (i) {
+              clear; info.display(0,'t');
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill('',ask('crm_migrace')) // v cr2.inc.php
+            }
+          }
+        }
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'4',cmd:'show'}}
           item {title:'Ulož ezer_answer.db_osoba', par:{org:'4',cmd:'save'}, skill:'m'}
