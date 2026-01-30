@@ -297,7 +297,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   elseif ($typ==1) { // záloha
     if (!$revize) $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Zálohová faktura $par->nazev";
-    $dum_faktura_fld['za_co'][1]= "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
+    $dum_faktura_fld['za_co'][1]= $nadpis ?: "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
     $vals['{DUZP-text}']= '';
     $vals['{DUZP-datum}']= '';
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
