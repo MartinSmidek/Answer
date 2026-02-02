@@ -9,6 +9,7 @@
  *   8 - Šance pro manželství
  *  32 - ASC
  * 
+ * 2026-01-29 přidáno p_sluzba_vps, pokud p_upozorneni=0 zobrazí se ale bez []
  * 2026-01-24 umožnění typu E pro EROP (doplňující otázky, žádosti, PDF)
  * 2026-01-19 typ má odlišnou interpretaci podle organizace - typ_akce(typs[,org])
  * 2026-01-19 cis*akce_prihl_css může obsahovat adresu odlišnou od prihlaska.org.php info->mail
@@ -80,6 +81,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
     'p_obnova'      =>  0, // O: OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky
   // -- jen pro LK MS
     'p_upozorneni'  =>  0, // M: LETNÍ KURZ MS: vyžadovat akceptaci upozornění
+    'p_sluzba_vps'  =>  0, // LETNÍ KURZ MS: dotaz na službu VPS/PPS
     'p_dokument'    =>  0, // M: LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu
   // -- jen pro jednotlivce
     'p_oso_adresa'  =>  0, // zadání osobní adresy, pokud není použije se rodinná ale změna se poptá zda jde o rodinnou nebo jen vlastní
@@ -391,6 +393,7 @@ function polozky() { // --------------------------------------------------------
   // [ p|r|o => [ check => text|area, ...], ...] 
   $controling= [
     'p' => [
+      'sleva_zada'=> 'sleva_duvod',   // sleva? =>proč? ...
       'XtrickoQ' => 'Xtricko',    // tričko? => velikost
       'XdietaQ'  => 'Xdieta',     // dieta? => jaká ...
       'XakceQ'   => 'Xakce',      // účast na akcích? => jakých ...
@@ -405,7 +408,7 @@ function polozky() { // --------------------------------------------------------
   //        je to ale nutné pro každou položku naprogramovat 
   $p_fld= array_merge( // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt
     [ 'pracovni'    =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, '
-        . 'které nebylo možné nikam napsat','area'], // pro MO pobyt.pracovni, pro RJ pobyt.poznamka
+        . 'které nebylo možné nikam napsat','area'], // pro MO pobyt.pracovni, pro RJE pobyt.poznamka
       'funkce'      =>[0,'funkce na akci','select'],
       'sleva_zada'  =>[ 0,'Žádám o poskytnutí slevy','check_sleva'],
       'sleva_duvod' =>['64/4','* napište, proč žádáte o slevu','area'],
@@ -416,7 +419,7 @@ function polozky() { // --------------------------------------------------------
     typ_akce('ORJE') && ($akce->p_zadost2??0) ? [
       'zadost2'     =>[ 0,$akce->veta_zadost2,'check_sleva'],
     ] : [],
-    typ_akce('MO') ? [
+    typ_akce('MO') && ($akce->p_sluzba_vps??0) ? [
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS/PPS
     ] : [],
     typ_akce('E') ? [
@@ -883,7 +886,12 @@ function kontrolovat() { trace();
     }
   }
   // údaje k pobytu
-  $miss= elems_missed('p',0,['Xsouhlas','sleva_duvod']);
+  $nekontrolovat= ['Xsouhlas','sleva_duvod'];
+  // specificifika EROP
+  if (typ_akce('E') && ($vars->kmet??0) ) {
+    $nekontrolovat= array_merge($nekontrolovat,['Xerop_2','Xerop_3']);
+  }
+  $miss= elems_missed('p',0,$nekontrolovat);
   $chybi_souhlas= $akce->p_souhlas && !get('p','Xsouhlas') ? 1 : 0;
   $chybi_duvod= $akce->p_sleva && get('p','sleva_zada') && !get('p','sleva_duvod') ? 1 : 0;
   $chybi_strava= $akce->p_strava ? $vars->form->strava!=2 : 0;
@@ -1603,13 +1611,18 @@ function form_MO($new) { trace();
   }
   // specifika pro VPS/PPS na MS
   $je_dotaz_vps= false;
-  if (typ_akce('MO')) {
-    $umi= get('r','r_umi');
-    $umi_vps= in_array(1,explode(',',$umi));
-    if ($umi_vps 
-        && ($akce->p_obnova && byli_na_aktualnim_LK(key($vars->rodina)) || typ_akce('M'))) {
-      $pobyt.= elem_input('p',0,['Xvps']);
-      $je_dotaz_vps= true;
+  if ($akce->p_sluzba_vps??0) {
+    if (typ_akce('MO')) {
+      $umi= get('r','r_umi');
+      $umi_vps= in_array(1,explode(',',$umi));
+      if ($umi_vps 
+          && ($akce->p_obnova && byli_na_aktualnim_LK(key($vars->rodina)) || typ_akce('M'))) {
+        $pobyt.= elem_input('p',0,['Xvps']);
+        $je_dotaz_vps= true;
+      }
+    }
+    if (!$je_dotaz_vps) {
+      unset($vars->pobyt->Xvps);
     }
   }
   if (!$je_dotaz_vps) {
@@ -1772,7 +1785,7 @@ function form_E($new) { trace();
   // -------------------------------------------- poznámky k pobytu
   $pobyt= '';
   
-  $pobyt.= elem_text_or_input('p',0,['Xerop_g','pracovni'])
+  $pobyt.= elem_input('p',0,['Xerop_g','pracovni'])
       . elem_input('p',0,['XtrickoQ']) . elem_input('p',0,['Xtricko'],1) . '<br>' 
       . elem_input('p',0,['XdietaQ']) . elem_input('p',0,['Xdieta'],1);
 
@@ -1783,7 +1796,7 @@ function form_E($new) { trace();
   else {
     $pobyt.= "<p>$TEXT->EROP_1</p>"
         . elem_input('p',0,['Xerop_2','Xerop_3'])
-        . elem_text_or_input('p',0,['XakceQ']) . '<br>' . elem_input('p',0,['Xakce'],1)
+        . elem_input('p',0,['XakceQ']) . '<br>' . elem_input('p',0,['Xakce'],1)
         . elem_input('p',0,['XspolcaQ']) . elem_input('p',0,['Xspolca'],1) . '<br>' 
         . elem_input('p',0,['XzapojenQ']) . elem_input('p',0,['Xzapojen'],1);
   }
@@ -2433,7 +2446,7 @@ end:
 }
 function elem_input($table,$id,$flds,$to_hide='') { // ----------------------------------- elem input
 # vytvoř část formuláře - pro vstup
-  global $p_fld, $r_fld, $o_fld, $vars, $options;
+  global $p_fld, $r_fld, $o_fld, $vars, $options, $controling;
   $html= '';
   $desc= $table=='r' ? $r_fld             : ($table=='o' ? $o_fld             : $p_fld);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='o' ? $vars->cleni[$id]  : $vars->pobyt);
@@ -2476,6 +2489,12 @@ function elem_input($table,$id,$flds,$to_hide='') { // -------------------------
         $title=  "<b style='color:red'>*</b>".substr($title,1);
     }
     $oninput= "onchange=\"elem_changed(this);\"";
+    // pokud má být skryté, zjistíme, zda nemá kontrolující položku, která je zviditelní
+    if ($to_hide && isset($controling[$table])) {
+      $controller= array_search($fld,$controling[$table]);
+      if ($controller && get($table,$controller,$id)) 
+        $to_hide= 0;
+    }
     $hide= $to_hide ? " style='display:none'" : '';
     switch ($typ) {
     case 'check_souhlas':
@@ -3087,7 +3106,7 @@ function db_zapis_pecovani($id_dite,$id_pecoun) { // ---------------------------
 }
 function db_close_pobyt($fld_plus) { // --------------------------------------------- db close_pobyt
 # fld_plus ... zápis hodnot mimo těch funkce polozky - např. strava
-# polozka pracovni se pro MO zapisuje do pobyt.pracovni pro RJ do pobyt.poznamka
+# polozka pracovni se pro MO zapisuje do pobyt.pracovni pro RJE do pobyt.poznamka
   global $p_fld, $vars;
   // úschova pobyt
   $idr= key($vars->rodina);
@@ -3103,7 +3122,7 @@ function db_close_pobyt($fld_plus) { // ----------------------------------------
     if (!isset($p_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
     if (in_array($f,['funkce'])) continue; // dávají se vždy
     if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
-      if ($f=='pracovni' && typ_akce('RJ')) $f= 'poznamka';
+      if ($f=='pracovni' && typ_akce('RJE')) $f= 'poznamka';
       $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
     }
   } 
@@ -3488,8 +3507,10 @@ function souhrn($ucel) {
     $jidlo= "<ul style='text-align:left'>$jidlo</ul>";
   }
   // doplnění poděkování za přijetí služby VPS/PPS
-  if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
-    $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu $VPS.</p>" : '';
+  if ($akce->p_sluzba_vps??0) {
+    if (typ_akce('MO') && isset($vars->pobyt->Xvps)) {
+      $vps= get('p','Xvps')==1 ? "<p>Děkujeme, že přijímáte službu $VPS.</p>" : '';
+    }
   }
   // případné žádosti, poznámky a žádosti o slevu
   $vzkazy= ''; 
