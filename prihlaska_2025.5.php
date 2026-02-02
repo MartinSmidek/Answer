@@ -3123,7 +3123,7 @@ function db_close_pobyt($fld_plus) { // ----------------------------------------
     if (!isset($p_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
     if (in_array($f,['funkce'])) continue; // dávají se vždy
     if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
-      if ($f=='pracovni' && typ_akce('RJE')) $f= 'poznamka';
+      if ($f=='pracovni' && (typ_akce('RJE') || typ_akce('MO',[2]))) $f= 'poznamka';
       $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
     }
   } 
