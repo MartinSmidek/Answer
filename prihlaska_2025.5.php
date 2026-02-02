@@ -503,11 +503,11 @@ function polozky() { // --------------------------------------------------------
 //      'Xpecuje_o' =>[12,'* bude pečovat o ...','','p'],
       'Xpovaha'    =>['70/2','* popiš svoji povahu','area','ab'],
       'Xmanzelstvi'=>['70/2','* vyjádři se o vašem manželství','area','ab'],
-      'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : [],
     typ_akce('M',[1,8]) ? [
       'Xocekavani' =>['70/2','* co očekáváš od účasti na MS','area','ab'],
       'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
+      'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : [],
     typ_akce('MO') && ($akce->p_strava??0) ? [
       'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
@@ -2257,7 +2257,8 @@ function read_akce() { // ------------------------------------------------------
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
   $akce->oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům 
       - je potřeba, abyste ji vyplňovali společně.</i></p>";
-  $akce->form_souhlas= $ORG->gdpr;
+  $akce->form_souhlas= $ORG->gdpr
+      . (typ_akce('M',[2]) && !($akce->p_upozorneni??0) ? "<br><b>$ORG->conf</b>" : '');
   $akce->upozorneni= $ORG->conf;
 end:    
   if ($msg) {
