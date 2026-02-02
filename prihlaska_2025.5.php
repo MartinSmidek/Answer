@@ -280,15 +280,26 @@ function initialize($id_akce) {
 function polozky() { // -------------------------------------------------------------------- položky
   global $akce, $MAIL, $TEST, $TEST_mail, $TEXT, $DOM_default, $ORG, $VPS,
          $options, $sub_options, $p_fld, $r_fld, $o_fld, $controling;
+  // organizace
+  $nazev_org= '';
+  switch ($ORG->code) {
+    case  1: $nazev_org= ' YMCA Setkání nebo YMCA Familia'; break;
+    case  2: $nazev_org= ' YMCA Familia nebo YMCA Setkání'; break;
+    case  8: $nazev_org= ' Šance pro manželství'; break;
+    case 16: $nazev_org= ' MS 50+'; break;
+    case 32: $nazev_org= ' ASC'; break;
+  }
   // popisné texty
   $TEXT= (object)[
       'usermail_nad1' => 
           'Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.',  
       'usermail_pod1' => 
-          typ_akce('MO') ? '<i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, abyste ji vyplňovali společně.</i>' : '',  
+          typ_akce('MO') ? "<i>Přihlášku vyplňujte společně, ale v otevřených otázkách každý sám za sebe."
+      . "<br>Více informací o této akci najdete na webu <a target='www' href='https://www.manzelaky.cz/letni-kurz-2026'>manzelaky.cz</a></i>" : '',  
       'usermail_nad2' => 
-          'Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
-           <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>',  
+          "Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
+           <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>
+           <br><br>Pokud jste se již dříve účastnili akcí$nazev_org, budou některé údaje předvyplněné.",  
       'usermail_nad3' => 
           "Tento mail v evidenci $ORG->name nemáme, tato akce předpokládá, že jste se již nějaké naší 
             akce zúčastnil/a, přihlaste se prosím pomocí toho, který jste tehdy použil/a",
@@ -766,8 +777,15 @@ function klient($idor,$nova_prihlaska=1) { trace();
     append_log(($vars->continue ? str_pad($vars->continue,6,' ',STR_PAD_LEFT) 
         : 'KLIENT')." ... $jmena id_osoba=$ido, id_rodina=$idr");
     log_append_stav('OLD');
-    // podle ido,idr nastav počáteční informace o klientovi
-    if (typ_akce('MOR'))
+    // podle ido,idr nastav počáteční informace o klientovi - pro MS Familia vymaž zájmy
+    if (typ_akce('M',[2])) {
+      kompletuj_pobyt_par($vars->idr,$vars->ido);
+      foreach (array_keys($vars->cleni) as $id) {
+        if (isset($vars->cleni[$id]->zajmy))
+          set('o','zajmy','',$id);
+      }
+    }
+    elseif (typ_akce('MOR'))
       kompletuj_pobyt_par($vars->idr,$vars->ido);
     else
       kompletuj_pobyt_ucastnik($vars->idr,$vars->ido);
@@ -2255,8 +2273,9 @@ function read_akce() { // ------------------------------------------------------
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
-  $akce->oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům 
-      - je potřeba, abyste ji vyplňovali společně.</i></p>";
+//  $akce->oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům 
+//      - je potřeba, abyste ji vyplňovali společně.</i></p>";
+  $akce->oba= "<p><i>Přihlášku vyplňujte společně, ale v otevřených otázkách každý sám za sebe.</i></p>";
   $akce->form_souhlas= $ORG->gdpr
       . (typ_akce('M',[2]) && !($akce->p_upozorneni??0) ? "<br><b>$ORG->conf</b>" : '');
   $akce->upozorneni= $ORG->conf;
