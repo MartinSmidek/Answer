@@ -423,7 +423,7 @@ function polozky() { // --------------------------------------------------------
       'Xvps'        =>[15,'* služba na kurzu','select'], // bude vložena jen pro neodpočívající VPS/PPS
     ] : [],
     typ_akce('E') ? [
-      'Xerop_g' =>['70/2','+ Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
+      'Xerop_g' =>['70/2','* Kontaktní údaje pro případ nouze (Koho máme kontaktovat a jak?)','area'],
       'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check_sleva'],
       'Xtricko'  =>[10,'* Vyber velikost','select'],
       'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check_sleva'],
@@ -435,8 +435,8 @@ function polozky() { // --------------------------------------------------------
           ."<br>Existuje někdo nebo něco, kdo nebo co Tě k účasti vyzval(o)?",'area'],
       'XspolcaQ' =>[0,'Existuje nějaké společenství, ve kterém se cítíš povolán být aktivním starším?','check_sleva'],
       'Xspolca'  =>['64/4','* Popiš jakých.','area'],
-      'XzapojenQ'=>[0,'Jsi nějak zapojen do chlapského hnutí (v místní skupině, v organizaci akce, ..)?','check_sleva'],
-      'Xzapojen' =>['64/4','* Napiš kde ... ','area'],
+      'XzapojenQ'=>[0,'Jsem v nějaké místní skupině, pomáhám v organizaci akcí pro muže, jsem jinak zapojen)?','check_sleva'],
+      'Xzapojen' =>['64/4','* Napiš kde či jak ... ','area'],
     ] : []
   );
   $r_fld= array_merge(
