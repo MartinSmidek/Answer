@@ -762,7 +762,7 @@ form _page [,,275,360] {
     switch (p_tag) { 
       case 'M': akci= 'Letní kurz MS'; 
         p_json.p_obcanky= 1; p_json.p_pecouni= 1; 
-        p_json.p_upozorneni= 1; p_json.p_dokument= 1; 
+        p_json.p_upozorneni= 1; p_json.p_dokument= 1; p_sluzba_vps= 1;
         p_json.p_diety= {};
         break;
       case 'O': akci= 'obnovu MS'; 
@@ -864,7 +864,7 @@ form _page [,,275,360] {
     field p_detska_od [251,427,30,] { tag:'pri,M,O', title:'dětská porce od: ', format:'r'}
     field p_detska_do [312,427,30,] { tag:'pri,M,O', title:'do: ', format:'r'}
     field p_diety { value:'' }
-    button p_diety_but [360,428,,] { tag:'pri,M,O', title:'možné diety' 
+    button p_diety_but [360,428,,] { tag:'pri,M,O,E', title:'možné diety' 
       func onclick() { 
         p_diety= prompt2(`zapiš možné diety poskytnuté mimo normální stravu ve tvaru 
               zkratka:název (zkratku na 2 velká písmena), více možných diet odděl středníkem. Například 
@@ -883,7 +883,8 @@ form _page [,,275,360] {
   field p_nocleh [173,447,32,] { tag:'pri,M,O', title:'MS: nabízené ubytování ', help:'LSZ-'}
     label [217,453,300,] { tag:'pri,M,O', title:'L:lůžko S:spacák Z:bez -:mimo'}
     check p_obnova [30,405,339,] { tag:'pri,O', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky'}
-    check p_upozorneni [30,471,380,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
+    check p_upozorneni [30,468,316,] { tag:'pri,M', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění'} 
+    check p_sluzba_vps [30,487,316,] { tag:'pri,M', title:'LETNÍ KURZ MS: dotaz na službu VPS/PPS'} 
     check p_dokument [30,405,400,] { tag:'pri,M,E', title:'vytvořit PDF přihlášky a uložit jako dokument k pobytu'} 
   edit veta_potvrzeni [13,525,438,35] { tag:'pri,M,O,R,J,E', title:"^text umístěný do potvrzujícího dopisu mezi seznam přihlášených a podpis garanta"}
   // Zpět a Uložit
