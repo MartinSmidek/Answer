@@ -295,7 +295,7 @@ function polozky() { // --------------------------------------------------------
           'Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.',  
       'usermail_pod1' => 
           typ_akce('MO') ? "<i>Přihlášku vyplňujte společně, ale v otevřených otázkách každý sám za sebe."
-      . "<br>Více informací o této akci najdete na webu <a target='www' href='https://www.manzelaky.cz/letni-kurz-2026'>manzelaky.cz</a></i>" : '',  
+      . "<br>Více informací a také ceník platný pro tuto akci najdete na webu <a target='www' href='https://www.manzelaky.cz/letni-kurz-2026'>manzelaky.cz</a></i>" : '',  
       'usermail_nad2' => 
           "Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
            <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>
@@ -2268,8 +2268,9 @@ function read_akce() { // ------------------------------------------------------
   $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu.";
   $akce->opravit_chybu= "<br>Abychom chybu mohli opravit, napište prosím "
       . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška 2026'>autorovi</a> "
-      . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
-      . "Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme.";
+      . " a popište problém. "
+//      . "Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
+      . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme.";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
