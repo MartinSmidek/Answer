@@ -1956,7 +1956,7 @@ function connect_db() { // -----------------------------------------------------
   ezer_connect($answer_db);
 } // napojení na Ezer a log
 function read_akce() { // ---------------------------------------------------------------- read akce
-  global $akce, $akce_default, $vars, $ORG;
+  global $akce, $akce_default, $vars, $ORG, $VERZE, $MINOR, $CORR_JS;
   $msg= '';
   $id_akce= $vars->id_akce; //$_GET['akce'];
   // parametry přihlášky a ověření možnosti přihlášení
@@ -2002,8 +2002,8 @@ function read_akce() { // ------------------------------------------------------
   $akce->id_akce= $id_akce;
   $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu.";
   $akce->opravit_chybu= "<br>Abychom chybu mohli opravit, napište prosím "
-      . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška 2025'>autorovi</a> "
-      . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
+      . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška $VERZE $MINOR.$CORR_JS'>autorovi</a> a popište problém. "
+//      . "Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
       . "Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme.";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
