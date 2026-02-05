@@ -438,7 +438,7 @@ function polozky() { // --------------------------------------------------------
       'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check_sleva'],
       'Xtricko'  =>[10,'* Vyber velikost','select'],
       'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check_sleva'],
-      'Xdieta'   =>[10,'Nabízené možnosti','select'],
+      'Xdieta'   =>[30,'pojmenuj ji, případně rozveď v poznámce',''],
       'XakceQ'   =>[ 0,'Účastnil ses již nějakých setkání pro muže?','check_sleva'],
       'Xakce'    =>['64/2','* napiš kterých akcí','area'],
       'Xerop_2'  =>['64/4','* Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
