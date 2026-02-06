@@ -370,7 +370,7 @@ function polozky() { // --------------------------------------------------------
       'Xvps'      => [''=>'něco prosím vyberte',1=>"počítáme se službou $VPS",
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [0=>'',1=>'celá',2=>'poloviční'], // ['','C','P'] ... 0 může být jen pro Familia
-      'Xtricko'   => [0=>'',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'],
+      'Xtricko'   => [''=>'?',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'],
       'Xdieta'    => [1=>'bez diety'],  // ['-','BL']
       'Xdieta_abbr' => [1=>'-'],  // zkratky diet
       // texty musí mít stejný význam jako v prihl_show_2025
@@ -438,7 +438,7 @@ function polozky() { // --------------------------------------------------------
       'XtrickoQ' =>[ 0,'Chceš si na akci koupit tričko s logem EROPu?','check_sleva'],
       'Xtricko'  =>[10,'* Vyber velikost','select'],
       'XdietaQ'  =>[ 0,'Potřebuješ dietu?','check_sleva'],
-      'Xdieta'   =>[10,'Nabízené možnosti','select'],
+      'Xdieta'   =>[30,'pojmenuj ji, případně rozveď v poznámce',''],
       'XakceQ'   =>[ 0,'Účastnil ses již nějakých setkání pro muže?','check_sleva'],
       'Xakce'    =>['64/2','* napiš kterých akcí','area'],
       'Xerop_2'  =>['64/4','* Proč se chceš zúčastnit rituálu pro starší muže? Co očekáváš?','area'],
