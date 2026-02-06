@@ -1637,13 +1637,17 @@ function chart_akce($par) { // debug($par,'chart_akce');
       $pro= $par->pro;
       $od= $par->od;
       $do= $par->do ?: $letos;
+      $cs= $par->cs??0;
 //      $od= 2014;
 //      $do= $letos;
       $chart= (object)array('chart'=>'line');
       $chart->title= "tempo (zápisu) přihlašování na "
-          .($pro=='mrop'?'MROP':($pro=='firm'?'FIRMING':($pro=='erop'?'EROP':'LK MS')));
+          .($pro=='mrop'?'MROP':($pro=='firm'?'FIRMING':($pro=='erop'?'EROP':'LK MS')))
+          .($cs ? ' (CZ+SK)' : '');
       $akce= $pro=='ms' ? "druh=1 && access&$org" : ($pro=='erop' ? "nazev LIKE 'EROP%'" : "$pro=1");
       $funkce= $pro=='ms' ? "funkce IN (0,1,2,5,9,13,15)" : "funkce IN (0,1)";
+      $joins= $cs ? "JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba)" : '';
+      $AND_cs= $cs ? "AND stat IN ('CZ','SK','')" : '';
       for ($rok= $od; $rok<=$do; $rok++) {
         $ida= select('id_duakce','akce',"$akce AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ida) continue;
@@ -1652,8 +1656,8 @@ function chart_akce($par) { // debug($par,'chart_akce');
         $qp=  "SELECT id_pobyt,
              (SELECT DATE(kdy) FROM _track 
               WHERE kde='pobyt' AND klic=id_pobyt ORDER BY id_track LIMIT 1) AS mesic
-          FROM pobyt JOIN akce ON id_akce=id_duakce
-          WHERE id_akce='$ida' AND $funkce ";
+          FROM pobyt JOIN akce ON id_akce=id_duakce $joins
+          WHERE id_akce='$ida' AND $funkce $AND_cs";
         $rp= pdo_qry($qp);
         while ( $rp && (list($idp,$datum)= pdo_fetch_row($rp)) ) {
           if (substr($datum,0,4)==$rok)

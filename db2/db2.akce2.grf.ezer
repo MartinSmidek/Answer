@@ -116,6 +116,7 @@ menu m {type:'left', format:'f+'
     item  {title:"[fa-pie-chart] ... podle věku", par:{akce:'EROP', type:'hist_vek', tag:'i|d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'erop'}}
+    item  {title:"[fa-line-chart] ... jen CZ+SK", par:{type:'prihlasky',ukaz:'celkem',pro:'erop',cs:1}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'erop'}}
   }
   func onclick(i:ezer) {  var y:object, par:object
