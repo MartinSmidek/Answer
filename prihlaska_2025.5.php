@@ -370,7 +370,7 @@ function polozky() { // --------------------------------------------------------
       'Xvps'      => [''=>'něco prosím vyberte',1=>"počítáme se službou $VPS",
                       2=>'raději bychom byli v "odpočinkové" skupince'],
       'Xporce'    => [0=>'',1=>'celá',2=>'poloviční'], // ['','C','P'] ... 0 může být jen pro Familia
-      'Xtricko'   => [0=>'',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'],
+      'Xtricko'   => [''=>'?',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'],
       'Xdieta'    => [1=>'bez diety'],  // ['-','BL']
       'Xdieta_abbr' => [1=>'-'],  // zkratky diet
       // texty musí mít stejný význam jako v prihl_show_2025
