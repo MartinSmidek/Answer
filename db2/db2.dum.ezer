@@ -354,11 +354,13 @@ form _obj {
     plan.enable(0,'.*'); 
 //    dan_send= 'Daňový doklad';
     if (udaje.faktura.fakt_idf==0 && udaje.faktura.vyj_idf==0) {
-      // konečná faktura
+      // bude konečná faktura
       fakt_vystavena= now();
       fakt_num= udaje.fld.fakt_num;
       fakt_vs= udaje.fld.fakt_num;
       fakt_ss= id_order;
+      if (udaje.faktura.zal_ubyt_zal) zal_ubyt= udaje.faktura.zal_ubyt_zal;
+      if (udaje.faktura.zal_stra_zal) zal_stra= udaje.faktura.zal_stra_zal;
       fakt_zal_ubyt= zal_ubyt;
       fakt_zal_stra= zal_stra;
       fakt_castka= udaje.ucet.celkem2 - zal_ubyt - zal_stra; // po odečtení rodinných podfaktur a zálohy
@@ -366,21 +368,24 @@ form _obj {
       form.enable(1,'fakt|closed'); 
       plan.enable(1,'.*'); 
       if (udaje.faktura.zal_idf==0) {
-        // zálohová faktura
+        // bude zálohová faktura
         zal_num= udaje.fld.zal_num;
         zal_vs= udaje.fld.zal_num;
         zal_ss= id_order;
         zal_castka= udaje.cena.celkem;
         form.enable(1,'zal'); 
       }
-//      else { // byla vydána zálohová faktura
+      else { // byla vydána zálohová faktura
+        echo(debug(udaje.faktura,'udaje.faktura'));
+        zal_ubyt= udaje.faktura.zal_ubyt_zal;
+        zal_stra= udaje.faktura.zal_stra_zal;
 //        dan_num= udaje.fld.dan_num;
 //        if (zal_zaplacena) {
 //          dan_send.enable(1); 
 //          dan_send= dan_vystavena 
 //            ? '[fa-check] Daň.doklad odeslán' : '[fa-exclamation fa-red] Poslat daň.doklad';
 //        }
-//      }
+      }
     }
   }
   func helps() { var x:object, fld: ezer
