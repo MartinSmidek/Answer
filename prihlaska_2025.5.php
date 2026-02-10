@@ -814,7 +814,7 @@ function formular(/*$nova=1*/) { trace();
   // nastavení formuláře
   $new= 1;
   if (($vars->continue??0) /* && $nova==0*/) {
-    log_load_changes();   // z uchované přihlášky
+    log_load_changes();   // z uchované přihlášky ... s vynulovanými kontrolami
     log_write_changes();  // do současné
     $new= 0;
   }
@@ -3284,6 +3284,8 @@ function log_load_changes() { // -----------------------------------------------
   foreach ($chngs as $name=>$val0) {
     if ($name=='form') {
       $vars->form= $val0;
+      // zruš výsledek starých kontrol
+      $vars->form->kontrola= [];
       continue;
     }
     foreach ($val0 as $id=>$val1) {
