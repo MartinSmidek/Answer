@@ -1,27 +1,101 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-  <head>
-    <link rel="shortcut icon" href="./Ezer2/client/img/dbg.ico" />
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <script type="text/javascript">
-      // zjištění hodnoty parametru v url
-      // see http://www.netlobo.com/url_query_string_javascript.html
-      var parms= window.location.href.split('#');
-      parms= parms.length==2 ? '#'+parms[1] : '';
-      function get_url_param(name) {
-        name= name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-        var regexS= "[\\?&]"+name+"=([^&#]*)";
-        var regex= new RegExp( regexS );
-        var results= regex.exec( window.location.href );
-        if( results == null )
-          return "";
-        else
-          return results[1];
-      }
-      document.write('  <title>DBG '+get_url_param("app")+'</'+'title>');
-      document.write('  <frameset cols="138,*"><frame id="dbg" src="./ezer2/client/dbgf.html"  name="dbg" />'
-      +'<frame id="app" name="app" src="'+get_url_param("app")+'.php'+parms+'" /></'+'frameset>');
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa ČR s Brnem</title>
+
+    <!-- Odkaz na CSS knihovny Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Styl pro mapu -->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            top: 100px;
+            height: 200px;
+            width: 300px;
+            margin: 0 auto;
+            position: relative; /* Potřebné pro absolutní pozicování tlačítka uvnitř */
+        }
+        #zoomBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 401; /* Vyšší než z-index mapy (obvykle 400) */
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map">
+        <!-- Tlačítko pro přiblížení na celou ČR -->
+        <button id="zoomBtn">Celá ČR</button>
+    </div>
+
+    <!-- Odkaz na JavaScript knihovny Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Funkce pro nastavení pohledu na celou ČR, tak aby byla vidět celé ČR včetně svých hranic
+        
+        function zoomToCzechia() {
+            // Souřadnice ohraničujícího obdélníku pro ČR (jihozápadní a severovýchodní roh).
+            // Metoda fitBounds automaticky najde nejlepší střed a přiblížení.
+            const czechiaBounds = [
+                [48.55, 12.09], // Jihozápadní roh
+                [51.06, 18.87]  // Severovýchodní roh
+            ];
+            map.fitBounds(czechiaBounds);
+        }
+
+        // Inicializace mapy v <div> s id="map" 400/500px
+        // modře orámovaném        
+        document.getElementById('map').style.border = '2px solid blue';
+        document.getElementById('map').style.height = '400px';
+        document.getElementById('map').style.width = '500px';
+        document.getElementById('map').style.margin = '0 auto';
+        // v pravém horním rohu div je button s funkcí onclick, které provede zoom mapy tak aby  byla vidět celé ČR
+        document.getElementById('zoomBtn').onclick = zoomToCzechia;
+        const map = L.map('map').setView([49.8175, 15.4730], 8);
+
+        // Přidání dlaždicové vrstvy z OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // --- Trojúhelník tvořený červenými čarami spojujícími Brno, Prahu a Olomouc ---
+
+        // 1. Souřadnice měst
+        const brnoCoords = [49.1951, 16.6068];
+        const prahaCoords = [50.0755, 14.4378];
+        const olomoucCoords = [49.5938, 17.2509];
+
+        // 2. Přidání značek (markerů) pro každé město
+        L.marker(brnoCoords).addTo(map).bindPopup("<b>Brno</b>");
+        L.marker(prahaCoords).addTo(map).bindPopup("<b>Praha</b>");
+        L.marker(olomoucCoords).addTo(map).bindPopup("<b>Olomouc</b>");
+
+        // 3. Vytvoření pole souřadnic pro trojúhelník
+        const triangleCoords = [
+            brnoCoords,
+            prahaCoords,
+            olomoucCoords
+        ];
+
+        // 4. Vykreslení polygonu (trojúhelníku) na mapu
+        const polygon = L.polygon(triangleCoords, {color: 'red'}).addTo(map);
+
+        // 5. Přizpůsobení pohledu mapy, aby byl vidět celý trojúhelník
+        map.fitBounds(polygon.getBounds());
     </script>
-  </head>
+
+</body>
 </html>
