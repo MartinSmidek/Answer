@@ -46,6 +46,11 @@ function pretty_log(patt,akce) {
         lines[i]= lines[i].substr(0,6)+'  '+lines[i].substr(6,25)+idw.toString().padStart(5,' ')
           + lines[i].substr(31);
       }
+      // přeškrtni ručně zrušenou chybovou hlášku (má '-' na začátku)
+      if (lines[i].substr(0,1)=='-') {
+        const solved= lines[i].replace('<b style="color:red">CATCH</b>','CATCH');
+        lines[i]= `<s>${solved}</s>`;
+      }
     }
     pretty_log.called= true;
     
