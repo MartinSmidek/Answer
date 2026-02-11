@@ -1435,7 +1435,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
         }
         else warning(`PSČ ${psc} nemá definované souřadnice`)
       }
-      cr= {clear:0,mark:`0,${lat},${ltg},,./ezer3.1/client/img/circle_blue_25x25.png,12`}; 
+      cr= {clear:0,mark:`0,${lat},${ltg},,./ezer3.3/client/img/circle_blue_25x25.png,12`}; 
   }}
   # ==> . přidej nebo zruš značku adresy pro id
   func mapa_mark_add(id,lat,ltg,psc,add) { var ll:array, color:text
@@ -1450,7 +1450,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
           if (ll && ll[0]) {lat= ll[0]; ltg= ll[1]; color= 'gold';}
           else warning(`PSČ ${psc} nemá definované souřadnice`)
         }
-        cr= {clear:0,mark:`${id},${lat},${ltg},${id},./ezer3.1/client/img/circle_${color}_15x15.png,7`}; 
+        cr= {clear:0,mark:`${id},${lat},${ltg},${id},./ezer3.3/client/img/circle_${color}_15x15.png,7`}; 
       }
   }}
 //  proc mapa_curr(lat,lng) {

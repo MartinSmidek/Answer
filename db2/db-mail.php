@@ -1599,9 +1599,12 @@ function mail2_smtp() {
 // y.done - počet provedených kroků 
 // y.sent - počet skutečně odeslaných mailů
 // y.error = text chyby, způsobí konec
+// y.pauza - pauza v minutách po odeslání dávky
+// y.test - nic se neposílá, místo to je 10 vteřin čekání
 function mail2_mai_sending($y) { 
   global $ezer_root;
   // získání případného omezení použitého SMTP
+  debug($y,"mail2_mai_sending ... begin");
   $idu= $_SESSION[$ezer_root]['user_id'];
   $i_smtp= sys_user_get($idu,'opt','smtp');
   $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
@@ -1613,6 +1616,8 @@ function mail2_mai_sending($y) {
     $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
     $y->last= 0; // poslední poslaný id_mail
     $y->sent= 0; // počet poslaných
+    $y->test= 0; $y->par->test??0; // test = pauza místo php_mailer
+    $y->pauza= $y->par->pauza??0; // pauza v minutách po odeslání dávky
     $y->error= '';
     unset($y->par);
   }
@@ -1624,7 +1629,12 @@ function mail2_mai_sending($y) {
      $res->max= $max_per_day;
    } 
   // vlastní proces
-  $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
+  if ($y->test) {
+    $res= (object)array('_error'=>0,'_sent'=>$par->davka,'_over_quota'=>0);
+  }
+  else {
+    $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
+  }
   $y->done++;
   $y->sent= $res->_sent;
   // zpráva
@@ -1644,6 +1654,7 @@ function mail2_mai_sending($y) {
   // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
   sleep(1);
 end:  
+  debug($y,"mail2_mai_sending ... end");
   return $y;
 }
 # ----------------------------------------------------------------------------------- mail2 mai_send
