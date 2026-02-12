@@ -80,4 +80,22 @@ $access2org= [
       'tlfn'=>'+420 734 647 785'
     ],
   ],   
+ 16 => (object)[ // MS50+
+  'smtp'  => 1,
+  'name'  => 'Centrum pro rodinu Vysočina',
+  'deep'  => 'answer/ms50.dbs.php',
+  'sess'  => 'ms50',
+  'icon'  => '/db2/img/akce.png',
+  'gdpr'  => "Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
+      osobních údajů pro potřeby organizace akcí Šance pro manželství v souladu s Nařízením 
+      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
+      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR.",
+  'conf'  => "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu.",
+   // default pro garanta akce, pokud není dostupný z AKCE/Úprava
+  'info'  => (object)[
+      'name'=>'x',
+      'mail'=>'x',
+      'tlfn'=>'x'
+    ],
+  ],
 ];
