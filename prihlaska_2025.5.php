@@ -7,6 +7,7 @@
  *   1 - YMCA Setkání 
  *   2 - YMCA Familia
  *   8 - Šance pro manželství
+ *  16 - MS50+
  *  32 - ASC
  * 
  * 2026-01-29 přidáno p_sluzba_vps, pokud p_upozorneni=0 zobrazí se ale bez []
