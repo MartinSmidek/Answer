@@ -7,6 +7,7 @@
  *   1 - YMCA Setkání 
  *   2 - YMCA Familia
  *   8 - Šance pro manželství
+ *  16 - MS50+
  *  32 - ASC
  * 
  * 2026-01-29 přidáno p_sluzba_vps, pokud p_upozorneni=0 zobrazí se ale bez []
@@ -520,9 +521,11 @@ function polozky() { // --------------------------------------------------------
       'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
       'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : [],
-    typ_akce('MO') && ($akce->p_strava??0) ? [
+    typ_akce('MO') ? [
       'o_pecoun'  =>[ 0,'','x','d'],  // =0 tlačítko, >0 id osobního pečovatele
       'o_dite'    =>[ 0,'','x','p'],  // id opečovávaného dítěte
+    ] : [],
+    typ_akce('MO') && ($akce->p_strava??0) ? [
       'Xstrava'   =>[ 0,'','x','abdp'],  // 0 = nedefinovaná, 1 = definovaná
       'Xporce'    =>[10,'porce','select','abdp'],
       'Xdieta'    =>[15,'dieta','select','abdp'],
@@ -998,6 +1001,11 @@ function prihlasit() { trace();
     }
     $web_changes|= db_vytvor_nebo_oprav_clena($id);
     if (count($errors)) goto db_end;
+  }
+  // případně zruš fantomy = členy se záporným ID
+  foreach (array_keys($vars->cleni) as $id) {
+    if ($id<0)
+      unset($vars->cleni[$id]);
   }
   // přidání změn k pobytu
   $fld['web_changes']= $web_changes; 
@@ -2913,9 +2921,9 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       $vars->cleni[$ido]->jmeno= $jmeno;
       $vars->cleni[$ido]->prijmeni= $prijmeni;
       $vars->cleni[$ido]->narozeni= sql_date1($narozeni);
-      unset($vars->cleni[$id]);
       // případně vyměníme $id za $ido v _o_dite a o_pecoun
       $rewrite($id,$ido);
+//      unset($vars->cleni[$id]);
       append_log("  <b style='color:blue'>dupl</b> ... pro $jmeno $prijmeni nalezena id_osoba=$ido");
       log_write('id_osoba',$ido);
     }
@@ -2966,10 +2974,9 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     if ($vars->ido==$id) { // zapíšeme id klienta
       log_write('id_osoba',$ido);
     }
-    unset($vars->cleni[$id]); 
     // případně vyměníme $id za $ido v _o_dite a o_pecoun
     $rewrite($id,$ido);
-    
+//    unset($vars->cleni[$id]); 
   } // nenašli => zapíšeme novou osobu a připojíme ji do rodiny
   else { // našli => opravíme změněné hodnoty položek existující osoby - adresu možná do rodiny
     $chng= [];
