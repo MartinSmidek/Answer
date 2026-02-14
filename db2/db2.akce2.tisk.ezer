@@ -451,8 +451,8 @@ menu m {type:'left', //active:*
     item {title:'[fa-file-excel-o] Noclehy, program'
         ,par:{typ:'pasc',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'0;1'
         ,note:`Jsou zobrazeny všechny rodiny.`
-        ,tit:'ID,příjmení:15,jména:18,obec:25,počet:5,prg.pátek:10,prg.sobota:10,prg.neděle:10,nocleh v okolí Prahy:10,nocleh pá=>so:10,nocleh so=>ne:10,poznámka pro organizátory:50'
-        ,fld:'^id_pobyt,prijmeni,jmena,obec,_pocet,^Xpocet1,^Xpocet2,^Xpocet3,zadost,^Xpocet4,^Xpocet5,poznamka'}}
+        ,tit:'příjmení:15,jména:18,obec:25,počet:5,prg.pátek:10,prg.sobota:10,prg.neděle:10,nocleh v okolí Prahy:10,nocleh pá=>so:10,nocleh so=>ne:10,poznámka pro organizátory:50,^'
+        ,fld:'prijmeni,jmena,obec,_pocet,pocet1,pocet2,pocet3,zadost,pocet4,pocet5,poznamka,^id_pobyt'}}
   
 }
 

@@ -1112,7 +1112,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
   $clmn= array();
   $expr= array();       // pro výrazy
   // data akce
-  $qry=  "SELECT id_pobyt,pocet1,
+  $qry=  "SELECT id_pobyt,
             r.nazev as nazev,p.pouze as pouze,p.poznamka,
             -- p.datplatby,p.zpusobplat,
             COUNT(o.id_osoba) AS _pocet,
