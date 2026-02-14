@@ -438,6 +438,24 @@ menu m {type:'left', //active:*
         info.fill('',ret.html);
     }}
   }
+
+  # ----------------------------------------------------------------------------------------==> Salesiáni
+  menu {tag:'a', title:'sestavy ASC',type:'group',_sys:'*'                                  skill:'b'
+    
+    item {title:'[fa-file-excel-o] Účast na turnaji'                                              skill:'b'
+        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'0;1'
+        ,note:`Jsou zobrazeny všechni přítomní na akci.`
+        ,tit:'příjmení:15,jméno:12,pokoj:5,st.přísl.:10,narození:12:r,věk:4:r,obec:25,psč:7,ulice:25,stát:10,fotbalový turnaj:12'
+        ,fld:'prijmeni,jmeno,pokoj,prislusnost,narozeni_dmy,_vek,obec,psc,ulice,stat,^Xturnaj'}}
+    
+    item {title:'[fa-file-excel-o] Noclehy, program'
+        ,par:{typ:'pasc',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'0;1'
+        ,note:`Jsou zobrazeny všechny rodiny.`
+        ,tit:'ID,příjmení:15,jména:18,obec:25,počet:5,prg.pátek:10,prg.sobota:10,prg.neděle:10,nocleh v okolí Prahy:10,nocleh pá=>so:10,nocleh so=>ne:10,poznámka pro organizátory:50'
+        ,fld:'^id_pobyt,prijmeni,jmena,obec,_pocet,^Xpocet1,^Xpocet2,^Xpocet3,zadost,^Xpocet4,^Xpocet5,poznamka'}}
+  
+}
+
   # ----------------------------------------------------------------------------------------==> MROP
   menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'f'
     item {title:'příjem'
