@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/db-tisk-noclehy.php';
+
 # ---------------------------------------------------------------------------------- akce2 dary_load
 # načtení darů a členkých příspěvků vztažených k pobytu
 function akce2_dary_load($idp) { 
