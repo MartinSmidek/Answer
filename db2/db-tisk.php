@@ -35,6 +35,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
   $tisk_hnizdo= $hnizdo;
   $cenik_verze= select('ma_cenik_verze','akce',"id_duakce=$akce"); // verze ceníku
   return 0 ? 0
+     : ( $par->typ=='pasc' ? tisk2_sestava_noclehy($akce,$par,$title,$vypis,$export) //!
      : ( $par->typ=='p'    ? tisk2_sestava_pary($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)  //!
      : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)   //!
@@ -78,7 +79,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)         
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))))))))))))));
+     ))))))))))))))))))))))))))))))));
 }
 # ------------------------------------------------------------------------------- akce2 tabulka
 # generování tabulky účastníků $akce typu LK pro přípravu hnízd
@@ -745,7 +746,27 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       // pro vyúčtování
       case '#deti':     $c= count($deti);  break;
       // hodnoty z tabulek
-      default:          $c= $x->$f; break;
+      case 'zadost': ;
+      case 'zadost2':
+        $c= $x->$f ? 'x' : '';
+          break;
+      case '^Xpobyt1':
+        $value= '';
+        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->key_pobyt");
+        if ($vars_json) {
+          $vars_json= str_replace("\n", "\\n", $vars_json);
+          $vars= json_decode($vars_json);
+          if ($vars!==null) {
+            $ido= $x->id_osoba;
+            $value= $vars->cleni;
+            $value= $value->$ido;
+            $c= $value->pobyt1;
+          }
+        }
+        $clmn[$n][$f]= $value;
+        break;
+    
+      default:          $c= $x->$f ;; break;
       }
       $clmn[$n][$f]= $c;
     }
@@ -987,6 +1008,37 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       case 'zadost':
       case 'zadost2':
         $clmn[$n][$f]= $x->$f ? 'x' : '';
+        break;
+      // ---------------------------------------------------------- informace z tabulky prihlaska.
+      case '^jmeno':
+        $value= '';
+        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
+        if ($vars_json) {
+          $vars_json= str_replace("\n", "\\n", $vars_json);
+          $vars= json_decode($vars_json);
+          if ($vars!==null) {
+            $ido= $x->id_osoba;
+            $value= $vars->cleni;
+            $value= $value->$ido;
+            $value= $value->jmeno??'?';
+          }
+        }
+        $clmn[$n][$f]= $value;
+        break;
+      case '^Xturnaj':
+        $value= '';
+        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
+        if ($vars_json) {
+          $vars_json= str_replace("\n", "\\n", $vars_json);
+          $vars= json_decode($vars_json);
+          if ($vars!==null) {
+            $ido= $x->id_osoba;
+            $value= $vars->cleni;
+            $value= $value->$ido;
+            $value= $value->Xturnaj;
+          }
+        }
+        $clmn[$n][$f]= $value;
         break;
       default: $clmn[$n][$f]= $x->$f;
       }
@@ -1566,7 +1618,7 @@ function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
     break;
   case 'pobyt_rodiny':
     $qry= "
-      SELECT id_pobyt,i0_rodina,pr.obec
+      SELECT id_pobyt,i0_rodina,pr.obec,
         ,COUNT(pso.id_osoba) AS _ucastniku
         ,CONCAT(IF(pr.telefony!='',CONCAT(pr.telefony,','),''),
            GROUP_CONCAT(IF(pso.kontakt,pso.telefon,''))) AS _telefony
