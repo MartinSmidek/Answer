@@ -295,8 +295,11 @@ function polozky() { // --------------------------------------------------------
       'usermail_nad1' => 
           'Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.',  
       'usermail_pod1' => 
-          typ_akce('MO') ? "<i>Přihlášku vyplňujte společně, ale v otevřených otázkách každý sám za sebe."
-      . "<br>Více informací a také ceník platný pro tuto akci najdete na webu <a target='www' href='https://www.manzelaky.cz/letni-kurz-2026'>manzelaky.cz</a></i>" : '',  
+          typ_akce('MO',[2]) ? "<i>Přihlášku vyplňujte společně, ale v otevřených otázkách každý sám za sebe."
+            . "<br>Více informací a také ceník platný pro tuto akci najdete na webu <a target='www' "
+            . "href='https://www.manzelaky.cz/letni-kurz-2026'>manzelaky.cz</a></i>" : (
+          typ_akce('MO') ? '<i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, '
+            . 'abyste ji vyplňovali společně.</i>' : ''),  
       'usermail_nad2' => 
           "Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
            <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i>
