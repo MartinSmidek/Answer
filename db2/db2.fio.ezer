@@ -217,8 +217,8 @@ form _ucty [,,640,*] {
 //    }
   }}
   // refresh z Fio banky
-  label [963,0,92,42] { css:'ae_parm' }
-  button [973,7,,30] {title:'[fa-bank] načti Fio', func onclick() { 
+  label [913,0,174,42] { css:'ae_parm' }
+  button [922,7,,30] {title:'[fa-bank] načti Fio', func onclick() { 
     var op:text, msg:text, y:object, i:number, hd:text
     spinner(1);
     msg= ''; i= 0;
@@ -233,6 +233,13 @@ form _ucty [,,640,*] {
     spinner(0);
     alert(msg);
     load_by_filter();
+  }}
+  button [1001,7,,30] {title:'[fa-file-excel-o] ulož výběr'
+    func onclick() { var name:text
+      name= `pohyby_uctu_${ucet}`;
+      fio.browse_export({file:name,type:'xlsx',title:'Výběr z výpisu účtu',
+          show:'ucet,stav,datum,castka,faktura,nazev,protiucet,vs,ss,ss2,zprava'});
+      alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
   }}
   field id_platba [10,top1+35,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
   field id_osoba { data:platba.id_oso }
