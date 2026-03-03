@@ -88,6 +88,8 @@
   // (re)definice Ezer.options
   $add_pars= array(
     'favicon' => $favicon,
+    'login_interval' => 120, // minuty povolené nečinosti
+    'gc_maxlifetime' => 12*60*60, // životnost SESSION v sekundách - default=12 hodin
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
     'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = jinak povolit přístup jen ze známých IP adres

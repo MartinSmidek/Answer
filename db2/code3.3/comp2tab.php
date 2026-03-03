@@ -43,6 +43,7 @@ $names= array(
  'castka_slovy' => (object)array('op'=>'ff'),
  'cconc' => (object)array('op'=>'ff'),
  'clear' => (object)array('op'=>'ff'),
+ 'clear_out_bounds' => (object)array('op'=>'fm'),
  'click' => (object)array('op'=>'fm'),
  'click_wait' => (object)array('op'=>'fi'),
  'clipboard' => (object)array('op'=>'ff'),
@@ -52,7 +53,7 @@ $names= array(
  'conc' => (object)array('op'=>'ff'),
  'confirm' => (object)array('op'=>'fj'),
  'contains' => (object)array('op'=>'ff'),
- 'context' => (object)array('op'=>'oc'),
+
  'contextmenu' => (object)array('op'=>'ff'),
  'copy' => (object)array('op'=>'fm'),
  'copy_by_name' => (object)array('op'=>'ff'),

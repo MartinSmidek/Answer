@@ -1,5 +1,109 @@
 <?php
+# =============================================================================> . geos = OpenStreet
+# ------------------------------------------------------------------------------------- geos refresh
+# nalezení polohy id_osoba, její vrácení a zápis, pokud neleží daleko od polohy podle psč
+#   context = {ido,idr,adresa,ulice,psc,obec,stat} adresa=1 znamená osobní adresu jinak rodinnou
+# navrací
+#   ok: 0=nenalezeno - poloha zrušena, 1=uloženo, 2=detekováno ale neuloženo - mimo psč
+#   seek: hledaná (upravená) adresa
+#   found: nalezená adresa
+#   lat, lon: poloha adresy nebo poloha psč nebo 0
+#   rect: oblast psč (jen pokud ok=2)
+function geos_refresh($ctx) {
+  $ret= (object)['ok'=>0,'seek'=>'','found'=>'','lat'=>0,'lng'=>0,'rect'=>''];
+  $x= geocode_nominatim($ctx);
+  if ($x->lat) {
+    $ret->seek= $x->seek;
+    $ret->found= "$x->class $x->type $x->name $x->display_name";
+    $ret->lat= $x->lat;
+    $ret->lon= $x->lon;
+    $b= geocode_nominatim("CZ$ctx->psc");
+    if ($b->lat) {
+      // je $x uvnitř obdélníku kolem polohy psč?
+      $dlat= 0.03; $dlon= 0.05;
+      $ret->rect= ($b->lat+$dlat).','.($b->lon-$dlon).';'.($b->lat-$dlat).','.($b->lon+$dlon);
+      if (abs($x->lat - $b->lat)<$dlat && abs($x->lon - $b->lon)<$dlon) {
+        // ano je uvnitř => zápis do tabulky osoba_geo nebo rodina_geo, stav=1
+        geos_manual($ctx->adresa?$ctx->ido:$ctx->idr,$x->lat,$x->lon,$ctx->adresa?'osoba':'rodina',1);
+        $ret->ok= 1;
+      }
+      else 
+        $ret->ok= 2;
+    }
+  }
+  return $ret;
+}
+# ----------------------------------------------------------------------------------------- geo fill
+// y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
+// y.par.par.cond - omezení na tabulku osoba
+// y.todo - celkový počet kroků
+// y.done - počet provedených kroků 
+// y.error = text chyby, způsobí konec
+function geos_fill ($y) { //debug($y,'geos_fill');
+  $sql_zbyva= "id_osoba AS ido,IF(adresa=1,'',id_rodina) AS idr,adresa,
+      IF(adresa=1,o.ulice,r.ulice) AS ulice,
+      IF(adresa=1,o.psc,r.psc) AS psc,
+      IF(adresa=1,o.obec,r.obec) AS obec,
+      IF(adresa=1,o.stat,r.stat) AS stat
+    FROM osoba AS o
+      LEFT JOIN osoba_geo AS go USING (id_osoba)
+      LEFT JOIN tvori USING (id_osoba)
+      LEFT JOIN rodina AS r USING (id_rodina)
+      LEFT JOIN rodina_geo AS gr USING (id_rodina)
+    WHERE o.deleted='' AND o.umrti=0 AND {$y->par->par->cond}
+      AND IF(o.adresa=1,o.psc!='' AND IFNULL(go.lat,0)=0 AND IFNULL(go.stav,0)=0
+        ,IFNULL(r.psc,'')!='' AND IFNULL(gr.lat,0)=0 AND IFNULL(gr.stav,0)=0 AND role IN ('a','b'))
+    GROUP BY IF(adresa=1,id_osoba,id_rodina)
+    ";
+  if ( !$y->todo ) {
+    // pokud je y.todo=0 zjistíme kolik toho bude
+    list($todo)= select("COUNT(*) FROM (SELECT $sql_zbyva) AS ch");
+    $y->todo= $todo;
+    $y->last_id= 0;
+    display("TODO {$y->todo}");
+  }
+  if ( $y->error ) { goto end; }
+  if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
+  // ------------------------------- vlastní proces
+  if ( $y->par->y!=='-' ) {
+    $x= pdo_fetch_object(pdo_qry("SELECT CONCAT(jmeno,' ',prijmeni) AS jmeno,$sql_zbyva LIMIT 1"));
+//    debug($x,">geos_refresh");
+    if (!$x->ido) goto end; 
+    $y->last_id= $x->ido;
 
+    $g= geos_refresh($x);
+    $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
+    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} ... $g->seek");
+//    debug($g,"geos_refresh>");
+    
+    // pro ok=1 zápis proběhl v geos_refresh
+    // jinak zapíšeme polohu (prok ok=0 bude 0,0) ale stav=-5
+    if ($g->ok!=1) 
+      geos_manual($x->adresa?$x->ido:$x->idr,$g->lat??0,$g->lon??0,$x->adresa?'osoba':'rodina',-5);
+  }
+  $y->done++;
+  // zpráva
+  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
+//  $y->error= "au";
+end:  
+  return $y;
+}
+# --------------------------------------------------------------------------------------- geo manual
+// zapíše resp. opraví souřadnice v tabulce osoba_geo resp. do rodina_geo
+// stav nastaví na 2
+function geos_manual($id,$lat,$lon,$table,$stav) { 
+  $msg= "";
+  if (select("id_$table","{$table}_geo","id_$table=$id")) {
+    query("UPDATE {$table}_geo SET lat='$lat',lng='$lon',stav=$stav WHERE id_$table=$id");
+    $msg= "GPS upraveno v $table.$id";
+  }
+  else {
+    query("INSERT INTO {$table}_geo (id_$table,lat,lng,stav) VALUES ($id,'$lat','$lon',$stav)");
+    $msg= "GPS vloženo do $table.$id";
+  }
+  return $msg;
+}
+# ==========================================================================================> . ...
 # --------------------------------------------------------------------------------------- akce2 mapa
 # získání seznamu souřadnic bydlišť účastníků akce 
 # s případným filtrem - např. bez pečounů: pobyt.funkce!=99
@@ -9,8 +113,8 @@ function akce2_mapa($akce,$filtr='') {  trace();
   $psc= $obec= array();
   $AND= $filtr ? " AND $filtr" : '';
   $qo=  "
-    SELECT prijmeni,adresa,psc,obec,
-      (SELECT MIN(CONCAT(role,RPAD(psc,5,' '),'x',obec))
+    SELECT prijmeni,adresa,REPLACE(psc, ' ', '') AS psc,obec,
+      (SELECT MIN(CONCAT(role,RPAD(REPLACE(psc, ' ', ''),5,' '),'x',obec))
        FROM tvori AS ot JOIN rodina AS r USING (id_rodina)
        WHERE ot.id_osoba=o.id_osoba 
       ) AS r_psc
@@ -30,7 +134,9 @@ function akce2_mapa($akce,$filtr='') {  trace();
   }
 //                                         debug($psc);
   $icon= "./ezer$ezer_version/client/img/circle_gold_15x15.png,7,7";
-  return mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+  $ret= mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+//  debug($ret);
+  return $ret;
 }
 # ---------------------------------------------------------------------------==> .. mapa2 geo_export
 # vrátí strukturu pro gmap
@@ -214,34 +320,13 @@ end:
 }
 # ------------------------------------------------------------------------------==> .. mapa2 ctverec
 # ASK
-# obsah čtverce $clen +- $dist (km) na všechny strany
+# čtverec kolem středu +- $dist (km) na všechny strany
 # vrací objekt {
 #   err:  0/1
-#   msg:  text chyby
 #   rect: omezující obdélník jako SW;NE
 #   poly: omezující polygon zmenšený o $perc % oproti obdélníku
-function mapa2_ctverec($mode,$id,$dist,$perc) {  trace();
-  $ret= (object)array('err'=>0,'msg'=>'');
-  // zjištění polohy člena
-  $lat0= $lng0= 0;
-  $qc= in_array($mode,array('o','h','m'))
-   ? "SELECT IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
-      FROM osoba AS o
-      LEFT JOIN osoba_geo AS g USING (id_osoba)
-      LEFT JOIN tvori AS t USING (id_osoba)
-      LEFT JOIN rodina AS r USING (id_rodina)
-      LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-      WHERE id_osoba=$id"
-   : "SELECT lat,lng
-      FROM rodina AS r
-      LEFT JOIN psc_axy AS a ON a.psc=r.psc
-      WHERE id_rodina=$id";
-  $rc= pdo_qry($qc);
-  if ( $rc && $c= pdo_fetch_object($rc) ) {
-    $lat0= $c->lat;
-    $lng0= $c->lng;
-  }
-  if ( !$lat0 ) { $ret->msg= "nelze najít polohu $mode/$id"; $ret->err++; goto end; }
+function mapa2_ctverec($lat0,$lng0,$dist,$perc) {  trace();
+  $ret= (object)array();
   // čtverec  SW;NE
   $delta_lat= 0.0089913097;
   $delta_lng= 0.0137464041;
@@ -262,6 +347,56 @@ end:
 //                                                 debug($ret,"geo_get_ctverec");
   return $ret;
 }
+//# ------------------------------------------------------------------------------==> .. mapa2 ctverec
+//# ASK
+//# obsah čtverce $clen +- $dist (km) na všechny strany
+//# vrací objekt {
+//#   err:  0/1
+//#   msg:  text chyby
+//#   rect: omezující obdélník jako SW;NE
+//#   poly: omezující polygon zmenšený o $perc % oproti obdélníku
+//function mapa2_ctverec($mode,$id,$dist,$perc) {  trace();
+//  $ret= (object)array('err'=>0,'msg'=>'');
+//  // zjištění polohy člena
+//  $lat0= $lng0= 0;
+//  $qc= in_array($mode,array('o','h','m'))
+//   ? "SELECT IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
+//      FROM osoba AS o
+//      LEFT JOIN osoba_geo AS g USING (id_osoba)
+//      LEFT JOIN tvori AS t USING (id_osoba)
+//      LEFT JOIN rodina AS r USING (id_rodina)
+//      LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+//      WHERE id_osoba=$id"
+//   : "SELECT lat,lng
+//      FROM rodina AS r
+//      LEFT JOIN psc_axy AS a ON a.psc=r.psc
+//      WHERE id_rodina=$id";
+//  $rc= pdo_qry($qc);
+//  if ( $rc && $c= pdo_fetch_object($rc) ) {
+//    $lat0= $c->lat;
+//    $lng0= $c->lng;
+//  }
+//  if ( !$lat0 ) { $ret->msg= "nelze najít polohu $mode/$id"; $ret->err++; goto end; }
+//  // čtverec  SW;NE
+//  $delta_lat= 0.0089913097;
+//  $delta_lng= 0.0137464041;
+//  $N= $lat0-$dist*$delta_lat;
+//  $S= $lat0+$dist*$delta_lat;
+//  $W= $lng0-$dist*$delta_lng;
+//  $E= $lng0+$dist*$delta_lng;
+//  $ret->rect= "$N,$W;$S,$E";
+//  // polygon
+//  $d_lat= abs($N-$S)*$perc/300;
+//  $d_lng= abs($W-$E)*$perc/100;
+//  $N= $N-$d_lat;
+//  $S= $S+$d_lat;
+//  $W= $W+$d_lng;
+//  $E= $E-$d_lng;
+//  $ret->poly= "$N,$W;$N,$E;$S,$E;$S,$W";
+//end:
+////                                                 debug($ret,"geo_get_ctverec");
+//  return $ret;
+//}
 # --------------------------------------------------------------------------------- mapa2 ve_ctverci
 # ASK
 # vrátí jako seznam id_$tab bydlících v oblasti dané obdélníkem 'x,y;x,y'
@@ -277,19 +412,34 @@ function mapa2_ve_ctverci($mode,$rect,$ids,$max=5000) { trace();
     $nw= explode(',',$nwll);
     $poloha= "IF(ISNULL(g.lat),a.lat,g.lat) BETWEEN $nw[0] AND $se[0]
       AND IF(ISNULL(g.lng),a.lng,g.lng) BETWEEN $se[1] AND $nw[1]";
+    $hpoloha= "IFNULL(lat,0) BETWEEN $nw[0] AND $se[0]
+           AND IFNULL(lng,0) BETWEEN $se[1] AND $nw[1]";
   }
   else {
     $poloha= "lat!=0 AND lng!=0";
   }
-  $qo= in_array($mode,array('o','h','m'))
-   ? "SELECT id_osoba,IFNULL(g.lat,0),
-        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
-      FROM osoba AS o
-      LEFT JOIN osoba_geo AS g USING (id_osoba)
+  $qo= in_array($mode,array('o','h','m')) ? "
+    SELECT id_osoba,
+      IF(o.adresa=1,IFNULL(go.lat,0),IFNULL(gr.lng,0)) AS geo,
+      IF(o.adresa=1,IF(ISNULL(go.lat),a.lat,go.lat),IF(ISNULL(gr.lat),a.lat,gr.lat)) AS lat,
+      IF(o.adresa=1,IF(ISNULL(go.lng),a.lng,go.lng),IF(ISNULL(gr.lng),a.lng,gr.lng)) AS lng
+    FROM osoba AS o
+      LEFT JOIN osoba_geo AS go USING (id_osoba)
       LEFT JOIN tvori AS t USING (id_osoba)
       LEFT JOIN rodina AS r USING (id_rodina)
+      LEFT JOIN rodina_geo AS gr USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-      WHERE id_osoba IN ($ids) AND $poloha "
+    WHERE id_osoba IN ($ids)
+    GROUP BY id_osoba HAVING $hpoloha
+    ORDER BY role -- LIMIT 1  "
+//   ? "SELECT id_osoba,IFNULL(g.lat,0),
+//        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
+//      FROM osoba AS o
+//      LEFT JOIN osoba_geo AS g USING (id_osoba)
+//      LEFT JOIN tvori AS t USING (id_osoba)
+//      LEFT JOIN rodina AS r USING (id_rodina)
+//      LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+//      WHERE id_osoba IN ($ids) AND $poloha "
    : // r|f
      "SELECT id_rodina,IFNULL(g.lat,0),
         IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
@@ -476,24 +626,21 @@ function mail2_mapa($id_mailist) {  trace();
 end:
   return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
-# --------------------------------------------------------------------------------------- geo remove
-// zapíše osobě geolokaci z mapy.cz (kopie GPS)
-// 50.6176686N, 15.6191003E
-function geo_manual($ido,$gps) { 
+# --------------------------------------------------------------------------------------- geo manual
+// zapíše resp. opraví souřadnice v tabulce osoba_geo resp. do rodina_geo
+// stav nastaví na 2
+function geo_manual($id,$lat,$lon,$rodina=0) { 
   $msg= "";
-  $m= null;
-  $ok= preg_match("/([0-9\.]+)N,\s*([0-9\.]+)E/",$gps,$m);
-  if ($ok) {
-    if (select('id_osoba','osoba_geo',"id_osoba=$ido")) {
-      query("UPDATE osoba_geo SET lat='$m[1]',lng='$m[2]',stav=1 ");
-      $msg= "GPS upraveno";
-    }
-    else {
-      query("INSERT INTO osoba_geo (id_osoba,lat,lng,stav) VALUES ($ido,'$m[1]','$m[2]',1)");
-      $msg= "GPS vloženo";
-    }
+  $table= $rodina ? 'rodina' : 'osoba';
+  if (select("id_$table","{$table}_geo","id_$table=$id")) {
+    query("UPDATE {$table}_geo SET lat='$lat',lng='$lon',stav=1 WHERE id_$table=$id");
+    $msg= "GPS upraveno v $table.$id";
   }
-  return $ok ? $msg : 'nepochopená forma GPS';
+  else {
+    query("INSERT INTO {$table}_geo (id_$table,lat,lng,stav) VALUES ($id,'$lat','$lon',1)");
+    $msg= "GPS vloženo do $table.$id";
+  }
+  return $msg;
 }
 # --------------------------------------------------------------------------------------- geo remove
 // zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
@@ -501,6 +648,13 @@ function geo_remove($ido) {
   $ok= query("DELETE FROM osoba_geo WHERE id_osoba=$ido");
   return $ok+1;
 }
+
+
+
+
+
+
+
 # -------------------------------------------------------------------------------------- geo refresh
 // pokusí se zjistit dané osobě polohu a zapsat ji
 // vrátí {ok:0/1

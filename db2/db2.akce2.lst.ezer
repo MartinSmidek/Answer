@@ -31,7 +31,7 @@ func onfirstfocus() {
   // detekce rozměrů
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
   // zobrazovat mapu?
-  info.mapka.enable(sys('options','gmap'));
+  info.mapka.enable(sys('options','omap'));
   // zobrazení akce
   info.fill(the_title);
   // inicializace zobrazení

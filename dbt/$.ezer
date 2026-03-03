@@ -101,8 +101,10 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
           item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
           item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
-          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
-          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
+          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}, skill:'a'}
+          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}, skill:'a'}
+          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}, skill:'a'}
+//          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
           item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
@@ -239,7 +241,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         // Step - jeden krok procesu
         func Step() { 
           while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
-            y= php.geo_fill(y); // funkce serveru odpovídá  za done<=todo 
+            y= php.geos_fill(y); // funkce serveru odpovídá  za done<=todo 
             info.append(y.note);
             it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
             if (y.error) {

@@ -153,7 +153,9 @@
     $cookie==1 ? "tt" : (
     $cookie==2 ? "tt" : "default" );
 
-  $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
+  $app_js= array("db2/ds_fce3.js",
+//      "o_map.js",
+      "db2/db2_fce3.js");
 
   $app_css= [ 
       "db2/db2.css.php=skin",

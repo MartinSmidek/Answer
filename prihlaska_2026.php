@@ -21,4 +21,4 @@ else {
 //if ($_GET['akce']==3094)
 //  require_once("prihlaska_2025.2.php"); // LK MS 2025
 //else
-  require_once("prihlaska_2025.4.php"); // odkazem z www.setkani.org
+  require_once("prihlaska_2025.5.php"); // odkazem z www.setkani.org
