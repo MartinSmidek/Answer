@@ -128,6 +128,11 @@ tr td.err       { background-color:#fa8 !important; }
 tr td.tr-odd.transparent  { background-color:#e6e6e6 !important; }
 tr td.tr-even.transparent  { background-color:#ffffff !important; }
  
+/* specifické barvy pro Evidence */
+tr td.geo_psc    { border-left: 5px solid silver; }
+tr td.geo_oso    { border-left: 5px solid blue; }
+tr td.geo_rod    { border-left: 5px solid darkred; }
+
  button.search   { padding-left:0px; }
 .search         { z-index:3 !important; }
 

@@ -194,6 +194,7 @@ panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akc
 # ======================================================================================> . EVIDENCE
 panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', 
     include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop#T'
+  var context:object                            // informace o osobě po kliknutí v seznamu
   func curr() {return {rodina:0,osoba:0}}
   func reaccess() {}
   func rodina_show() {}
@@ -201,6 +202,7 @@ panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE',
   func evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
   func evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
   func ulozen_gmail() { }
+  func geolocate_psc(psc) {}
 }
 panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.akce2.mai',
   skill:'yam;fam;cam#T'
@@ -969,14 +971,15 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   func onfirstfocus() { 
     spinner(1); 
 //    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
-    f.cr.init('ROADMAP',0,'smap'); 
+//    f.cr.init('ROADMAP',0,'smap'); 
+    f.cr.init('',0,'omap'); 
     ukaz_psc(); 
     spinner(0) 
   }
   func onfocus() { 
     ukaz_psc(); 
   }
-  func ukaz_psc() { var ret: object, smazat: number, psc:text, gps:text, filtr:text
+  func ukaz_psc() { var ret: object, adr:object, smazat: number, psc:text, gps:text, filtr:text
     if ( not(metoda) ) return();
     smazat= 1;
     switch (metoda) {
@@ -1005,15 +1008,27 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     if ( smazat ) f.cr.set(object('mark',''));
     f.cr.set(object('mark',ret.mark));
     if ( eq(metoda,'mrop','ms') ) panel.title= ret.title;
-    if ( (has_skill('yaa+;faa+;caa+') && ret.err) 
-      && confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?") ) {
+    echo(debug(ret.chybi,ret.err));      
+    if ( (has_skill('yaa+;faa+;caa+') && array_length(ret.chybi)) 
+        && confirm("chceš pomocí <b>OpenStreet/Nominatim</b> doplnit polohu chybějících PSČ?") ) {
       for (psc of ret.chybi) {
-        gps= prompt2(`V <b>mapy.cz</b> dej vyhledat <b>${psc}</b> a zkopíruj GPS. 
-            Pokud se v mapy.cz nenajde, je asi špatně uvedeno u adresy, najdi ji 
+        adr= php.geocode_nominatim(`CZ${psc}`,0,1);
+        echo(debug(adr));      
+        if (adr && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) 
+          php.mapa2_psc_set(psc,`${adr.lat},${adr.lon}`);
+        else alert(`PSČ ${psc} nebylo nalezeno, je asi špatně uvedeno u adresy, najdi ji 
             (ve výpisech jednotlivců) a oprav podle <b>psc.cz</b>`);
-        php.mapa2_psc_set(psc,gps);
       }
     }
+//    if ( (has_skill('yaa+;faa+;caa+') && ret.err) 
+//      && confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?") ) {
+//      for (psc of ret.chybi) {
+//        gps= prompt2(`V <b>mapy.cz</b> dej vyhledat <b>${psc}</b> a zkopíruj GPS. 
+//            Pokud se v mapy.cz nenajde, je asi špatně uvedeno u adresy, najdi ji 
+//            (ve výpisech jednotlivců) a oprav podle <b>psc.cz</b>`);
+//        php.mapa2_psc_set(psc,gps);
+//      }
+//    }
   }
   use f: form _f [0,0,,]
   form _f [,,*,*] {
@@ -1105,13 +1120,13 @@ form _osoba2x [,,244,322] { css:'ae_frame'
   func save_osoba() { var removed:number, geo:object, ido:number
     ido= form.key();
     if (adresa.changed()||ulice.changed()||stat.changed()||psc.changed()||obec.changed()) {
-      removed= php.geo_remove(ido);
+      removed= php.geos_remove(ido);
       form.save();
-      geo= php.geo_refresh(ido);
-      if (geo.ok) {
-        warning(geo.warning);
-//        alert(`${geo.note}`)
-      }
+      geo= php.geos_refresh(ido);
+//      if (geo.ok) {
+//        warning(geo.warning);
+////        alert(`${geo.note}`)
+//      }
     }
     else {
       form.save()
@@ -1253,14 +1268,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       track.back_osoba_rodina(key_osoba,cconc(host=='E',id_kmen,kmen)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  func onclick () { set_mode(2,host); refresh() }}
     item o { title:'nezobrazovat ®rodinné údaje', func onclick () { set_mode(0,host); refresh() }}
-    item { title:'-aktualizovat GPS z mapy.cz', skill:'m', 
-      func onclick() { var gps:text, msg:text
-        gps= prompt2("souřadnice GPS z mapy.cz");
-        msg= php.geo_manual(key_osoba,gps);
-        alert(msg);
-      }
-    }
-    item { title:'ukázat data', skill:'m|mm', 
+    item { title:'-ukázat data', skill:'m|mm', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
       func onclick_() {}
     }
@@ -1536,7 +1544,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       if (form_mode=='new') form.enable(this,'b') else show_osoba(0);
     }
   }
-  field geo_ok   [39,2,12,12] {tag:'a', css:'Label3', format:'no' }
+  field geo_ok   [39,2,12,12] {tag:'a', css:'Label3', format:'o' }
   label adresa_r [169,3,75,12] {tag:'a', format:'n', style:"z-index:3;background-color:inherit" }
   label [0,0,,3] {tag:'A,S', format:'n', css:'db_sep' } // zarovnání
   field ulice    [31,2,157,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}

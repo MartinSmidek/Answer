@@ -638,13 +638,13 @@ function evid2_browse_mailist($x) {
   case 'browse_load':
     $zz= array();
     # získej pozice PSČ
-    $lat= $lng= array();
-    $qs= "SELECT psc,lat,lng FROM psc_axy GROUP BY psc";
+    $lat= $lon= array();
+    $qs= "SELECT psc,lat,lng AS lon FROM psc_axy GROUP BY psc";
     $rs= pdo_qry($qs);
     while ( $rs && ($s= pdo_fetch_object($rs)) ) {
       $psc= $s->psc;
       $lat[$psc]= $s->lat;
-      $lng[$psc]= $s->lng;
+      $lon[$psc]= $s->lon;
     }
     # pokus se získat podmínku - zjednodušeno na show=[*,vzor]
     $whr= $hav= array();
@@ -692,15 +692,15 @@ function evid2_browse_mailist($x) {
       }
       $psc= $o->_psc;
       $_lat= isset($lat[$psc]) ? $lat[$psc] : 0;
-      $_lng= isset($lng[$psc]) ? $lng[$psc] : 0;
+      $_lon= isset($lon[$psc]) ? $lon[$psc] : 0;
       if ($komu=='o') {
-        list($lt,$lg)= select('lat,lng','osoba_geo',"id_osoba=$id");
-        if ($lt) { $_lat= $lt; $_lng= $lg; }
+        list($lt,$lg)= select('lat,lng AS lon','osoba_geo',"id_osoba=$id");
+        if ($lt) { $_lat= $lt; $_lon= $lg; }
       }
       $zz[]= (object)array(
       'id_o'=>$id,
       'lat'=> $_lat,
-      'lng'=> $_lng,
+      'lon'=> $_lon,
       'access'=>$o->access,
       'prijmeni'=>$prijmeni,
       'jmeno'=>$jmeno,

@@ -648,7 +648,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     }
     # atributy rodin
     $qr= pdo_qry("
-      SELECT r.*,IF(g.stav=1,'ok','') AS _geo  
+      SELECT r.*,IF(g.stav>0,'ok','') AS _geo  
       FROM rodina AS r 
       LEFT JOIN rodina_geo AS g USING(id_rodina)
       WHERE deleted='' AND id_rodina IN (0$rodiny)");
@@ -664,7 +664,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     }
     # atributy osob
     $qo= pdo_qry("
-      SELECT o.*,IF(g.stav=1,'ok','') AS _geo 
+      SELECT o.*,IF(g.stav>0,'ok','') AS _geo 
       FROM osoba AS o 
       LEFT JOIN osoba_geo AS g USING(id_osoba)
       WHERE deleted='' AND id_osoba IN (0$osoby)");

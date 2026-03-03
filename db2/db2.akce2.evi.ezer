@@ -8,6 +8,11 @@
   var virgin=1
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
+  var context= {
+    idr:0, ido:0, lat:0, lon:0,
+    gps:0, // 0=neznáme, 1=psč, 2=osoba, 3=rodina     
+    adresa:0, ulice:'', psc:'', obec:''
+  }
 # --------------------------------------------------------------------------------==> globální jména
 # načtení rodiny a osoby
 # stačí udat jedno z nich - osoba musí být udané členem rodiny
@@ -18,6 +23,30 @@ func curr() {
     : {rodina:page.rod.key_rodina, osoba:page.oso.key_osoba}
 }
           
+# vrátí pole [lat,lon] nebo zkusí geolokaci, pokud je psc=\d{5}
+func geolocate_psc(psc) { var ll:array, adr:object
+  ll= [0,0];
+  if (match('^\d{5}$',psc)) {
+    ll= php.select('lat,lng AS lon','psc_axy',`psc='${psc}'`); 
+    if (!ll && confirm(`PSČ ${psc} neznám, mám zkusit lokalizovat?`)) {
+      adr= php.geocode_nominatim(`CZ${psc}`,0,1);
+//      echo(debug(adr));      
+      if (adr && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) {
+        php.mapa2_psc_set(psc,`${adr.lat},${adr.lon}`);
+        ll= [adr.lat,adr.lon];
+      }
+      else 
+        alert(`PSČ ${psc} nebylo nalezeno, je asi špatně uvedeno u adresy, oprav je podle <b>psc.cz</b>`);
+    }
+  }
+  return ll;
+}
+
+func context_set(idr,ido,lat,lon,adresa,ulice,psc,obec,gps) {
+  context.lat= lat; context.lon= lon; context.idr= idr; context.ido= ido; 
+  context.adresa= adresa; context.ulice= ulice; context.psc= psc; context.obec= obec; context.gps= gps; 
+}
+
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 
 func evid_osoba(_ido)  { 
@@ -263,14 +292,14 @@ use info: form right [12,4,,]           { tag:'i'
     }
   }
 }
-# ------------------------------------------------------------------------------------------==> test
-use test: form _test [360,2,,] { skill:'m' }
-form _test [0,0,12,25] { style:'z-index:3;cursor:help;text-align:center'
-  label [0,0,12,12] {title:' r', style:'color:white;background:red'
-    func onclick() { clear(); GEO.locate(0,idr); lst.brow.browse_row(); lst.load_rodina(idr); }}
-  label [0,13,12,12] {title:'o', style:'color:white;background:blue'
-    func onclick() { clear(); GEO.locate(ido,0); page.oso_load(ido); }}
-}
+//# ------------------------------------------------------------------------------------------==> test
+//use test: form _test [360,2,,] { skill:'m' }
+//form _test [0,0,12,25] { style:'z-index:3;cursor:help;text-align:center'
+//  label [0,0,12,12] {title:' r', style:'color:white;background:red'
+//    func onclick() { clear(); GEO.locate(0,idr); lst.brow.browse_row(); lst.load_rodina(idr); }}
+//  label [0,13,12,12] {title:'o', style:'color:white;background:blue'
+//    func onclick() { clear(); GEO.locate(ido,0); page.oso_load(ido); }}
+//}
 # =========================================================================================> SEZNAMY
 form _lst [,,370,*] {
   # ---------------------------------------------- interface 
@@ -477,18 +506,21 @@ form _lst [,,370,*] {
   view ot: table tvori  { join_type:"LEFT", join:"USING (id_osoba)" }
   view of: table rodina { join_type:"LEFT", join:"ON of.id_rodina=ot.id_rodina" }
   view og: table osoba_geo { join_type:"LEFT", join:"USING (id_osoba)" }
+  view org: table rodina_geo { join_type:"LEFT", join:"ON org.id_rodina=ot.id_rodina" }
 //  view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
 //  view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
-//  view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
+  view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
   browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba', rows:27, buf_rows:60, qry_rows:1, 
       optimize:{fetch:'all'}, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
 //    show id_d { data:od.id_dar }
     show id_t { data:ot.id_tvori }
     show id_r { data:of.id_rodina }
+    show adresa { data:o.adresa }
 //    show id_p { data:os.id_pobyt }
-    show lat  { expr:"IFNULL(og.lat,0)" }
-    show lng  { expr:"IFNULL(og.lng,0)" }
+    show gps  { expr:"IF(o.adresa,IF(IFNULL(og.lat,0),1,IF(ISNULL(u.lat),0,3)),IF(IFNULL(org.lat,0),2,IF(ISNULL(u.lat),0,3)))" }
+    show lat  { expr:"IF(o.adresa,IFNULL(og.lat,IFNULL(u.lat,0)),IFNULL(org.lat,IFNULL(u.lat,0)))" }
+    show lon  { expr:"IF(o.adresa,IFNULL(og.lng,IFNULL(u.lng,0)),IFNULL(org.lng,IFNULL(u.lng,0)))" }
     show filtr { expr:"1" } // dynamicky definováno ve filtr_osob funkcí o_filtr.onchange
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
@@ -500,7 +532,9 @@ form _lst [,,370,*] {
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
     show ulice {expr:"IF(o.adresa,o.ulice,of.ulice)"}
     show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
-    show obec [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' }
+    show obec [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' 
+      css_cell:'gps,0:,1:geo_oso,2:geo_rod,3:geo_psc' }
+//      css_cell:'gps,0:,1:geo_oso,10:geo_rod' }
     show nar [,,50,] { title:'rrmmdd', data:o.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
       help:'datum narození ve tvaru rrmmdd'}
     show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }
@@ -511,13 +545,15 @@ form _lst [,,370,*] {
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
     show tips [,,0,] { title:'dup?', expr:"'0'", format:'trsq*' }
     // počítané položky
-//    var lat:number, lng:number
     proc onrowclick() { bo_show }
     func bo_show() { 
       ido= id_o; page.evid_load(ido,0);
-      page.map.mapa_mark_curr(lat,lng,psc);
+      if (page.map.on) {
+        context_set(id_r,id_o,lat,lon,adresa,ulice,psc,obec,gps);
+        page.map.mapa_mark_curr(); // gps: 0=neznáme, 1=psč, 2=osoba, 3=rodina
+      }
     }
-    func onchoice(on) { page.map.mapa_mark_add(ido,lat,lng,psc,on) }
+    func onchoice(on) { page.map.mapa_mark_add(ido,lat,lon,psc,on) }
     proc onclick() {
       mail.width;     mail.width(0);    telefon.width(44)
     | telefon.width;  telefon.width(0); _id_o.width(44)
@@ -539,28 +575,7 @@ form _lst [,,370,*] {
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
       item { title:'-vybraná ID dát do schránky'  func onclick() { clipboard(brow_selected('get')) }}
       item { title:'všechna ID dát do schránky'   func onclick() { clipboard(brow.browse_keys()) }}
-      item { title:'-pozice na mapě'              func onclick() { geo_latltd(); }}
     }
-//    proc re_geocode() {   // podle maps.google.com
-//      C_clen.goo_ok.enable(0);
-//      C_clen.goo_pat.set(clen_adresa);
-//      geo.set(object('id',C_clen.id_clen.get,'address',C_clen.goo_pat.get));
-//      geo.set(m.geocode(geo.get));            // přepočítáme polohu
-//      [ geo.get('mark');                      // pokud je známa poloha zobrazíme výrazně
-//        klub_google(m,'curr',geo.get('lat'),geo.get('lng'),'red',12);
-//        C_clen.goo_ok.enable(1) ];
-//      C_clen.goo_adr.set(geo.get('found.addr')); // včetně adresy vrácené geocode
-//    }
-    func geo_latltd() { var adresa:text, geo:object // {mark:'lat,lng',ezer:{c,k,a,s}}
-      adresa= geo_adresa();
-      geo= {id:id_o,address:adresa};
-      geo= page.map.cr.geocode(geo);
-      echo(debug(geo,adresa));
-    }
-    func geo_adresa() {
-      return `${ulice}, ${psc} ${obec}, CZ`;
-    }
-
   }
   # ==============================================> M - MAILIST
   var bm_having= 1, bm_komu= -1
@@ -579,8 +594,8 @@ form _lst [,,370,*] {
   browse bm [10,30,,] {tag:'m', rows:27, qry_rows:1, buf_rows:6000,
       optimize:{ask:'evid2_browse_mailist'}, key_id:'id_o'
     show id_o
-    show lat
-    show lng
+//    show lat
+//    show lng
     show ulice
     show telefon
     show access
@@ -595,7 +610,6 @@ form _lst [,,370,*] {
     show _id_o    [,,0,]  { title:'ID osoby', format:'rsq=', help:'osobní číslo' }
     // events
     func onrowclick() {
-      page.map.mapa_mark_curr(lat,lng,psc);
       if (bm_komu=='o') { // seznam osob
         ido= id_o; page.evid_load(ido,0);
       }
@@ -603,7 +617,6 @@ form _lst [,,370,*] {
         idr= id_o; page.evid_load(0,idr);
       }
     }
-    func onchoice(on) { page.map.mapa_mark_add(ido,lat,lng,psc,on) }
     proc onclick() {
       mail.width; mail.width(0);  _id_o.width(44)
     |             mail.width(44); _id_o.width(0)
@@ -659,8 +672,8 @@ form _lst [,,370,*] {
     show barva { expr:"r.deleted=''" }
     show _clenu { expr:"COUNT(*)" }
     show access { data:r.access }
-    show lat  { expr:"IFNULL(rg.lat,0)" }
-    show lng  { expr:"IFNULL(rg.lng,0)" }
+//    show lat  { expr:"IFNULL(rg.lat,0)" }
+//    show lng  { expr:"IFNULL(rg.lng,0)" }
     show nazev [,,70,] { data:r.nazev, title:'rodina', format:'q*s+',
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmena [,,130,] { expr:"GROUP_CONCAT(rto.jmeno ORDER BY rt.role)", title:'jména', format:'tq%s' }
@@ -671,15 +684,10 @@ form _lst [,,370,*] {
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
     show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq=s' }
     show tips [,,0,] { title:'dup?', expr:"'0'", format:'trsq*' }
-    func onrowclick() {  var ll:array, lat:number, lng:number
+    func onrowclick() {  
       idr= id_r; 
       page.evid_load(0,idr); 
-      if (psc && page.map.on) {
-//        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); lat= ll[0]; lng= ll[1];
-        page.map.mapa_mark_curr(0,0,psc)
-      }
     }
-    func onchoice(on) { page.map.mapa_mark_add(ido,lat,lng,psc,on) }
     proc onclick() {
       maily.width; maily.width(0);  _id_r.width(66)
     |              maily.width(66); _id_r.width(0)
@@ -739,6 +747,7 @@ form _page {
     rod_load(x.rodina);
   | rod.enable(0,'.*'); osoba_load
   }
+  
   # vyčištění stránky
   proc page_init() {
     oso.init; rod.init; cleni.browse_init; act.akc.browse_init;
@@ -751,23 +760,38 @@ form _page {
   # zruš příznaky změn
   proc page_plain() { form.plain; rod.plain; oso.plain; }
   # načíst aktivní osobu do aktivní záložky
-  proc osoba_load() {
-    switch(curr.get,
-    'evid',{ oso_load(ido.get) },
-    'akce',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
-    'albu',{ alb.galery('rodina',idr.get) },
-    'dary',{ oso_load(ido.get); 
-             dar.form_init; dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
-    'clen',{ oso_load(ido.get);
-             cle.form_init; [ cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) ];
-             pri.form_init; pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
-    'mapa',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
-    );
-    [ cmd.part('o_smaz');
-      cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];
+//  proc osoba_load() {
+//    switch(curr.get,
+//    'evid',{ oso_load(ido.get) },
+//    'akce',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+//    'albu',{ alb.galery('rodina',idr.get) },
+//    'dary',{ oso_load(ido.get); 
+//             dar.form_init; dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+//    'clen',{ oso_load(ido.get);
+//             cle.form_init; [ cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) ];
+//             pri.form_init; pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+//    'mapa',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
+//    );
+//    [ cmd.part('o_smaz');
+//      cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];
+//  }
+  func osoba_load() { 
+    switch(curr) {
+      case 'evid': oso_load(ido); break;
+      case 'akce': oso_load(ido); act.ucasti(ido,conc(oso.prijmeni,' ',oso.jmeno)); break;
+      case 'albu': alb.galery('rodina',idr); break;
+      case 'dary': oso_load(ido); dar.form_init(); dar.dary(ido,conc(oso.prijmeni,' ',oso.jmeno)); break;
+      case 'clen': oso_load(ido);
+        cle.form_init(); cle.dary(ido,conc(oso.prijmeni,' ',oso.jmeno));
+        pri.form_init(); pri.dary(ido,conc(oso.prijmeni,' ',oso.jmeno)); break;
+      case 'mapa': oso_load(ido); act.ucasti(ido,conc(oso.prijmeni,' ',oso.jmeno)); break;
+    }
+    if (cmd.part('o_smaz')) {
+      cmd.o_smaz.display(!page.oso.deleted); cmd.o_obnov.display(page.oso.deleted) 
+    }
   }
   # načíst osobu do záložky evid (případně s doplněním informací z _track) ==> . oso_load
-  func oso_load(ido) { var ret: object, geo:object
+  func oso_load(ido) { var ret: object //, geo:object
     if (ido && evi_barvit_zmeny) {
       oso.set_helps(0,'zluty','oranzovy');
       ret= php.elim2_data_osoba(ido,eq(lst.mode,'f','h') ? lst.track_past : '');
@@ -777,25 +801,9 @@ form _page {
     }
     elseif (ido) {
       oso.load(ido);
-      oso.geo_ok= php.select('stav=1','osoba_geo',`id_osoba=${ido}`) ? 'ok' : '';
-//      geo= php.geo_get_osoba(ido);
-//      oso.geo_ok= geo.ok ? 'OK' : '';
       oso.show_osoba(2);
     }
   }
-//  proc oso_load(ido) { var ret: object
-//    ido;
-//    evi_barvit_zmeny.get;
-//    oso.set_helps(0,'zluty','oranzovy');
-//    ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-//    oso.load(ido);
-////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-//    oso.show_osoba(2);
-//    oso.set_helps(ret.chng,'zluty','oranzovy');
-//  | ido; oso.load(ido);
-////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-//    oso.show_osoba(2);
-//  }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
   func rod_load(idr) { var ret: object, mazat:number
     if (evi_barvit_zmeny) 
@@ -803,8 +811,6 @@ form _page {
     rod.r.load(idr); rod.od_svatby();
     if (evi_barvit_zmeny) 
       rod.set_helps(ret.chng,'zluty','oranzovy');
-    // zobrazení značky ověřené adresy
-    rod.r_geo_ok= lst.mode=='r' && lst.brow.lat ? 'ok' : '';
     // přepínání mezi mazat/obnovit
     mazat= page.rod.r_deleted ? 0 : 1; 
     page.rod._deleted.display(!mazat);
@@ -813,30 +819,6 @@ form _page {
       cmd.r_obnov.display(!mazat);
     }
   }
-//  func rod_load(idr) { var ret: object, mazat:number
-//    if (evi_barvit_zmeny) {
-//      ret= php.elim2_data_rodina(idr,eq(lst.mode,'f','h') ? lst.track_past : '');
-//      rod.r.load(idr); rod.od_svatby();
-//      rod.set_helps(ret.chng,'zluty','oranzovy');
-//    }
-//    else {
-//      rod.r.load(idr); rod.od_svatby();
-//    }
-//    mazat= page.rod.r_deleted ? 0 : 1; 
-//    cmd.r_smaz.display(mazat);
-//    cmd.r_obnov.display(!mazat);
-//  }
-//  proc rod_load(idr) { var ret: object
-//    [ evi_barvit_zmeny.get;
-//      ret.set(ask('elim2_data_rodina',idr,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-//      rod.r.load(idr); [ rod.call('od_svatby') ];
-//      rod.set_helps(ret.chng,'zluty','oranzovy');
-//    | rod.r.load(idr); [ rod.call('od_svatby') ]
-//    ];
-//    [ cmd.part('r_smaz');
-//      cmd.r_smaz.display(not(page.rod.r_deleted.get));
-//      cmd.r_obnov.display(page.rod.r_deleted.get) ];
-//  }
   # ----------------------------------------------==> záložky
   var curr:object // aktuální záložka
   proc cvak(i) {
@@ -849,7 +831,8 @@ form _page {
   label albu [247,0,90,20] {par:°{on:'C|F',off:'O|B|D|Y|M'}, tag:'_', title:'<b>Fotografie</b>',
     proc onclick() { cvak(this); osoba_load }}
   label mapa [365,0,90,20] {par:°{on:'C|O|M',off:'F|D|Y'},  tag:'_', title:'<b>Mapa</b>',
-    proc onclick() { cvak(this); osoba_load; map.mapa_show('smap') }}
+//    proc onclick() { cvak(this); osoba_load; map.mapa_show('smap') }}
+    proc onclick() { cvak(this); osoba_load; map.mapa_show('omap') }}
   label dary [483,0,90,20] {par:°{on:'C|O|D',off:'F|Y|M'},   tag:'_', title:'<b>Dary</b>', skill:'yae;fae;cae'
     proc onclick() { cvak(this); osoba_load; dar.onclick }}
   label clen [601,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>', skill:'yae;fae;cae'
@@ -894,27 +877,25 @@ form _page {
         if (track.display()) track.back_show('osoba',ido);
       }
     }
-//    proc onrowclick() {
-//      has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
-//      this.blur(1);
-//    | cleni_click(id_osoba.get);
-//      [ track.display; track.back_show('osoba',ido.get) ];
-//    }
-    proc cleni_click(id) {
-      accessed(org.get);
-      // zobrazení člena rodiny, případná úprava focus
-      last.set(this.browse_active);
-      ido.set(id);                              // změna lokálního ido
-      rod.t.key(id_tvori.get); rod.t_role.set(role.get);
-      rod.rodiny.selects(rodiny.get); rod.rodiny.key(idr.get);
-      [ eq(lst.mode.get,'o');                   // pokud jde o jinou osobu než je v lst
-        { eq(ido.get,ido0.get); lst.bo.browse_focus
-        | lst.bo.blur(1) }
-      ];
-      osoba_load
-    | not(accessed(org.get));
-      warning("nemáte oprávnění vidět údaje o osobě z jiné organizace");
-      this.browse_active(last.get)
+    func cleni_click(id) {
+      if (accessed(org)) {
+        // zobrazení člena rodiny, případná úprava focus
+        last= this.browse_active();
+        ido= id;                              // změna lokálního ido
+        rod.t.key(id_tvori); rod.t_role= role;
+        rod.rodiny.selects(rodiny); rod.rodiny.key(idr);
+        if (lst.mode=='o') {                  // pokud jde o jinou osobu než je v lst
+          if (ido==ido0) 
+            lst.bo.browse_focus();
+          else
+            lst.bo.blur(1);
+        }
+        osoba_load()
+      }
+      else {
+        warning("nemáte oprávnění vidět osobní údaje o osobě z jiné organizace");
+        this.browse_active(last)
+      }
     }
   }
   # ==============================================> O: EVIDENCE OSOBY
@@ -923,13 +904,8 @@ form _page {
       proc onclick() { var zmena:text, ido:number, tips:text
         ido.set(lst.bo.id_o.get); tips.set(lst.bo.tips.get);
         spinner(1); zmena.set(elim.osoby_lst(ido,tips)); spinner(0);
-//        echo("elim.osoby_lst(",ido,",",tips,")=",zmena," ido=",elim.osoby_lst_id.get);
         lst.bo.browse_seek(conc("o.id_osoba=",elim.osoby_lst_id.get));
         lst.bo.raise('onrowclick',elim.osoby_lst_id.get);
-#         [ lst.bo.browse_row;
-#           lst.bo.raise('onrowclick',elim.osoby_lst_id.get);
-#           lst.bo.browse_row
-#         ];
     }}
     proc on_click() {
       up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri); down(page.map) }
@@ -1003,7 +979,43 @@ form _page {
     }} 
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
+    item { title:'-[fa-map-marker] aktualizovat GPS z OpenStreet', skill:'m', 
+      func onclick() {
+        var x:object, dlat:number, dlon:number
+        x= php.geos_refresh(context);  
+        // ok: 0=nenalezeno - poloha zrušena, 1=uloženo, 2=detekováno ale neuloženo - mimo psč
+        // seek: hledaná (upravená) adresa
+        // found: nalezená adresa
+        // lat, lon: poloha adresy nebo poloha psč nebo 0
+        // rect: oblast psč (jen pokud ok=2)
+        if (!x.ok) 
+          alert(`adresa ${x.seek} nebyla nalezena`); 
+        else {
+          page.map.cr.set({mark:`0,${x.lat},${x.lon}`});
+          page.map.cr.set({rect:x.rect});
+          warning(`nalezeno ${x.found}`); 
+          if (x.ok==2) { // rozhodnutí o zápisu
+            if (confirm(`nalezená adresa ${x.seek} je trochu mimo psč ${context.psc}. Přesto uložit?`)) {
+              php.geos_manual(
+                context.adresa?context.ido:context.idr,x.lat,x.lon,context.adresa?'osoba':'rodina',1);
+            }
+          }
+          context.lat= x.lat; context.lon= x.lon;
+        }
+      }
+    }
+    item { title:'zobraz oblast PSČ', skill:'m'
+      func onclick() { var b: array, rect:text, lat:number, lon:number
+        b= php.select('lat,lng AS lon','psc_axy',`psc='${context.psc}'`);
+        if (b) {
+          lat= b[0]; lon= b[1]; 
+          rect= `${lat+0.06},${lon-0.11};${lat-0.06},${lon+0.11}`;
+          page.map.cr.set({rect:rect});
+        }
+      }
+    }
   }
+# . uses in page
   use act: form _aktivity  [450, 20,,]  { tag:'B', format:'n' }
   use alb: form foto._alb  [200, 20,,]  { tag:'F', format:'n' }
   use dar: form _dary      [  5,-57,,]  { tag:'D', format:'n' }
@@ -1337,7 +1349,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     akc.browse_load(conc('a.spec=0 AND a.zruseno=0 AND s.id_osoba=',_ido),"datum_od DESC")
   }
 }
-# ------------------------------------------------------------------------------------------==> MAPA
+# -----------------------------------------------------------------------------==> _mapa as page.map
 //form _mapa [,,500,500] {css:'ae_frame shift_down'
 form _mapa [,,650,500] {css:'ae_frame shift_down'
   var on=0,
@@ -1354,16 +1366,17 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
   proc onclick() {
     up(page.map); down(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
   label cr [2,2,646,496] { type:'map'
-    proc onmarkclick(mark) {
-      { eq(mark.ezer,'skupiny'); //echo('skupiny');
-        alert(skup.get(mark.id));
-      | eq(mark.ezer,'psc'); //echo('psc')
-      | lst.bm.raise('onrowclick',mark.id)
-      };
+    func onmarkclick(mark:object) {
+      if (mark.ezer=='skupiny') 
+        alert(skup[mark.id]);
+      elseif (mark.ezer=='psc')
+        echo('psc')
+      else
+        lst.brow.browse_seek(`o.id_osoba=${mark.id}`)
     }
   }
-  label [6,6,28,26] { css:'ae_parm', style:"z-index:1" }
-  button op [10,10,,] { title:'[fa-navicon]'
+  label [-6,6,28,26] { css:'ae_parm', style:"z-index:1" }
+  button op [-10,10,,] { title:'[fa-navicon]'
     proc onclick() { mode.set('evidence'); }
     menu cm { type:'context', par:{trigger:'click'} # ==> . kontextové menu
       item { title:'vyber bydlící ve výřezu'
@@ -1375,6 +1388,33 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
           if (poly) select_in_polygon(poly) 
           else alert("napřed v menu vytvoř ohraničující obdélník")
       }}
+      item { title:'vytvoř ohraničující obdélník'
+        func onclick() { ohraniceni() }}
+      item { title:'-zruš pomocné obrazce'
+        func onclick() { cr.set({rect:'',poly:''}) }}
+      item { title:'zruš všechny body'
+        func onclick() { cr.set({mark:''});}}
+      item { title:'zruš body ležící mimo výřez'
+        func onclick() { cr.clear_out_bounds() }}
+      item { title:'-zoom na malé okolí'
+        func onclick() { zoom(1) }}
+//        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,1) }}
+      item { title:'zoom na na velké okolí', 
+        func onclick() { zoom(5) }}
+//        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,5) }}
+      item { title:'zoom na všechno zobrazené'
+        proc onclick() { cr.fit_bounds }}
+      item { title:'zoom na celou republiku'
+        func onclick() { cr.set({zoom:'51.21,12.17;48.38,18.76'}) }}
+      item { title:'- aktuální chlapské skupiny'
+        proc onclick() { var ret:object
+          mode.set('skupiny');
+          ret.set(ask('mapa2_skupiny'));
+          [ ret.err; warning(ret.err) ];
+          cr.set(object('mark',ret.mark,'ezer','skupiny'));
+          skup.set(ret.clmns);
+          [ ret.msg; alert(ret.msg) ];
+      }}
       item { title:'vypiš PSČ ležící v ohraničení'
         func onclick() { var poly:text, ret:object
           poly= cr.get('poly');
@@ -1385,33 +1425,6 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
           }
           else alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
       }}
-      item { title:'-zruš pomocné obrazce'
-        func onclick() { cr.set({rect:'',poly:''}) }}
-      item { title:'zruš všechny body'
-        func onclick() { cr.set({mark:''});}}
-//      item { title:'zruš body ležící mimo výřez'
-//        func onclick() { unselect_out_map(cr.get_bounds()) }}
-//          lst.bm_unselect_out(cr.get_bounds());
-//          function('m',"return evid_mapa_focus(m);",cr); }}
-      item { title:'-zoom na malé okolí'
-        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,1) }}
-      item { title:'zoom na na velké okolí', 
-        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,5) }}
-      item { title:'zoom na všechny vybrané'
-        proc onclick() { cr.fit_bounds }}
-      item { title:'zoom na celou republiku'
-        func onclick() { cr.set({zoom:"49.0,14.6;50.5,16.4"}) }}
-      item { title:'vytvoř ohraničující obdélník (klik dovnitř zjemní ohraničení)'
-        func onclick() { ohraniceni() }}
-      item { title:'- aktuální chlapské skupiny'
-        proc onclick() { var ret:object
-          mode.set('skupiny');
-          ret.set(ask('mapa2_skupiny'));
-          [ ret.err; warning(ret.err) ];
-          cr.set(object('mark',ret.mark,'ezer','skupiny'));
-          skup.set(ret.clmns);
-          [ ret.msg; alert(ret.msg) ];
-      }}
       item { title:'zobrazení seznamu PSČ'
         proc onclick() { var lst:text, ret:object
           mode.set('psc');
@@ -1419,26 +1432,36 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
           ret.set(ask('mapa2_psc_list',lst));
           cr.set(object('mark',ret.mark,'ezer','psc'));
       }}
-      item { title:'-použít mapu ČR od Mapy.cz'
-        func onclick() { on= 0; mapa_show('smap') }}
-      item { title:'... nebo mapu ČR od Google'
-        func onclick() { on= 0; mapa_show('gmap') }}
+      item { title:'-mapa ČR podle OpenStreet'
+        func onclick() { on= 0; mapa_show('omap') }}
+//      item { title:'... nebo mapu ČR od Mapy.cz'
+//        func onclick() { on= 0; mapa_show('smap') }}
+//      item { title:'... nebo mapu ČR od Google'
+//        func onclick() { on= 0; mapa_show('gmap') }}
+      item { title:'-dump', skill:'m' 
+        func onclick() { echo(debug(cr.dump())); }}
     }
   }
   # ==> . označ adresu kroužkem
-  func mapa_mark_curr(lat,ltg,psc) { var ll:array
+  # voláno kliknutím v seznamu osob => je definován kontext
+  # barva podle typu gps - 1=blue, 2=red, 3:grey
+  func mapa_mark_curr() { var ll:array, clr:text
     if (on) { 
-      if (!lat && psc) {
-        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); 
-        if (ll && ll[0]) {
-          lat= ll[0]; ltg= ll[1];
-        }
-        else warning(`PSČ ${psc} nemá definované souřadnice`)
+      if (!context.lat && context.psc) {
+        // zkusíme doplnit chybějící polohu PSČ
+        ll= geolocate_psc(context.psc);
+        context.lat= ll[0]; context.lon= ll[1];
       }
-      cr= {clear:0,mark:`0,${lat},${ltg},,./ezer3.3/client/img/circle_blue_25x25.png,12`}; 
-  }}
+//      echo(`mapa_mark_curr(${context.lat},${context.lon},${context.psc},${context.gps})`);
+      if (context.lat) {
+        clr= context.gps==3 ? 'grey' : (context.gps==1 ? 'blue' : 'red');
+        cr.set({clear:0,mark:`0,${context.lat},${context.lon},,./ezer3.3/client/img/circle_${clr}_25x25.png,12`}); 
+      }
+    }
+  }
   # ==> . přidej nebo zruš značku adresy pro id
-  func mapa_mark_add(id,lat,ltg,psc,add) { var ll:array, color:text
+  # je voláno z bo.onrowclick
+  func mapa_mark_add(id,lat,lon,psc,add) { var ll:array, color:text
     if (on) { 
       if (!add) {
         cr.set_mark(id,'delete')
@@ -1446,23 +1469,13 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       else {
         color= 'green';
         if (!lat && psc) {
-          ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); 
-          if (ll && ll[0]) {lat= ll[0]; ltg= ll[1]; color= 'gold';}
+          ll= php.select('lat,lon','psc_axy',`psc='${psc}'`); 
+          if (ll && ll[0]) {lat= ll[0]; lon= ll[1]; color= 'gold';}
           else warning(`PSČ ${psc} nemá definované souřadnice`)
         }
-        cr= {clear:0,mark:`${id},${lat},${ltg},${id},./ezer3.3/client/img/circle_${color}_15x15.png,7`}; 
+        cr.set({clear:0,mark:`${id},${lat},${lon},${id},./ezer3.3/client/img/circle_${color}_15x15.png,7`}); 
       }
   }}
-//  proc mapa_curr(lat,lng) {
-//    on.get; function('m','lat','lng',"evid_mapa_curr(m,lat,lng,'blue',12); return 1;",cr,lat,lng) }
-//  # ==> . přidej osobu na mapu
-//  proc mapa_add(geo) { on.get; cr.set(geo); }
-//  # ==> . uber osobu z mapy
-//  proc mapa_del(ido) { var mark:object
-//    on.get;
-//    mark.set(cr.get('id',ido));
-//    mark; cr.set_mark(mark,'delete');
-//  }
   # ==> . vyber v browse adresy v polygonu nebo ve výřezu či mimo něj
   // vybere v aktuálním browse osoby resp. rodiny s adresou ve výřezu
   func select_in_map() { var ret:object, keys:array
@@ -1473,15 +1486,11 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       ret= php.mapa2_ve_ctverci(lst.mode,cr.get_bounds(),keys);
       if (ret.msg) { alert(ret.msg); return; }
       lst.brow.selected('clear');
-      page.map.mapa_clear(0); // polyline nechat
+//      page.map.mapa_clear(0); // polyline nechat
       lst.brow.selected('set',ret.ids);
       page.map.cr.set({mark:ret.marks});
     }
   }
-//  // zrušit výběr osob mimo výřez
-//  func unselect_out_map(rect) { 
-//    select_in_map(rect);
-//  }
   // vybere v aktuálním browse osoby resp. rodiny s adresou v polygonu
   func select_in_polygon(poly) { var ret:object, keys:array
     if (on) {
@@ -1491,7 +1500,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       ret= php.mapa2_v_polygonu(lst.mode,poly,keys);
       if (ret.msg) { alert(ret.msg); return; }
       lst.brow.selected('clear');
-      page.map.mapa_clear(0); // polyline nechat
+//      page.map.mapa_clear(0); // polyline nechat
       lst.brow.selected('set',ret.ids);
       page.map.cr.set({mark:ret.marks});
     }
@@ -1503,13 +1512,10 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
     | cr.set(°{zoom:'',rect:'',mark:''}) 
     } 
   }
-  func zoom (id,km) { var ret: object
+  func zoom (km) { var ret: object
     if (on) {
-      ret= php.mapa2_ctverec(lst.mode,id,km,5);
-      cr.set({zoom:'',rect:'',poly:''});
+      ret= php.mapa2_ctverec(context.lat,context.lon,km,5);
       cr.set({zoom:ret.rect});
-//      cr.set({poly:ret.poly});
-//      cr.option({poly_edit:1});
     }
   }
   func ohraniceni () { var rect:text, zoom:number
@@ -1518,46 +1524,6 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       cr.set({poly:rect});
       cr.option({poly_edit:1});
     }
-  }
-//  proc zoom (id,km) { var ret: object
-//    on.get;
-//    ret.set(ask('mapa2_ctverec',cconc(eq(lst.bm_komu.get,'o'),'osoba','rodina'),id,km,5));
-//    cr.set(°{zoom:'',rect:'',poly:''});
-//    cr.set(object('zoom',ret.rect));
-//    cr.set(object('poly',ret.poly));
-//    cr.option(object('poly_edit',1));
-//  }
-}
-# =============================================================================================> GEO
-panel GEO [0,0,400,110] {type:'popup', title:'hledání adresy v mapy.cz' 
-  var ido: number,
-      idr:number,
-      geo:object
-  // poznamená navrženou polohu jako správnou se stav=2
-  func locate(_ido,_idr) { 
-    ido= _ido;
-    idr= _idr;
-    fork.panel.mapy_cz();
-    panel.modal();
-  }
-  func mapy_cz() {
-    f.pat= ''; f.adr= ''; f.err= '';
-    geo= ido ? php.geo_get_osoba(ido) : (idr ? php.geo_get_rodina(idr) : {error:'?'});
-    f.pat= geo.address; f.adr= geo.full; f.err= geo.error;
-  }
-  use f: form {
-    label [11,0,56,15] {title:'hledáme:' }
-    label pat [75,0,312,25] {style:"border:1px solid #777" }
-    label [11,32,55,16] {title:'nalezeno:' }
-    label adr [74,32,312,25] {style:"border:1px solid #777" }
-    label [11,70,55,16] {title:'problém:' }
-    label err [74,70,312,25] {style:"color:red" }
-    button [72,92,,] {title:'Ok - zapamatovat', 
-      func onclick() {
-        if (ido) php.geo_set_osoba(ido,geo); 
-        if (idr) php.geo_set_rodina(idr,geo); 
-        panel.hide(1);
-    }}
   }
 }
 # ============================================================================================> _CMD
@@ -1664,7 +1630,6 @@ form _cmd [,,706,32] { css:'ae_frame'
         if (!page.oso.same()) {
           if (page.oso.jmeno.changed() || page.oso.prijmeni.changed() || page.oso.narozeni.changed())
             depth= 'page';
-//          page.oso.save()
           page.oso.save_osoba();
         }
         if (!page.rod.same()) {
