@@ -28,9 +28,9 @@ func geolocate_psc(psc) { var ll:array, adr:object
   ll= [0,0];
   if (match('^\d{5}$',psc)) {
     ll= php.select('lat,lng AS lon','psc_axy',`psc='${psc}'`); 
-    if (!ll && confirm(`PSČ ${psc} neznám, mám zkusit lokalizovat?`)) {
+    if (!ll) ll= [0,0];
+    if (!ll[0] && confirm(`PSČ ${psc} neznám, mám zkusit lokalizovat?`)) {
       adr= php.geocode_nominatim(`CZ${psc}`,0,1);
-//      echo(debug(adr));      
       if (adr && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) {
         php.mapa2_psc_set(psc,`${adr.lat},${adr.lon}`);
         ll= [adr.lat,adr.lon];
@@ -1452,7 +1452,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
         ll= geolocate_psc(context.psc);
         context.lat= ll[0]; context.lon= ll[1];
       }
-      echo(`mapa_mark_curr(${context.lat},${context.lon},${context.psc},${context.gps})`);
+//      echo(`mapa_mark_curr(${context.lat},${context.lon},${context.psc},${context.gps})`);
       if (context.lat) {
         clr= context.gps==3 ? 'grey' : (context.gps==1 ? 'blue' : 'red');
         cr.set({clear:0,mark:`0,${context.lat},${context.lon},,./ezer3.3/client/img/circle_${clr}_25x25.png,12`}); 
