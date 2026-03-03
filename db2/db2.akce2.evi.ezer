@@ -1056,9 +1056,9 @@ form _page {
           alert(`adresa ${x.seek} nebyla nalezena`); 
         else {
           page.map.cr.set({mark:`0,${x.lat},${x.lon}`});
+          page.map.cr.set({rect:x.rect});
           warning(`nalezeno ${x.found}`); 
           if (x.ok==2) { // rozhodnutí o zápisu
-            page.map.cr.set({rect:x.rect});
             if (confirm(`nalezená adresa ${x.seek} je trochu mimo psč ${context.psc}. Přesto uložit?`)) {
               php.geo_manual(context.adresa?context.ido:context.idr,x.lat,x.lon,1-context.adresa);
             }

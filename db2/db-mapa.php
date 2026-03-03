@@ -12,8 +12,8 @@
 function geos_refresh($ctx) {
   $ret= (object)['ok'=>0,'seek'=>'','found'=>'','lat'=>0,'lng'=>0,'rect'=>''];
   $x= geocode_nominatim($ctx);
+  $ret->seek= $x->seek;
   if ($x->lat) {
-    $ret->seek= $x->seek;
     $ret->found= "$x->class $x->type $x->name $x->display_name";
     $ret->lat= $x->lat;
     $ret->lon= $x->lon;
@@ -31,6 +31,7 @@ function geos_refresh($ctx) {
         $ret->ok= 2;
     }
   }
+  debug($ret,"geos_refresh");
   return $ret;
 }
 # ----------------------------------------------------------------------------------------- geo fill
