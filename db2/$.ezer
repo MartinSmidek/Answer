@@ -86,19 +86,6 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
 //          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
-//          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
-//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
-//          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
-//          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
-//          func onclick (i:ezer) {
-//            clear(); info.display(0,'t'); info.header(i);
-//            info.fill('','... probíhá výpočet ...');
-//            if (eq(i.par.cmd,'show','save'))
-//              info.fill('',php.db2_info(i.par)) 
-//            else {
-//               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
-//            }
-//          }
 //          item {title:'TEST url', skill:'m'
 //            func onclick (i:ezer) {
 //              clear(); info.display(1,'t'); info.header(i);
@@ -133,6 +120,23 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //            info.append(php.mapa2_geo_export(i.par)) 
 //          }
 //        }
+        menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
+          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
+          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
+          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
+          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
+          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
+          func onclick (i:ezer) {
+            clear(); info.display(0,'t'); info.header(i);
+            if (!confirm('Spustit geolokaci?')) return;
+            info.fill('','... probíhá výpočet ...');
+            if (eq(i.par.cmd,'show','save'))
+              info.fill('',php.db2_info(i.par)) 
+            else {
+               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+            }
+          }
+        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Letošní nové záznamy - osoba', par:{table:'osoba'}}
           item {title:'Letošní nové záznamy - rodina', par:{table:'rodina'}}
@@ -245,7 +249,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         // Step - jeden krok procesu
         func Step() { 
           while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
-            y= php.geo_fill(y); // funkce serveru odpovídá  za done<=todo 
+            y= php.geos_fill(y); // funkce serveru odpovídá  za done<=todo 
             info.append(y.note);
             it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
             if (y.error) {
