@@ -27,7 +27,7 @@ func curr() {
 func geolocate_psc(psc) { var ll:array, adr:object
   ll= [0,0];
   if (match('^\d{5}$',psc)) {
-    ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); 
+    ll= php.select('lat,lng AS lon','psc_axy',`psc='${psc}'`); 
     if (!ll && confirm(`PSČ ${psc} neznám, mám zkusit lokalizovat?`)) {
       adr= php.geocode_nominatim(`CZ${psc}`,0,1);
 //      echo(debug(adr));      
@@ -801,25 +801,9 @@ form _page {
     }
     elseif (ido) {
       oso.load(ido);
-//      oso.geo_ok= php.select('stav=1','osoba_geo',`id_osoba=${ido}`) ? 'ok' : '';
-//      geo= php.geo_get_osoba(ido);
-//      oso.geo_ok= geo.ok ? 'OK' : '';
       oso.show_osoba(2);
     }
   }
-//  proc oso_load(ido) { var ret: object
-//    ido;
-//    evi_barvit_zmeny.get;
-//    oso.set_helps(0,'zluty','oranzovy');
-//    ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-//    oso.load(ido);
-////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-//    oso.show_osoba(2);
-//    oso.set_helps(ret.chng,'zluty','oranzovy');
-//  | ido; oso.load(ido);
-////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-//    oso.show_osoba(2);
-//  }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
   func rod_load(idr) { var ret: object, mazat:number
     if (evi_barvit_zmeny) 
@@ -827,8 +811,6 @@ form _page {
     rod.r.load(idr); rod.od_svatby();
     if (evi_barvit_zmeny) 
       rod.set_helps(ret.chng,'zluty','oranzovy');
-//    // zobrazení značky ověřené adresy
-//    rod.r_geo_ok= lst.mode=='r' && lst.brow.lat ? 'ok' : '';
     // přepínání mezi mazat/obnovit
     mazat= page.rod.r_deleted ? 0 : 1; 
     page.rod._deleted.display(!mazat);
@@ -837,30 +819,6 @@ form _page {
       cmd.r_obnov.display(!mazat);
     }
   }
-//  func rod_load(idr) { var ret: object, mazat:number
-//    if (evi_barvit_zmeny) {
-//      ret= php.elim2_data_rodina(idr,eq(lst.mode,'f','h') ? lst.track_past : '');
-//      rod.r.load(idr); rod.od_svatby();
-//      rod.set_helps(ret.chng,'zluty','oranzovy');
-//    }
-//    else {
-//      rod.r.load(idr); rod.od_svatby();
-//    }
-//    mazat= page.rod.r_deleted ? 0 : 1; 
-//    cmd.r_smaz.display(mazat);
-//    cmd.r_obnov.display(!mazat);
-//  }
-//  proc rod_load(idr) { var ret: object
-//    [ evi_barvit_zmeny.get;
-//      ret.set(ask('elim2_data_rodina',idr,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-//      rod.r.load(idr); [ rod.call('od_svatby') ];
-//      rod.set_helps(ret.chng,'zluty','oranzovy');
-//    | rod.r.load(idr); [ rod.call('od_svatby') ]
-//    ];
-//    [ cmd.part('r_smaz');
-//      cmd.r_smaz.display(not(page.rod.r_deleted.get));
-//      cmd.r_obnov.display(page.rod.r_deleted.get) ];
-//  }
   # ----------------------------------------------==> záložky
   var curr:object // aktuální záložka
   proc cvak(i) {
@@ -919,12 +877,6 @@ form _page {
         if (track.display()) track.back_show('osoba',ido);
       }
     }
-//    proc onrowclick() {
-//      has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
-//      this.blur(1);
-//    | cleni_click(id_osoba.get);
-//      [ track.display; track.back_show('osoba',ido.get) ];
-//    }
     func cleni_click(id) {
       if (accessed(org)) {
         // zobrazení člena rodiny, případná úprava focus
@@ -945,22 +897,6 @@ form _page {
         this.browse_active(last)
       }
     }
-//    proc cleni_click(id) {
-//      accessed(org.get);
-//      // zobrazení člena rodiny, případná úprava focus
-//      last.set(this.browse_active);
-//      ido.set(id);                              // změna lokálního ido
-//      rod.t.key(id_tvori.get); rod.t_role.set(role.get);
-//      rod.rodiny.selects(rodiny.get); rod.rodiny.key(idr.get);
-//      [ eq(lst.mode.get,'o');                   // pokud jde o jinou osobu než je v lst
-//        { eq(ido.get,ido0.get); lst.bo.browse_focus
-//        | lst.bo.blur(1) }
-//      ];
-//      osoba_load
-//    | not(accessed(org.get));
-//      warning("nemáte oprávnění vidět údaje o osobě z jiné organizace");
-//      this.browse_active(last.get)
-//    }
   }
   # ==============================================> O: EVIDENCE OSOBY
   use oso: form _osoba2x  [200,20,,] { tag:'O'  // view o:osoba
@@ -1060,7 +996,8 @@ form _page {
           warning(`nalezeno ${x.found}`); 
           if (x.ok==2) { // rozhodnutí o zápisu
             if (confirm(`nalezená adresa ${x.seek} je trochu mimo psč ${context.psc}. Přesto uložit?`)) {
-              php.geo_manual(context.adresa?context.ido:context.idr,x.lat,x.lon,1-context.adresa);
+              php.geos_manual(
+                context.adresa?context.ido:context.idr,x.lat,x.lon,context.adresa?'osoba':'rodina',1);
             }
           }
           context.lat= x.lat; context.lon= x.lon;
@@ -1069,7 +1006,7 @@ form _page {
     }
     item { title:'zobraz oblast PSČ', skill:'m'
       func onclick() { var b: array, rect:text, lat:number, lon:number
-        b= php.select('lat,lng','psc_axy',`psc='${context.psc}'`);
+        b= php.select('lat,lng AS lon','psc_axy',`psc='${context.psc}'`);
         if (b) {
           lat= b[0]; lon= b[1]; 
           rect= `${lat+0.06},${lon-0.11};${lat-0.06},${lon+0.11}`;
@@ -1437,13 +1374,6 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       else
         lst.brow.browse_seek(`o.id_osoba=${mark.id}`)
     }
-//    proc onmarkclick(mark) {
-//      { eq(mark.ezer,'skupiny'); //echo('skupiny');
-//        alert(skup.get(mark.id));
-//      | eq(mark.ezer,'psc'); //echo('psc')
-//      | lst.bm.raise('onrowclick',mark.id)
-//      };
-//    }
   }
   label [-6,6,28,26] { css:'ae_parm', style:"z-index:1" }
   button op [-10,10,,] { title:'[fa-navicon]'
@@ -1585,10 +1515,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
   func zoom (km) { var ret: object
     if (on) {
       ret= php.mapa2_ctverec(context.lat,context.lon,km,5);
-//      cr.set({zoom:'',rect:'',poly:''});
       cr.set({zoom:ret.rect});
-//      cr.set({poly:ret.poly});
-//      cr.option({poly_edit:1});
     }
   }
   func ohraniceni () { var rect:text, zoom:number
@@ -1598,47 +1525,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       cr.option({poly_edit:1});
     }
   }
-//  proc zoom (id,km) { var ret: object
-//    on.get;
-//    ret.set(ask('mapa2_ctverec',cconc(eq(lst.bm_komu.get,'o'),'osoba','rodina'),id,km,5));
-//    cr.set(°{zoom:'',rect:'',poly:''});
-//    cr.set(object('zoom',ret.rect));
-//    cr.set(object('poly',ret.poly));
-//    cr.option(object('poly_edit',1));
-//  }
 }
-//# =============================================================================================> GEO
-//panel GEO [0,0,400,110] {type:'popup', title:'hledání adresy v mapy.cz' 
-//  var ido: number,
-//      idr:number,
-//      geo:object
-//  // poznamená navrženou polohu jako správnou se stav=2
-//  func locate(_ido,_idr) { 
-//    ido= _ido;
-//    idr= _idr;
-//    fork.panel.mapy_cz();
-//    panel.modal();
-//  }
-//  func mapy_cz() {
-//    f.pat= ''; f.adr= ''; f.err= '';
-//    geo= ido ? php.geo_get_osoba(ido) : (idr ? php.geo_get_rodina(idr) : {error:'?'});
-//    f.pat= geo.address; f.adr= geo.full; f.err= geo.error;
-//  }
-//  use f: form {
-//    label [11,0,56,15] {title:'hledáme:' }
-//    label pat [75,0,312,25] {style:"border:1px solid #777" }
-//    label [11,32,55,16] {title:'nalezeno:' }
-//    label adr [74,32,312,25] {style:"border:1px solid #777" }
-//    label [11,70,55,16] {title:'problém:' }
-//    label err [74,70,312,25] {style:"color:red" }
-//    button [72,92,,] {title:'Ok - zapamatovat', 
-//      func onclick() {
-//        if (ido) php.geo_set_osoba(ido,geo); 
-//        if (idr) php.geo_set_rodina(idr,geo); 
-//        panel.hide(1);
-//    }}
-//  }
-//}
 # ============================================================================================> _CMD
 # změny v evidenci
 form _cmd [,,706,32] { css:'ae_frame'
@@ -1743,7 +1630,6 @@ form _cmd [,,706,32] { css:'ae_frame'
         if (!page.oso.same()) {
           if (page.oso.jmeno.changed() || page.oso.prijmeni.changed() || page.oso.narozeni.changed())
             depth= 'page';
-//          page.oso.save()
           page.oso.save_osoba();
         }
         if (!page.rod.same()) {

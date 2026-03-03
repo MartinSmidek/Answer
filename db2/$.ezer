@@ -85,9 +85,9 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
           item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
-          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
-          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
-          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
+          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}, skill:'a'}
+          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}, skill:'a'}
+          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}, skill:'a'}
           item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
@@ -123,15 +123,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
-        menu { title:'Export a import polí',type:'group',skill:'m'
-          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
-          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
-          func onclick(i:ezer) { var own:ezer
-            own= i.owner(); info.display(0,'t');
-            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
-            info.append(php.mapa2_geo_export(i.par)) 
-          }
-        }
+//        menu { title:'Export a import polí',type:'group',skill:'m'
+//          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
+//          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
+//          func onclick(i:ezer) { var own:ezer
+//            own= i.owner(); info.display(0,'t');
+//            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
+//            info.append(php.mapa2_geo_export(i.par)) 
+//          }
+//        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
@@ -228,7 +228,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         // Step - jeden krok procesu
         func Step() { 
           while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
-            y= php.geo_fill(y); // funkce serveru odpovídá  za done<=todo 
+            y= php.geos_fill(y); // funkce serveru odpovídá  za done<=todo 
             info.append(y.note);
             it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
             if (y.error) {
