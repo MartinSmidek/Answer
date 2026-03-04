@@ -99,71 +99,51 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
-          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
-          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
-          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}, skill:'a'}
-          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}, skill:'a'}
-          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}, skill:'a'}
-//          item {title:"Doplň geolokace - MROP'24", par:{cond:'id_osoba=24298'}, skill:'a'}
-          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
+        }
+        menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
+          item {title:'Přehled lokalizovaných',    par:{prehled:'show'}}
+          item {title:'. . . označ k opravě',      par:{prehled:'again'}}
+          item {title:'Lokalizuj označené',        par:{corr:1}} // spustí proces pro stav=0
+          item {title:'. . . zruš označené',       par:{prehled:'delete'}}
+//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
+//          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
+//          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
+//          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
+          item {title:'Lokalizuj s příjmením od A*',      par:{cond:"o.prijmeni LIKE 'A%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od B*', par:{cond:"o.prijmeni LIKE 'B%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od C*', par:{cond:"o.prijmeni LIKE 'C%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od D*', par:{cond:"o.prijmeni LIKE 'D%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od E*', par:{cond:"o.prijmeni LIKE 'E%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od F*', par:{cond:"o.prijmeni LIKE 'F%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od G*', par:{cond:"o.prijmeni LIKE 'G%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od H*', par:{cond:"o.prijmeni LIKE 'H%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od I*', par:{cond:"o.prijmeni LIKE 'I%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od J*', par:{cond:"o.prijmeni LIKE 'J%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od K*', par:{cond:"o.prijmeni LIKE 'K%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od L*', par:{cond:"o.prijmeni LIKE 'L%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od M*', par:{cond:"o.prijmeni LIKE 'M%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od N*', par:{cond:"o.prijmeni LIKE 'N%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od P*', par:{cond:"o.prijmeni LIKE 'P%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od O*', par:{cond:"o.prijmeni LIKE 'O%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Q*', par:{cond:"o.prijmeni LIKE 'Q%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od R*', par:{cond:"o.prijmeni LIKE 'R%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od S*', par:{cond:"o.prijmeni LIKE 'S%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od T*', par:{cond:"o.prijmeni LIKE 'T%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od U*', par:{cond:"o.prijmeni LIKE 'U%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od V*', par:{cond:"o.prijmeni LIKE 'V%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od W*', par:{cond:"o.prijmeni LIKE 'W%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
-            info.fill('','... probíhá výpočet ...');
-            if (eq(i.par.cmd,'show','save'))
-              info.fill('',php.db2_info(i.par)) 
-            else {
-               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
-            }
-          }
-          item {title:'TEST url', skill:'m'
-            func onclick (i:ezer) {
-              clear(); info.display(1,'t'); info.header(i);
+            if (i.par.prehled) 
+              info.fill('',php.geos_prehled(i.par.prehled));
+            elseif (confirm('Spustit geolokaci?')) {
+              Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
             }
           }
         }
-//        menu { title:'Import a záloha databáze',type:'group',skill:'m'
-//          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
-//          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
-//          proc onclick(i) {
-//            clear; info.display(0,'t');
-//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-//            info.append(ask('sys_backup_make',i.par)) 
-//          }
-//          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
-//            proc onclick(i) { var heslo:text
-//              clear; info.display(0,'t');
-//              info.fill(conc(i.owner.title,' - ',i.title),' ');
-//              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
-//              confirm('Opravdu mám lokální databázi přepsat?'); 
-//              info.append(ask('sys_backup_make',i.par))
-//            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
-//            }
-//          }
-//        }
-//        menu { title:'Export a import polí',type:'group',skill:'m'
-//          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
-//          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
-//          func onclick(i:ezer) { var own:ezer
-//            own= i.owner(); info.display(0,'t');
-//            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
-//            info.append(php.mapa2_geo_export(i.par)) 
-//          }
-//        }
-//        menu o {title:'Ostrá databáze',type:'group', _sys:'*'
-//          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
-//            proc onclick (i) {
-//              panel.display(2,'i'); info.display(0,'t');
-//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-//              info.fill('',ask('db2_stav',i.par.db)) }}
-//          item {title:'obnova pobyt.web_changes' 
-//            proc onclick() { 
-//              panel.display(2,'i'); info.display(0,'t');
-//              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
-//          }}
-////          item {title:'smazat platební údaje LK2019' skill:'m'
-////            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
-////          }
-//        }
         menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
           item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
           item {title:'rodina-tvori-osoba - oprava'       ,par:{opravit:1,vazba:'tvori'}}

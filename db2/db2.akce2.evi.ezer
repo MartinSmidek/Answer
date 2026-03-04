@@ -8,7 +8,7 @@
   var virgin=1
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
-  var context= {
+  var geo= {
     idr:0, ido:0, lat:0, lon:0,
     gps:0, // 0=neznáme, 1=psč, 2=osoba, 3=rodina     
     adresa:0, ulice:'', psc:'', obec:''
@@ -30,8 +30,8 @@ func geolocate_psc(psc) { var ll:array, adr:object
     ll= php.select('lat,lng AS lon','psc_axy',`psc='${psc}'`); 
     if (!ll) ll= [0,0];
     if (!ll[0] && confirm(`PSČ ${psc} neznám, mám zkusit lokalizovat?`)) {
-      adr= php.geocode_nominatim(`CZ${psc}`,0,1);
-      if (adr && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) {
+      adr= php.geocode_nominatim(`CZ${psc}`);
+      if (adr.lat && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) {
         php.mapa2_psc_set(psc,`${adr.lat},${adr.lon}`);
         ll= [adr.lat,adr.lon];
       }
@@ -40,11 +40,6 @@ func geolocate_psc(psc) { var ll:array, adr:object
     }
   }
   return ll;
-}
-
-func context_set(idr,ido,lat,lon,adresa,ulice,psc,obec,gps) {
-  context.lat= lat; context.lon= lon; context.idr= idr; context.ido= ido; 
-  context.adresa= adresa; context.ulice= ulice; context.psc= psc; context.obec= obec; context.gps= gps; 
 }
 
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
@@ -549,7 +544,7 @@ form _lst [,,370,*] {
     func bo_show() { 
       ido= id_o; page.evid_load(ido,0);
       if (page.map.on) {
-        context_set(id_r,id_o,lat,lon,adresa,ulice,psc,obec,gps);
+        geo.ido= id_o; geo.lat= lat; geo.lon= lon; geo.psc= psc; geo.gps= gps; 
         page.map.mapa_mark_curr(); // gps: 0=neznáme, 1=psč, 2=osoba, 3=rodina
       }
     }
@@ -791,7 +786,7 @@ form _page {
     }
   }
   # načíst osobu do záložky evid (případně s doplněním informací z _track) ==> . oso_load
-  func oso_load(ido) { var ret: object //, geo:object
+  func oso_load(ido) { var ret: object 
     if (ido && evi_barvit_zmeny) {
       oso.set_helps(0,'zluty','oranzovy');
       ret= php.elim2_data_osoba(ido,eq(lst.mode,'f','h') ? lst.track_past : '');
@@ -981,32 +976,31 @@ form _page {
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
     item { title:'-[fa-map-marker] aktualizovat GPS z OpenStreet', skill:'m', 
       func onclick() {
-        var x:object, dlat:number, dlon:number
-        x= php.geos_refresh(context);  
+        var dlat:number, dlon:number
+        geo= php.geos_refresh(geo.ido); // geos_refresh lépe najde správnou rodinu  
         // ok: 0=nenalezeno - poloha zrušena, 1=uloženo, 2=detekováno ale neuloženo - mimo psč
         // seek: hledaná (upravená) adresa
         // found: nalezená adresa
         // lat, lon: poloha adresy nebo poloha psč nebo 0
         // rect: oblast psč (jen pokud ok=2)
-        if (!x.ok) 
-          alert(`adresa ${x.seek} nebyla nalezena`); 
+        if (!geo.ok) 
+          alert(`adresa ${geo.seek} nebyla nalezena`); 
         else {
-          page.map.cr.set({mark:`0,${x.lat},${x.lon}`});
-          page.map.cr.set({rect:x.rect});
-          warning(`nalezeno ${x.found}`); 
-          if (x.ok==2) { // rozhodnutí o zápisu
-            if (confirm(`nalezená adresa ${x.seek} je trochu mimo psč ${context.psc}. Přesto uložit?`)) {
+          page.map.cr.set({mark:`0,${geo.lat},${geo.lon}`});
+          page.map.cr.set({rect:geo.rect});
+          warning(`nalezeno ${geo.found}`); 
+          if (geo.ok==2) { // rozhodnutí o zápisu
+            if (confirm(`nalezená adresa ${geo.seek} je trochu mimo psč ${geo.psc}. Přesto uložit?`)) {
               php.geos_manual(
-                context.adresa?context.ido:context.idr,x.lat,x.lon,context.adresa?'osoba':'rodina',1);
+                geo.adresa?geo.ido:geo.idr,geo.lat,geo.lon,geo.adresa?'osoba':'rodina',1);
             }
           }
-          context.lat= x.lat; context.lon= x.lon;
         }
       }
     }
     item { title:'zobraz oblast PSČ', skill:'m'
       func onclick() { var b: array, rect:text, lat:number, lon:number
-        b= php.select('lat,lng AS lon','psc_axy',`psc='${context.psc}'`);
+        b= php.select('lat,lng AS lon','psc_axy',`psc='${geo.psc}'`);
         if (b) {
           lat= b[0]; lon= b[1]; 
           rect= `${lat+0.06},${lon-0.11};${lat-0.06},${lon+0.11}`;
@@ -1390,6 +1384,14 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       }}
       item { title:'vytvoř ohraničující obdélník'
         func onclick() { ohraniceni() }}
+      item { title:'... obdélník kolem PSČ'
+        func onclick() { var b: array, rect:text, lat:number, lon:number
+          b= php.select('lat,lng AS lon','psc_axy',`psc='${geo.psc}'`);
+          if (b) {
+            lat= b[0]; lon= b[1]; 
+            rect= `${lat+0.06},${lon-0.11};${lat-0.06},${lon+0.11}`;
+            page.map.cr.set({rect:rect});
+        }}}
       item { title:'-zruš pomocné obrazce'
         func onclick() { cr.set({rect:'',poly:''}) }}
       item { title:'zruš všechny body'
@@ -1447,15 +1449,15 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
   # barva podle typu gps - 1=blue, 2=red, 3:grey
   func mapa_mark_curr() { var ll:array, clr:text
     if (on) { 
-      if (!context.lat && context.psc) {
+      if (!geo.lat && geo.psc) {
         // zkusíme doplnit chybějící polohu PSČ
-        ll= geolocate_psc(context.psc);
-        context.lat= ll[0]; context.lon= ll[1];
+        ll= geolocate_psc(geo.psc);
+        geo.lat= ll[0]; geo.lon= ll[1];
       }
-//      echo(`mapa_mark_curr(${context.lat},${context.lon},${context.psc},${context.gps})`);
-      if (context.lat) {
-        clr= context.gps==3 ? 'grey' : (context.gps==1 ? 'blue' : 'red');
-        cr.set({clear:0,mark:`0,${context.lat},${context.lon},,./ezer3.3/client/img/circle_${clr}_25x25.png,12`}); 
+//      echo(`mapa_mark_curr(${geo.lat},${geo.lon},${geo.psc},${geo.gps})`);
+      if (geo.lat) {
+        clr= geo.gps==3 ? 'grey' : (geo.gps==1 ? 'blue' : 'red');
+        cr.set({clear:0,mark:`0,${geo.lat},${geo.lon},,./ezer3.3/client/img/circle_${clr}_25x25.png,12`}); 
       }
     }
   }
@@ -1514,7 +1516,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
   }
   func zoom (km) { var ret: object
     if (on) {
-      ret= php.mapa2_ctverec(context.lat,context.lon,km,5);
+      ret= php.mapa2_ctverec(geo.lat,geo.lon,km,5);
       cr.set({zoom:ret.rect});
     }
   }

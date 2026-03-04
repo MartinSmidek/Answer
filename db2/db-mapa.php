@@ -1,5 +1,27 @@
 <?php
 # =============================================================================> . geos = OpenStreet
+# ------------------------------------------------------------------------------------- geos prehled
+// přehled tabulek geo
+function geos_prehled($cmd) { 
+  switch ($cmd) {
+    case 'again':
+      query("UPDATE osoba_geo  SET lat=0,lng=0,stav=0 WHERE stav<0");
+      query("UPDATE rodina_geo SET lat=0,lng=0,stav=0 WHERE stav<0");
+      break;
+    case 'delete':
+      query("DELETE FROM osoba_geo  WHERE lat=0 OR lng=0 OR stav<=0");
+      query("DELETE FROM rodina_geo WHERE lat=0 OR lng=0 OR stav<=0");
+      break;
+  }
+  $o_ok= select1('COUNT(*)','osoba_geo',"stav>0");
+  $o_td= select1('COUNT(*)','osoba_geo',"stav=0");
+  $o_ko= select1('COUNT(*)','osoba_geo',"stav<0");
+  $r_ok= select1('COUNT(*)','rodina_geo',"stav>0");
+  $r_ko= select1('COUNT(*)','rodina_geo',"stav<0");
+  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, $o_ko chyb lokalizace, $o_td připraveno k opravě"
+      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, $r_ko chyb lokalizace";
+  return $html;
+}
 # -------------------------------------------------------------------------------------- geos remove
 // zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
 function geos_remove($ido) { 
@@ -9,16 +31,15 @@ function geos_remove($ido) {
 # ------------------------------------------------------------------------------------- geos refresh
 # nalezení polohy osoby, její vrácení a zápis, pokud neleží daleko od polohy podle psč
 # vstup
-#   pokud je ctx číslo je to id_osoba  jinak je to kontext 
+#   pokud je ctx číslo je to id_osoba  foplní potřebný kontext
 #   {ido,idr,adresa,ulice,psc,obec,stat} adresa=1 znamená osobní adresu jinak rodinnou
-# navrací
+# navrací obohacený kontext o
 #   ok: 0=nenalezeno - poloha zrušena, 1=uloženo, 2=detekováno ale neuloženo - mimo psč
 #   seek: hledaná (upravená) adresa
 #   found: nalezená adresa
 #   lat, lon: poloha adresy nebo poloha psč nebo 0
 #   rect: oblast psč (jen pokud ok=2)
 function geos_refresh($ctx) {
-  $ret= (object)['ok'=>0,'seek'=>'','found'=>'','lat'=>0,'lon'=>0,'rect'=>''];
   if (is_numeric($ctx)) {
     $ctx= pdo_fetch_object(pdo_qry(
      "SELECT o.id_osoba as ido,r.id_rodina as idr,o.adresa,
@@ -35,56 +56,67 @@ function geos_refresh($ctx) {
         LEFT JOIN rodina AS r USING (id_rodina)
       WHERE o.id_osoba=$ctx"));
   }
+  $ctx->ok= 0;
+  $ctx->lat= 0;
+  $ctx->lon= 0;
+  $ctx->found= '';
+  $ctx->rect= '';
   $x= geocode_nominatim($ctx);
-  $ret->seek= $x->seek;
+  $ctx->seek= $x->seek;
   if ($x->lat) {
-    $ret->found= "$x->class $x->type $x->name $x->display_name";
-    $ret->lat= $x->lat;
-    $ret->lon= $x->lon;
+    $ctx->found= "$x->class $x->type $x->name $x->display_name";
+    $ctx->lat= $x->lat;
+    $ctx->lon= $x->lon;
     $b= geocode_nominatim("CZ$ctx->psc");
     if ($b->lat) {
       // je $x uvnitř obdélníku kolem polohy psč?
       $dlat= 0.03; $dlon= 0.05;
-      $ret->rect= ($b->lat+$dlat).','.($b->lon-$dlon).';'.($b->lat-$dlat).','.($b->lon+$dlon);
+      $ctx->rect= ($b->lat+$dlat).','.($b->lon-$dlon).';'.($b->lat-$dlat).','.($b->lon+$dlon);
       if (abs($x->lat - $b->lat)<$dlat && abs($x->lon - $b->lon)<$dlon) {
         // ano je uvnitř => zápis do tabulky osoba_geo nebo rodina_geo, stav=1
         geos_manual($ctx->adresa?$ctx->ido:$ctx->idr,$x->lat,$x->lon,$ctx->adresa?'osoba':'rodina',1);
-        $ret->ok= 1;
+        $ctx->ok= 1;
       }
       else 
-        $ret->ok= 2;
+        $ctx->ok= 2;
     }
   }
-//  debug($ret,"geos_refresh");
-  return $ret;
+  return $ctx;
 }
 # ----------------------------------------------------------------------------------------- geo fill
 // y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
-// y.par.par.cond - omezení na tabulku osoba
-// y.todo - celkový počet kroků
+// y.par.par.cond - omezení na tabulku osoba WHERE
+// y.par.par.have - omezení na tabulku osoba HAVING
+// y.par.par.corr - pouze pro stav=0
+// y.todo - celkový počet kroků - omezený na MAX=100
 // y.done - počet provedených kroků 
 // y.error = text chyby, způsobí konec
-function geos_fill ($y) { //debug($y,'geos_fill');
+function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
+  $AND= isset($y->par->par->cond) ? "AND {$y->par->par->cond}" : ''; 
+  $having= isset($y->par->par->have) ? "HAVING {$y->par->par->have}" : ''; 
+  $go_stav= isset($y->par->par->corr) ? "go.stav" : "IFNULL(go.stav,0)";
+  $gr_stav= isset($y->par->par->corr) ? "gr.stav" : "IFNULL(gr.stav,0)";
   $sql_zbyva= "id_osoba AS ido,IF(adresa=1,'',id_rodina) AS idr,adresa,
       IF(adresa=1,o.ulice,r.ulice) AS ulice,
       IF(adresa=1,o.psc,r.psc) AS psc,
       IF(adresa=1,o.obec,r.obec) AS obec,
-      IF(adresa=1,o.stat,r.stat) AS stat
+      IF(adresa=1,o.stat,r.stat) AS stat,
+      IF(adresa=1,o.email,r.emaily) AS email
     FROM osoba AS o
       LEFT JOIN osoba_geo AS go USING (id_osoba)
       LEFT JOIN tvori USING (id_osoba)
       LEFT JOIN rodina AS r USING (id_rodina)
       LEFT JOIN rodina_geo AS gr USING (id_rodina)
-    WHERE o.deleted='' AND o.umrti=0 AND {$y->par->par->cond}
-      AND IF(o.adresa=1,o.psc!='' AND IFNULL(go.lat,0)=0 AND IFNULL(go.stav,0)=0
-        ,IFNULL(r.psc,'')!='' AND IFNULL(gr.lat,0)=0 AND IFNULL(gr.stav,0)=0 AND role IN ('a','b'))
-    GROUP BY IF(adresa=1,id_osoba,id_rodina)
+    WHERE o.deleted='' AND o.umrti=0 $AND
+      AND IF(o.adresa=1,o.psc!='' AND IFNULL(go.lat,0)=0 AND $go_stav=0
+        ,IFNULL(r.psc,'')!='' AND IFNULL(gr.lat,0)=0 AND $gr_stav=0 AND role IN ('a','b'))
+    GROUP BY IF(adresa=1,id_osoba,id_rodina) $having
     ORDER BY prijmeni,jmeno
     ";
   if ( !$y->todo ) {
     // pokud je y.todo=0 zjistíme kolik toho bude
     list($todo)= select("COUNT(*) FROM (SELECT $sql_zbyva) AS ch");
-    $y->todo= $todo;
+    $y->todo= min($todo,$MAX);
     $y->last_id= 0;
 //    display("TODO {$y->todo}");
   }
