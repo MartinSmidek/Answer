@@ -1,5 +1,16 @@
 <?php
 # =============================================================================> . geos = OpenStreet
+# ------------------------------------------------------------------------------------- geos prehled
+// přehled tabulek geo
+function geos_prehled() { 
+  $o_ok= select1('COUNT(*)','osoba_geo',"stav>0");
+  $o_ko= select1('COUNT(*)','osoba_geo',"stav<0");
+  $r_ok= select1('COUNT(*)','rodina_geo',"stav>0");
+  $r_ko= select1('COUNT(*)','rodina_geo',"stav<0");
+  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, $o_ko chyb lokalizace"
+      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, $r_ko chyb lokalizace";
+  return $html;
+}
 # -------------------------------------------------------------------------------------- geos remove
 // zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
 function geos_remove($ido) { 
@@ -61,15 +72,17 @@ function geos_refresh($ctx) {
 # ----------------------------------------------------------------------------------------- geo fill
 // y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
 // y.par.par.cond - omezení na tabulku osoba
-// y.todo - celkový počet kroků
+// y.todo - celkový počet kroků - omezený na MAX=100
 // y.done - počet provedených kroků 
 // y.error = text chyby, způsobí konec
-function geos_fill ($y) { //debug($y,'geos_fill');
+function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
+  $having= isset($y->par->par->have) ? "HAVING {$y->par->par->have}" : ''; 
   $sql_zbyva= "id_osoba AS ido,IF(adresa=1,'',id_rodina) AS idr,adresa,
       IF(adresa=1,o.ulice,r.ulice) AS ulice,
       IF(adresa=1,o.psc,r.psc) AS psc,
       IF(adresa=1,o.obec,r.obec) AS obec,
-      IF(adresa=1,o.stat,r.stat) AS stat
+      IF(adresa=1,o.stat,r.stat) AS stat,
+      IF(adresa=1,o.email,r.emaily) AS email
     FROM osoba AS o
       LEFT JOIN osoba_geo AS go USING (id_osoba)
       LEFT JOIN tvori USING (id_osoba)
@@ -78,13 +91,13 @@ function geos_fill ($y) { //debug($y,'geos_fill');
     WHERE o.deleted='' AND o.umrti=0 AND {$y->par->par->cond}
       AND IF(o.adresa=1,o.psc!='' AND IFNULL(go.lat,0)=0 AND IFNULL(go.stav,0)=0
         ,IFNULL(r.psc,'')!='' AND IFNULL(gr.lat,0)=0 AND IFNULL(gr.stav,0)=0 AND role IN ('a','b'))
-    GROUP BY IF(adresa=1,id_osoba,id_rodina)
+    GROUP BY IF(adresa=1,id_osoba,id_rodina) $having
     ORDER BY prijmeni,jmeno
     ";
   if ( !$y->todo ) {
     // pokud je y.todo=0 zjistíme kolik toho bude
     list($todo)= select("COUNT(*) FROM (SELECT $sql_zbyva) AS ch");
-    $y->todo= $todo;
+    $y->todo= min($todo,$MAX);
     $y->last_id= 0;
 //    display("TODO {$y->todo}");
   }
