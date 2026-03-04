@@ -155,12 +155,16 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'. . . . . . . . . . . . . . . . . . . od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
-          func onclick (i:ezer) {
+          func onclick (i:ezer) { var n:number
             clear(); info.display(0,'t'); info.header(i);
-            if (i.par.prehled) 
+            if (i.par.prehled) {
               info.fill('',php.geos_prehled(i.par.prehled));
-            elseif (confirm('Spustit geolokaci?')) {
-              Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+            }
+            else {
+              n= Proces.ToDo({par:i.par}); 
+              if (confirm(`Mám spustit geolokaci ${n} osob? <br>(Bude omezena na 100 dotazů)`)) {
+                Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+              }
             }
           }
         }
@@ -263,6 +267,14 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         // stavové proměnné
         var y:object, // střadač zajištující komunikaci mezi klientem a serverem
             continue=1
+        // ToDo - zjistí počet cyklů procesu
+        func ToDo(par) {
+          // předání prametrů
+          y= {todo:0,done:0,par:par}; 
+          // zahájení cyklu 
+          y= php.geos_fill(y,999999);
+          return y.todo;
+        }
         // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
         func Start(par,title) { 
           clear(); continue= 1; it.msg= ''; Show(0,1); it.display(1,'t'); it.display(0,'e'); 
