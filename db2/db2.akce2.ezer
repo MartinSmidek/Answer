@@ -1012,9 +1012,9 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     if ( (has_skill('yaa+;faa+;caa+') && array_length(ret.chybi)) 
         && confirm("chceš pomocí <b>OpenStreet/Nominatim</b> doplnit polohu chybějících PSČ?") ) {
       for (psc of ret.chybi) {
-        adr= php.geocode_nominatim(`CZ${psc}`,0,1);
+        adr= php.geocode_nominatim(`CZ${psc}`);
         echo(debug(adr));      
-        if (adr && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) 
+        if (adr.lat && adr.addresstype=='postcode' && confirm(`uložit PSČ ${psc} jako ${adr.display_name}?`)) 
           php.mapa2_psc_set(psc,`${adr.lat},${adr.lon}`);
         else alert(`PSČ ${psc} nebylo nalezeno, je asi špatně uvedeno u adresy, najdi ji 
             (ve výpisech jednotlivců) a oprav podle <b>psc.cz</b>`);
