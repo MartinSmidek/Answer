@@ -121,50 +121,46 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //          }
 //        }
         menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
-          item {title:'Přehled'
-            func onclick (i:ezer) {
-              clear(); info.display(0,'t'); info.header(i);
-              info.fill('',php.geos_prehled());
-            }
-          }
-          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
-          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
-          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
-          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
-          item {title:'Obeslatelní od A*',         par:{cond:"o.prijmeni LIKE 'A%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od B*', par:{cond:"o.prijmeni LIKE 'B%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od C*', par:{cond:"o.prijmeni LIKE 'C%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od D*', par:{cond:"o.prijmeni LIKE 'D%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od E*', par:{cond:"o.prijmeni LIKE 'E%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od F*', par:{cond:"o.prijmeni LIKE 'F%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od G*', par:{cond:"o.prijmeni LIKE 'G%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od H*', par:{cond:"o.prijmeni LIKE 'H%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od I*', par:{cond:"o.prijmeni LIKE 'I%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od J*', par:{cond:"o.prijmeni LIKE 'J%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od K*', par:{cond:"o.prijmeni LIKE 'K%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od L*', par:{cond:"o.prijmeni LIKE 'L%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od M*', par:{cond:"o.prijmeni LIKE 'M%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od N*', par:{cond:"o.prijmeni LIKE 'N%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od P*', par:{cond:"o.prijmeni LIKE 'P%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od O*', par:{cond:"o.prijmeni LIKE 'O%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od Q*', par:{cond:"o.prijmeni LIKE 'Q%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od R*', par:{cond:"o.prijmeni LIKE 'R%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od S*', par:{cond:"o.prijmeni LIKE 'S%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od T*', par:{cond:"o.prijmeni LIKE 'T%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od U*', par:{cond:"o.prijmeni LIKE 'U%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od V*', par:{cond:"o.prijmeni LIKE 'V%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od W*', par:{cond:"o.prijmeni LIKE 'W%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
-          item {title:'... ... ... ... ... od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
+          item {title:'Přehled lokalizovaných',    par:{prehled:'show'}}
+          item {title:'. . . označ k opravě',      par:{prehled:'again'}}
+          item {title:'Lokalizuj označené',        par:{corr:1}} // spustí proces pro stav=0
+          item {title:'. . . zruš označené',       par:{prehled:'delete'}}
+//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
+//          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
+//          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
+//          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
+          item {title:'Lokalizuj s příjmením od A*',      par:{cond:"o.prijmeni LIKE 'A%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od B*', par:{cond:"o.prijmeni LIKE 'B%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od C*', par:{cond:"o.prijmeni LIKE 'C%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od D*', par:{cond:"o.prijmeni LIKE 'D%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od E*', par:{cond:"o.prijmeni LIKE 'E%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od F*', par:{cond:"o.prijmeni LIKE 'F%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od G*', par:{cond:"o.prijmeni LIKE 'G%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od H*', par:{cond:"o.prijmeni LIKE 'H%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od I*', par:{cond:"o.prijmeni LIKE 'I%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od J*', par:{cond:"o.prijmeni LIKE 'J%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od K*', par:{cond:"o.prijmeni LIKE 'K%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od L*', par:{cond:"o.prijmeni LIKE 'L%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od M*', par:{cond:"o.prijmeni LIKE 'M%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od N*', par:{cond:"o.prijmeni LIKE 'N%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od P*', par:{cond:"o.prijmeni LIKE 'P%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od O*', par:{cond:"o.prijmeni LIKE 'O%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Q*', par:{cond:"o.prijmeni LIKE 'Q%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od R*', par:{cond:"o.prijmeni LIKE 'R%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od S*', par:{cond:"o.prijmeni LIKE 'S%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od T*', par:{cond:"o.prijmeni LIKE 'T%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od U*', par:{cond:"o.prijmeni LIKE 'U%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od V*', par:{cond:"o.prijmeni LIKE 'V%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od W*', par:{cond:"o.prijmeni LIKE 'W%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
+          item {title:'. . . . . . . . . . . . . . . . . . . od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
-            if (!confirm('Spustit geolokaci?')) return;
-            info.fill('','... probíhá výpočet ...');
-            if (eq(i.par.cmd,'show','save'))
-              info.fill('',php.db2_info(i.par)) 
-            else {
-               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+            if (i.par.prehled) 
+              info.fill('',php.geos_prehled(i.par.prehled));
+            elseif (confirm('Spustit geolokaci?')) {
+              Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
             }
           }
         }
