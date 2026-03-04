@@ -1,8 +1,8 @@
 /* global jQuery, myself_sid, myself_url */
 /*
-  (c) 2025 Martin Smidek <martin@smidek.eu>
+  (c) 2026 Martin Smidek <martin@smidek.eu>
    
-  online přihlašování pro ASC - verze 2025.3
+  online přihlašování pro Answer - verze 2025.5
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
  */
@@ -65,12 +65,15 @@ function pretty_log(patt,akce) {
   for (let i= pretty_log.lines.length-2; i>0; i--) {
     let hlavicka= pretty_log.lines[i].substr(14,1)=='=' ? 1 : 0;
     if (hlavicka) {
-      let akce_id= pretty_log.lines[i].substr(9,4),
-          akce_nazev= pretty_log.lines[i].substr(16);
-      if (akce && akce==akce_id) {
-        nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>\n';
+      let konec= pretty_log.lines[i].match(/(\d*\.\s*\d+\.\s*\d\d\d\d)/);
+      if (konec && isFuture(konec[0])) {
+        let akce_id= pretty_log.lines[i].substr(9,4),
+            akce_nazev= pretty_log.lines[i].substr(16);
+        if (akce && akce==akce_id) {
+          nazev= 'přihlašování na '+akce_id+': '+'<big>'+akce_nazev+'</big>\n';
+        }
+        hlavicky+= '\n      vyber jen '+akce_id+': '+akce_nazev;
       }
-      hlavicky+= '\n      vyber jen '+akce_id+': '+akce_nazev;
     }
     else {
       if (patt && !pretty_log.lines[i].match(patt)) continue;
@@ -86,6 +89,20 @@ function reload_bez_akce() {
   url.searchParams.delete("akce");
   window.location.href = url.toString();
 }
+function isFuture(dateStr) {
+  // očekává formát "31. 5. 2026"
+  const [day, month, year] = dateStr
+    .split('.')
+    .map(s => s.trim())
+    .filter(Boolean);
+  const date = new Date(year, month - 1, day); // měsíc je 0–11
+  const today = new Date();
+  // porovnání jen podle data (bez času)
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date > today;
+}
+
 function yms_hms() {
   // aktuální datum
   let now = new Date();
