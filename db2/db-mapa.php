@@ -162,9 +162,8 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
   // zařadíme pauzu
   sleep(2);
   if ( $y->done % 10 == 0) {
-    $minut= 1;
-    sleep($minut*60);
-    display("... pauza $minut minuta");
+    sleep(10);
+    display("... pauza 10s");
   }
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
