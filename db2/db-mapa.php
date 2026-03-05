@@ -139,7 +139,6 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
 //    debug($x,">geos_refresh");
     if (!$x->ido) goto end; 
     $y->last_id= $x->ido;
-
     $g= geos_refresh($x);
     $error= '';
     if ($g->error) {
@@ -160,6 +159,13 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
       geos_manual($x->adresa?$x->ido:$x->idr,0,0,$x->adresa?'osoba':'rodina',-5);
   }
   $y->done++;
+  // zařadíme pauzu
+  sleep(2);
+  if ( $y->done % 10 == 0) {
+    $minut= 1;
+    sleep($minut*60);
+    display("... pauza $minut minuta");
+  }
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
 //  $y->error= "au";
