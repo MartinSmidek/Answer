@@ -93,7 +93,7 @@ function geos_refresh($ctx) {
     $b= geocode_nominatim($ctx->psc,'psc');
     if ($b->lat) {
       // je $x uvnitř obdélníku kolem polohy psč?
-      $dlat= 0.03; $dlon= 0.05;
+      $dlat= 0.05; $dlon= 0.07;
       $ctx->rect= ($b->lat+$dlat).','.($b->lon-$dlon).';'.($b->lat-$dlat).','.($b->lon+$dlon);
       if (abs($x->lat - $b->lat)<$dlat && abs($x->lon - $b->lon)<$dlon) {
         // ano je uvnitř => zápis do tabulky osoba_geo nebo rodina_geo, stav=1
