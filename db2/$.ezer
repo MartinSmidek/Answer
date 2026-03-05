@@ -155,16 +155,25 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'. . . . . . . . . . . . . . . . . . . od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
-          func onclick (i:ezer) { var n:number
+          item {title:'Lokalizuj s daným PSČ',                       par:{psc:'?'}}
+          func onclick (i:ezer) { var n:number, vyber:object, psc:text
             clear(); info.display(0,'t'); info.header(i);
             if (i.par.prehled) {
               info.fill('',php.geos_prehled(i.par.prehled));
             }
             else {
-              n= Proces.ToDo({par:i.par}); 
+              vyber= i.par;
+              if (vyber.psc) {
+                psc= prompt2("Zadej požadované PSČ");
+                if (psc) {
+                  vyber.cond= 1;
+                  vyber.have= ` psc='${psc}' AND email!='' `;
+                }
+              }
+              n= Proces.ToDo({par:vyber}); 
               if (confirm(conc(`Mám spustit geolokaci ${n} osob?`
                     ,n>100 ? ' <br>(Bude omezena na 100 dotazů)' : ''))) {
-                Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+                Proces.Start({x:10,y:1,par:vyber},"Lokalizace adres") 
               }
             }
           }

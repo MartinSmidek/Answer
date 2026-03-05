@@ -156,7 +156,7 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
     // pro ok=1 zápis proběhl v geos_refresh
     // jinak zapíšeme polohu 0,0 a stav=-5
     if ($g->ok!=1) 
-      geos_manual($x->adresa?$x->ido:$x->idr,0,0,$x->adresa?'osoba':'rodina',-5);
+      geos_manual($x->adresa?$x->ido:$x->idr,0,0,$x->adresa?'osoba':'rodina',$g->ok==2?-2:-5);
   }
   $y->done++;
   // zařadíme pauzu
