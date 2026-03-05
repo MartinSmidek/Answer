@@ -83,7 +83,7 @@ function geos_refresh($ctx) {
   }
   return $ctx;
 }
-# ----------------------------------------------------------------------------------------- geo fill
+# ---------------------------------------------------------------------------------------- geos fill
 // y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
 // y.par.par.cond - omezení na tabulku osoba WHERE
 // y.par.par.have - omezení na tabulku osoba HAVING
@@ -140,7 +140,8 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
     $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
     $span= $g->ok==1 ? '' : "... <span {$style[$g->ok]}>$g->seek</span>";
-    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} $span");
+    $x_ido= $g->ok==1 ? $x->ido : geos_ukaz_osobu($x->ido,$g->ok==2?'blue':'red');
+    display("$x->jmeno: ido=$x_ido, idr=$x->idr {$oks[$g->ok]} $span");
 //    debug($g,"geos_refresh>");
     
     // pro ok=1 zápis proběhl v geos_refresh
@@ -155,7 +156,13 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
 end:  
   return $y;
 }
-# --------------------------------------------------------------------------------------- geo manual
+# ---------------------------------------------------------------------------------- geos ukaz_osobu
+# zobrazí odkaz na osobu v evidenci
+function geos_ukaz_osobu($ido,$barva) {
+  $style= $barva ? "style='cursor:pointer;color:$barva'" : '';
+  return "<b><a $style onclick=\"Ezer.fce.href('akce2.evi.evid_osoba/$ido');\">$ido</a></b>";
+}
+# -------------------------------------------------------------------------------------- geos manual
 // zapíše resp. opraví souřadnice v tabulce osoba_geo resp. do rodina_geo
 // stav nastaví na 2
 function geos_manual($id,$lat,$lon,$table,$stav) { 
