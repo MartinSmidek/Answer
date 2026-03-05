@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------------- geos prehled
 // přehled tabulek geo
 function geos_prehled($cmd) { 
+  $tipy= '';
   switch ($cmd) {
     case 'again':
       query("UPDATE osoba_geo  SET lat=0,lng=0,stav=0 WHERE stav<0");
@@ -12,14 +13,32 @@ function geos_prehled($cmd) {
       query("DELETE FROM osoba_geo  WHERE lat=0 OR lng=0 OR stav<=0");
       query("DELETE FROM rodina_geo WHERE lat=0 OR lng=0 OR stav<=0");
       break;
+    case 'blizke':
+      $tipy.= "<hr>OSOBY adresa=1: ";
+      $ro= pdo_qry("SELECT id_osoba FROM osoba_geo WHERE stav=-2");
+      while ($ro && (list($ido)= pdo_fetch_array($ro))) {
+        $tipy.= ' '.geos_ukaz_osobu($ido,'black');
+      }
+      $tipy.= "<hr>OSOBY adresa=0: ";
+      $ro= pdo_qry("SELECT id_osoba,id_rodina FROM rodina_geo "
+          . "JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba) WHERE stav=-2");
+      while ($ro && (list($ido,$idr)= pdo_fetch_array($ro))) {
+        $tipy.= ' '.geos_ukaz_osobu($ido,'black')."/$idr";
+      }
+      break;
   }
   $o_ok= select1('COUNT(*)','osoba_geo',"stav>0");
   $o_td= select1('COUNT(*)','osoba_geo',"stav=0");
-  $o_ko= select1('COUNT(*)','osoba_geo',"stav<0");
+  $o_s5= select1('COUNT(*)','osoba_geo',"stav=-5");
+  $o_s2= select1('COUNT(*)','osoba_geo',"stav=-2");
   $r_ok= select1('COUNT(*)','rodina_geo',"stav>0");
-  $r_ko= select1('COUNT(*)','rodina_geo',"stav<0");
-  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, $o_ko chyb lokalizace, $o_td připraveno k opravě"
-      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, $r_ko chyb lokalizace";
+  $r_s5= select1('COUNT(*)','rodina_geo',"stav=-5");
+  $r_s2= select1('COUNT(*)','rodina_geo',"stav=-2");
+  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, "
+      . "$o_s2 přibližná lokalizace, $o_s5 chyba lokalizace, $o_td připraveno k opravě"
+      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, "
+      . "$r_s2 přibližná lokalizace, $r_s5 chyba lokalizace, "
+      . "$tipy";
   return $html;
 }
 # -------------------------------------------------------------------------------------- geos remove

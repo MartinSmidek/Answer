@@ -121,10 +121,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //          }
 //        }
         menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
-          item {title:'Přehled lokalizovaných',    par:{prehled:'show'}}
-          item {title:'. . . označ k opravě',      par:{prehled:'again'}}
-          item {title:'Lokalizuj označené',        par:{corr:1}} // spustí proces pro stav=0
-          item {title:'. . . zruš označené',       par:{prehled:'delete'}}
+          item {title:'Přehled lokalizovaných',       par:{prehled:'show'}}
+          item {title:'. . . označ k opravě',         par:{prehled:'again'}}
+          item {title:'Lokalizuj označené',           par:{corr:1}} // spustí proces pro stav=0
+          item {title:'. . . zruš označené',          par:{prehled:'delete'}}
+          item {title:'Seznam skoro lokalizovaných',  par:{prehled:'blizke'}}
 //          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
 //          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
 //          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
