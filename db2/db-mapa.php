@@ -89,6 +89,7 @@ function geos_refresh($ctx) {
 // y.par.par.have - omezení na tabulku osoba HAVING
 // y.par.par.corr - pouze pro stav=0
 // y.todo - celkový počet kroků - omezený na MAX=100
+//        - pro MAX=-1 pouze spočítá počet kroků a neprovede ten první
 // y.done - počet provedených kroků 
 // y.error = text chyby, způsobí konec
 function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
@@ -101,7 +102,7 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
       IF(adresa=1,o.psc,r.psc) AS psc,
       IF(adresa=1,o.obec,r.obec) AS obec,
       IF(adresa=1,o.stat,r.stat) AS stat,
-      IF(adresa=1,o.email,r.emaily) AS email
+      IF(kontakt=1,o.email,r.emaily) AS email
     FROM osoba AS o
       LEFT JOIN osoba_geo AS go USING (id_osoba)
       LEFT JOIN tvori USING (id_osoba)
@@ -116,6 +117,11 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
   if ( !$y->todo ) {
     // pokud je y.todo=0 zjistíme kolik toho bude
     list($todo)= select("COUNT(*) FROM (SELECT $sql_zbyva) AS ch");
+    // a pro MAX=-1 tento počet jen vrátíme
+    if ($MAX==-1) {
+      $y->todo= $todo;
+      goto end;
+    }
     $y->todo= min($todo,$MAX);
     $y->last_id= 0;
 //    display("TODO {$y->todo}");
