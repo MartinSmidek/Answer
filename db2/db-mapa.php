@@ -67,7 +67,7 @@ function geos_refresh($ctx) {
     $ctx->found= "$x->class $x->type $x->name $x->display_name";
     $ctx->lat= $x->lat;
     $ctx->lon= $x->lon;
-    $b= geocode_nominatim("CZ$ctx->psc");
+    $b= geocode_nominatim($ctx->psc,'psc');
     if ($b->lat) {
       // je $x uvnitř obdélníku kolem polohy psč?
       $dlat= 0.03; $dlon= 0.05;
@@ -139,7 +139,7 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
     // listing 
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
     $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
-    $span= $g->ok ? "... <span {$style[$g->ok]}>$g->seek</span>" : '';
+    $span= $g->ok==1 ? '' : "... <span {$style[$g->ok]}>$g->seek</span>";
     display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} $span");
 //    debug($g,"geos_refresh>");
     
