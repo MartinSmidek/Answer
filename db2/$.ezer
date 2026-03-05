@@ -168,7 +168,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
                   vyber.have= ` psc='${psc}' AND email!='' `;
                 }
               }
-              Proces.max_cyklu= 250;
+              Proces.max_cyklu= 500;
               n= Proces.ToDo({par:vyber}); 
               if (confirm(conc(`Mám spustit geolokaci ${n} osob?`
                     ,n>100 ? ` <br>(Bude omezena na ${Proces.max_cyklu} dotazů)` : ''))) {
