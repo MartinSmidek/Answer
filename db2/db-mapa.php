@@ -137,7 +137,8 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
 
     $g= geos_refresh($x);
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
-    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} ... $g->seek");
+    $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
+    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} ... <span {$style[$g->ok]}>$g->seek</span>");
 //    debug($g,"geos_refresh>");
     
     // pro ok=1 zápis proběhl v geos_refresh
