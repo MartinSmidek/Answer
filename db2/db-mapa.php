@@ -130,15 +130,17 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
   if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
   // ------------------------------- vlastní proces
   if ( $y->par->y!=='-' ) {
-    $x= pdo_fetch_object(pdo_qry("SELECT CONCAT(jmeno,' ',prijmeni) AS jmeno,$sql_zbyva LIMIT 1"));
+    $x= pdo_fetch_object(pdo_qry("SELECT CONCAT(prijmeni,' ',jmeno) AS jmeno,$sql_zbyva LIMIT 1"));
 //    debug($x,">geos_refresh");
     if (!$x->ido) goto end; 
     $y->last_id= $x->ido;
 
     $g= geos_refresh($x);
+    // listing 
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
     $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
-    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} ... <span {$style[$g->ok]}>$g->seek</span>");
+    $span= $g->ok ? "... <span {$style[$g->ok]}>$g->seek</span>" : '';
+    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} $span");
 //    debug($g,"geos_refresh>");
     
     // pro ok=1 zápis proběhl v geos_refresh
