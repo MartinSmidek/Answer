@@ -63,6 +63,10 @@ function geos_refresh($ctx) {
   $ctx->rect= '';
   $x= geocode_nominatim($ctx);
   $ctx->seek= $x->seek;
+  if ($x->error) {
+    $ctx->error= $x->error;
+    goto end;
+  }
   if ($x->lat) {
     $ctx->found= "$x->class $x->type $x->name $x->display_name";
     $ctx->lat= $x->lat;
@@ -81,6 +85,7 @@ function geos_refresh($ctx) {
         $ctx->ok= 2;
     }
   }
+end:
   return $ctx;
 }
 # ---------------------------------------------------------------------------------------- geos fill
@@ -136,12 +141,17 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
     $y->last_id= $x->ido;
 
     $g= geos_refresh($x);
+    $error= '';
+    if ($g->error) {
+      $y->error= $g->error;
+      $error= "<b style='color:red'>$g->error</b>";
+    }
     // listing 
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
     $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
     $span= $g->ok==1 ? '' : "... <span {$style[$g->ok]}>$g->seek</span>";
     $x_ido= $g->ok==1 ? $x->ido : geos_ukaz_osobu($x->ido,$g->ok==2?'blue':'red');
-    display("$x->jmeno: ido=$x_ido, idr=$x->idr {$oks[$g->ok]} $span");
+    display("$x->jmeno: ido=$x_ido, idr=$x->idr {$oks[$g->ok]} $span $error");
 //    debug($g,"geos_refresh>");
     
     // pro ok=1 zápis proběhl v geos_refresh
