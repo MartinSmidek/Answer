@@ -126,10 +126,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'Lokalizuj označené',           par:{corr:1}} // spustí proces pro stav=0
           item {title:'. . . zruš označené',          par:{prehled:'delete'}}
           item {title:'Seznam skoro lokalizovaných',  par:{prehled:'blizke'}}
-//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
-//          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
-//          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
-//          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
+          item {title:'Lokalizuj iniciované',         par:{cond:'iniciace!=0'}}
           item {title:'Lokalizuj s příjmením od A*',      par:{cond:"o.prijmeni LIKE 'A%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od B*', par:{cond:"o.prijmeni LIKE 'B%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od C*', par:{cond:"o.prijmeni LIKE 'C%'",have:"email!=''"}}
@@ -171,9 +168,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
                   vyber.have= ` psc='${psc}' AND email!='' `;
                 }
               }
+              Proces.max_cyklu= 250;
               n= Proces.ToDo({par:vyber}); 
               if (confirm(conc(`Mám spustit geolokaci ${n} osob?`
-                    ,n>100 ? ' <br>(Bude omezena na 100 dotazů)' : ''))) {
+                    ,n>100 ? ` <br>(Bude omezena na ${Proces.max_cyklu} dotazů)` : ''))) {
                 Proces.Start({x:10,y:1,par:vyber},"Lokalizace adres") 
               }
             }
@@ -273,10 +271,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       }
       // ==> proces lokalizace adres
       panel Proces [0,0,300,50] { type:'popup', 
-          //par:°{close:'no'} 
         use it: form _it 
         // stavové proměnné
         var y:object, // střadač zajištující komunikaci mezi klientem a serverem
+            max_cyklu=100,  // maximální počet cyklů
             continue=1
         // ToDo - zjistí počet cyklů procesu
         func ToDo(par) {
@@ -299,7 +297,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         // Step - jeden krok procesu
         func Step() { 
           while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
-            y= php.geos_fill(y); // funkce serveru odpovídá  za done<=todo 
+            y= php.geos_fill(y,max_cyklu); // funkce serveru odpovídá  za done<=todo 
             info.append(y.note);
             it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
             if (y.error) {
