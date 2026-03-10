@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------------- geos prehled
 // přehled tabulek geo
 function geos_prehled($cmd) { 
+  $tipy= '';
   switch ($cmd) {
     case 'again':
       query("UPDATE osoba_geo  SET lat=0,lng=0,stav=0 WHERE stav<0");
@@ -12,14 +13,32 @@ function geos_prehled($cmd) {
       query("DELETE FROM osoba_geo  WHERE lat=0 OR lng=0 OR stav<=0");
       query("DELETE FROM rodina_geo WHERE lat=0 OR lng=0 OR stav<=0");
       break;
+    case 'blizke':
+      $tipy.= "<hr>OSOBY adresa=1: ";
+      $ro= pdo_qry("SELECT id_osoba FROM osoba_geo WHERE stav=-2");
+      while ($ro && (list($ido)= pdo_fetch_array($ro))) {
+        $tipy.= ' '.geos_ukaz_osobu($ido,'black');
+      }
+      $tipy.= "<hr>OSOBY adresa=0: ";
+      $ro= pdo_qry("SELECT id_osoba,id_rodina FROM rodina_geo "
+          . "JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba) WHERE adresa=0 AND stav=-2");
+      while ($ro && (list($ido,$idr)= pdo_fetch_array($ro))) {
+        $tipy.= ' '.geos_ukaz_osobu($ido,'black')."/$idr";
+      }
+      break;
   }
   $o_ok= select1('COUNT(*)','osoba_geo',"stav>0");
   $o_td= select1('COUNT(*)','osoba_geo',"stav=0");
-  $o_ko= select1('COUNT(*)','osoba_geo',"stav<0");
+  $o_s5= select1('COUNT(*)','osoba_geo',"stav=-5");
+  $o_s2= select1('COUNT(*)','osoba_geo',"stav=-2");
   $r_ok= select1('COUNT(*)','rodina_geo',"stav>0");
-  $r_ko= select1('COUNT(*)','rodina_geo',"stav<0");
-  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, $o_ko chyb lokalizace, $o_td připraveno k opravě"
-      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, $r_ko chyb lokalizace";
+  $r_s5= select1('COUNT(*)','rodina_geo',"stav=-5");
+  $r_s2= select1('COUNT(*)','rodina_geo',"stav=-2");
+  $html= "<b>tabulka osoba_geo</b> má $o_ok lokalizovaných osob, "
+      . "$o_s2 přibližná lokalizace, $o_s5 chyba lokalizace, $o_td připraveno k opravě"
+      . "<br><b>tabulka rodina_geo</b> má $r_ok lokalizovaných rodin, "
+      . "$r_s2 přibližná lokalizace, $r_s5 chyba lokalizace, "
+      . "$tipy";
   return $html;
 }
 # -------------------------------------------------------------------------------------- geos remove
@@ -63,14 +82,18 @@ function geos_refresh($ctx) {
   $ctx->rect= '';
   $x= geocode_nominatim($ctx);
   $ctx->seek= $x->seek;
+  if ($x->error) {
+    $ctx->error= $x->error;
+    goto end;
+  }
   if ($x->lat) {
     $ctx->found= "$x->class $x->type $x->name $x->display_name";
     $ctx->lat= $x->lat;
     $ctx->lon= $x->lon;
-    $b= geocode_nominatim("CZ$ctx->psc");
+    $b= geocode_nominatim($ctx->psc,'psc');
     if ($b->lat) {
       // je $x uvnitř obdélníku kolem polohy psč?
-      $dlat= 0.03; $dlon= 0.05;
+      $dlat= 0.05; $dlon= 0.07;
       $ctx->rect= ($b->lat+$dlat).','.($b->lon-$dlon).';'.($b->lat-$dlat).','.($b->lon+$dlon);
       if (abs($x->lat - $b->lat)<$dlat && abs($x->lon - $b->lon)<$dlon) {
         // ano je uvnitř => zápis do tabulky osoba_geo nebo rodina_geo, stav=1
@@ -81,14 +104,16 @@ function geos_refresh($ctx) {
         $ctx->ok= 2;
     }
   }
+end:
   return $ctx;
 }
-# ----------------------------------------------------------------------------------------- geo fill
+# ---------------------------------------------------------------------------------------- geos fill
 // y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
 // y.par.par.cond - omezení na tabulku osoba WHERE
 // y.par.par.have - omezení na tabulku osoba HAVING
 // y.par.par.corr - pouze pro stav=0
 // y.todo - celkový počet kroků - omezený na MAX=100
+//        - pro MAX=-1 pouze spočítá počet kroků a neprovede ten první
 // y.done - počet provedených kroků 
 // y.error = text chyby, způsobí konec
 function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
@@ -101,7 +126,7 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
       IF(adresa=1,o.psc,r.psc) AS psc,
       IF(adresa=1,o.obec,r.obec) AS obec,
       IF(adresa=1,o.stat,r.stat) AS stat,
-      IF(adresa=1,o.email,r.emaily) AS email
+      IF(kontakt=1,o.email,r.emaily) AS email
     FROM osoba AS o
       LEFT JOIN osoba_geo AS go USING (id_osoba)
       LEFT JOIN tvori USING (id_osoba)
@@ -116,6 +141,11 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
   if ( !$y->todo ) {
     // pokud je y.todo=0 zjistíme kolik toho bude
     list($todo)= select("COUNT(*) FROM (SELECT $sql_zbyva) AS ch");
+    // a pro MAX=-1 tento počet jen vrátíme
+    if ($MAX==-1) {
+      $y->todo= $todo;
+      goto end;
+    }
     $y->todo= min($todo,$MAX);
     $y->last_id= 0;
 //    display("TODO {$y->todo}");
@@ -124,29 +154,49 @@ function geos_fill ($y,$MAX= 100) { //debug($y,'geos_fill');
   if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
   // ------------------------------- vlastní proces
   if ( $y->par->y!=='-' ) {
-    $x= pdo_fetch_object(pdo_qry("SELECT CONCAT(jmeno,' ',prijmeni) AS jmeno,$sql_zbyva LIMIT 1"));
+    $x= pdo_fetch_object(pdo_qry("SELECT CONCAT(prijmeni,' ',jmeno) AS jmeno,$sql_zbyva LIMIT 1"));
 //    debug($x,">geos_refresh");
     if (!$x->ido) goto end; 
     $y->last_id= $x->ido;
-
     $g= geos_refresh($x);
+    $error= '';
+    if ($g->error) {
+      $y->error= $g->error;
+      $error= "<b style='color:red'>$g->error</b>";
+    }
+    // listing 
     $oks= [0=>'---',1=>'OK',2=>'??? daleko'];
-    display("$x->jmeno: ido=$x->ido, idr=$x->idr {$oks[$g->ok]} ... $g->seek");
+    $style= [0=>"style='color:red'",1=>'',2=>"style='color:blue'"];
+    $span= $g->ok==1 ? '' : "... <span {$style[$g->ok]}>$g->seek</span>";
+    $x_ido= $g->ok==1 ? $x->ido : geos_ukaz_osobu($x->ido,$g->ok==2?'blue':'red');
+    display("$x->jmeno: ido=$x_ido, idr=$x->idr {$oks[$g->ok]} $span $error");
 //    debug($g,"geos_refresh>");
     
     // pro ok=1 zápis proběhl v geos_refresh
     // jinak zapíšeme polohu 0,0 a stav=-5
     if ($g->ok!=1) 
-      geos_manual($x->adresa?$x->ido:$x->idr,0,0,$x->adresa?'osoba':'rodina',-5);
+      geos_manual($x->adresa?$x->ido:$x->idr,0,0,$x->adresa?'osoba':'rodina',$g->ok==2?-2:-5);
   }
   $y->done++;
+  // zařadíme pauzu
+  sleep(2);
+  if ( $y->done % 10 == 0) {
+    sleep(10);
+    display("... pauza 10s");
+  }
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
 //  $y->error= "au";
 end:  
   return $y;
 }
-# --------------------------------------------------------------------------------------- geo manual
+# ---------------------------------------------------------------------------------- geos ukaz_osobu
+# zobrazí odkaz na osobu v evidenci
+function geos_ukaz_osobu($ido,$barva) {
+  $style= $barva ? "style='cursor:pointer;color:$barva'" : '';
+  return "<b><a $style onclick=\"Ezer.fce.href('akce2.evi.evid_osoba/$ido');\">$ido</a></b>";
+}
+# -------------------------------------------------------------------------------------- geos manual
 // zapíše resp. opraví souřadnice v tabulce osoba_geo resp. do rodina_geo
 // stav nastaví na 2
 function geos_manual($id,$lat,$lon,$table,$stav) { 

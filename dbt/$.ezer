@@ -101,14 +101,12 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
         }
         menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
-          item {title:'Přehled lokalizovaných',    par:{prehled:'show'}}
-          item {title:'. . . označ k opravě',      par:{prehled:'again'}}
-          item {title:'Lokalizuj označené',        par:{corr:1}} // spustí proces pro stav=0
-          item {title:'. . . zruš označené',       par:{prehled:'delete'}}
-//          item {title:'Doplň geolokace - iniciovaní', par:{cond:'iniciace!=0'}}
-//          item {title:' ... iniciovaní 2025', par:{cond:'iniciace=2025'}}
-//          item {title:' ... iniciovaní 2024', par:{cond:'iniciace=2024'}}
-//          item {title:' ... iniciovaní 2023', par:{cond:'iniciace=2023'}}
+          item {title:'Přehled lokalizovaných',       par:{prehled:'show'}}
+          item {title:'. . . označ k opravě',         par:{prehled:'again'}}
+          item {title:'Lokalizuj označené',           par:{corr:1}} // spustí proces pro stav=0
+          item {title:'. . . zruš označené',          par:{prehled:'delete'}}
+          item {title:'Seznam skoro lokalizovaných',  par:{prehled:'blizke'}}
+          item {title:'Lokalizuj iniciované',         par:{cond:'iniciace!=0'}}
           item {title:'Lokalizuj s příjmením od A*',      par:{cond:"o.prijmeni LIKE 'A%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od B*', par:{cond:"o.prijmeni LIKE 'B%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od C*', par:{cond:"o.prijmeni LIKE 'C%'",have:"email!=''"}}
@@ -135,12 +133,27 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'. . . . . . . . . . . . . . . . . . . od X*', par:{cond:"o.prijmeni LIKE 'X%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Y*', par:{cond:"o.prijmeni LIKE 'Y%'",have:"email!=''"}}
           item {title:'. . . . . . . . . . . . . . . . . . . od Z*', par:{cond:"o.prijmeni LIKE 'Z%'",have:"email!=''"}}
-          func onclick (i:ezer) {
+          item {title:'Lokalizuj s daným PSČ',                       par:{psc:'?'}}
+          func onclick (i:ezer) { var n:number, vyber:object, psc:text
             clear(); info.display(0,'t'); info.header(i);
-            if (i.par.prehled) 
+            if (i.par.prehled) {
               info.fill('',php.geos_prehled(i.par.prehled));
-            elseif (confirm('Spustit geolokaci?')) {
-              Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+            }
+            else {
+              vyber= i.par;
+              if (vyber.psc) {
+                psc= prompt2("Zadej požadované PSČ");
+                if (psc) {
+                  vyber.cond= 1;
+                  vyber.have= ` psc='${psc}' AND email!='' `;
+                }
+              }
+              Proces.max_cyklu= 500;
+              n= Proces.ToDo({par:vyber}); 
+              if (confirm(conc(`Mám spustit geolokaci ${n} osob?`
+                    ,n>Proces.max_cyklu ? ` <br>(Bude omezena na ${Proces.max_cyklu} dotazů)` : ''))) {
+                Proces.Start({x:10,y:1,par:vyber},"Lokalizace adres") 
+              }
             }
           }
         }
@@ -203,11 +216,19 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       }
       // ==> proces lokalizace adres
       panel Proces [0,0,300,50] { type:'popup', 
-          //par:°{close:'no'} 
         use it: form _it 
         // stavové proměnné
         var y:object, // střadač zajištující komunikaci mezi klientem a serverem
+            max_cyklu=100,  // maximální počet cyklů
             continue=1
+        // ToDo - zjistí počet cyklů procesu
+        func ToDo(par) {
+          // předání prametrů
+          y= {todo:0,done:0,par:par}; 
+          // zahájení cyklu - jen zjistí počet
+          y= php.geos_fill(y,-1);
+          return y.todo;
+        }
         // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
         func Start(par,title) { 
           clear(); continue= 1; it.msg= ''; Show(0,1); it.display(1,'t'); it.display(0,'e'); 
@@ -221,7 +242,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         // Step - jeden krok procesu
         func Step() { 
           while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
-            y= php.geos_fill(y); // funkce serveru odpovídá  za done<=todo 
+            y= php.geos_fill(y,max_cyklu); // funkce serveru odpovídá  za done<=todo 
             info.append(y.note);
             it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
             if (y.error) {
