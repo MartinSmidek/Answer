@@ -21,7 +21,7 @@ function geos_prehled($cmd) {
       }
       $tipy.= "<hr>OSOBY adresa=0: ";
       $ro= pdo_qry("SELECT id_osoba,id_rodina FROM rodina_geo "
-          . "JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba) WHERE stav=-2");
+          . "JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba) WHERE adresa=0 AND stav=-2");
       while ($ro && (list($ido,$idr)= pdo_fetch_array($ro))) {
         $tipy.= ' '.geos_ukaz_osobu($ido,'black')."/$idr";
       }

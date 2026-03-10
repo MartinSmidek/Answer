@@ -171,7 +171,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               Proces.max_cyklu= 500;
               n= Proces.ToDo({par:vyber}); 
               if (confirm(conc(`Mám spustit geolokaci ${n} osob?`
-                    ,n>100 ? ` <br>(Bude omezena na ${Proces.max_cyklu} dotazů)` : ''))) {
+                    ,n>Proces.max_cyklu ? ` <br>(Bude omezena na ${Proces.max_cyklu} dotazů)` : ''))) {
                 Proces.Start({x:10,y:1,par:vyber},"Lokalizace adres") 
               }
             }
