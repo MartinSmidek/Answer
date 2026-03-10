@@ -333,7 +333,7 @@ function db2_copy_test_db($db) {  trace();
     "*_touch,*_todo,*_track,*mail,"
   . "_help,_cis,ezer_doc2,"
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,"
-//a  . "g_akce,join_akce,"
+  . "osoba_geo,rodina_geo,"
   . "prihlaska,"
   . "dar,uhrada,"
   . "dopis,mailist,"
