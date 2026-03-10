@@ -168,7 +168,7 @@ menu m {type:'left', format:'f+'
     item w {title:'[fa-beer fa-red]s webovými právy'   par:{lst:'o',tit:'práva pro úpravu webů',
                                                 cnd:"o.web_level!=''"},skill:'a'}
     item   {title:'[fa-map-marker fa-red] skoro lokalizovaní' par:{lst:'o',tit:'mají stav=-2 v osoba_geo nebo rodina_geo',
-                                                cnd:"(og.stav=-2 OR org.stav=-2) AND role IN ('a','b')",psc:1},skill:'a'}
+                                                cnd:"(og.stav=-2 OR org.stav=-2) AND IFNULL(role,'a') IN ('a','b')",psc:1},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877,9437)"},skill:'m'}
   }
@@ -1372,9 +1372,8 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
   button op [-10,10,,] { title:'[fa-navicon]'
     proc onclick() { mode.set('evidence'); }
     menu cm { type:'context', par:{trigger:'click'} # ==> . kontextové menu
-      item { title:'vyber bydlící ve výřezu'
+      item { title:'[fa-question]vyber bydlící ve výřezu'
         func onclick() { select_in_map() }}
-//        proc onclick() { lst.bm_select_in(cr.get_bounds) }}
       item { title:'vyber bydlící v ohraničení'
         func onclick() { var poly:text
           poly= cr.get('poly');
@@ -1397,24 +1396,22 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
         func onclick() { cr.set({mark:''});}}
       item { title:'zruš body ležící mimo výřez'
         func onclick() { cr.clear_out_bounds() }}
-      item { title:'-zoom na malé okolí'
+      item { title:'-[fa-mobile]zoom na malé okolí'
         func onclick() { zoom(1) }}
-//        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,1) }}
-      item { title:'zoom na na velké okolí', 
+      item { title:'[fa-tablet]zoom na na velké okolí', 
         func onclick() { zoom(5) }}
-//        func onclick() { zoom(eq(lst.mode,'r','f')?idr:ido,5) }}
       item { title:'zoom na všechno zobrazené'
-        proc onclick() { cr.fit_bounds }}
-      item { title:'zoom na celou republiku'
+        func onclick() { cr.fit_bounds() }}
+      item { title:'[fa-map-o]zoom na celou republiku'
         func onclick() { cr.set({zoom:'51.21,12.17;48.38,18.76'}) }}
       item { title:'- aktuální chlapské skupiny'
-        proc onclick() { var ret:object
-          mode.set('skupiny');
-          ret.set(ask('mapa2_skupiny'));
-          [ ret.err; warning(ret.err) ];
-          cr.set(object('mark',ret.mark,'ezer','skupiny'));
-          skup.set(ret.clmns);
-          [ ret.msg; alert(ret.msg) ];
+        func onclick() { var ret:object
+          mode= 'skupiny';
+          ret= php.mapa2_skupiny();
+          if (ret.err) warning(ret.err);
+          cr.set({mark:ret.mark,ezer:'skupiny'});
+          skup= ret.clmns;
+          if (ret) alert(ret.msg);
       }}
       item { title:'vypiš PSČ ležící v ohraničení'
         func onclick() { var poly:text, ret:object
@@ -1427,11 +1424,11 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
           else alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
       }}
       item { title:'zobrazení seznamu PSČ'
-        proc onclick() { var lst:text, ret:object
-          mode.set('psc');
-          lst.set(prompt("napiš seznam PSČ"));
-          ret.set(ask('mapa2_psc_list',lst));
-          cr.set(object('mark',ret.mark,'ezer','psc'));
+        func onclick() { var lst:text, ret:object
+          mode= 'psc';
+          lst= prompt("napiš seznam PSČ");
+          ret= php.mapa2_psc_list(lst);
+          cr.set({mark:ret.mark,ezer:'psc'});
       }}
       item { title:'-mapa ČR podle OpenStreet'
         func onclick() { on= 0; mapa_show('omap') }}
@@ -1457,10 +1454,11 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
     if (!geo.ok) 
       alert(`adresa ${geo.seek} nebyla nalezena`); 
     else {
-      page.map.cr.set({mark:`0,${geo.lat},${geo.lon}`});
-      page.map.cr.set({rect:geo.rect});
+      cr.set({mark:`0,${geo.lat},${geo.lon}`});
+      cr.set({rect:geo.rect});
       warning(`nalezeno ${geo.found}`); 
       if (geo.ok==2) { // rozhodnutí o zápisu
+        zoom(3);
         if (confirm(`nalezená adresa ${geo.seek} je trochu mimo psč ${geo.psc}. Přesto uložit?`)) {
           php.geos_manual(
             geo.adresa?geo.ido:geo.idr,geo.lat,geo.lon,geo.adresa?'osoba':'rodina',1);
@@ -1476,7 +1474,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
     if (b) {
       lat= b[0]; lon= b[1]; 
       rect= `${lat+0.06},${lon-0.11};${lat-0.06},${lon+0.11}`;
-      page.map.cr.set({rect:rect});
+      cr.set({rect:rect});
     }
   }
 
