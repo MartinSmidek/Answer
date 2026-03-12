@@ -48,7 +48,8 @@ function pretty_log(patt,akce) {
       }
       // přeškrtni ručně zrušenou chybovou hlášku (má '-' na začátku)
       if (lines[i].substr(0,1)=='-') {
-        const solved= lines[i].replace('<b style="color:red">CATCH</b>','CATCH');
+        let solved= lines[i].replace('<b style="color:red">CATCH</b>','CATCH');
+        solved= solved.replace('<b style="color:red">ERROR</b>','ERROR');
         lines[i]= `<s>${solved}</s>`;
       }
     }
