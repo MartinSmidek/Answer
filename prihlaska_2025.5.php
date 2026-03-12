@@ -174,7 +174,7 @@ try {
         $_SESSION[$AKCE]= $vars;
     }
     else {
-      $call.= " <b style='color:red'>neexistuje</b>";
+      $call.= " <b style='color:red'>$fce neexistuje</b>";
       $DOM->errorbox= ['show',$call];
       $errors[]= $call;
     }
@@ -241,6 +241,10 @@ catch (Throwable $e) {
     $errpos= "$msg na řádku $tline";
   }
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
+  stop_after_error($errpos);
+}
+function stop_after_error($errpos='') {
+  global $akce, $TEST, $ORG;
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Zkuste to prosím později nebo se na akci přihlaste mailem zaslaným na {$ORG->info->mail}."
   . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
@@ -3332,7 +3336,7 @@ function log_load_changes() { // -----------------------------------------------
   log_append_stav("reload_$idw");
 end:
 } // načtení uloženého stavu $vars
-function log_error($msg) { // ---------------------------------------------------- log error
+function log_error($msg,$and_stop='') { // ----------------------------------------------- log error
   global $AKCE, $TRACE;
   if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $val= "'".pdo_real_escape_string($msg)."'";
@@ -3344,6 +3348,8 @@ function log_error($msg) { // --------------------------------------------------
       display("LOG_ERROR fail - no sesssion");
   // vložení do souboru prihlaska_2025.log.php
   append_log("<b style='color:red'>ERROR</b> $msg");
+  // pokud se má přihláška ukončit chybovou hláškou
+  if ($and_stop) stop_after_error($msg);
 }
 function log_close() { // ---------------------------------------------------------------- log close
   global $ORG, $VERZE, $MINOR, $CORR_JS, $TEST, $akce, $vars;
@@ -3927,7 +3933,7 @@ function get_smtp($i_smtp) {
   $smtp_json= select1_2('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
   $smtp= json_decode($smtp_json);
   if ( json_last_error() != JSON_ERROR_NONE ) {
-    $smtp->err= "chyba ve volbe SMTP serveru" . json_last_error_msg();
+    log_error("chyba odesílacího serveru $i_smtp",'STOP!');
   }
   return $smtp;
 }
@@ -4376,7 +4382,7 @@ function query_track_2($qry,$quiet=false) { // ---------------------------------
       $ok= 0;
     }
     if (!$ok) {
-      log_error("funkce query-track nemá předepsaný tvar argumentu ale $qry");
+      log_error("funkce query-track nemá předepsaný tvar argumentu ale $qry",'STOP!');
     }
   }
   else {
