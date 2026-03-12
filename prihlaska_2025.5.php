@@ -240,7 +240,19 @@ catch (Throwable $e) {
   else {
     $errpos= "$msg na řádku $tline";
   }
+err:
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
+  stop_after_error($errpos);
+//  $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
+//  . "<br><br>Zkuste to prosím později nebo se na akci přihlaste mailem zaslaným na {$ORG->info->mail}."
+//  . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
+//  . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
+//      . "<br>$errpos" : '');
+//  echo $errmsg;
+//  exit;
+}
+function stop_after_error($errpos='') {
+  global $akce, $TEST, $ORG;
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Zkuste to prosím později nebo se na akci přihlaste mailem zaslaným na {$ORG->info->mail}."
   . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
@@ -3928,6 +3940,7 @@ function get_smtp($i_smtp) {
   $smtp= json_decode($smtp_json);
   if ( json_last_error() != JSON_ERROR_NONE ) {
     log_error("chyba odesílacího serveru");
+    stop_after_error();
   }
   return $smtp;
 }
