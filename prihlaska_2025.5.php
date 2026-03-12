@@ -240,7 +240,6 @@ catch (Throwable $e) {
   else {
     $errpos= "$msg na řádku $tline";
   }
-err:
   append_log("<b style='color:red'>CATCH</b> ".str_replace('<br>',' | ',$errpos));
   stop_after_error($errpos);
 }
