@@ -3927,7 +3927,7 @@ function get_smtp($i_smtp) {
   $smtp_json= select1_2('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
   $smtp= json_decode($smtp_json);
   if ( json_last_error() != JSON_ERROR_NONE ) {
-    $smtp->err= "chyba ve volbe SMTP serveru" . json_last_error_msg();
+    log_error("chyba odesílacího serveru");
   }
   return $smtp;
 }
