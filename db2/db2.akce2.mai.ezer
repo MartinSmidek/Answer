@@ -1287,9 +1287,11 @@ form _esady  {
   // výběr SMTP serveru
   select smtp [105,212,202,17] { type:'map', options:map_smtp_srv.zkratka, title:'odesílat z adresy:'
     help:'smtp|použitý odesílací server', format:'t'
-    func onchanged() { var ik_ba:array
-      php.sys_user_change(sys('user','id_user'),'opt','smtp',smtp.key());
-      ik_ba= php.select('ikona,barva','_cis',`druh='smtp_srv' AND data=${smtp.key()}`);
+    func onchanged() { var ik_ba:array, smtp_key:number
+      smtp_key= smtp.key();
+      php.sys_user_change(sys('user','id_user'),'opt','smtp',smtp_key);
+      ik_ba= php.select('ikona,barva','_cis',`druh='smtp_srv' AND data='${smtp_key}'`);
+      if (!ik_ba) { alert("Vyber adresu, ze které se bude odesílat"); return; }
       if (ik_ba[1]) {
         davka= ik_ba[0]; pauza= ik_ba[1];
         davka.enable(0); pauza.enable(0);
