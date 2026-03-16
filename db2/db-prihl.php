@@ -15,6 +15,12 @@ function web_prihlaska_url($ida) {  trace();
   return (object)['txt'=>$a,'url'=>$path];
 }
 
+# ---------------------------------------------------------------------------------- web akce_status
+# propojení s www.setkani.org - nastaví akci jako (ne)obsazenou
+function web_akce_status($ida,$status) {  trace();
+  query("UPDATE tx_gncase_part SET status='$status' WHERE id_akce='$ida' ",'setkani');
+}
+
 # ------------------------------------------------------------------------------- generování QR kódů
 # Generuje QR kódy online přihlášky a příkazů platby
 use Endroid\QrCode\Builder\Builder;

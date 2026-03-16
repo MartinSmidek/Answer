@@ -930,7 +930,10 @@ form _page [,,275,360] {
         if (p_enable.changed()) { 
           if (has_skill('yaa+|yaaw')) { xp_enable= p_enable; xp_enable.change(); }
         }
-        if (p_pozde.changed()) { xp_pozde= p_pozde; xp_pozde.change(); }
+        if (p_pozde.changed()) { 
+          xp_pozde= p_pozde; xp_pozde.change(); 
+          php.web_akce_status(key_akce,xp_pozde?2:0);
+        }
         form.save(); 
         form.load(); 
         p_show();
