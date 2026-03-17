@@ -184,9 +184,9 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         ? "IFNULL(r.nazev,o.prijmeni) AS _prijmeni,
            IF(ISNULL(r.id_rodina),o.jmeno,GROUP_CONCAT(IF(t.role IN ('a','b'),
              o.jmeno,'') ORDER BY t.role SEPARATOR ' ')) AS _jmena,
-           IF(ISNULL(r.id_rodina),'',GROUP_CONCAT(IF(t.role NOT IN ('a','b'),CONCAT(
+           IF(ISNULL(r.id_rodina),'',GROUP_CONCAT(IF(IFNULL(t.role,'p') NOT IN ('a','b'),CONCAT(
                IF(s.s_role=5 AND t.role='d','*',''),
-               IF(s.s_role=5 AND t.role='p','§',''),
+               IF(s.s_role=5 AND IFNULL(t.role,'p')='p','§',''),
                YEAR(a.datum_od)-YEAR(o.narozeni)-(DATE_FORMAT(a.datum_od,'%m%d')<DATE_FORMAT(o.narozeni,'%m%d')))
              ,'') ORDER BY o.narozeni DESC)) AS _vekdeti"
         : '1';
@@ -215,7 +215,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
              SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=2,1,0)) AS _zen,
          --  SUM(IF(s.s_role=5 AND s.pfunkce=0,1,0)) AS _chuv,
              SUM(IF(s.s_role=5 AND s.pfunkce=0 AND t.role='d',1,0)) AS _chuv_d,
-             SUM(IF(s.s_role=5 AND s.pfunkce=0 AND t.role='p',1,0)) AS _chuv_p,
+             SUM(IF(s.s_role=5 AND s.pfunkce=0 AND IFNULL(t.role,'p')='p',1,0)) AS _chuv_p,
              SUM(IF(s.s_role=5 AND s.pfunkce=5,1,0)) AS _po,
              SUM(IF(s.s_role=4 AND s.pfunkce=4,1,0)) AS _pp,
              SUM(IF(               s.pfunkce=8,1,0)) AS _pg,
@@ -248,7 +248,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
            $JOIN_dum
            WHERE a.id_duakce='$id_akce' AND o.deleted=''
-             -- AND p.id_pobyt IN (59240,59318)
+             -- AND p.id_pobyt IN (71508,71402)
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
@@ -416,7 +416,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
     if ( $divna_rodina ) $divna_rodina= substr($divna_rodina,2);
     display("dicná rodina: $divna_rodina");
     $dosp+= $muzi + $zeny;
-                              display("$dosp+= $muzi + $zeny");
+//                              display("$dosp+= $muzi + $zeny");
     $skupin= $ucasti;
 //    if ( $text ) {
       // čeština
@@ -1006,7 +1006,7 @@ end:
 # ------------------------------------------------------------------------------- akce2 tabulka
 # generování tabulky účastníků $akce typu LK
 function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace();
-  global $VPS, $tisk_hnizdo;
+  global $VPS; //, $tisk_hnizdo;
 //                                         debug($par,"akce2_tabulka");
   $map_fce= map_cis('ms_akce_funkce','zkratka');
   $res= (object)array('html'=>'...');
@@ -1091,7 +1091,7 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
   }
 end:  
   $legenda= "U páru je v závorce uveden věk dětí a chův, které berou na akci 
-    <br>(§ označuje chůvu s rolí 'p' tj. snad dospělou, * označuje vlastní dítě sloužící coby chůvička). 
+    <br>(§ označuje chůvu s rolí 'p' nebo mimo rodinu snad dospělou, * označuje vlastní dítě sloužící coby chůvička). 
     <br>Odhad chybějících pečounů bere v úvahu chůvy a přihlášené pečouny a pro zbytek dětí 
     je počítán podle vzorce: 
     <br>1 pečoun na dítě do 3 let + na každé 3 děti jeden pečoun.";

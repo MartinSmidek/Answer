@@ -1522,7 +1522,7 @@ panel ANOTACE [0,0,660,530] { title:' Úprava textu anotace', type:'popup', css:
 panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     style:"height:calc(100% - 130px)"
   func prehled(ida) { var y:object
-    clear(); panel.title= "Přehled obsazenosti hnízd této akce";
+    clear(); panel.title= `Přehled obsazenosti ${page.is_hnizda?'hnízd':''} této akce`;
     y= php.akce2_hnizda(ida);
     h.txt= y.html;
     panel.modal(210,60);
