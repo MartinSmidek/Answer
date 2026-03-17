@@ -248,11 +248,10 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
            $JOIN_dum
            WHERE a.id_duakce='$id_akce' AND o.deleted=''
-             AND p.id_pobyt IN (71508,71402)
+             -- AND p.id_pobyt IN (71508,71402)
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
-//      debug($p);
       $access= $p->access;
       $uid= $p->uid;
       $pobyt= null;
@@ -293,7 +292,6 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
               ? ($p->_ucasti_ms==0 ? 'nov' : 'rep') : ($fce==9 ? 'nah' : 'tym'));
         }
       }
-//      debug($pobyt,'pobyt');
       // online přihlášky
       if ( $p->web_zmena!='0000-00-00' || $p->web_changes ) {
         $web++;
