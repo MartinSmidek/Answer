@@ -47,6 +47,27 @@ function geos_remove($ido) {
   $ok= query("DELETE FROM osoba_geo WHERE id_osoba=$ido");
   return $ok+1;
 }
+# --------------------------------------------------------------------------------------- geos osoby
+// nalezne geo-informaci dané osoby
+function geos_osoby($ido,$idr) { 
+  $AND_rodina= $idr ? "AND id_rodina=$idr" : '';
+  $geo= pdo_fetch_object(pdo_qry(
+     "SELECT id_osoba as ido, IFNULL(id_rodina,0) AS idr, adresa,
+        IF(adresa=1,o.ulice,r.ulice) AS ulice,
+        IF(adresa=1,o.psc,r.psc) AS psc,
+        IF(adresa=1,o.obec,r.obec) AS obec,
+        IF(o.adresa,IF(IFNULL(og.lat,0),1,IF(ISNULL(u.lat),0,3)),IF(IFNULL(org.lat,0),2,IF(ISNULL(u.lat),0,3))) AS gps,
+        IF(o.adresa,IFNULL(og.lat,IFNULL(u.lat,0)),IFNULL(org.lat,IFNULL(u.lat,0))) AS lat,
+        IF(o.adresa,IFNULL(og.lng,IFNULL(u.lng,0)),IFNULL(org.lng,IFNULL(u.lng,0))) AS lon
+      FROM osoba AS o
+      LEFT JOIN osoba_geo AS og USING (id_osoba)
+      LEFT JOIN tvori USING (id_osoba)
+      LEFT JOIN rodina AS r USING (id_rodina)
+      LEFT JOIN rodina_geo AS org USING (id_rodina)
+      LEFT JOIN psc_axy AS u ON u.psc=IF(o.adresa,o.psc,r.psc)
+      WHERE id_osoba=$ido $AND_rodina"));
+  return $geo;
+}
 # ------------------------------------------------------------------------------------- geos refresh
 # nalezení polohy osoby, její vrácení a zápis, pokud neleží daleko od polohy podle psč
 # vstup
