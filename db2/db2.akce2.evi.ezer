@@ -136,9 +136,13 @@ menu m {type:'left', format:'f+'
     item a {title:'[fa-group]všechny rodiny'    par:{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item m {title:'[fa-send-o] podle mail-listu'par:{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'}  skill:'#crz' }
     item v {title:'[fa-chain fa-red]výběr rodin'par:{lst:'r',tit:'vybrané rodiny vč. smazaných ',cnd:'0',skill:'yad;fad'}
-      func onclick(i:ezer) {
+      func onclick(i:ezer) { var ids:text
         menu_item= i; menu_par= i.par; menu_title= i.title;
         lst.display(2,i.par.lst);
+        ids= prompt("ručně zadaný seznam id_rodina?");
+        if (ids) {
+          menu_vyber_rodin= split(ids,',');
+        }
         lst.br.browse_load(`r.id_rodina IN (${menu_vyber_rodin})`,'tips',1);
       }
     }
@@ -160,9 +164,13 @@ menu m {type:'left', format:'f+'
     item   {title:'[fa-male fa-green]brána dospělosti'  par:{lst:'o',tit:'muži za branou, co ',
                                                 cnd:"o.brana>0"}, skill:'mrop;yaa:c;faa:c'}
     item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby vč. smazaných ',cnd:'0',skill:'yad;fad'}
-      func onclick(i:ezer) {
+      func onclick(i:ezer) { var ids:text
         menu_item= i; menu_par= i.par; menu_title= i.title;
         lst.display(2,i.par.lst);
+        ids= prompt("ručně zadaný seznam id_osoba?");
+        if (ids) {
+          menu_vyber_osob= split(ids,',');
+        }
         lst.bo.browse_load(`o.id_osoba IN (${menu_vyber_osob})`,'tips',1);
       }
     }

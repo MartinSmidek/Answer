@@ -173,7 +173,7 @@ $names= array(
  'print' => (object)array('op'=>'fm'),
  'prints' => (object)array('op'=>'ff'),
  'prior' => (object)array('op'=>'oc'),
- 'prompt' => (object)array('op'=>'ff'),
+ 'prompt' => (object)array('op'=>'fj'),
  'prompt2' => (object)array('op'=>'fj'),
  'property' => (object)array('op'=>'fm'),
  'qry_rows' => (object)array('op'=>'on'),
