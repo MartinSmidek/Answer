@@ -26,6 +26,7 @@ func curr() {
 # vrátí pole [lat,lon] nebo zkusí geolokaci, pokud je psc=\d{5}
 func geolocate_psc(psc) { var ll:array, adr:object
   ll= [0,0];
+  psc= replace(psc,' ','');
   if (match('^\d{5}$',psc)) {
     ll= php.select('lat,lng AS lon','psc_axy',`psc='${psc}'`); 
     if (!ll) ll= [0,0];

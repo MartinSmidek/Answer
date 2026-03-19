@@ -1468,7 +1468,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       if (!this && (telefon || email)) {
         yes= confirm("Opravdu mám zneplatnit osobní kontakt?"); 
         if (!yes) {
-          this= function('x',"return x.original.value",this); this.plain()
+          kontakt= function('x',"return x.original.value",this); this.plain()
         }
       }
       if (yes) {
@@ -1518,7 +1518,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       // varovné confirm při existenci osobního adresy a pokusu přepnutí na rodinnou
       if (!this && (ulice || obec)) {
         yes= confirm("Opravdu mám zneplatnit osobní adresu?");
-        if (!yes) { this= function('x',"return x.original.value",this); this.plain() }
+        if (!yes) { adresa= function('x',"return x.original.value",this); this.plain() }
       };
       if (yes) {
         if (host=='E') show_osoba(0)
@@ -1553,8 +1553,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'
-    func onchanged() { this= replace(this,' ','') }
-//    proc onchanged() { this.let(replace(this.get,' ','')) }
+    func onchanged() { psc= replace(psc,' ',''); psc.change(); }
   }
   field obec     [59,38,179,] {tag:'b', data:o.obec, format:'n', title:'^obec'}
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
@@ -1730,7 +1729,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
   field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'
-    func onchanged() { this= replace(this,' ','') }
+    func onchanged() { r_psc= replace(r_psc,' ',''); r_psc.change() }
   }
   field r_geo_ok   [Lp+29,Tp+76,12,12] {tag:'r', css:'Label3', format:'no' }
   field r_obec     [Lp+47,Tp+90,128,] {tag:'r', data:r.obec, title:'^obec'}
