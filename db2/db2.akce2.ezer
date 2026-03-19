@@ -1433,7 +1433,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
     css:"search fa", help:"potvrzení nalezené osoby a její přidání k pobytu"
     func onclick() { var ret:object
       see.see_end();
-      warning(); see_old_osoba()                             // dokončení v účastnících nebo evidenci
+      warning(); see_old_osoba()                           // dokončení v účastnících nebo evidenci
   }}
   button see_new [95,6,16,16] {tag:'W', type:'html', title:"[fa-heart]", format:'n'
     css:"search fa", help:'Vytvoření nové osoby s daným příjmením a jménem'
@@ -1467,7 +1467,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
       // varovné confirm při existenci osobního telefonu nebo emailu a pokusu přepnutí na rodinný
       if (!this && (telefon || email)) {
         yes= confirm("Opravdu mám zneplatnit osobní kontakt?"); 
-        if (!yes) {
+        if (!yes)  {
           kontakt= function('x',"return x.original.value",this); this.plain()
         }
       }
