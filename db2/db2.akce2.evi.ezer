@@ -163,7 +163,7 @@ menu m {type:'left', format:'f+'
                                                 cnd:"o.iniciace>0"}, skill:'mrop;yaa:c;faa:c'}
     item   {title:'[fa-male fa-green]brána dospělosti'  par:{lst:'o',tit:'muži za branou, co ',
                                                 cnd:"o.brana>0"}, skill:'mrop;yaa:c;faa:c'}
-    item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby vč. smazaných ',cnd:'0',skill:'yad;fad'}
+    item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby vč. smazaných ',cnd:'0',skill:'a'}
       func onclick(i:ezer) { var ids:text
         menu_item= i; menu_par= i.par; menu_title= i.title;
         lst.display(2,i.par.lst);
