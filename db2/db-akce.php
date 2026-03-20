@@ -121,7 +121,7 @@ end:
 #   info.pobyty= [ {idp:id_pobyt, prijmeni, jmena, hnizdo:n, typ:vps|nov|rep|tym|nah, 
 #                   deti:seznam věků dětí a chův - těch s §}, ...]
 #   info.pecouni= [ {ids, hnizdo, prijmeni, jmeno}, ... ]
-function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace(); 
+function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { //trace(); 
   global $setkani_db;
   $nf= function($n) { return number_format($n, 0, '.', '&nbsp;'); };
   $html= '';
@@ -414,7 +414,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
     if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
     if ( $vic_ucasti ) $vic_ucasti= substr($vic_ucasti,2);
     if ( $divna_rodina ) $divna_rodina= substr($divna_rodina,2);
-    display("dicná rodina: $divna_rodina");
+    if ( $divna_rodina ) display("divná rodina: $divna_rodina");
     $dosp+= $muzi + $zeny;
 //                              display("$dosp+= $muzi + $zeny");
     $skupin= $ucasti;

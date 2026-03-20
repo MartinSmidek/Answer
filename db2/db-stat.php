@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------- akce2 info_par
 # charakteristika účastníků z hlediska páru,
 # počítáme pouze v případě, když je definované i0_pobyt
-function akce2_info_par($ida,$idp=0,$tab_only=0) { trace();
+function akce2_info_par($ida,$idp=0,$tab_only=0) { //trace();
   $html= $tab= '';
   $typy= array(''=>0,'a'=>0,'b'=>0,'s'=>0,'as'=>0,'bs'=>0,'abs'=>0,'bas'=>0,);
   $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
@@ -1788,6 +1788,77 @@ function chart_akce($par) { // debug($par,'chart_akce');
         <br>korektnost grafu předpokládá, že je v databázi správně zapsána i počet účastí 
         na kurzech neevidovaných touto databází (pole 'MS mimo' na evidenční kartě).
         </i>";
+      break;
+    case 'skladba_ds':
+      $akce= $par->akce=='FIRM' ? 'firmingu' : $par->akce;
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $po= $par->po ?: 10;
+      // histogram
+      $ds= [];
+      for ($rok= $od; $rok<=$do; $rok++) {
+        $ds[0][$rok]= $ds[1][$rok]= $ds[2][$rok]= $ds[3][$rok]= $ds[4][$rok]= 0;
+        // projdeme akce na DS - muži,ženy,děti
+        $akce_roku= 0;
+        $ar= pdo_qry("SELECT id_duakce,nazev,DATEDIFF(datum_do,datum_od) FROM akce 
+            WHERE access=1 AND ciselnik_akce BETWEEN 500 AND 599 
+            AND spec=0 AND zruseno=0 AND YEAR(datum_od)=$rok
+            ORDER BY ciselnik_akce DESC ");
+        while ($ar && (list($id_akce,$nazev,$dnu)= pdo_fetch_row($ar))) {
+          if (in_array($par->graf,['celkem','dnu'])) {
+            $info= akce2_info($id_akce,0,1);
+//            debug($info,"$nazev",null,'*');
+            $ds[0][$rok]+= $info->muzi;
+            $ds[1][$rok]+= $info->zeny;
+            $ds[2][$rok]+= $info->deti;
+          }
+          $ds[3][$rok]+= 1;
+          $ds[4][$rok]+= max($dnu-1,1)*($info->muzi+$info->zeny+$info->deti);
+          display("$id_akce: $info->muzi,$info->zeny,$info->deti,$dnu ... $nazev",'*');
+          $akce_roku++;
+        }
+        $roky[]= $rok;
+      }
+      debug($ds,"skladba",null,'*');
+      $muzi= implode(',',$ds[0]);
+      $zeny= implode(',',$ds[1]);
+      $deti= implode(',',$ds[2]);
+      $akci= implode(',',$ds[3]);
+      $dnu = implode(',',$ds[4]);
+      switch ($par->graf) {
+        case 'dnu':
+          $chart->title= 'Počet člověkonocí na akcích YMCA Setkání v Domě setkání';
+          $chart->series= [(object)array('name'=>'člověkonocí','data'=>$dnu,'color'=>'olive')];
+          $y_title= " počet dnů akcí v daném roce"; 
+          break;
+        case 'akci':
+          $chart->title= 'Počet akcí YMCA Setkání v Domě setkání';
+          $chart->series= [(object)array('name'=>'akcí','data'=>$akci,'color'=>'grey')];
+          $y_title= " počet akcí v daném roce"; 
+          break;
+        case 'celkem':
+          $chart->title= 'Skladba účastníků akcí YMCA Setkání v Domě setkání';
+          $chart->series= [
+              (object)array('name'=>'muži','data'=>$muzi,'color'=>'blue'),
+              (object)array('name'=>'ženy','data'=>$zeny,'color'=>'red'),
+              (object)array('name'=>'děti','data'=>$deti,'color'=>'lightgreen')
+            ];
+          $y_title= " počet účastníků v daném roce"; 
+          break;
+      }
+      $chart->yAxis= (object)array('title'=>(object)
+          ['text'=>($par->prc ? 'procento':'počet').$y_title],
+          'tickInterval'=>10,'min'=>0); 
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>"rok konání $akce "));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
       break;
     case 'skladba':
       $chart->title= 'Skladba účastníků letního kurzu';

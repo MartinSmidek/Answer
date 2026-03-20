@@ -1005,7 +1005,7 @@ function dum_objednavka_nazev($ido,$format='') {
 }
 # ----------------------------------------------------------------------------- dum objednavka_nazev
 # vrátí informaci pro AKCE
-function dum_objednavka_info($ido,$ida,$html_akce,$show_create=1) { trace();
+function dum_objednavka_info($ido,$ida,$html_akce,$show_create=1) { // trace();
   global $setkani_db;
   $stav= map_cis('ds_stav','hodnota');
   $o= select_object('*',"$setkani_db.tx_gnalberice_order","uid=$ido");

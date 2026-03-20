@@ -64,6 +64,16 @@ menu m {type:'left', format:'f+'
       info.spinner(0);
     }
   }
+  menu {title:'2. Infografika Domu setkání',type:'group'
+    item  {title:"[fa-bar-chart] Účastníků akcí YMCA Setkání", par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'celkem',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] Počet akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'akci',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+  }
   menu {title:'Infografika MROP',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop', tag:'d',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
@@ -129,7 +139,9 @@ menu m {type:'left', format:'f+'
     last_par.od= info.od;
     last_par.do= info.do;
     last_par.prc= info.prc;
-    if (last_par.pro!='ms') 
+    if (last_par.pro=='ds') 
+      info.org.key(1);
+    elseif (last_par.pro!='ms') 
       info.org.key(3);
     last_par.org= info.org.key();
     y= php.chart_akce(last_par);
