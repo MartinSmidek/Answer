@@ -1484,7 +1484,7 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ------------------------------------------------------------------------------- akce2 text_prehled
 # pokud $title='' negeneruje se html
-function akce2_text_prehled($akce,$title) { trace();
+function akce2_text_prehled($akce,$title) { // trace();
   global $USER;
   $org= $USER->org;
   $pocet= 0;
