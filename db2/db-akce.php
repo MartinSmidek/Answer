@@ -410,6 +410,24 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { //trace();
         $pob[]= $pobyt;
       }
     }
+    
+          
+      // OPRAVA !!!!!!!!!!!!!!!!!!
+      if ($id_akce==1352) {
+        $deti= $deti/10;
+        $muzi= $muzi/10;
+        $zeny= $zeny/10;
+      }
+      if ($id_akce==1389) {
+        $deti= $deti/2;
+        $muzi= $muzi/2;
+        $zeny= $zeny/2;
+      }
+      
+      
+
+    
+    
     if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
     if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
     if ( $vic_ucasti ) $vic_ucasti= substr($vic_ucasti,2);
