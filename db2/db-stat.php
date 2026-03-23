@@ -1623,7 +1623,7 @@ end:
 }
 # ----------------------------------------------------------------------------------==> . chart akce
 # agregace údajů o MROP, EROP, FIRMING a MS pro grafické znázornění
-function chart_akce($par) { debug($par,'chart_akce','','*');
+function chart_akce($par) { debug($par,'chart_akce','','T');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
@@ -1803,8 +1803,9 @@ function chart_akce($par) { debug($par,'chart_akce','','*');
         $cond_ds.= " AND druh!=9 /*brigáda*/";
       }
       for ($rok= $od; $rok<=$do; $rok++) {
-        // muzi       zeny          deti          akcí          člověkonoci   účast 
-        $ds[0][$rok]= $ds[1][$rok]= $ds[2][$rok]= $ds[3][$rok]= $ds[4][$rok]= $ds[5][$rok]= 0;
+        display("<h3>$rok</h3>",'*');
+        // muzi       zeny          deti          akcí          člověkonoci   účast         delka 
+        $ds[0][$rok]= $ds[1][$rok]= $ds[2][$rok]= $ds[3][$rok]= $ds[4][$rok]= $ds[5][$rok]= $ds[6][$rok]= 0;
         // projdeme akce na DS - muži,ženy,děti
         $ucast_roku= 0;
         $ar= pdo_qry("SELECT GROUP_CONCAT(id_duakce),nazev,DATEDIFF(datum_do,datum_od) FROM akce 
@@ -1828,22 +1829,24 @@ function chart_akce($par) { debug($par,'chart_akce','','*');
               $ds[0][$rok]+= $muzi;
               $ds[1][$rok]+= $zeny;
               $ds[2][$rok]+= $deti;
-              $ds[4][$rok]+= max($dnu-1,1)*$celkem;
-              display("$ids_akce: $muzi,$zeny,$deti,$dnu ... $nazev",'*');
+              $ds[4][$rok]+= $dnu*$celkem;
+              display("$ids_akce: $celkem ($muzi,$zeny,$deti) * $dnu ... $nazev ... {$ds[4][$rok]}",'*');
             }
           }
           $ds[3][$rok]+= 1;
+          $ds[6][$rok]+= $dnu;
         }
         $ds[5][$rok]= $ds[3][$rok] ? round($ucast_roku/$ds[3][$rok]) : 0;
         $roky[]= $rok;
       }
-      debug($ds,"skladba",null,'*');
+      debug($ds,"skladba",null,'T');
       $muzi= implode(',',$ds[0]);
       $zeny= implode(',',$ds[1]);
       $deti= implode(',',$ds[2]);
       $akci= implode(',',$ds[3]);
       $dnu = implode(',',$ds[4]);
       $ucast=implode(',',$ds[5]);
+      $delka=implode(',',$ds[6]);
       switch ($par->graf) {
         case 'dnu':
           $chart->title= 'Počet člověkonocí na akcích YMCA Setkání v Domě setkání';
@@ -1853,6 +1856,11 @@ function chart_akce($par) { debug($par,'chart_akce','','*');
         case 'akci':
           $chart->title= 'Počet akcí YMCA Setkání v Domě setkání';
           $chart->series= [(object)array('name'=>'akcí','data'=>$akci,'color'=>'grey')];
+          $y_title= "  akcí v daném roce"; 
+          break;
+        case 'delka':
+          $chart->title= 'Počet dnů akcí YMCA Setkání v Domě setkání';
+          $chart->series= [(object)array('name'=>'akcí','data'=>$delka,'color'=>'grey')];
           $y_title= "  akcí v daném roce"; 
           break;
         case 'ucast':
@@ -1888,7 +1896,8 @@ function chart_akce($par) { debug($par,'chart_akce','','*');
           <li>zobrazují se jen akce uvedené v menu AKCE/Akce zadaného roku, u kterých je jako 
             místo uvedeno <u>Albe</u>řice nebo <u>Dům</u> setkání (z názvů se porovnává jen podtržená část). 
           <li>grafy tedy neobsahují tzv. komerční pobyty. 
-          <li>grafy tedy obsahují i akce programu MS - například VPS1, VPS2, Setkání organizátorů
+          <li>grafy tedy obsahují i akce programu MS - například VPS1, VPS2, Setkání organizátorů 
+            <br><u>neobsahuje</u> ale \"albeřické hnízdo\" letního kurzu v roce 2021 
           <li>grafy neobsahují např. akce Fr. Růžičky (vedené jako komerční) 
             ... pokud se dohodneme,že účel naplňují, do grafů je přidám 
           <li>pro výpočet člověkonocí a průměrného počtu účastníků jsou vyňaty brigády, protože se na nich 
