@@ -38,8 +38,6 @@ menu m {type:'left', format:'f+'
     item prih {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'ms', tag:'o|d'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek", par:{type:'prihlasky',ukaz:'prubeh',pro:'ms', tag:'o|d'}}
   }
-  // fa-?-chart: area|bar|line|pie
-  // graf=line|bar|bar%|pie, x=od-do, y=vek|pocet [,z=typ-ucasti]
   menu s2 {title:'2. Infografika LK MS',type:'group'
     item  {title:"[fa-line-chart] Stáří účastníků kurzu", par:{
         graf:'spline/regression', yaxis:'věk účastníků,36,54,10', rok:'od-do',y:'vek',z:'typ-ucasti'}}
@@ -73,8 +71,6 @@ menu m {type:'left', format:'f+'
         chart:{chart:'column'}}}
     item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",         par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
         chart:{chart:'column'}}}
-//    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
-//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
   menu {title:'Infografika MROP',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop', tag:'d',

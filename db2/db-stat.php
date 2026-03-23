@@ -1878,6 +1878,31 @@ function chart_akce($par) { debug($par,'chart_akce','','*');
       if ($chart->plotOptions->column->stacking && $par->prc) {
         $chart->plotOptions->column->stacking= 'percent';
       }
+      $y->note= "
+        <h3>Účelem infografik Domu setkání ...</h3><ul>
+          <li>... je znázornit využití Domu setkání pro akce s programem YMCA Setkání, 
+          tedy jak se dařilo v průběhu času naplňovat původní účel
+          <li>... není znázornit hospodárnost provozu Domu - k tomu slouží ekonomické údaje v účetnictví
+        </ul>
+        <h3>Pro grafy platí následující</h3> <ul>
+          <li>zobrazují se jen akce uvedené v menu AKCE/Akce zadaného roku, u kterých je jako 
+            místo uvedeno <u>Albe</u>řice nebo <u>Dům</u> setkání (z názvů se porovnává jen podtržená část). 
+          <li>grafy tedy neobsahují tzv. komerční pobyty. 
+          <li>grafy tedy obsahují i akce programu MS - například VPS1, VPS2, Setkání organizátorů
+          <li>grafy neobsahují např. akce Fr. Růžičky (vedené jako komerční) 
+            ... pokud se dohodneme,že účel naplňují, do grafů je přidám 
+          <li>pro výpočet člověkonocí a průměrného počtu účastníků jsou vyňaty brigády, protože se na nich 
+            účastníci většinou střídají <br>(to platilo zejména v počátcích)
+        </ul>
+        <h3>Možnosti zobrazení</h3> <ul>
+          <li>V nadpisové liště je možné nastavit odkdy do kdy se mají údaje zobrazit
+          <li>pro skladbu účastníků lze i zaškrtnout procentní zobrazení
+          <li>poslední ikonou se graf aktualizuje
+          <li>Grafy je možné zobrazit již od roku 2003, 
+            aktuální rok ukazuje přirozeně jen částečné údaje - v počtu akcí jsou zahrnuty i ty plánované,
+            takže má smysl uvést horní hranici z budoucnosti
+          </ul>
+        <br>Martin Šmídek, 2026";
       break;
     case 'skladba':
       $chart->title= 'Skladba účastníků letního kurzu';
