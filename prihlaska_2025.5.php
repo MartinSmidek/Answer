@@ -116,10 +116,13 @@ try {
   $virgin= true;
   if (!count($_POST)) { // zde se proběhne jen poprvé
     $virgin= false;
-    if (!isset($_GET['akce']) || !isset($_GET['org'])) {
+    if (!isset($_GET['akce']) || strlen($_GET['akce'])!=4 || !is_numeric($_GET['akce'])) {
       die("Online přihlašování není k dispozici."); 
     }
     require_once("prihlaska.org.php"); 
+    if (!isset($_GET['org']) || !is_numeric($_GET['org']) || !isset($access2org[$_GET['org']])) {
+      die("Online přihlašování není k dispozici"); 
+    }
     $ORG= $access2org[$_GET['org']];
     $ORG->code= $_GET['org'];
     // detekce varianty: normální nebo testovací - buďto přihlášení do Answer nebo volání z webu
