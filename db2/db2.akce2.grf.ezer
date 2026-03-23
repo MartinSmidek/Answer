@@ -65,12 +65,14 @@ menu m {type:'left', format:'f+'
     }
   }
   menu {title:'2. Infografika Domu setkání',type:'group'
-    item  {title:"[fa-bar-chart] Účastníků akcí YMCA Setkání", par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'celkem',
+    item  {title:"[fa-bar-chart] Účastníků akcí YMCA Setkání",   par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'celkem',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
-    item  {title:"[fa-bar-chart] Počet akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'akci',
-        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
-    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
-        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] Počet akcí YMCA Setkání",       par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'akci',
+        chart:{chart:'column'}}}
+    item  {title:"[fa-bar-chart] ... průměrně účastníků na akci",par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'ucast',
+        chart:{chart:'column'}}}
+    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",         par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
+        chart:{chart:'column'}}}
 //    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
 //        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
