@@ -1622,8 +1622,8 @@ end:
   return $y;
 }
 # ----------------------------------------------------------------------------------==> . chart akce
-# agregace údajů o MROP, FIRMING a MS pro grafické znázornění
-function chart_akce($par) { // debug($par,'chart_akce');
+# agregace údajů o MROP, EROP, FIRMING a MS pro grafické znázornění
+function chart_akce($par) { debug($par,'chart_akce','','*');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
@@ -1790,33 +1790,51 @@ function chart_akce($par) { // debug($par,'chart_akce');
         </i>";
       break;
     case 'skladba_ds':
-      $akce= $par->akce=='FIRM' ? 'firmingu' : $par->akce;
       $od= $par->od;
       $do= $par->do ?: date('Y');
       $po= $par->po ?: 10;
       // histogram
       $ds= [];
+//      $cond_ds= "ciselnik_akce BETWEEN 500 AND 599 AND druh!=9 /*brigáda*/";
+//      $cond_ds= "ma_cenik=2 AND druh!=9 /*brigáda*/";
+//      $cond_ds= "(ciselnik_akce BETWEEN 500 AND 599 OR ma_cenik=2) AND druh!=9 /*brigáda*/";
+      $cond_ds= "misto RLIKE 'Albe|Dům'";
+      if (in_array($par->graf,['dnu','ucast'])) {
+        $cond_ds.= " AND druh!=9 /*brigáda*/";
+      }
       for ($rok= $od; $rok<=$do; $rok++) {
-        $ds[0][$rok]= $ds[1][$rok]= $ds[2][$rok]= $ds[3][$rok]= $ds[4][$rok]= 0;
+        // muzi       zeny          deti          akcí          člověkonoci   účast 
+        $ds[0][$rok]= $ds[1][$rok]= $ds[2][$rok]= $ds[3][$rok]= $ds[4][$rok]= $ds[5][$rok]= 0;
         // projdeme akce na DS - muži,ženy,děti
-        $akce_roku= 0;
-        $ar= pdo_qry("SELECT id_duakce,nazev,DATEDIFF(datum_do,datum_od) FROM akce 
-            WHERE access=1 AND ciselnik_akce BETWEEN 500 AND 599 
+        $ucast_roku= 0;
+        $ar= pdo_qry("SELECT GROUP_CONCAT(id_duakce),nazev,DATEDIFF(datum_do,datum_od) FROM akce 
+            WHERE access=1 AND $cond_ds
             AND spec=0 AND zruseno=0 AND YEAR(datum_od)=$rok
+            GROUP BY datum_od
             ORDER BY ciselnik_akce DESC ");
-        while ($ar && (list($id_akce,$nazev,$dnu)= pdo_fetch_row($ar))) {
-          if (in_array($par->graf,['celkem','dnu'])) {
-            $info= akce2_info($id_akce,0,1);
-//            debug($info,"$nazev",null,'*');
-            $ds[0][$rok]+= $info->muzi;
-            $ds[1][$rok]+= $info->zeny;
-            $ds[2][$rok]+= $info->deti;
+        while ($ar && (list($ids_akce,$nazev,$dnu)= pdo_fetch_row($ar))) {
+          if (in_array($par->graf,['celkem','dnu','ucast'])) {
+            $or= pdo_qry("SELECT COUNT(*),
+                SUM(IF($rok-YEAR(narozeni)<=18,1,0)) AS _deti,
+                SUM(IF($rok-YEAR(narozeni)>18 AND sex=1,1,0)) AS _muzi,
+                SUM(IF($rok-YEAR(narozeni)>18 AND sex=2,1,0)) AS _zeny
+                FROM pobyt
+                JOIN _cis ON druh='ms_akce_funkce' AND data=funkce
+                JOIN spolu USING (id_pobyt)
+                JOIN osoba USING (id_osoba)
+                WHERE id_akce IN ($ids_akce) AND ikona!=1  ");
+            while ($or && (list($celkem,$deti,$muzi,$zeny)= pdo_fetch_row($or))) {
+              $ucast_roku+= $celkem;
+              $ds[0][$rok]+= $muzi;
+              $ds[1][$rok]+= $zeny;
+              $ds[2][$rok]+= $deti;
+              $ds[4][$rok]+= max($dnu-1,1)*$celkem;
+              display("$ids_akce: $muzi,$zeny,$deti,$dnu ... $nazev",'*');
+            }
           }
           $ds[3][$rok]+= 1;
-          $ds[4][$rok]+= max($dnu-1,1)*($info->muzi+$info->zeny+$info->deti);
-          display("$id_akce: $info->muzi,$info->zeny,$info->deti,$dnu ... $nazev",'*');
-          $akce_roku++;
         }
+        $ds[5][$rok]= $ds[3][$rok] ? round($ucast_roku/$ds[3][$rok]) : 0;
         $roky[]= $rok;
       }
       debug($ds,"skladba",null,'*');
@@ -1825,16 +1843,22 @@ function chart_akce($par) { // debug($par,'chart_akce');
       $deti= implode(',',$ds[2]);
       $akci= implode(',',$ds[3]);
       $dnu = implode(',',$ds[4]);
+      $ucast=implode(',',$ds[5]);
       switch ($par->graf) {
         case 'dnu':
           $chart->title= 'Počet člověkonocí na akcích YMCA Setkání v Domě setkání';
           $chart->series= [(object)array('name'=>'člověkonocí','data'=>$dnu,'color'=>'olive')];
-          $y_title= " počet dnů akcí v daném roce"; 
+          $y_title= "  dnů akcí v daném roce"; 
           break;
         case 'akci':
           $chart->title= 'Počet akcí YMCA Setkání v Domě setkání';
           $chart->series= [(object)array('name'=>'akcí','data'=>$akci,'color'=>'grey')];
-          $y_title= " počet akcí v daném roce"; 
+          $y_title= "  akcí v daném roce"; 
+          break;
+        case 'ucast':
+          $chart->title= 'Obsazenost akcí YMCA Setkání v Domě setkání';
+          $chart->series= [(object)array('name'=>'účast','data'=>$ucast,'color'=>'grey')];
+          $y_title= "  průmšrně účastníků na akci v daném roce"; 
           break;
         case 'celkem':
           $chart->title= 'Skladba účastníků akcí YMCA Setkání v Domě setkání';
@@ -1843,21 +1867,16 @@ function chart_akce($par) { // debug($par,'chart_akce');
               (object)array('name'=>'ženy','data'=>$zeny,'color'=>'red'),
               (object)array('name'=>'děti','data'=>$deti,'color'=>'lightgreen')
             ];
-          $y_title= " počet účastníků v daném roce"; 
+          $y_title= "  účastníků v daném roce"; 
           break;
       }
       $chart->yAxis= (object)array('title'=>(object)
           ['text'=>($par->prc ? 'procento':'počet').$y_title],
           'tickInterval'=>10,'min'=>0); 
       $chart->xAxis= (object)array('categories'=>$roky,
-          'title'=>(object)array('text'=>"rok konání $akce "));
-      if (isset($chart->plotOptions->series->stacking)){
-        $chart->tooltip= (object)array(
-          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
-        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
-          $chart->plotOptions->series->stacking= 'percent';
-        }
-        $chart->chart= 'bar';
+          'title'=>(object)array('text'=>""));
+      if ($chart->plotOptions->column->stacking && $par->prc) {
+        $chart->plotOptions->column->stacking= 'percent';
       }
       break;
     case 'skladba':
