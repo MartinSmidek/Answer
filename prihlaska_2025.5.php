@@ -116,7 +116,7 @@ try {
   $virgin= true;
   if (!count($_POST)) { // zde se proběhne jen poprvé
     $virgin= false;
-    if (!isset($_GET['akce']) || strlen($_GET['akce'])!=4 || !is_numeric($_GET['akce'])) {
+    if (!isset($_GET['akce']) || strlen($_GET['akce'])>5 || !is_numeric($_GET['akce'])) {
       die("Online přihlašování není k dispozici."); 
     }
     require_once("prihlaska.org.php"); 
