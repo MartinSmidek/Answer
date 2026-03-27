@@ -551,6 +551,8 @@ form _lst [,,370,*] {
               show:'prijmeni,jmeno,ulice,psc,obec,_vek,telefon,mail,iniciace'});
           alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
       }}
+      item { title:'[fa-exclamation fa-red]jména+mrop do temp.txt', skill:'m'
+        func onclick () { alert(php.evid2_save_iniciovani()); }}
       item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
       item { title:'vybrat vše, co lze zobrazit'  func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}
