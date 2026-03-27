@@ -152,15 +152,15 @@ menu m {type:'left', format:'f+'
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae;mrop'
     item a {title:'[fa-user]všechny kontakty'   par:{lst:'o',tit:'všechny osoby, co ',cnd:'1'}, skill:'yae;fae;cae'}
     item m {title:'[fa-send-o] podle mail-listu'par:{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'}, skill:'yae;fae;cae#crz' }
-    item i {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop'}
-    item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
+    item i {title:'[fa-send-o] podle mail-listu'par:{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop'}
+    item   {title:'[fa-male]muži'               par:{lst:'o',tit:'všichni muži, co ',
                                                 cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
-    item   {title:'[fa-female]ženy'             par:°{lst:'o',tit:'všechny ženy, co ',
+    item   {title:'[fa-female]ženy'             par:{lst:'o',tit:'všechny ženy, co ',
                                                 cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
-    item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
+    item   {title:'[fa-child]děti'              par:{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
-    item   {title:'[fa-male fa-red]iniciovaní'  par:°{lst:'o',tit:'iniciovaní muži, co ',
-                                                cnd:"o.iniciace>0"}, skill:'mrop;yaa:c;faa:c'}
+    item   {title:'[fa-male fa-red]iniciovaní'  par:{lst:'o',tit:'iniciovaní muži, co ',
+                                                cnd:"o.iniciace>0 AND sex=1"}, skill:'mrop;yaa:c;faa:c;caa:c'}
     item   {title:'[fa-male fa-green]brána dospělosti'  par:{lst:'o',tit:'muži za branou, co ',
                                                 cnd:"o.brana>0"}, skill:'mrop;yaa:c;faa:c'}
     item v {title:'[fa-chain fa-red]výběr osob' par:{lst:'o',tit:'vybrané osoby vč. smazaných ',cnd:'0',skill:'a'}
@@ -179,7 +179,7 @@ menu m {type:'left', format:'f+'
     item   {title:'[fa-map-marker fa-red] skoro lokalizovaní' par:{lst:'o',tit:'mají stav=-2 v osoba_geo nebo rodina_geo',
                                                 cnd:"(og.stav=-2 OR org.stav=-2) AND IFNULL(role,'a') IN ('a','b')",psc:1},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:{lst:'o',tit:'testovací osoby, co ',
-                                                cnd:"o.id_osoba IN (679,4031,4504,5877,9437)"},skill:'m'}
+                                                cnd:"o.id_osoba IN (195,679,4031,4504,5877,9437)"},skill:'m'}
   }
   menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
     item {title:'[fa-file-text] přehled před závěrkou'
@@ -551,6 +551,8 @@ form _lst [,,370,*] {
               show:'prijmeni,jmeno,ulice,psc,obec,_vek,telefon,mail,iniciace'});
           alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
       }}
+      item { title:'[fa-exclamation fa-red]jména+mrop do temp.txt', skill:'m'
+        func onclick () { alert(php.evid2_save_iniciovani()); }}
       item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
       item { title:'vybrat vše, co lze zobrazit'  func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}

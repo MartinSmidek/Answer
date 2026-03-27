@@ -344,6 +344,60 @@ end:
   return $ret;
 }
 # ==========================================================================================> . YMCA
+# ---------------------------------------------------------------------------==> .. evid2 save_vyber
+# seznam prijmeni,jmeno,narozeni,iniciace do/z temp.txt
+function evid2_save_iniciovani() {
+  $n= 0;
+  $path= "docs/temp.txt";
+  $f= fopen($path,'w');
+  if ( !$f ) fce_error("soubor '$path' nelze vytvořit");
+  $rd= pdo_qry("SELECT prijmeni,jmeno,narozeni,iniciace
+    FROM osoba
+    WHERE iniciace>0 AND deleted=''
+    ORDER BY prijmeni,jmeno
+  ");
+  while ($rd && list($prijmeni,$jmeno,$narozeni,$iniciace)= pdo_fetch_array($rd)) {
+    fwrite($f,trim($prijmeni).';'.trim($jmeno).';'.trim($narozeni).';'.trim($iniciace)."\n");
+    $n++;
+  }
+  fclose($f);
+  return "Do $path uloženo $n záznamů<br>import přes evid2_load_iniciovani<br>zapnout trace! sledovat výpis";
+}
+function evid2_load_iniciovani() {
+  $n= $n1= $n2= $nx= 0;
+  $path= "docs/temp.txt";
+  $f= fopen($path,'r');
+  if ( !$f ) fce_error("soubor '$path' nelze otevřít");
+  while (!feof($f)) {
+    $n++;
+    $pozn= '';
+    list($prijmeni,$jmeno,$narozeni,$iniciace)= fgetcsv($f,999,';');
+    list($count,$ido,$rok)= select('COUNT(*),id_osoba,iniciace','osoba',
+        "prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' AND deleted='' ");
+    if ($count==1) {
+      $n1++; 
+      if ($rok!=$iniciace) {
+        if ($rok && $rok<99) { // je tam počet dětí
+          $pozn= " ------------------ POZOR MÁ TAM POČET DĚTÍ NEAKTUALIZOVÁNO!";
+        }
+        else {
+          $nx+= query("UPDATE osoba SET iniciace=$iniciace WHERE id_osoba=$ido");
+          $pozn= " ... AKTUALIZACE č.$nx";
+        }
+      }
+    }
+    elseif ($count>1) {
+      $n2++;
+      $pozn= " ------------------ NEJEDNOZNAČNÉ ";
+    }
+    IF ($pozn)
+      display("$pozn ... $prijmeni,$jmeno,$narozeni,$iniciace ... řádek $n, $n1, $n2, $nx ");
+//    if ($nx) goto end;
+  }
+end:
+  fclose($f);
+  display("Z $path obnoveno $nx dat iniciace přečteno $n řádků rozpoznáno $n1 iniciovaných, $n2 nejednoznačných");
+}
 # ---------------------------------------------------------------------------==> .. evid2 ymca darci
 # správa dárců pro YS
 function evid2_ymca_darci($org,$kdy='loni') {
