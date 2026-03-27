@@ -62,7 +62,7 @@ menu m {type:'left', format:'f+'
       info.spinner(0);
     }
   }
-  menu {title:'Infografika Domu setkání',type:'group'
+  menu {title:'Infografika Domu setkání',type:'group'                                      skill:'y'
     item  {title:"[fa-bar-chart] Účastníků akcí YMCA Setkání",   par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'celkem',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
     item  {title:"[fa-bar-chart] Počet akcí YMCA Setkání",       par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'akci',
@@ -71,7 +71,7 @@ menu m {type:'left', format:'f+'
         chart:{chart:'column'}}}
     item  {title:"[fa-bar-chart] Průměrný počet účastníků ... ", par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'ucast',
         chart:{chart:'column'}}}
-    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",         par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
+    item  {title:"[fa-bar-chart] Počet člověkonocí ...",         par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
         chart:{chart:'column'}}}
   }
   menu {title:'Infografika MROP',type:'group'                                            skill:'y;f'
@@ -114,7 +114,7 @@ menu m {type:'left', format:'f+'
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'firm'}}
   }
-  menu {title:'Infografika EROP',type:'group'                                            
+  menu {title:'Infografika EROP',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] odhad frekvence", par:{type:'erop', tag:'d',               
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}                       skill:'m'}
     item  {title:"[fa-bar-chart] Aktuální věk neiniciovaných",par:{type:'vek_abs_nemrop',tag:'i|d',
