@@ -38,8 +38,6 @@ menu m {type:'left', format:'f+'
     item prih {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'ms', tag:'o|d'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek", par:{type:'prihlasky',ukaz:'prubeh',pro:'ms', tag:'o|d'}}
   }
-  // fa-?-chart: area|bar|line|pie
-  // graf=line|bar|bar%|pie, x=od-do, y=vek|pocet [,z=typ-ucasti]
   menu s2 {title:'2. Infografika LK MS',type:'group'
     item  {title:"[fa-line-chart] Stáří účastníků kurzu", par:{
         graf:'spline/regression', yaxis:'věk účastníků,36,54,10', rok:'od-do',y:'vek',z:'typ-ucasti'}}
@@ -64,17 +62,17 @@ menu m {type:'left', format:'f+'
       info.spinner(0);
     }
   }
-  menu {title:'2. Infografika Domu setkání',type:'group'
+  menu {title:'Infografika Domu setkání',type:'group'
     item  {title:"[fa-bar-chart] Účastníků akcí YMCA Setkání",   par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'celkem',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
     item  {title:"[fa-bar-chart] Počet akcí YMCA Setkání",       par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'akci',
         chart:{chart:'column'}}}
-    item  {title:"[fa-bar-chart] ... průměrně účastníků na akci",par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'ucast',
+    item  {title:"[fa-bar-chart] Počet dnů akcí YMCA Setkání",   par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'delka',
+        chart:{chart:'column'}}}
+    item  {title:"[fa-bar-chart] Průměrný počet účastníků ... ", par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'ucast',
         chart:{chart:'column'}}}
     item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",         par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
         chart:{chart:'column'}}}
-//    item  {title:"[fa-bar-chart] Dnů akcí YMCA Setkání",     par:{type:'skladba_ds', pro:'ds', tag:'o|d', graf:'dnu',
-//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
   menu {title:'Infografika MROP',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop', tag:'d',
