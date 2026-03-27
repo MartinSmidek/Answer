@@ -381,7 +381,7 @@ function evid2_load_iniciovani() {
           $pozn= " ------------------ POZOR MÁ TAM POČET DĚTÍ NEAKTUALIZOVÁNO!";
         }
         else {
-          $nx+= 1; //query("UPDATE osoba SET iniciace=$iniciace WHERE id_osoba=$ido");
+          $nx+= query("UPDATE osoba SET iniciace=$iniciace WHERE id_osoba=$ido");
           $pozn= " ... AKTUALIZACE č.$nx";
         }
       }
