@@ -228,6 +228,9 @@ function prihl_show($idp,$idw) { trace();
       case '2025.4': 
         $html= prihl_show_2025($idp,$idw,4); 
         break;
+      case '2025.5': 
+        $html= prihl_show_2025($idp,$idw,5); 
+        break;
       case '': 
         $html= 'pobyt nevznikl online přihláškou';
         break;
