@@ -295,7 +295,7 @@ panel Objednavka [,,760,510] { type:'popup' title:"Objednávka pobytu v Domě se
     obj.init(); obj.plan.init();
     obj.plain(); obj.plan.plain();
     obj.rok= rok;
-    obj.display(0,'.*'); obj.display(1,'new|adr');
+    obj.display(0,'.*'); obj.display(1,'new|adr'); obj.enable(1,'new|adr');
     obj.plan.display(0,'no|yes|comp');
     obj.state.key(1); obj.state.enable(0); obj.state.change(); 
     obj.board.key(1); obj.board.change(); 
