@@ -2336,7 +2336,8 @@ function get_vek1($id): float {
   $narozeni= get('o','narozeni',$id);
   if ($narozeni) {
     $datum = $akce->od;
-    $d1 = new DateTime($narozeni);
+    $_narozeni = str_replace(' ','',trim($narozeni)); // zruší mezery
+    $d1 = new DateTime($_narozeni);
     $d2 = new DateTime($datum);
     // rozdíl v dnech
     $diff = $d1->diff($d2)->days;
