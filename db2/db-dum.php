@@ -1178,7 +1178,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku,$idd,$idp=0) { //trace();
       $kc= $d->cena;
       $cena['naklad']+= $kc * $pocet;
       // případná úprava ceny o slevu
-      if ($sleva) $kc= $kc * (100-$sleva)/100;
+      if ($sleva && $zaco!='ubyt_C') $kc= round($kc * (100-$sleva)/100);
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
@@ -1195,7 +1195,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku,$idd,$idp=0) { //trace();
       $zaco_d= "$zaco/d";
       $kc= $d->dotovana;
       // případná úprava ceny o slevu
-      if ($sleva) $kc= $kc * (100-$sleva)/100;
+      if ($sleva && $zaco!='ubyt_C') $kc= round($kc * (100-$sleva)/100);
       $cena['naklad']+= $d->cena * $pocet;
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;

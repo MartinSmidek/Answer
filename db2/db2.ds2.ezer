@@ -261,10 +261,12 @@ panel fakt {type:'right', title:"Faktury"
     check smazane [643,378,114,] { title:'zobrazit i smazané', format:'t', value:'0' 
       func onchange() { Reload() }}
     button [792,378,,] { title:'[fa-file-pdf-o] Stáhnout fakturu jako PDF' 
-      func onclick() { var html:text
-        faktura= php.dum_faktura(faktura.parm);
-        if (faktura.err) { alert(faktura.err); return }
-        alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
+      func onclick() { var ref:text
+//        faktura= php.dum_faktura(faktura.parm);
+//        if (faktura.err) { alert(faktura.err); return }
+        if (!faktura.parm.soubor) { alert("soubor s fakturou nelze nalézt"); return }
+        ref= `<a target='pdf' href='docs/dum_setkani/faktury/${faktura.parm.soubor}'>zde</a>`;
+        alert(`Faktura k vytištění nebo poslání emailem je ${ref}`);
       }
     }
     button [523,408,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat fakturu' 
