@@ -1562,7 +1562,7 @@ form _osoba2x [,,244,322] { css:'ae_frame'
   field obcanka  [18,2,70,] {tag:'o', data:o.obcanka, format:'n', title:'op:'}
 //  field rc       [106,2,45,] {tag:'o', format:'nd', title:'rč:'}
 //  field rc_xxxx  [159,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
-  select clen    [29,26,54,] {tag:'o', type:'map', format:'n', data:o.clen,
+  select clen    [29,26,54,] {tag:'-', type:'map', format:'n', data:o.clen,
                                 options:ms_akce_clen.zkratka, title:'ymca'}
   check uvitano  [190,25,58,] {tag:'o', data:o.uvitano, title:'vítáno',
                                help:'dítě bylo slavnostně uvítáno ve společenství na nějaké akci'}
