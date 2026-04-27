@@ -446,7 +446,7 @@ menu m {type:'left', //active:*
         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'0;1'
         ,note:`Jsou zobrazeny všechni přítomní na akci.`
         ,tit:'příjmení:15,jméno:12,pokoj:5,st.přísl.:10,narození:12:r,věk:4:r,obec:25,psč:7,ulice:25,stát:10,fotbalový turnaj:12'
-        ,fld:'prijmeni,jmeno,pokoj,prislusnost,narozeni_dmy,_vek,obec,psc,ulice,stat,^Xturnaj'}}
+        ,fld:'prijmeni,jmeno,pokoj,prislusnost,narozeni_dmy,_vek,obec,psc,ulice,stat,Xturnaj'}}
     
     item {title:'[fa-file-excel-o] Noclehy, program'
         ,par:{typ:'pasc',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,15,99)",hav:"1",bydli:'0;1'

@@ -1027,7 +1027,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         }
         $clmn[$n][$f]= $value;
         break;
-      case '^Xturnaj':
+      case 'Xturnaj':
         $value= '';
         $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
         if ($vars_json) {
