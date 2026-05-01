@@ -247,13 +247,19 @@ catch (Throwable $e) {
   stop_after_error($errpos);
 }
 function stop_after_error($errpos='') {
-  global $akce, $TEST, $ORG;
+  global $akce, $vars, $TEST, $MAIL, $ORG;
   $errmsg= "Omlouváme se, během práce programu došlo k nečekané chybě."
   . "<br><br>Zkuste to prosím později nebo se na akci přihlaste mailem zaslaným na {$ORG->info->mail}."
   . ($akce??0 ? "<br>$akce->opravit_chybu" : '')
   . ($TEST ? "<hr><i>příčina chyby je v logu, zde se vypíše jen pokud bylo zapnuto trasování ...</i>"
       . "<br>$errpos" : '');
   echo $errmsg;
+  // pokus se poslat hlášení o chybě
+  $MAIL= 1;
+  simple_mail('', 'martin@smidek.eu', 
+      "ERROR: online přihláška na ".($vars->id_akce??0 ? $vars->id_akce : '?'),
+      $errmsg);
+  // a konec
   exit;
 }
 // -------------------------------------------------------------------- obnova počátečního nastavení
