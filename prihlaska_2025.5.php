@@ -634,6 +634,11 @@ function kontrola_pinu($pin,$ignorovat_rozepsanou=0) { trace();
 # pokud je neznámý umožni zadání jiného
 # pokud je nejednoznačný umožni zadání jiného
   global $DOM, $TEXT, $akce, $vars;
+  if ($pin=='ERROR') {
+    // simulace chyby 
+    $vars->to_je_test_chovani_pri_chybe;
+    exit;
+  }
   if ($pin!=$vars->pin) { // chyba pinu
     $DOM->usermail_pod= zvyraznit("<p>Do mailu jsme poslali odlišný PIN, podívejte se prosím pozorně</p>");
   }
