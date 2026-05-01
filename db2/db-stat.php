@@ -1850,23 +1850,23 @@ function chart_akce($par) { debug($par,'chart_akce','','T');
       switch ($par->graf) {
         case 'dnu':
           $chart->title= 'Počet člověkonocí na akcích YMCA Setkání v Domě setkání';
-          $chart->series= [(object)array('name'=>'člověkonocí','data'=>$dnu,'color'=>'olive')];
-          $y_title= "  dnů akcí v daném roce"; 
+          $chart->series= [(object)array('name'=>'počet člověkonocí','data'=>$dnu,'color'=>'olive')];
+          $y_title= "  člověkonocí v daném roce"; 
           break;
         case 'akci':
           $chart->title= 'Počet akcí YMCA Setkání v Domě setkání';
-          $chart->series= [(object)array('name'=>'akcí','data'=>$akci,'color'=>'grey')];
+          $chart->series= [(object)array('name'=>'počet akcí','data'=>$akci,'color'=>'grey')];
           $y_title= "  akcí v daném roce"; 
           break;
         case 'delka':
           $chart->title= 'Počet dnů akcí YMCA Setkání v Domě setkání';
-          $chart->series= [(object)array('name'=>'akcí','data'=>$delka,'color'=>'grey')];
-          $y_title= "  akcí v daném roce"; 
+          $chart->series= [(object)array('name'=>'počet dnů','data'=>$delka,'color'=>'grey')];
+          $y_title= "  dnů akcí v daném roce"; 
           break;
         case 'ucast':
           $chart->title= 'Obsazenost akcí YMCA Setkání v Domě setkání';
-          $chart->series= [(object)array('name'=>'účast','data'=>$ucast,'color'=>'grey')];
-          $y_title= "  průmšrně účastníků na akci v daném roce"; 
+          $chart->series= [(object)array('name'=>'průměrná obsazenost','data'=>$ucast,'color'=>'grey')];
+          $y_title= "  průměrně účastníků na akci v daném roce"; 
           break;
         case 'celkem':
           $chart->title= 'Skladba účastníků akcí YMCA Setkání v Domě setkání';

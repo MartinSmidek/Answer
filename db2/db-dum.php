@@ -799,15 +799,17 @@ function dum_objednavka_akce_make($id_order) {
   return $ida;
 }
 # ----------------------------------------------------------------------------------- dum objednavka
-# vrátí nové číslo faktury, snaží se o zaplěnní případných mezer po smazání
-function dum_faktura_cislo($rok,$typ_cond) {
+# vrátí nové číslo faktury, snaží se o zaplnění případných mezer po smazání
+function dum_faktura_cislo($rok,$typ_cond) { 
   $num= 0;
 //  pdo_query("SELECT MAX(num) FROM faktura AS f1
 //    WHERE deleted!='' AND $typ_cond AND NOT EXISTS (
 //      SELECT 1 FROM faktura AS f2 WHERE f2.num=f1.num AND f2.deleted='' AND $typ_cond
 //    )");
   if (!$num)
-    $num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$rok AND $typ_cond");
+    $num= select1('IFNULL(MAX(vs)+1,1)','faktura',"rok=$rok AND $typ_cond");
+//    $num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$rok AND $typ_cond");
+  display("dum_faktura_cislo($rok,$typ_cond)=$num");
   return $num;
 }
 # ----------------------------------------------------------------------------------- dum objednavka
@@ -1176,7 +1178,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku,$idd,$idp=0) { //trace();
       $kc= $d->cena;
       $cena['naklad']+= $kc * $pocet;
       // případná úprava ceny o slevu
-      if ($sleva) $kc= $kc * (100-$sleva)/100;
+      if ($sleva && $zaco!='ubyt_C') $kc= round($kc * (100-$sleva)/100);
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
@@ -1193,7 +1195,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku,$idd,$idp=0) { //trace();
       $zaco_d= "$zaco/d";
       $kc= $d->dotovana;
       // případná úprava ceny o slevu
-      if ($sleva) $kc= $kc * (100-$sleva)/100;
+      if ($sleva && $zaco!='ubyt_C') $kc= round($kc * (100-$sleva)/100);
       $cena['naklad']+= $d->cena * $pocet;
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;

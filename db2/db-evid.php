@@ -729,7 +729,7 @@ function evid2_browse_mailist($x) {
     }
     if ( count($hav) ) {
       $cond= implode(' AND ',$hav);
-      $qo= str_replace("ORDER BY","HAVING $cond ORDER BY",$qo);
+      $qo= str_replace("\nORDER BY","\nHAVING $cond ORDER BY",$qo);
     }
 //                                                                display($qo);
     $ro= pdo_qry($qo);

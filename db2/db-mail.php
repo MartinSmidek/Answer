@@ -633,22 +633,22 @@ function mail2_mai_prazdny($id_dopis) {  trace();
 #   kde A je seznam aktivit oddělený čárkami
 #   a D=1 pokud mají být začleněni pouze letošní a loňští dárci
 #   a cond je obecná podmínka na položky tabulky CLEN
-function mail2_mai_qry($komu) {  trace();
-  list($aktivity,$is_dary,$cond)= explode('|',$komu);
-  $and= $aktivity=='*' ? '' : "AND FIND_IN_SET(aktivita,'$aktivity')";
-  if ( $cond ) $and.= " AND $cond";
-  $letos= date('Y'); $loni= $letos-1;
-  $qry= $is_dary
-    ? "SELECT id_clen, email,
-         BIT_OR(IF((YEAR(datum) BETWEEN $loni AND $letos) AND LEFT(dar.deleted,1)!='D'
-           AND castka>0 AND akce='G',1,0)) AS is_darce
-       FROM clen LEFT JOIN dar USING (id_clen)
-       WHERE LEFT(clen.deleted,1)!='D' AND umrti=0 AND aktivita!=9 AND email!='' $and
-       GROUP BY id_clen HAVING is_darce=1"
-    : "SELECT id_clen, email FROM clen
-       WHERE left(deleted,1)!='D' AND umrti=0 AND email!='' $and";
-  return $qry;
-}
+//function mail2_mai_qry($komu) {  trace();
+//  list($aktivity,$is_dary,$cond)= explode('|',$komu);
+//  $and= $aktivity=='*' ? '' : "AND FIND_IN_SET(aktivita,'$aktivity')";
+//  if ( $cond ) $and.= " AND $cond";
+//  $letos= date('Y'); $loni= $letos-1;
+//  $qry= $is_dary
+//    ? "SELECT id_clen, email,
+//         BIT_OR(IF((YEAR(datum) BETWEEN $loni AND $letos) AND LEFT(dar.deleted,1)!='D'
+//           AND castka>0 AND akce='G',1,0)) AS is_darce
+//       FROM clen LEFT JOIN dar USING (id_clen)
+//       WHERE LEFT(clen.deleted,1)!='D' AND umrti=0 AND aktivita!=9 AND email!='' $and
+//       GROUP BY id_clen HAVING is_darce=1"
+//    : "SELECT id_clen, email FROM clen
+//       WHERE left(deleted,1)!='D' AND umrti=0 AND email!='' $and";
+//  return $qry;
+//}
 # ---------------------------------------------------------------------------------- mail2 mai_omitt
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emailu z MAIL($id_dopis=$vynech)
 # to je funkce určená k zamezení duplicit
