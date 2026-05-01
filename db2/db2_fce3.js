@@ -1044,8 +1044,10 @@ Ezer.fce.roku= function (dat,rok) {
 //s: ys
 //Ezer.obj.set_css_changed= null;
 Ezer.obj.set_css_changed_title= null; // 
-var set_css_changed= 
-Ezer.fce.set_css_changed= function (cases,css,chngs) {
+function set_css_changed (cases,css,chngs) {
+//  return Ezer.fce.set_css_changed(cases,css,chngs);
+//}
+//Ezer.fce.set_css_changed= function (cases,css,chngs) {
   // vymazání starých poznámek
   if (!cases) {
     // zrušíme obarvení
