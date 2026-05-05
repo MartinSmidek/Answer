@@ -271,8 +271,8 @@ menu m {type:'left', format:'f+'
     set_cookie(`${sys('root')}_akce_source`,the_source);
     backtrace();
     echo(`----------- set_cookie ...source=${the_source}`);
-    if (i.par.o) 
-      the_omezeni= `da2.access!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
+    if (i.par.o) // ikona=0 tj. byli na akci
+      the_omezeni= `ikona=0 AND da2.access!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
     if (i.par.a) 
       akce_roku(info.rok); 
     else 
@@ -1309,6 +1309,7 @@ form _info [,,*,50] {
   view ds2: table ds_order  {join_type:'LEFT',join:'ON ds2.id_akce=da2.id_duakce', skill:'#e'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
+  view pc2: table _cis      {join_type:'LEFT',join:"ON pc2.druh='ms_akce_funkce' AND data=pa2.funkce"}
   browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
       css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
       optimize:{fetch:'all'}
@@ -1316,6 +1317,7 @@ form _info [,,*,50] {
     show idd [,,0,] { title:'ord', expr:"IFNULL(ds2.id_order,0)", format:'rsq*' } // pro #y je expr=" 0 "
     show          {data:pa2.id_pobyt}
     show ma_archiv // [,,10,] 
+    show ikona {data:pc2.id_cis}
     show ma_cenik {data:da2.ma_cenik}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
