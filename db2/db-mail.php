@@ -1249,7 +1249,9 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
       }
       break;
     case 'pratele':
-      $val= $idr ? select('nazev','rodina',"id_rodina=$idr") : 'přátelé';
+      $val= $idr ? trim(select('nazev','rodina',"id_rodina=$idr")) : 'přátelé';
+      if (strstr($val,' ')!==false)
+        $val= 'přátelé';
       break;
     case 'akce_cena':
 //      // zjisti, zda je cena stanovena
