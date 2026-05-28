@@ -82,6 +82,8 @@ menu m {type:'left',
       par:{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... ... jen VPS'
       par:{k:'et',uq:'U2',on:'akce',off:'gen|skup',cond:'p.funkce=1'} }
+    item {title:'... ... jen VPS (i odpočívajícím)'
+      par:{k:'et',uq:'U5',on:'akce',off:'gen|skup',cond:'FIND_IN_SET(1,r_umi)'} }
     item {title:'... kněžím, psychologům akce'
       par:{k:'et',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
@@ -106,6 +108,8 @@ menu m {type:'left',
       par:{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... ... jen VPS'
       par:{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
+    item {title:'... ... jen VPS (i odpočívajícím)'
+      par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... kněžím, psychologům akce'
       par:{k:'es',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
