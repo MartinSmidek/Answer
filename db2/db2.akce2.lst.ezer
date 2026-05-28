@@ -272,7 +272,7 @@ menu m {type:'left', format:'f+'
     backtrace();
     echo(`----------- set_cookie ...source=${the_source}`);
     if (i.par.o) // ikona=0 tj. byli na akci
-      the_omezeni= `ikona=0 AND da2.access!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
+      the_omezeni= `IFNULL(ikona,0)=0 AND da2.access!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
     if (i.par.a) 
       akce_roku(info.rok); 
     else 
