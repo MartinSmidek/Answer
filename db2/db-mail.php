@@ -1659,6 +1659,83 @@ end:
   debug($y,"mail2_mai_sending ... end");
   return $y;
 }
+# ---------------------------------------------------------------------------------- mail2 batch_add
+# BATCH
+# v tabulce _send zjistí, zda se má něco poslat a podle smtp serveru odešle část
+# vrátí {error,dopis,sent}
+#
+function mail2_batch_add($idd,$i_smtp,$from,$name) {
+  $get_msg= function($byla_vytvorena,$todo) use ($i_smtp) {
+    list($po,$pauza)= select('ikona,barva','_cis',"druh='smtp_srv' AND data=$i_smtp");
+    $minut= ceil($todo/$po) * $pauza;
+    $hodin= ceil($minut/60);
+    $_hodin= je_1_2_5($hodin,"hodiny,hodin,hodin");
+    $msg= "Dávka k odeslání $byla_vytvorena, maily budou odesílány v pozadí. 
+      <br><br>Rozeslání $todo mailů bylo naplánováno, bude rozesláno během $_hodin.
+      <br><br>Můžeš pracovat na jiné kartě nebo se odhlásit.";
+    return $msg;
+  };
+  list($uzje,$todo,$ids)= select('COUNT(*),todo,id_send','_send',"id_dopis=$idd");
+  if (!$uzje) {
+    $todo= select('COUNT(*)','mail',"id_dopis=$idd AND stav IN (0,3)");
+    query("INSERT INTO _send (id_dopis,smtp,frommail,fromname,todo,error) 
+           VALUES ($idd,$i_smtp,'$from','$name',$todo,0)");
+    $msg= $get_msg("byla vytvořena",$todo);
+  }
+  else {
+    $todo2= select('COUNT(*)','mail',"id_dopis=$idd AND stav IN (0,3)");
+    if ($todo==$todo2) {
+      $msg= $todo2 ? $get_msg("již byla vytvořena",$todo) : "všechny maily již byly rozeslány";
+    }
+    else {
+      query("UPDATE _send SET todo='$todo2' WHERE id_send=$ids");
+      $msg= $get_msg("byla aktualizována",$todo2);
+    }
+  }
+  return $msg;
+}
+# --------------------------------------------------------------------------------- mail2 batch_send
+# musí být nastaven plánovač úloh, který bude volat
+# SERVER/dbt.php?batch=send-mails&secret=WEBPOUZEAUTORIZOVANEVOLANIKEYWEB
+#
+function mail2_batch_send() {
+  $res= (object)['error'=>'','davka'=>0,'dopis'=>0,'sent'=>0];
+  list($ids,$idd,$i_smtp,$from,$fromname)= select('id_send,id_dopis,smtp,frommail,fromname','_send',
+      "todo>0 AND error=0");
+  if (!$ids) goto end; // nic k poslání
+  $res->davka= $ids;
+  $res->dopis= $idd;
+  // získání SMTP serveru
+  list($smtp_json,$kolik)= select('hodnota,ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  $smtp= json_decode($smtp_json);
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    $res->error=  "chyba ve volbe SMTP serveru" . json_last_error_msg();
+    display($res->error);
+    goto end;
+  }
+  else {
+    debug($smtp);
+  }
+  // získání objektu $mail
+  $mail= mail2_new_PHPMailer($smtp);
+  if ( $mail->Ezer_error ) { 
+    $res->error= "tato odesílací adresa nelze použít ($mail->Ezer_error)";
+    goto end;
+  }
+  // odeslání dávky
+  $sent= mail2_mai_send($idd,$kolik,$from,$fromname,'',0,'',$mail);
+  if ($sent->_error) {
+    $res->error= $sent->_html;
+    query("UPDATE _send SET error=1 WHERE id_send=$ids");
+  }
+  $res->sent= $sent->_sent;
+  // zjištění zbytku
+  $todo= select('COUNT(*)','mail',"id_dopis=$idd AND stav IN (0,3)");
+  query("UPDATE _send SET todo='$todo' WHERE id_send=$ids");
+  $res->todo= $todo;
+end:
+  return $res;  
+}
 # ----------------------------------------------------------------------------------- mail2 mai_send
 # ASK
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
@@ -1666,8 +1743,8 @@ end:
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
 # pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
 # pokud je definováno $foot tj. patička, připojí se na konec
-# použije se SMTP server podle SESSION
-function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='') { trace();
+# pokud není definován objekt $mail, použije se SMTP server podle SESSION
+function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='',$mail=null) { trace();
   $TEST= 0;
   // připojení případné přílohy
   $attach= function($mail,$fname) {
@@ -1693,9 +1770,10 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $html= '';
   // poslání mailů
   try {
-    $mail= mail2_new_PHPMailer();
-    display("mail2_new_PHPMailer() ok");
-  
+    if (!$mail) {
+      $mail= mail2_new_PHPMailer();
+      display("mail2_new_PHPMailer() ok");
+    }
     if ( $mail->Ezer_error ) { 
       $result->_html.= "<br><b style='color:#700'>tato odesílací adresa nelze použít ($mail->Ezer_error)</b>";
       $result->_error= 1;
