@@ -61,6 +61,7 @@
     try {
       error_reporting(0);
       switch ($_GET['batch']) {
+      // ---------------------------------------------------------- stáhnutí změn na účtech
       case 'fio-get':
         foreach (['load-ys'=>'LOAD YS','join-ys'=>'AKCE YS',
                   'load-ds'=>'LOAD DS','join-ds'=>'AKCE DS'] as $fce=>$note) {
@@ -68,10 +69,26 @@
           $html.= "\n$note: $y->html"; 
         }
         break;
+      // ---------------------------------------------------------- odeslání připomínek mailem
       case 'kasa-mail':
         $html= kasa_send('*',1);
         echo "<hr><h2>Odeslání připomenutí</h2><br>$html";
         break;
+      // ---------------------------------------------------------- odeslání plánovaných mailů
+      case 'send-mails':
+        $sent= mail2_batch_send();
+        if ($sent->davka) { // pokud byla nějaká dávka dopisů k rozeslání
+          $msg= $sent->error
+              ? "Dávka $sent->davka, dopis $sent->dopis: chyba $sent->error\n"
+              : "Dávka $sent->davka, dopis $sent->dopis: poslano $sent->sent, zbyva $sent->todo\n";
+          echo $msg;
+          $msg= uw(str_replace("\n","<br>",$msg)); // pro chybovou zprávu
+          file_put_contents("$abs_root/mails_sent.html",$msg,FILE_APPEND | LOCK_EX);
+        }
+        else {
+          echo "Nothing to send";
+        }
+        exit();
       }
     } 
     catch (Throwable $e) { 

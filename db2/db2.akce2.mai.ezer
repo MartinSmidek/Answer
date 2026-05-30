@@ -1221,6 +1221,8 @@ proc mail_refresh(idm) {
   es.maily.browse_seek(conc('id_mail=',idm));
 }
 form _esady  {
+  var offline=0 // 1 přepne na dávkové odesílání po 30 minutách v pozadí - php.mail2_batch_send()
+                // musí být nastaveno plánovačem pozadí
   # ------------------------ připravené dopisy
   view etd: table dopis
   view etm: table mail  {join_type:'LEFT' join:'USING (id_dopis)'}
@@ -1263,7 +1265,7 @@ form _esady  {
         else 
           smtp.key(1); 
         smtp.onchanged();
-        davka.set(20); pauza.set(30); davka.change();
+//        davka.set(20); pauza.set(30); davka.change();
       }
     }
 //    proc onrowclick () { var old_dopis:number
@@ -1292,15 +1294,18 @@ form _esady  {
       php.sys_user_change(sys('user','id_user'),'opt','smtp',smtp_key);
       ik_ba= php.select('ikona,barva','_cis',`druh='smtp_srv' AND data='${smtp_key}'`);
       if (!ik_ba) { alert("Vyber adresu, ze které se bude odesílat"); return; }
-      if (ik_ba[1]) {
+      if (ik_ba[1]) { // barva udává, že je třeba čekat mezi dávkami => offline odeslání
+        offline= 1;
         davka= ik_ba[0]; pauza= ik_ba[1];
-        davka.enable(0); pauza.enable(0);
+        davka.display(0); pauza.display(0);
+        send= replace_fa(`[fa-send-o] stiskem naplánuj rozeslání mailů v pozadí`);
       }
-      else {
+      else { // pouze ikona bez barvy umožňuje online odeslání
+        offline= 0;
         davka= 20; pauza= 1;
-        davka.enable(1); pauza.enable(1);
+        davka.display(1); pauza.display(1);
+        pauza.onchange();      
       }
-      pauza.onchange();      
     }
 //    proc onchanged() { var ok:text
 //      ask('sys_user_change',sys('user','id_user'),'opt','smtp',smtp.key);
@@ -1344,35 +1349,26 @@ form _esady  {
   }
   button send [70,313,,] { skill:'yam|yams;fam|fams;cam|cams',
     help:'budu posílat mail za mailem tak, aby se server nezahltil'
-    func onclick () { var foot:text, par:object
-      msg= ''; foot= '';
-      if (!confirm(`Opravdu postupně po ${davka} mailech s pauzou ${pauza} minut "z adresy" ${from}?`)) return;
-      if (foo) foot= sys('user','options','email_foot'); 
-      par= {id_dopis: dopis_id, davka: davka, pauza: pauza, from: from, name: name, foot: foot};
-//      par.test= 1;
-      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
-      Proces.parent= panel;
-      Proces.refresh= 'mail_refresh';
-      Proces.Start(par,"Postupné odesílání připravených mailů");
-      msg= conc(`Bylo odesláno ${Proces.sent} mailů`, 
-          Proces.problem ? `, s chybou ${Proces.problem}` : '');
-      texty.browse_refresh();
+    func onclick () { var foot:text, par:object, msg:text
+      if (offline) {
+        msg= php.mail2_batch_add(dopis_id,smtp.key(),from,name);
+        alert(msg);
+      }
+      else {
+        msg= ''; foot= '';
+        if (!confirm(`Opravdu postupně po ${davka} mailech s pauzou ${pauza} minut "z adresy" ${from}?`)) return;
+        if (foo) foot= sys('user','options','email_foot'); 
+        par= {id_dopis: dopis_id, davka: davka, pauza: pauza, from: from, name: name, foot: foot};
+  //      par.test= 1;
+        // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
+        Proces.parent= panel;
+        Proces.refresh= 'mail_refresh';
+        Proces.Start(par,"Postupné odesílání připravených mailů");
+        msg= conc(`Bylo odesláno ${Proces.sent} mailů`, 
+            Proces.problem ? `, s chybou ${Proces.problem}` : '');
+        texty.browse_refresh();
+      }
     }
-//    proc onclick () { var foot:text, par:object
-//      msg.set(''); foot.set('');
-//      confirm(conc('Opravdu postupně po ',davka.get,' mailech "z adresy" ',from.get,'?'));
-//      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
-//      par.set(object(
-//          'id_dopis',dopis_id.get,'davka',davka.get,
-//          'from',from.get,'name',name.get,'foot',foot.get));
-//      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
-//      Proces.parent.set(panel);
-//      Proces.refresh.set('mail_refresh');
-//      [ Proces.Start(par,"Postupné odesílání připravených mailů") ];
-//      msg.set(conc("Bylo odesláno ",Proces.sent.get," mailů",
-//          cconc(Proces.problem.get,conc(", s chybou ",Proces.problem.get))));
-//      texty.browse_refresh;
-//    }
   }
   # ------------------- přegenerování jednoho potvrzení
   button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2", format:'n'
