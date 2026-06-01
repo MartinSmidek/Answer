@@ -78,9 +78,10 @@
       case 'send-mails':
         $sent= mail2_batch_send();
         if ($sent->davka) { // pokud byla nějaká dávka dopisů k rozeslání
+          $cas= date('d.m.Y H:i:s');
           $msg= $sent->error
-              ? "Dávka $sent->davka, dopis $sent->dopis: chyba $sent->error\n"
-              : "Dávka $sent->davka, dopis $sent->dopis: poslano $sent->sent, zbyva $sent->todo\n";
+              ? "$cas: dávka $sent->davka, dopis $sent->dopis: chyba $sent->error\n"
+              : "$cas: dávka $sent->davka, dopis $sent->dopis: poslano $sent->sent, zbyva $sent->todo\n";
           echo $msg;
           $msg= uw(str_replace("\n","<br>",$msg)); // pro chybovou zprávu
           file_put_contents("$abs_root/mails_sent.html",$msg,FILE_APPEND | LOCK_EX);
