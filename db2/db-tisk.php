@@ -902,21 +902,32 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $historie= '';
     if ($subtyp=='EROP') { 
       // pčoítáme jen akce, na ketrých byl jako dospělý
-      list($akce_ms,$akce_vps,$akce_ch,$iniciace,$firming,$erop,$cizi)= select(
-          "SUM(IF(druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),"
-          . "iniciace,firming,SUM(erop),prislusnost",
-          'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
-          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<NOW() AND YEAR(datum_od)-YEAR(narozeni)>18");
+      // vyloučíme funkce znamenající neúčast - mají v číselníku ikona=1
+      list($akce_ms,$akce_vps,$akce_ch,$iniciace,$cizi,$firming,$erop)= select(
+          "SUM(IF(a.druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),"
+          . "iniciace,prislusnost,"
+          . "GROUP_CONCAT(CASE WHEN firm = 1 THEN YEAR(datum_od) END),"
+          . "GROUP_CONCAT(CASE WHEN erop = 1 THEN YEAR(datum_od) END)",
+          'osoba JOIN spolu USING (id_osoba) '
+          . 'JOIN pobyt USING (id_pobyt) '
+          . 'JOIN akce AS a ON id_akce=id_duakce '
+          . "JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=pobyt.funkce",
+          "id_osoba={$x->id_osoba} AND zruseno=0 AND ikona=0"
+          . " AND datum_od<NOW() AND YEAR(datum_od)-YEAR(narozeni)>18");
+      $navrat= 0;
       $historie= '';
-      if (!$cizi) {
-        if ($erop) $historie.= " EROP $erop x";
+//      if (!$cizi) {
+        if ($erop) { $historie.= " EROP: $erop !"; $navrat++; }
         if ($akce_ch) $historie.= " chlapi $akce_ch x";
         if ($akce_ms) $historie.= " MS $akce_ms x";
         if ($akce_vps) $historie.= ' (vps)';
-        if ($firming) $historie.= " firming $firming";
+        if ($firming) $historie.= " firming: $firming";
         if ($iniciace) $historie.= " iniciace $iniciace";
-      }
-      $x->funkce= $x->funkce==1 ? 'stoker' : ($x->funkce==12 ? 'lektor' : ($x->funkce==5 ? 'hospodář' : $x->funkce==1));
+//      }
+      $x->funkce= $x->funkce==1 ? 'stoker' : (
+          $x->funkce==12 ? 'lektor' : (
+          $x->funkce==5 ? 'hospodář' : (
+          $navrat ? 'navracející se' : $x->funkce==1)));
     }
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date_year($x->narozeni);
