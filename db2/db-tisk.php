@@ -837,7 +837,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     SELECT p.zadost,p.zadost2,p.id_pobyt,
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
-      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,
+      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,YEAR(a.datum_od) AS _rok_akce,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina, r3.role AS p_role,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -882,6 +882,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       ORDER BY $ord";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
+    $rok_akce= $x->_rok_akce;
     // mají se vyloučit nebydlící?
     if ($par->bydli??0) {
       if ($x->ma_cenik_verze==2) {
@@ -907,7 +908,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           "SUM(IF(a.druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),"
           . "iniciace,prislusnost,"
           . "GROUP_CONCAT(CASE WHEN firm = 1 THEN YEAR(datum_od) END),"
-          . "GROUP_CONCAT(CASE WHEN erop = 1 THEN YEAR(datum_od) END)",
+          . "GROUP_CONCAT(CASE WHEN erop = 1 AND YEAR(datum_od)<$rok_akce THEN YEAR(datum_od) END)",
           'osoba JOIN spolu USING (id_osoba) '
           . 'JOIN pobyt USING (id_pobyt) '
           . 'JOIN akce AS a ON id_akce=id_duakce '
