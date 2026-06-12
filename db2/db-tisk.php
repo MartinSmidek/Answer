@@ -748,7 +748,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       // pro vyúčtování
       case '#deti':     $c= count($deti);  break;
       // hodnoty z tabulek
-      case 'zadost': ;
+      case 'zadost': 
       case 'zadost2':
         $c= $x->$f ? 'x' : '';
           break;
@@ -768,7 +768,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         $clmn[$n][$f]= $value;
         break;
     
-      default:          $c= $x->$f ;; break;
+      default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
     }
@@ -964,7 +964,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case 'dite_kat':                                                // osoba: kategorie dítěte
         $clmn[$n][$f]= in_array($x->s_role,array(2,3,4)) 
-          ? $s_role[$x->s_role].'-'.$dite_kat[$x->$f]
+          ? $s_role[$x->s_role].($x->$f ? '-'.$dite_kat[$x->$f] : '')
           : $s_role[$x->s_role];
 //        $clmn[$n][$f]= $dite_kat[$x->$f];
         break;

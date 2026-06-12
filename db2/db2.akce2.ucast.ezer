@@ -1809,16 +1809,23 @@ form _spolu [,,0,270] {
   proc onchanged() { evid.d_change }
   proc onclick() { Onclick }
   proc Onclick() { evid.z_change('p') } // nutné aby přímým voláním onclick nedošlo k zacyklení
-  func show_spolu() { var height:number, tags:text, tit:text, dny:object
+  func show_spolu() { var height:number, tags:text, tit:text, dny:object, zobraz_x:number
     form.display(0,'[^f]');
     if (key_spolu) { // je na akci
       tit= 'účastník akce ...'; tags= 'S';
       if (contains('P',spolu_config.grp)) 
         tags= conc(tags,',p');
+      zobraz_x= 0; // měnit display lze až po stack_forms
       switch(s_role.key()) {
         case 0: tit= 'jako host'; break;
         case 1: tit= 'účastník akce'; break;
-        case 2: tags= conc(tags,',d'); tit= 'dítě na akci'; break;
+        case 2: tags= conc(tags,',d'); tit= 'dítě na akci'; 
+                // náhradní zobrazení dítěte se zvláčtní péčí
+                if (the_org!=2 && the_cenik_verze==2) {
+                  zobraz_x= 1;
+                  s_dite_kat_x= s_dite_kat.key()==99 ? 1 : 0;
+                }
+                break;
         case 3: tags= conc(tags,',o,d'); tit= 'dítě s osobním pečovatelem'; break;
         case 4: tags= conc(tags,',d'); tit= 'dítě jako pomocný pečovatel'; break;
         case 5: tags= conc(tags,',c'); tit= 'osobní pečovatel'; pece_sel= pece_val; break;
@@ -1838,6 +1845,7 @@ form _spolu [,,0,270] {
     height= sum(stack_forms(form,tags,10,'up'),0);
     // pro FA ukaž vždy dětské kategorie
     if (the_org!=2 && the_cenik_verze==2 && contains('d',tags)) s_dite_kat.display(0);
+    s_dite_kat_x.display(zobraz_x);
     frame.property({top: 265-height, height: height+10});
   }
   // globální procedury
@@ -1879,14 +1887,25 @@ form _spolu [,,0,270] {
   // r = s_role
   select s_role [55,2,90,] {tag:'r', type:'map', options:ms_akce_s_role.zkratka, format:'nu'
     data:s.s_role, title:'účast jako:',
-      proc onchanged() {
+      func onchanged() {
         // pokud není chůvou pak nemá chované dítě
-        [ pece_key.get; { eq(this.key,5) | pece_key.set(0); pece_sel.key(0); pece_key.change; }  ];
-        show_spolu;
-        eq(this.key,4); pfunkce.set(4); pfunkce.change
-      | eq(this.key,5); pecoun.get; pfunkce.set(5); pfunkce.change
-      | pfunkce.set(0); pfunkce.change
+        if (pece_key && this.key()!=5) {
+          pece_key= 0; pece_sel.key(0); pece_key.change(); 
+        };
+        show_spolu();
+        if (this.key()==4) pfunkce= 4; 
+        elseif (this.key()==5 && pecoun) pfunkce.set(5); 
+        else pfunkce= 0;  
+        pfunkce.change();
       }
+//      proc onchanged() {
+//        // pokud není chůvou pak nemá chované dítě
+//        [ pece_key.get; { eq(this.key,5) | pece_key.set(0); pece_sel.key(0); pece_key.change; }  ];
+//        show_spolu;
+//        eq(this.key,4); pfunkce.set(4); pfunkce.change
+//      | eq(this.key,5); pecoun.get; pfunkce.set(5); pfunkce.change
+//      | pfunkce.set(0); pfunkce.change
+//      }
   }
 
   // informace závislé na s_roli
@@ -1906,6 +1925,13 @@ form _spolu [,,0,270] {
       | alert("POZOR: kategorie '",this.get,"' neodpovídá věku dítěte ",a.vek," let (k začátku akce)");
         this.key(kat_orig.get); this.plain; }
   }}
+  # dítě se zvláštní péčí pokud nelze nastavit přes s_dite_kat (cenik v.2)
+  check s_dite_kat_x [80,0,100,] { tag:'S', title:'se zvláštní péčí', style:'margin-top:-8px;color:white' 
+    func onchange() {
+      s_dite_kat.key(s_dite_kat_x ? 99 : 0);
+      s_dite_kat.change();
+    }  
+  }
 
   # o: osobně opečovávané dítě + info "je pečoun"
   field pece_val [70,0,160,] { tag:'o', format:'no', title:'pečovatel:     ' }

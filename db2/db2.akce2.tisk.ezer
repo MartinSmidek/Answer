@@ -708,6 +708,10 @@ menu m {type:'left', //active:*
 #                                         ,cnd:"p.funkce NOT IN (99) AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
                                         ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,^id_pobyt'}}
+    item {title:'Účastníci žádající slevu'                                                   skill:'y;f;c'
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.sleva_zada=1 "
+                                        ,tit:'příjmení:15,jména:12,obec:25,sleva:5,důvod slevy:50,poznámka k akci:50,^'
+                                        ,fld:'prijmeni,jmena,obec,sleva,sleva_duvod,poznamka,^id_pobyt'}}
     item h {title:'Příprava hnízd'                                                           skill:'y;f;c'
                                         ,par:{typ:'nut' //,exp:'Excel2'
 //                                        ,cnd:"p.funkce NOT IN (99)"

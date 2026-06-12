@@ -797,19 +797,19 @@ panel DnySpolu [,,235,220] { type:'popup', title:'Rozpis noclehů a stravy'
       kat_p.selects('C,P'); 
       kat_d.selects('-,BL'); 
     }
+    func uloz() { var old:text
+      clear();
+      old= kat_dny;
+      kat_dny= js.dny_precti();
+      if (kat_dny!=old) kat_dny.change();
+      stav= php.akce_dny2sov(ids,kat_dny);
+      p_od_pobyt= stav.necely_pobyt; p_od_pobyt.change();
+      form.save();
+      panel.hide(1);
+    }
     label matrix [0,5,160,*] { style:'font-size:13px' }
     button [165,22,,] { title:'[fa-save] Uložit' 
-      func onclick() { var old:text
-        clear();
-        old= kat_dny;
-        kat_dny= js.dny_precti();
-        if (kat_dny!=old) kat_dny.change();
-        stav= php.akce_dny2sov(ids,kat_dny);
-        p_od_pobyt= stav.necely_pobyt; p_od_pobyt.change();
-//        echo(debug(stav,kat_dny));
-        form.save();
-//        reload(the_pobyt);
-        panel.hide(1);
+      func onclick() { uloz();
     }}
     button [165,44,,] { title:'[fa-undo] Zpět' func onclick() { panel.hide(0); }}
     field kat_dny { data:'spolu.kat_dny' }
@@ -817,7 +817,12 @@ panel DnySpolu [,,235,220] { type:'popup', title:'Rozpis noclehů a stravy'
     select kat_n [165,89,40,] { title:'-&nbsp;nocleh', data:'spolu.kat_nocleh', format:'fc' }
     select kat_p [165,112,40,] { title:'-&nbsp;porce', data:'spolu.kat_porce', format:'fc'}
     select kat_d [165,135,40,] { title:'-&nbsp;dieta', data:'spolu.kat_dieta', format:'fc'}
-    label warn [165,165,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
+    button [165,170,,] { title:'[fa-ban] Zruš vše' 
+      func onclick() { var nuly:text
+        nuly= replace(u.kat_dny,'1','0');
+        js.dny_zobraz(&u.matrix,nuly,the_datum_od,the_datum_do,the_strava_oddo);
+    }}
+    label warn [165,194,80,40] { title:"<b style='color:red'>Potvrď nebo změň navržené hodnoty</b>", format:'n' }
     label [70,-1,200,5] { 
       title:"<i class='fa fa-share fa-rotate-270' style='vertical-align:super;'></i> datum vstávání" }
   }
