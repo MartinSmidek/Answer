@@ -294,15 +294,17 @@ function akce2_vzorec2($ida,$osoby,$slevy=null,$spec=null) { // trace();
           $html.= "<tr><td>$pol $nx</td><td align='right'>$kc</td><td></td></tr>";
         }
       }    
-      if ($d=='d' && $spec->funkce_slevy && $slevy->dotace>0) {
+      if ($d=='d' && $spec->funkce_slevy && $slevy->dotace!=0) {
         $kc= -$slevy->dotace;
         $ret->rozpis[$d]+= $kc;
         $za_blok+= $kc;
         $celkem+= $kc;
-        $html.= "<tr><td>individuální sleva</td><td align='right'>$kc</td><td></td></tr>";
+        $_sleva= $slevy->dotace>0 ? 'sleva' : 'přirážka';
+        $html.= "<tr><td>individuální $_sleva</td><td align='right'>$kc</td><td></td></tr>";
       }
       $kc_blok= $d=='x' ? "$za_blok x" : $za_blok;
-      $html.= "<tr><th>$nadpis[$d]</th><td></td><th align='right'>$kc_blok<br></th></tr>";
+      $_nadpis= $nadpis[$d]=='slevy' && $kc_blok>0 ? 'přirážky' : $nadpis[$d];
+      $html.= "<tr><th>$_nadpis</th><td></td><th align='right'>$kc_blok<br></th></tr>";
     }
   }
   $html.= "<tr><th>celkem</th><td></td><th>$celkem</th></tr>";

@@ -748,7 +748,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       // pro vyúčtování
       case '#deti':     $c= count($deti);  break;
       // hodnoty z tabulek
-      case 'zadost': ;
+      case 'zadost': 
       case 'zadost2':
         $c= $x->$f ? 'x' : '';
           break;
@@ -768,7 +768,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         $clmn[$n][$f]= $value;
         break;
     
-      default:          $c= $x->$f ;; break;
+      default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
     }
@@ -837,7 +837,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     SELECT p.zadost,p.zadost2,p.id_pobyt,
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,
-      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,
+      o.dieta,s.kat_dieta,s.kat_dny,p.luzka,a.ma_cenik,a.ma_cenik_verze,YEAR(a.datum_od) AS _rok_akce,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina, r3.role AS p_role,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -882,6 +882,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       ORDER BY $ord";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
+    $rok_akce= $x->_rok_akce;
     // mají se vyloučit nebydlící?
     if ($par->bydli??0) {
       if ($x->ma_cenik_verze==2) {
@@ -902,19 +903,32 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $historie= '';
     if ($subtyp=='EROP') { 
       // pčoítáme jen akce, na ketrých byl jako dospělý
-      list($akce_ms,$akce_vps,$akce_ch,$iniciace,$firming,$cizi)= select(
-          "SUM(IF(druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
-          'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
-          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<NOW() AND YEAR(datum_od)-YEAR(narozeni)>18");
+      // vyloučíme funkce znamenající neúčast - mají v číselníku ikona=1
+      list($akce_ms,$akce_vps,$akce_ch,$iniciace,$cizi,$firming,$erop)= select(
+          "SUM(IF(a.druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),"
+          . "iniciace,prislusnost,"
+          . "GROUP_CONCAT(CASE WHEN firm = 1 THEN YEAR(datum_od) END),"
+          . "GROUP_CONCAT(CASE WHEN erop = 1 AND YEAR(datum_od)<$rok_akce THEN YEAR(datum_od) END)",
+          'osoba JOIN spolu USING (id_osoba) '
+          . 'JOIN pobyt USING (id_pobyt) '
+          . 'JOIN akce AS a ON id_akce=id_duakce '
+          . "JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=pobyt.funkce",
+          "id_osoba={$x->id_osoba} AND zruseno=0 AND ikona=0"
+          . " AND datum_od<NOW() AND YEAR(datum_od)-YEAR(narozeni)>18");
+      $navrat= 0;
       $historie= '';
-      if (!$cizi) {
+//      if (!$cizi) {
+        if ($erop) { $historie.= " EROP: $erop !"; $navrat++; }
         if ($akce_ch) $historie.= " chlapi $akce_ch x";
         if ($akce_ms) $historie.= " MS $akce_ms x";
         if ($akce_vps) $historie.= ' (vps)';
-        if ($firming) $historie.= " firming $firming";
+        if ($firming) $historie.= " firming: $firming";
         if ($iniciace) $historie.= " iniciace $iniciace";
-      }
-      $x->funkce= $x->funkce==1 ? 'stoker' : ($x->funkce==12 ? 'lektor' : ($x->funkce==5 ? 'hospodář' : $x->funkce==1));
+//      }
+      $x->funkce= $x->funkce==1 ? 'stoker' : (
+          $x->funkce==12 ? 'lektor' : (
+          $x->funkce==5 ? 'hospodář' : (
+          $navrat ? 'navracející se' : $x->funkce==1)));
     }
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date_year($x->narozeni);
@@ -950,7 +964,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case 'dite_kat':                                                // osoba: kategorie dítěte
         $clmn[$n][$f]= in_array($x->s_role,array(2,3,4)) 
-          ? $s_role[$x->s_role].'-'.$dite_kat[$x->$f]
+          ? $s_role[$x->s_role].($x->$f ? '-'.$dite_kat[$x->$f] : '')
           : $s_role[$x->s_role];
 //        $clmn[$n][$f]= $dite_kat[$x->$f];
         break;

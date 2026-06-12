@@ -457,7 +457,7 @@ menu m {type:'left', //active:*
 }
 
   # ----------------------------------------------------------------------------------------==> MROP
-  menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'f'
+  menu {tag:'a', title:'sestavy MROP, EROP',type:'group',_sys:'*'                                  skill:'f'
     item {title:'příjem'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
@@ -533,7 +533,7 @@ menu m {type:'left', //active:*
     }}
     item {title:'EROP - účastníci se vším'                                                     
                                         ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
-                                        ,tit:'příjmení:15,jméno:12,funkce:5,skupina:4,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,historie:20'
+                                        ,tit:'příjmení:15,jméno:12,funkce aj.:5,skupina:4,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,historie:20'
                                         ,fld:'prijmeni,jmeno,funkce,skupina,_vek,prislusnost,obec,psc,telefony,emaily,poznamka,note,pracovni,_historie'}}
     item {title:'skupiny EROP'
                                         ,par:{typ:'mrop',exp:'Excel2'
@@ -708,6 +708,10 @@ menu m {type:'left', //active:*
 #                                         ,cnd:"p.funkce NOT IN (99) AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
                                         ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,^id_pobyt'}}
+    item {title:'Účastníci žádající slevu'                                                   skill:'y;f;c'
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.sleva_zada=1 "
+                                        ,tit:'příjmení:15,jména:12,obec:25,sleva:5,důvod slevy:50,poznámka k akci:50,^'
+                                        ,fld:'prijmeni,jmena,obec,sleva,sleva_duvod,poznamka,^id_pobyt'}}
     item h {title:'Příprava hnízd'                                                           skill:'y;f;c'
                                         ,par:{typ:'nut' //,exp:'Excel2'
 //                                        ,cnd:"p.funkce NOT IN (99)"
