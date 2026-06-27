@@ -323,11 +323,11 @@ function db2_stav_kdo($db,$desc,$tit) {
 # --------------------------------------------------------------------------------- db2 copy_test_db
 # zkopíruje důležité tabulky a soubory z ezer_$db do ezer_$db_test
 # pro $db=db2 zkopíruje také setkani4 do setkani4_test
-function db2_copy_test_db($db) {  trace();
+function db2_copy_test_db($db,$call_from_test=0) {  trace();
   $msg= ''; $del= '';
   query("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
   // tabulka, ze které se kopíruje jen posledních $max záznamů, má před jménem hvězdičku
-  $max= 5000;
+  $max= 10000;
   $tabs= explode(',',
 //     "_user,_skill,"
     "*_touch,*_todo,*_track,*mail,"
@@ -349,16 +349,16 @@ function db2_copy_test_db($db) {  trace();
     if (!$je) continue;
     query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
     query("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
-    $LIMIT= $ORDER= '';
+    $LIMIT= $ORDER= $count= '';
     if ( $xtab[0]=='*' ) {
-      $count= select('COUNT(*)',$tab);
+      $count= select('COUNT(*)',"ezer_{$db}.$tab");
 //      if ($count>$max) $LIMIT= "LIMIT ".($count-$max).", $max";
       if ($count>$max) $LIMIT= "LIMIT $max";
       $ORDER= "ORDER BY id".($tab[0]=='_' ? $tab : "_$tab").' DESC';
     }
 //    $MAX= $xtab[0]=='*' ? "WHERE YEAR(kdy)=YEAR(NOW())" : '';
     $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab $ORDER $LIMIT");
-    $msg.= "{$del}COPY ezer_{$db}_test.$tab ... $n záznamů $LIMIT";
+    $msg.= "{$del}COPY ezer_{$db}_test.$tab ... ".($count?:$n)." záznamů $LIMIT";
     $del= '<br>';
   }
 
@@ -400,7 +400,8 @@ function db2_copy_test_db($db) {  trace();
       <br>VIEW objednávka";
   }
   // end
-  ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
+  if (!$call_from_test)
+    ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
   return $msg;
 }
 # ------------------------------------------------------------------------------- update web_changes

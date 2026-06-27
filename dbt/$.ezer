@@ -89,7 +89,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     }
 #endif
 #if test_version<1
-    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a;at'
       proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
       proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }
       proc smaz_tvori(idt)   {
@@ -97,7 +97,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
       menu m {type:'left', format:'f+'
-        menu {title:'Přehled',type:'group', _sys:'*'
+        menu {title:'Přehled',type:'group', _sys:'*', skill:'a'
           item {title:'Záznamy', par:{org:'3',cmd:'show'}}
         }
         menu {title:'Geolokace',type:'group', _sys:'*', skill:'m'
@@ -157,7 +157,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
-        menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
+        menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*', skill:'a'
           item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
           item {title:'rodina-tvori-osoba - oprava'       ,par:{opravit:1,vazba:'tvori'}}
           item {title:'pobyt-spolu-osoba/rodina - test'   ,par:{opravit:0,vazba:'spolu'}}
@@ -177,13 +177,22 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
-        menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item d {title:'[fa-chain]Sjednocování duplicit - letos', par:{db:'db2_test',let:1}}
-          item {title:'[fa-chain]... - loni',                      par:{db:'db2_test',let:2}}
+        menu t {title:'Testovací databáze',type:'group', _sys:'*', skill:'a;at'
+          item d {title:'[fa-chain]Sjednocování duplicit - letos', par:{db:'db2_test',let:1}, skill:'a'}
+          item {title:'[fa-chain]... - loni',                      par:{db:'db2_test',let:2}, skill:'a'}
           func onclick (i:ezer) {
             panel.display(2,'i'); info.display(0,'t'); info.header(i);
             info.append('... probíhá výpočet ...');
             info.fill(' ',php.db2_stav(i.par)) 
+          }
+          item {title:'obnovit testovací db z ostré', par:{db:'db2'}, skill:'a;at'
+            func onclick (i:ezer) {
+//              panel.display(2,'i'); 
+              info.display(0,'t'); 
+              info.header(i); clear();
+              if (confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?")) {
+              info.append(' ... probíhá update ...');
+              info.append(php.db2_copy_test_db(i.par.db,1)); }}
           }
         }
 //        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
