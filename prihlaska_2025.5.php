@@ -1438,11 +1438,12 @@ function form_strava_default($id,$cmd) { trace(); // ---------------- default st
         if ($akce->p_nocleh) set('o','Xnocleh',$vek <= $akce->p_detska_od ? 3 : 1,$id); 
       }
       else {
+        $vek= get_vek($id);
         set('o','Xstrava_s',$ji,$id);
         set('o','Xstrava_o',$ji,$id);
         set('o','Xstrava_v',$ji,$id);
-        set('o','Xporce', get_vek($id)<$akce->p_detska_do ? 2 : 1,$id); // 1 = celá, 2 = poloviční
-        if ($akce->p_nocleh) set('o','Xnocleh',   1,$id); // 1 je lůžko
+        set('o','Xporce', $vek<$akce->p_detska_do ? 2 : 1,$id); // 1 = celá, 2 = poloviční
+        if ($akce->p_nocleh) set('o','Xnocleh',  $vek<3 ? 3 : 1,$id); // 1 je lůžko, 3 bez
       }
       break;
     case 'not':
