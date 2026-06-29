@@ -128,7 +128,7 @@ use info: form right [12,4,,] {
         case 'Excel-plachta':
           res= php.akce2_plachta(the_akce,the_par,tit,the_vypis,1,the_hnizdo);
           form.note= '';
-          form.msg= res.html;
+          form.msg= res.xhref;
           break;
         case 'PDF-adresy':  // ==> export PDF
           sti_A.report_init(); sti_A.report_check();
