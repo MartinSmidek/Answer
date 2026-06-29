@@ -255,7 +255,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0,$tj='MROP') { trace();
     WHERE p.id_akce=$akce AND $cond AND p.funkce IN (0,1,2)
     ORDER BY skupina,p.funkce DESC,jmeno");
   while ( $rg && ($x= pdo_fetch_object($rg)) ) {
-    if ($id_pobyt_vps && $tj=='EROP') {
+    if ($id_pobyt_vps && $tj=='EROP' && $rok==2023) {
       $nik_missing= $x->pracovni ? '' : " ... <b>KONTAKT?</b>";
       $nik= '';
       if (!$nik_missing) {
@@ -315,7 +315,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0,$tj='MROP') { trace();
       $chata= $o->budova ? "$o->budova $o->pokoj" : ($o->pokoj ?: '');
       $fill= '&nbsp;&nbsp;';
       $stat= $o->stat=='CZ' ? '' : ", $o->stat";
-      if ($tj=='EROP') {
+      if ($tj=='EROP' && $rok==2023) {
         $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
         $nik= '';
         $jazyk= '';
@@ -1026,6 +1026,24 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         $clmn[$n][$f]= $x->$f ? 'x' : '';
         break;
       // ---------------------------------------------------------- informace z tabulky prihlaska.
+      case '_tricko': // velikost trička pokud je XtrickoQ a Xtricko v přihlášce 
+        $value= '';
+        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
+        if ($vars_json) {
+          $vars_json= str_replace("\n", "\\n", $vars_json);
+          $vars= json_decode($vars_json);
+          debug($vars);
+          if ($vars!==null) {
+            $Xtricko= [''=>'?',1=>'S',2=>'M',3=>'L',4=>'XL',5=>'XXL'];
+            $idp= $x->id_pobyt;
+            $v= $vars->pobyt->$idp;
+            $tricko= $v->XtrickoQ ? $Xtricko[$v->Xtricko] : 'NE';
+            $value= "Tričko: $tricko";
+//            $value= "$v->XtrickoQ/$v->Xtricko: $tricko";
+          }
+        }
+        $clmn[$n][$f]= $value;
+        break;
       case '^jmeno':
         $value= '';
         $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->id_pobyt");
