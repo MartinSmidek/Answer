@@ -117,7 +117,7 @@ use info: form right [12,4,,] {
 //      x= php.akce2_strava(the_akce,{typ:'vjp',cnd:1},the_title,the_vypis,0,the_hnizdo); 
 //      info.fill('',x.html); }}
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
-    func onclick() { var tit:text, res:object
+    func onclick() { var tit:text, res:object, mezery2:text
       clear();
       tit= cconc(the_hnizdo,conc(the_title," pro účastníky v ",the_hnizdo_name),the_title);
       switch (export) {
@@ -147,14 +147,15 @@ use info: form right [12,4,,] {
           form.msg= res.html;
           break;
         case 'PDF-plachta':
-          mezery= prompt2(conc("zadej případné mezery mezi štítky: <hr>řádků;index+mezera,...",
+          mezery= prompt2(conc("zadej případné mezery mezi štítky: <hr>řádků;od-do,...",
               "<hr>první číslo udává počet řádků (párů nad sebou) na stránce, po středníku následují ",
-              "dvojice oddělené čárkou udávající odkud se má přidat (+) kolik mezer ",
-              "(vynechaného místa pro zpřehlednění)")
+              "dvojice souřadnic oddělené pomlčkou udávající výplň mezerami pro zpřehlednění ",
+              "(například 14,B2-I2,A3-A3)")
             ,mezery);
           sti_P.report_init(); sti_P.report_check();
-          res= php.tisk2_pdf_plachta(the_akce,sti_P.get_json(),the_hnizdo,mezery);
-          form.note= res.html;
+          mezery2= php.tisk2_pdf_plachta_mezery(mezery);
+          res= php.tisk2_pdf_plachta(the_akce,sti_P.get_json(),the_hnizdo,mezery2);
+          form.note= `Po zadání mezer "${mezery}" ${res.html}`;
           form.msg= res.msg;
           break;
         case 'PDF-plachta0':

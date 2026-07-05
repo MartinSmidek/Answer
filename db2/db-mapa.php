@@ -250,7 +250,8 @@ function akce2_mapa($akce,$filtr='') {  trace();
     FROM pobyt
     JOIN spolu USING (id_pobyt)
     JOIN osoba AS o USING (id_osoba)
-    WHERE id_akce='$akce' $AND
+    JOIN _cis ON _cis.druh='ms_akce_funkce' AND data=funkce
+    WHERE id_akce='$akce' AND ikona=0 $AND
     GROUP BY id_osoba
     ";
   // najdeme použitá PSČ

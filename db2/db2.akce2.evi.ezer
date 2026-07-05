@@ -1681,9 +1681,9 @@ form _cmd [,,706,32] { css:'ae_frame'
     }
   }
   # RODINA
-  label [144,9,80,] { title:"<b>Rodina:</b>", skill:'yaa;faa;caa' }
+  label [142,9,80,] { title:"<b>Rodina:</b>", skill:'yaa;faa;caa' }
   // ==> ... rodina: nová, vymazat
-  button [188,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
+  button [185,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
     proc onclick() { var jmeno:text
       // ochrana před vytvářením s access=3
@@ -1703,7 +1703,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
   }}
   // vymazat
-  button r_smaz [287,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button r_smaz [282,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o rodině z evidence', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid2_delete',0,idr.get,'conf_rod'));
@@ -1722,11 +1722,11 @@ form _cmd [,,706,32] { css:'ae_frame'
       warning(ret.html); reload('lst')
   }}
   # ČLENI
-  label [364,9,80,] { title:"<b>Osoba:</b>", skill:'yaa;faa;caa' }
+  label [358,9,80,] { title:"<b>Osoba:</b>", skill:'yaa;faa;caa' }
   // ==> ... člen: nový, přidat, vyjmout
   proc change_x(elem) { elem.change(1) }
-  button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
+  button novy_clen [398,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nová osoba',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a případné zapojení do rodiny'
     func onclick() { var _sex:number, _prijmeni:text, elem:ezer
       if (has_access==3) { // ochrana před vytvářením s access=3
         alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
@@ -1758,7 +1758,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     } 
   }
   // PŘIDAT
-  button [490,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [493,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Výběr osoby z evidovaných a jeho připojení k rodině', format:'d'
     proc onclick() { var ret:object, bo: text, bh:text, br:text, bf:text
       bo.set(lst.bo.selected('get')); bh.set(lst.bh.selected('get'));
@@ -1771,7 +1771,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     | PridaniJmenem1.modal(240,50)
   } }
   // VYJMOUT
-  button [554,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
+  button [556,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vyjmutí osoby z rodiny', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid2_delete',ido.get,idr.get,'conf_mem'));

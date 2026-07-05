@@ -3561,6 +3561,31 @@ $jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd c
   return $jidel ? $h : ''; // "<h3>$nazev</h3> bez stravy";
 }
 # -------------------------------------------------------------------------------- tisk2 pdf_plachta
+# transformace zápisu mezer ve tvaru
+#   řádků;od1-do1,od2-do2,...  kde od,do jsou souřadnice tvaru A1, M7, ...
+# na tvar
+#   řádků;i1+x1,i2+x2,... znamená, že po i-tém štítku bude x prázdných (i je výsledný index)
+function tisk2_pdf_plachta_mezery($_mezery) {  trace();
+  $radku= 14;
+  $mezery= $radku;
+  if ($_mezery) {
+    list($radku,$ixs)= explode(';',$_mezery);
+    $mezery= $radku . ($ixs?';':'');
+    if ($ixs) {
+      $ixs= explode(',',$ixs);
+      $del= '';
+      foreach ($ixs as $ix) {
+        list($od,$do)= explode('-',$ix);
+        $i= ord($od[0]) - ord('A') + $radku*($od[1] - 1);
+        $x= ord($do[0]) - ord('A') + $radku*($do[1] - 1) + 1 - $i;
+        $mezery.= "$del$i+$x";
+        $del= ',';
+      }
+    }
+  }
+  return $mezery;
+}
+# -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
 # mezery= řádků;i1+x1,i2+x2,... znamená, že po i-tém štítku bude x prázdných (i je výsledný index)
 function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace();
@@ -3650,8 +3675,8 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
     $fpath= "$ezer_path_docs/$fname.pdf";
     $err= dop_rep_ids($report_json,$parss,$fpath);
     $html= $err ? $err
-      : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
-    $result->html= $html.$result->html;
+      : " byl vygenerován výpis ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+    $result->html= "$html<br>$result->html";
   }
   else {
 //    foreach ( $tab->pdf as $par=>$xa ) {
