@@ -452,7 +452,7 @@ form _page [,,275,360] {
   }
   // účetní symbol s nápovědou
   field ss [96,202,54,] { tag:'cor,!', title:'účetní symbol:', data:akce.ciselnik_akce }
-  button ss_help [157,202,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw', format:'n'
+  button ss_help [157,202,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaan', format:'n'
     help:'správný specifický symbol platby akce'
     func onclick() { alert(`
             <b>3xx</b> - akce mimo MS a DS<hr>
