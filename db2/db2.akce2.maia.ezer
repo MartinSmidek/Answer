@@ -72,6 +72,8 @@ menu m {type:'left',
       par:{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... všem přítomným na akci', help:'mimo pečounů, odhlášených, náhradníků, nepřijedších, ...'
       par:{k:'et',uq:'U5',on:'akce',off:'gen|skup'} }
+    item {title:'... všem účastníkům včetně VPS', help:'mimo pečounů, hospodářů, lektorů, ...'
+      par:{k:'et',uq:'U5',on:'akce',off:'gen|skup',cond:'p.funkce IN (0,1)'} }
     item {title:'... ... tuzemským CZ+SK', help:'jen CZ a SK - mimo odhlášených, náhradníků, nepřijedších, ...'
       par:{k:'et',uq:'U6',on:'akce',off:'gen|skup'} }
     item {title:'... ... zahraničním mimo SK', help:'mimo CZ a SK (a mimo odhlášených, náhradníků, nepřijedších, ...)'
@@ -84,6 +86,8 @@ menu m {type:'left',
       par:{k:'et',uq:'U2',on:'akce',off:'gen|skup',cond:'p.funkce=1'} }
     item {title:'... ... jen VPS (i odpočívajícím)'
       par:{k:'et',uq:'U5',on:'akce',off:'gen|skup',cond:'FIND_IN_SET(1,r_umi)'} }
+    item {title:'... ... jen hospodářům'
+      par:{k:'et',uq:'U5',on:'akce',off:'gen|skup',cond:'p.funkce=5'} }
     item {title:'... kněžím, psychologům akce'
       par:{k:'et',uq:'U8',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
@@ -98,6 +102,8 @@ menu m {type:'left',
       par:{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... všem přítomným na akci',
       par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
+    item {title:'... všem účastníkům včetně VPS', help:'mimo pečounů, hospodářů, lektorů, ...'
+      par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... ... tuzemským CZ+SK',
       par:{k:'es',uq:'U6',on:'akce',off:'gen|skup'} }
     item {title:'... ... zahraničním mimo SK',
@@ -109,6 +115,8 @@ menu m {type:'left',
     item {title:'... ... jen VPS'
       par:{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... ... jen VPS (i odpočívajícím)'
+      par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
+    item {title:'... ... jen hospodářům'
       par:{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... kněžím, psychologům akce'
       par:{k:'es',uq:'U8',on:'akce',off:'gen|skup'} }
@@ -512,6 +520,8 @@ proc mail_refresh(idm) {
   es.maily.browse_seek(conc('id_mail=',idm));
 }
 form _esady  {
+  var offline=0 // 1 přepne na dávkové odesílání po 30 minutách v pozadí - php.mail2_batch_send()
+                // musí být nastaveno plánovačem pozadí
   # ------------------------ připravené dopisy
   view etd: table dopis
   view etm: table mail  {join_type:'LEFT' join:'USING(id_dopis)'}
@@ -536,21 +546,40 @@ form _esady  {
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
-    proc onrowclick () { var old_dopis:number
-      old_dopis.set(dopis_id.get);
-      eq(this.browse_count,0);
-      dopis_id.set(0);
-    | dopis_id.set(id_dopis.get);
-      maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
-      [ eq(dopis_id.get,old_dopis)
-      | zkus.set(sys('user','options','email'));
-        from.set(sys('user','options','email'));
-        name.set(sys('user','options','vyrizuje'));
-        [ sys('user','options','smtp'); smtp.key(sys('user','options','smtp'))
-        | smtp.key(1); smtp.onchanged ];
-        davka.set(1); davka.change
-      ]
+    func onrowclick () { var old_dopis:number
+      old_dopis= dopis_id;
+      if (!this.browse_count()) { dopis_id= 0; return; }
+      dopis_id= id_dopis;
+//      regenerate.display(specialni);
+//      degenerate.display(specialni);
+      maily.browse_load(conc("etmm.id_dopis=",dopis_id));
+      if (dopis_id!=old_dopis) {
+        zkus= sys('user','options','email');
+        from= sys('user','options','email');
+        name= sys('user','options','vyrizuje');
+        if (sys('user','options','smtp'))
+          smtp.key(sys('user','options','smtp'));
+        else 
+          smtp.key(1); 
+        smtp.onchanged();
+//        davka.set(20); pauza.set(30); davka.change();
+      }
     }
+//    proc onrowclick () { var old_dopis:number
+//      old_dopis.set(dopis_id.get);
+//      eq(this.browse_count,0);
+//      dopis_id.set(0);
+//    | dopis_id.set(id_dopis.get);
+//      maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
+//      [ eq(dopis_id.get,old_dopis)
+//      | zkus.set(sys('user','options','email'));
+//        from.set(sys('user','options','email'));
+//        name.set(sys('user','options','vyrizuje'));
+//        [ sys('user','options','smtp'); smtp.key(sys('user','options','smtp'))
+//        | smtp.key(1); smtp.onchanged ];
+//        davka.set(1); davka.change
+//      ]
+//    }
     func ukaz_hnizda(on) {
       if (on) {
         xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
@@ -566,9 +595,27 @@ form _esady  {
   // výběr SMTP serveru
   select smtp [105,212,202,17] { type:'map', options:map_smtp_srv.zkratka, title:'odesílat z adresy:'
     help:'smtp|použitý odesílací server', format:'t'
-    proc onchanged() { var ok:text
-      ask('sys_user_change',sys('user','id_user'),'opt','smtp',smtp.key);
+    func onchanged() { var ik_ba:array, smtp_key:number
+      smtp_key= smtp.key();
+      php.sys_user_change(sys('user','id_user'),'opt','smtp',smtp_key);
+      ik_ba= php.select('ikona,barva','_cis',`druh='smtp_srv' AND data='${smtp_key}'`);
+      if (!ik_ba) { alert("Vyber adresu, ze které se bude odesílat"); return; }
+      if (ik_ba[1]) { // barva udává, že je třeba čekat mezi dávkami => offline odeslání
+        offline= 1;
+        davka= ik_ba[0]; //pauza= ik_ba[1];
+        davka.display(0); //pauza.display(0);
+        send= replace_fa(`[fa-send-o] stiskem naplánuj rozeslání mailů v pozadí`);
+      }
+      else { // pouze ikona bez barvy umožňuje online odeslání
+        offline= 0;
+        davka= 20; //pauza= 1;
+        davka.display(1); //pauza.display(1);
+        davka.onchanged();      
+      }
     }
+//    proc onchanged() { var ok:text
+//      ask('sys_user_change',sys('user','id_user'),'opt','smtp',smtp.key);
+//    }
   }
   // odpovědi na adresu, použít patičku
   field from [105,231,200,17] { title:'adresa pro odpovědi:'
@@ -597,28 +644,35 @@ form _esady  {
   }
   // postupné odesílání - nové
   label  [0,306,364,31] { css:'ae_parm' }
-  field davka [108,313,30,17] { title:'odesílat po:' value:'1' format:'r' 
+  field davka [28,313,30,17] { title:'po:' value:'1' format:'r' 
       skill:'yam|yams;fam|fams;cam|cams;T|T' 
-    proc onchange () {
-      gt(davka.get,20); alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
-    | send.set(replace_fa(conc('[fa-send-o] pošli všechny maily (po ',davka.get,')')));
+    func onchanged () {
+      if (davka>20) alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
+      else send= replace_fa(`[fa-send-o] posílej maily po ${davka}`);
+//      else send= replace_fa(`[fa-send-o] posílej maily po ${davka}, další za ${pauza} min`);
     }
   }
-  button send [150,313,,] { skill:'yam|yams;fam|fams;cam|cams;T|T',
+  button send [70,313,,] { skill:'yam|yams;fam|fams;cam|cams;T|T',
     help:'budu posílat mail za mailem tak, aby se server nezahltil'
-    func onclick () { var foot:text, par:object
-      msg= ''; foot= '';
-      if (!confirm(`Opravdu postupně po ${davka} mailech "z adresy" ${from}`,'?')) return;
-      // pokračujeme
-      if (foo) foot= sys('user','options','email_foot'); 
-      par= {id_dopis:dopis_id, davka:davka, from:from, name:name, foot:foot};
-      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
-      Proces.parent= panel;
-      Proces.refresh= 'mail_refresh';
-      Proces.Start(par,"Postupné odesílání připravených mailů");
-      msg= `Bylo odesláno ${Proces.sent} mailů`
-          + (Proces.problem ? `, s chybou ${Proces.problem}` : '');
-      texty.browse_refresh();
+    func onclick () { var foot:text, par:object, msg:text
+      if (offline) {
+        msg= php.mail2_batch_add(dopis_id,smtp.key(),from,name);
+        alert(msg);
+      }
+      else {
+        msg= ''; foot= '';
+        if (!confirm(`Opravdu postupně po ${davka} mailech "z adresy" ${from}`,'?')) return;
+        // pokračujeme
+        if (foo) foot= sys('user','options','email_foot'); 
+        par= {id_dopis:dopis_id, davka:davka, from:from, name:name, foot:foot};
+        // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
+        Proces.parent= panel;
+        Proces.refresh= 'mail_refresh';
+        Proces.Start(par,"Postupné odesílání připravených mailů");
+        msg= `Bylo odesláno ${Proces.sent} mailů`
+            + (Proces.problem ? `, s chybou ${Proces.problem}` : '');
+        texty.browse_refresh();
+      }
     }
 //    proc x_onclick () { var foot:text, par:object
 //      msg.set(''); foot.set('');
