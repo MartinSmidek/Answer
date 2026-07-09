@@ -927,8 +927,8 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
 //      }
       $x->funkce= $x->funkce==1 ? 'stoker' : (
           $x->funkce==12 ? 'lektor' : (
-          $x->funkce==5 ? 'hospodář' : (
-          $navrat ? 'navracející se' : $x->funkce==1)));
+          $x->funkce==5 ? 'hospodář' : ''));
+      $x->funkce.= $navrat ? ' návrat' : '';
     }
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date_year($x->narozeni);
