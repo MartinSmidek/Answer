@@ -26,7 +26,7 @@ func onfirstfocus() {
   curr_h= 0;
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
   evid.c_change(curr_w==1024 ? 1 :2);
-//  dbg.stop(58); alert('čekáme na debuger'); // DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG 
+//  debugger(prompt("stop na řádku:",58)); // DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG DBG 
   init_forms();
   page.evd.onclick();
   akce_onstart();
@@ -1645,6 +1645,25 @@ form _pobyt [,,360,62] {
     evid.d_change() }
   proc onclick() { evid.z_change('p') }
   proc init_pobyt() { pob.display(0,'[^f]'); }
+//  func show_pobyt() { var height:number, tags:text, tit:text
+//    form.display(0,'[^f]');
+//    tags= 'F';
+//    if (contains('T',pobyt_config.grp)) tags= conc(tags,',t');
+//    if (contains('P',pobyt_config.grp)) tags= conc(tags,',p');
+//    if (contains('U',pobyt_config.grp)) tags= conc(tags,',u');
+//    if (contains('D',pobyt_config.grp)) tags= conc(tags,',d');
+//    tags= conc(tags,',a');
+//    if (contains('S',pobyt_config.grp)) tags= conc(tags,',s');
+//    height= js.stack_forms(form,tags,0,'up')+10;
+//    frame.property({top:60-height,height:height-10});   
+//    if (contains('S',pobyt_config.grp)) {
+//      skupina.display(1);
+//      if (skupina) skup.display(1);
+//    }
+//    // počítané údaje
+//    if (u.b.browse_count()) 
+//      celkem= sum(u.b.c_nocleh,u.b.c_strava,u.b.c_program,u.b.c_sleva);
+//  }
   proc show_pobyt() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
     tags.set('F');
