@@ -66,6 +66,7 @@ $names= array(
  'date2sql' => (object)array('op'=>'ff'),
  'db' => (object)array('op'=>'os'),
  'debug' => (object)array('op'=>'ff'),
+ 'debugger' => (object)array('op'=>'fj'),
  'decode' => (object)array('op'=>'ff'),
  'delete' => (object)array('op'=>'fm'),
  'delete_record' => (object)array('op'=>'fx'),
