@@ -64,24 +64,61 @@ function xx_akce_dite_kat($id_akce) {  //trace();
       $org==2 ? 'fa_akce_dite_kat' : (
       $org>=4 ? 'ms_akce_dite_kat' : ''));
 }
-function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
-  $ret= (object)array('ok'=>0,'vek'=>0.0);
+// kategorii kontrolujeme pomocí atributů číselníku ikona (věkové rozmezí) a barva (velikost porce)
+// a.ok_porce=1 pro offline přihlášení nebo pokud je shoda s údajem v online přihlášce
+function akce_test_dite_kat($ido,$kat,$narozeni,$id_pobyt) {  trace();
+  $ret= (object)array('ok_vek'=>0,'vek'=>0.0,'ok_porce'=>1,'porce'=>'?');
+  list($id_akce,$akce_od)= select("id_akce,datum_od",
+      "pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
   $dite_kat= xx_akce_dite_kat($id_akce);
-  $od_do= select1("ikona","_cis","druh='$dite_kat' AND data=$kat"); // věk od-do
+  // barva vrací nocleh,porce,dieta
+  list($od_do,$npd)= select("ikona,barva","_cis","druh='$dite_kat' AND data=$kat"); // věk od-do, ...
+  $porce= substr($npd,2,1); // p|c|- ... poloviční|celá|bez stravy
+  $ids_porce= $porce=='p' ? 2 : ($porce=='c' ? 1 : 0);
   list($od,$do)= explode('-',$od_do);
-  $akce_od= select1("datum_od","akce","id_duakce=$id_akce");
   $narozeni= sql_date1($narozeni,1);
   $date1 = new DateTime($narozeni);
   $date2 = new DateTime($akce_od);
   $diff= $date2->diff($date1,1);
-  $x= $diff->y . " years, " . $diff->m." months, ".$diff->d." days ";
-  $roku= $diff->y;
+//  $x= $diff->y . " years, " . $diff->m." months, ".$diff->d." days ";
+//  $roku= $diff->y;
   $vek= $diff->y+($diff->m+$diff->d/30)/12;
 //   $d= array($diff->y,$diff->m,$diff->d,$diff->days);
 //                                               debug($d,"$vek: $x, narozen:$narozeni, akce:$akce_od");
   $ret->vek= round($vek,1);
-  $ret->ok= $vek>=$od && $vek<$do ? 1 : 0;
+  $ret->ok_vek= $vek>=$od && $vek<$do ? 1 : 0;
+  // zjisti existenci online přihlášky
+  list($vars_json,$idp)= select("vars_json,id_prihlaska","prihlaska","id_pobyt=$id_pobyt");
+  if ($vars_json) {
+    $vars_json= str_replace("\n", "\\n", $vars_json);
+    $vars= json_decode($vars_json);
+    if ($vars!==null) {
+      $cleni= $vars->cleni;
+      if ($cleni->$ido) {
+        $clen= $cleni->$ido;
+        //  'Xporce'    => [0=>'',1=>'celá',2=>'poloviční'], // ['','C','P'] ... 0 může být jen pro Familia
+        $iporce= isset($clen->Xporce) ? $clen->Xporce : -1;
+        if ($iporce>=0 && $ids_porce != $iporce) {
+          $ret->ok_porce= 0;
+          $ret->porce= $iporce==2 ? 'poloviční porci' : ($porce==1 ? 'celé porci' : 'žádné stravy');
+        }
+      }
+    }
+  }
   return $ret;
+}
+# ------------------------------------------------------------------------------- akce save_dite_kat
+# nastaví spolu.kat_nocleh či spolu.kat_porce podle změněné kategorie dítěte
+function akce_save_dite_kat($ida,$ids,$new_kat) {
+  // získání nocleh,porce z kategorie dítěte
+  $dite_kat= xx_akce_dite_kat($ida);
+  // barva vrací nocleh,porce,dieta
+  $npd= select1("UPPER(barva)","_cis","druh='$dite_kat' AND data=$new_kat"); // věk od-do, ...
+  $kp= substr($npd,2,1); // P|C|- ... poloviční|celá|bez stravy
+  $kn= substr($npd,0,1); // L|S|-
+  $qry= "UPDATE spolu SET kat_nocleh='$kn', kat_porce='$kp'"
+      . "WHERE id_spolu=$ids";
+  query($qry);
 }
 # --------------------------------------------------------------------------------- ucast2 clipboard
 # vrácení mailů dospělých členů rodiny
@@ -469,10 +506,11 @@ end:
 function ucast2_browse_ask($x,$tisk=false) {
   global $test_clmn,$test_asc, $y;
   // ofsety v atributech členů pobytu - definice viz níže
-  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+  global $i_osoba_id, $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
       $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
       $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_osoba_geo,
       $i_spolu_cenik2, $i_spolu_role;
+  $i_osoba_id   =     0;
   $i_osoba_jmeno=     4;
   $i_osoba_vek=       6;
   $i_osoba_role=      9;
@@ -1761,7 +1799,7 @@ end:
 //                                                 debug($ret,'ucast2_pridej_rodinu');
   return $ret;
 }
-# ------------------------------------------------------------------------------ ucast2_pridej_osobu
+# ------------------------------------------------------------------------------ ucast2 pridej_osobu
 # ASK přidání osoby k pobytu, případně k rodině a upraví access
 #   je-li zadáno access, opraví je v OSOBA
 #   není-li zadán pobyt, vytvoří nový, přidá SPOLU - hlídá duplicity
@@ -1794,7 +1832,8 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     goto end;
   }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
-  list($datum_od,$ma_cenik)= select("datum_od,ma_cenik","akce","id_duakce=$ida");
+  list($datum_od,$ma_cenik,$ma_cenik_verze)= 
+      select("datum_od,ma_cenik,ma_cenik_verze","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
   $kat= 0; $srole= 1;                                         // default= účastník, nedítě
   if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
@@ -1823,6 +1862,9 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     (object)array('fld'=>'dite_kat', 'op'=>'i','val'=>$kat)
   );
   $ret->spolu= ezer_qry("INSERT",'spolu',0,$chng);
+  if ($ma_cenik_verze==2) {
+    akce_dny_default_but($ida,$ret->spolu);
+  }
   # přidání do rodiny
   if ( $idr && $role ) {
     $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
@@ -1845,7 +1887,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
 //    dum_update_host($ret->spolu);
   }
 end:
-//                                                 debug($ret,'ucast2_pridej_osobu / $vek $kat $srole');
+//                                                 debug($ret,'ucast2 pridej_osobu / $vek $kat $srole');
   return $ret;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_copy

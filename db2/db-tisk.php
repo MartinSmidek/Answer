@@ -424,9 +424,21 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
   global $EZER, $tisk_hnizdo;
   // údaje o akci
-  list($hnizda,$org,$cv2,$noci,$oddo)= 
-      select('hnizda,access,ma_cenik_verze,DATEDIFF(datum_do,datum_od),strava_oddo',
+  list($json,$hnizda,$org,$cv2,$noci,$oddo)= 
+      select('web_online,hnizda,access,ma_cenik_verze,DATEDIFF(datum_do,datum_od),strava_oddo',
           'akce',"id_duakce=$akce");
+  // získání definice přihlášky kvůli výčtu diet
+  $json= str_replace("\n", "\\n", $json);
+  $p_akce= json_decode($json); // definice přihlášky
+  $p_diety= $p_akce->p_diety??'';
+  if ($p_diety) {
+    $p_diety= explode(';',$p_diety);
+    $diety[1]= '-';
+    for ($d= 0; $d<count($p_diety); $d++) {
+      list(,$nazev)= explode(':',$p_diety[$d]); // $zkratka:$nazev
+      $diety[$d+2]= $nazev;
+    }
+  }
   // spočítej normální počet stravu a ubytování
   $nj_def= [0,$noci,$oddo[0]=='o' ? $noci+1 : $noci,$noci]; // počet S,O,V
   $hnizda= $hnizda ? explode(',',$hnizda) : null;
@@ -467,7 +479,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 //    /**/ $cv2_prepocitat_stravu= 1;
   }
   // ofsety v atributech členů pobytu
-  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+  global $i_osoba_id, $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
       $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_role,
       $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_spolu_cenik2;
   $tit= isset($par->tit) ? $par->tit : '';
@@ -571,6 +583,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 //          $cleni[$o[$i_osoba_jmeno]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
           $cleni[$o[$i_key_spolu]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
           $cleni[$o[$i_key_spolu]]['jmeno']= $o[$i_osoba_jmeno]; 
+          $cleni[$o[$i_key_spolu]]['id']= $o[$i_osoba_id]; 
           if ( $o[$i_osoba_role]=='a' || $o[$i_osoba_role]=='b' ) {
             $rodice[$o[$i_osoba_role]]['jmeno']= trim($o[$i_osoba_jmeno]);
             $rodice[$o[$i_osoba_role]]['prijmeni']= trim($o[$i_osoba_prijmeni]);
@@ -613,6 +626,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
           $kat_d= $o[$i_spolu_cenik2+3]; // dieta
           $nj= [0,0,0]; // počet S,O,V
           $ji= 0;
+          $ma_stravu= 0;
           for ($d= 0; $d<strlen($dny); $d+=4) {
             for ($j=1; $j<=3; $j++) {
               if ($dny[$d+$j]) {
@@ -621,14 +635,17 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                 $cv2_strava[$d/4][$j][$kat_p][$kat_d]++;
                 $cv2_strava_dny[$d/4][$j][$kat_p][$kat_d]++;
                 $ji= 1;
+                $ma_stravu++;
               }
             }
           }
           $cv2_strava_sum[$kat_p][$kat_d]+= $ji;
           // detekuj výjimky
-          for ($j=1; $j<=3; $j++) {
-            if (/*$nj[$j] &&*/ $nj[$j]!=$nj_def[$j]) $cv2_vyjimka= 1;
-//            display("if ($nj[$j] && $nj[$j]!=$nj_def[$j]) $cv2_vyjimka= 1");
+          if ($ma_stravu) {
+            for ($j=1; $j<=3; $j++) {
+              if (/*$nj[$j] &&*/ $nj[$j]!=$nj_def[$j]) $cv2_vyjimka= 1;
+//              display("if ($nj[$j] && $nj[$j]!=$nj_def[$j]) $cv2_vyjimka= 1");
+            }
           }
         }
       }
@@ -708,9 +725,28 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                           $c.= "{$X['jmeno']}:{$X['vek']}:{$X['kat']} ";
                         }
                         break;
-      case '*diety':    foreach($cleni as $X) { 
-                          if ($X['dieta']=='-') continue;
-                          $c.= "{$X['jmeno']}:{$X['dieta']} ";
+      case '*diety':    // pokud je dieta specifikovaná v online přihlášce tak ta jinak osoba.dieta
+                        $prihl_cleni= [];                
+                        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->key_pobyt");
+                        if ($vars_json) {
+                          $vars_json= str_replace("\n", "\\n", $vars_json);
+                          $vars= json_decode($vars_json);
+                          if ($vars!==null) {
+                            $prihl_cleni= $vars->cleni;
+                          }
+                        }
+                        foreach($cleni as $X) { 
+                          $id= $X['id'];
+                          $viz= '';
+                          if ($vars_json && isset($prihl_cleni->$id)) {
+                            $dieta= $diety[$prihl_cleni->$id->Xdieta] ?? '-';
+                            $viz= '@ ';
+                          }
+                          else {
+                            $dieta= $X['dieta'];
+                          }
+                          if ($dieta=='-') continue;
+                          $c.= "{$X['jmeno']}:$dieta $viz";
                         }
                         break;
       case 'email':     $c= $email;  break;
@@ -1433,7 +1469,7 @@ function akce2_text_eko_cv2($akce,$par,$title='',$vypis='',$export=false) { trac
   $dni= date("j/n");
   $ptab= "<br><table class='stat'>";
   $ptab.= "<tr><th></th><th>uhrazeno k $dni</th><th>stav</th></tr>";
-  $ptab.= "<tr><th>předepsané platby</th><$td>$kc_platby_</td><$td>$saturace %</td></tr>";
+  $ptab.= "<tr><th>přijaté platby</th><$td>$kc_platby_</td><$td>$saturace %</td></tr>";
   $ptab.= "<tr><th>přidané dary</th><$td>$kc_dary_</td><$td></td></tr>";
   $ptab.= "<tr><th>suma</th><th align='right'>$kc_suma_</th><th align='right'></th></tr>";
   $ptab.= "</table>";

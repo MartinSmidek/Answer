@@ -416,8 +416,8 @@ function akce_dny2sov($ids,$dny) { //trace();
 //  debug($ret,"akce_dny2sov($ids,$dny)");
   return $ret;
 }
-# ------------------------------------------------------------------------------ akce prihlaska_load
-# pro spolu nastaví defaultní hodnoty pobytu podle online přihlášky akce a věku
+# --------------------------------------------------------------------------------- akce dny_default
+# pro spolu nastaví defaultní hodnoty pobytu podle definice online přihlášky akce a věku
 function akce_dny_default($ida,$ids) {
   // získání definice přihlášky kvůli stravě
   list($json,$a_od)= select('web_online,datum_od','akce',"id_duakce=$ida");
@@ -435,6 +435,43 @@ function akce_dny_default($ida,$ids) {
   $qry= "UPDATE spolu SET kat_nocleh='$kn',kat_porce='$kp',kat_dieta='$kd',kat_dny='$dny' "
       . "WHERE id_spolu=$ids";
   query($qry);
+}
+# ----------------------------------------------------------------------------- akce dny_default_but
+# pokud je ids=null provede se JEDNORÁZOVÁ OPRAVA 30.7.2026 PRO OFFLINE PŘIHLÁŠENÉ na LK FA
+# jinak se nastaví default pro danou osobu
+# nastaví spolu.kat_nocleh či spolu.kat_porce podle kategorie dítěte
+#   dietu vezme z osoba.dieta kde 1=BL a 4=BM ostatní ignoruje
+function akce_dny_default_but($ida,$ids=null) {
+  // pro jedinou osobu zadanou id_spolu ...
+  $cond= $ids ? "id_spolu=$ids " : "id_akce=$ida AND c.ikona!=1 AND kat_nocleh=''";
+  // pro všechny účastníky nepřihlášené online získání diety a případně kategorie dítěte
+  $rp= pdo_qry(" 
+    SELECT id_spolu,IF(s_role IN (2,3,4),1,0) AS _dite,dite_kat,dieta
+    FROM pobyt AS p
+    JOIN spolu AS s USING (id_pobyt)
+    JOIN osoba AS o USING (id_osoba)
+    JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
+    WHERE $cond
+  ");
+  while ($rp && (list($ids,$je_dite,$kat,$dieta)= pdo_fetch_array($rp))) {
+    if ($je_dite) {
+      // získání nocleh,porce z kategorie dítěte
+      $dite_kat= xx_akce_dite_kat($ida);
+      // barva vrací nocleh,porce,dieta
+      $npd= select1("UPPER(barva)","_cis","druh='$dite_kat' AND data=$kat"); // věk od-do, ...
+      $kp= substr($npd,2,1); // P|C|- ... poloviční|celá|bez stravy
+      $kn= substr($npd,0,1); // 
+    }
+    else {
+      $kn= 'L';
+      $kp= 'C';
+    }
+    $kd= $dieta==1 ? 'BL' : ($dieta==4 ? 'BM' : "-");
+    $dny= akce_sov2dny("SOV",$ida);
+    $qry= "UPDATE spolu SET kat_nocleh='$kn', kat_porce='$kp', kat_dieta='$kd',kat_dny='$dny' "
+        . "WHERE id_spolu=$ids";
+    query($qry);
+  }
 }
 # ========================================================================================> . strava
 # výpočet celkového počtu strav pro každý den
