@@ -790,12 +790,12 @@ panel Prihlaska [,,400,500] { title:'Data přihlášky', type:'popup', css:'dial
 # =======================================================================================> Dny Spolu
 panel DnySpolu [,,235,220] { type:'popup', title:'Rozpis noclehů a stravy'
 # nastaví položku spolu.kat_dny
-  var ids:number, stav:object
+  var ids:number, stav:object, diety_akce= 0
   use u: form {
     func onstart() { 
       kat_n.selects('L,S,Z,-'); 
       kat_p.selects('C,P'); 
-      kat_d.selects('-,BL'); 
+//      kat_d.selects('-,BL'); // závisí na akci viz uloz
     }
     func uloz() { var old:text
       clear();
@@ -826,7 +826,13 @@ panel DnySpolu [,,235,220] { type:'popup', title:'Rozpis noclehů a stravy'
     label [70,-1,200,5] { 
       title:"<i class='fa fa-share fa-rotate-270' style='vertical-align:super;'></i> datum vstávání" }
   }
-  func ukaz(_ids) { var dny:text
+  func ukaz(_ids) { var dny:text, diety: text
+    // zkontroluj, zda nebyla změna akce
+    if (diety_akce!=the_duakce) {
+      diety_akce= the_duakce;
+      diety= php.akce_prihlaska_diety(the_duakce);
+      u.kat_d.selects(diety); 
+    }
     ids= _ids;
     u.load(ids);
     u.warn.display(0);

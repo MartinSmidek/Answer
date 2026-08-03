@@ -386,7 +386,7 @@ function akce_sov2dny($sov,$ida,$n='L') { trace();
 function akce_dny2sov($ids,$dny) { //trace();
   $ret= (object)['n'=>'L','sov'=>'SOV','xN'=>0,'xS'=>0,'xO'=>0,'xV'=>0];
   // zjisti default nocí a strav
-  list($kn,$noci,$oddo)= select('kat_nocleh,DATEDIFF(datum_do,datum_od),strava_oddo',
+  list($kn,$kd,$noci,$oddo)= select('kat_nocleh,kat_dieta,DATEDIFF(datum_do,datum_od),strava_oddo',
       'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
       "id_spolu=$ids");
   $xs_def= $xv_def= $noci;
@@ -413,6 +413,7 @@ function akce_dny2sov($ids,$dny) { //trace();
   $ret->xS= $xs;
   $ret->xO= $xo;
   $ret->xV= $xv;
+  $ret->dieta= $kd;
 //  debug($ret,"akce_dny2sov($ids,$dny)");
   return $ret;
 }

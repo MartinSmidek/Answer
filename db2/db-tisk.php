@@ -725,34 +725,53 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                           $c.= "{$X['jmeno']}:{$X['vek']}:{$X['kat']} ";
                         }
                         break;
-      case '*diety':    // pokud je dieta specifikovaná v online přihlášce tak ta jinak osoba.dieta
-                        $prihl_cleni= [];                
-                        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->key_pobyt");
-                        if ($vars_json) {
-                          $vars_json= str_replace("\n", "\\n", $vars_json);
-                          $vars= json_decode($vars_json);
-                          if ($vars!==null) {
-                            $prihl_cleni= $vars->cleni;
-                          }
-                        }
+//      case 'NO *diety':    // pokud je dieta specifikovaná v online přihlášce tak ta jinak osoba.dieta
+//                        $prihl_cleni= [];                
+//                        $vars_json= select1('vars_json','prihlaska',"id_pobyt=$x->key_pobyt");
+//                        if ($vars_json) {
+//                          $vars_json= str_replace("\n", "\\n", $vars_json);
+//                          $vars= json_decode($vars_json);
+//                          if ($vars!==null) {
+//                            $prihl_cleni= $vars->cleni;
+//                          }
+//                        }
+//                        foreach($cleni as $X) { 
+//                          $id= $X['id'];
+//                          // zjistíme, zda se stravuje
+//                          list($ids,$dny)= select('id_spolu,kat_dny','spolu',
+//                              "id_osoba=$id AND id_pobyt=$x->key_pobyt");
+//                          $nsov= akce_dny2sov($ids,$dny);
+//                          if ($nsov->xS + $nsov->xO + $nsov->xV  == 0) 
+//                            break; // pokud ne tak dietu nepotřebuje
+//                          $viz= '';
+//                          if ($vars_json && isset($prihl_cleni->$id)) {
+//                            $dieta= $diety[$prihl_cleni->$id->Xdieta] ?? '-';
+//                            $viz= '@ ';
+//                          }
+//                          else {
+//                            $dieta= $X['dieta'];
+//                          }
+//                          if ($dieta=='-') continue;
+//                          $c.= "{$X['jmeno']}:$dieta $viz";
+//                        }
+//                        break;
+      case '*diety':    // pro ceník verze 2
                         foreach($cleni as $X) { 
                           $id= $X['id'];
                           // zjistíme, zda se stravuje
                           list($ids,$dny)= select('id_spolu,kat_dny','spolu',
                               "id_osoba=$id AND id_pobyt=$x->key_pobyt");
+                          if ($dny) {
                           $nsov= akce_dny2sov($ids,$dny);
                           if ($nsov->xS + $nsov->xO + $nsov->xV  == 0) 
                             break; // pokud ne tak dietu nepotřebuje
-                          $viz= '';
-                          if ($vars_json && isset($prihl_cleni->$id)) {
-                            $dieta= $diety[$prihl_cleni->$id->Xdieta] ?? '-';
-                            $viz= '@ ';
+                            $dieta= $nsov->dieta ?? '-';
                           }
                           else {
                             $dieta= $X['dieta'];
                           }
                           if ($dieta=='-') continue;
-                          $c.= "{$X['jmeno']}:$dieta $viz";
+                          $c.= "{$X['jmeno']}:$dieta ";
                         }
                         break;
       case 'email':     $c= $email;  break;
