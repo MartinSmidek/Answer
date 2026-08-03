@@ -737,6 +737,12 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                         }
                         foreach($cleni as $X) { 
                           $id= $X['id'];
+                          // zjistíme, zda se stravuje
+                          list($ids,$dny)= select('id_spolu,kat_dny','spolu',
+                              "id_osoba=$id AND id_pobyt=$x->key_pobyt");
+                          $nsov= akce_dny2sov($ids,$dny);
+                          if ($nsov->xS + $nsov->xO + $nsov->xV  == 0) 
+                            break; // pokud ne tak dietu nepotřebuje
                           $viz= '';
                           if ($vars_json && isset($prihl_cleni->$id)) {
                             $dieta= $diety[$prihl_cleni->$id->Xdieta] ?? '-';
