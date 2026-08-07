@@ -1553,13 +1553,17 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
       while ( $resu && ($u= pdo_fetch_object($resu)) ) {
         $mark= '';
         if ( $par && $par->mark=='novic' ) {
-          // minulé účasti
+          // minulé účasti 
           $ids= $u->ids_osoba;
-          $rqry= "SELECT count(*) as _pocet
+          $rqry= "SELECT IFNULL(COUNT(DISTINCT id_pobyt),0)+IFNULL(r_ms,0)-1 AS _pocet
                   FROM akce AS a
                   JOIN pobyt AS p ON a.id_duakce=p.id_akce
                   JOIN spolu AS s USING(id_pobyt)
-                  WHERE a.druh=1 AND s.id_osoba IN ($ids) AND p.id_akce!=$akce $jen_hnizdo";
+                  JOIN tvori AS ct USING (id_osoba) 
+                  JOIN rodina AS r USING (id_rodina)
+                  WHERE a.druh=1 AND s.id_osoba IN ($ids) 
+                    AND i0_rodina=id_rodina AND role IN ('a','b')
+                    /*AND p.id_akce!=$akce*/ $jen_hnizdo " ;
           $rres= pdo_qry($rqry);
           if ( $rres && ($r= pdo_fetch_object($rres)) ) {
             $mark= $r->_pocet;

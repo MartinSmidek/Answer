@@ -762,9 +762,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                           list($ids,$dny)= select('id_spolu,kat_dny','spolu',
                               "id_osoba=$id AND id_pobyt=$x->key_pobyt");
                           if ($dny) {
-                          $nsov= akce_dny2sov($ids,$dny);
-                          if ($nsov->xS + $nsov->xO + $nsov->xV  == 0) 
-                            break; // pokud ne tak dietu nepotřebuje
+                            $nsov= akce_dny2sov($ids,$dny);
+                            if ($nsov->xS + $nsov->xO + $nsov->xV  == 0) 
+                              break; // pokud ne tak dietu nepotřebuje
                             $dieta= $nsov->dieta ?? '-';
                           }
                           else {
@@ -1820,27 +1820,26 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
             r.nazev as nazev,
             ( SELECT CONCAT(nazev,' ',emaily,' ',email,'/',funkce )
               FROM rodina
-              JOIN tvori ON rodina.id_rodina=tvori.id_rodina
-              JOIN osoba ON osoba.id_osoba=tvori.id_osoba
-              JOIN spolu ON spolu.id_osoba=osoba.id_osoba
-              JOIN pobyt ON pobyt.id_pobyt=spolu.id_pobyt
+              JOIN tvori USING (id_rodina)
+              JOIN osoba USING (id_osoba)
+              JOIN spolu USING (id_osoba)
+              JOIN pobyt USING (id_pobyt)
               WHERE pobyt.id_akce='$akce' AND skupina=p.skupina AND role='a'
               ORDER BY funkce DESC LIMIT 1) as skup,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-            ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
+            ( SELECT COUNT(DISTINCT cp.id_pobyt)+r_ms FROM pobyt AS cp
               JOIN akce AS ca ON ca.id_duakce=cp.id_akce
-              JOIN spolu AS cs ON cp.id_pobyt=cs.id_pobyt
-              JOIN osoba AS co ON cs.id_osoba=co.id_osoba
-              LEFT JOIN tvori AS ct ON ct.id_osoba=co.id_osoba
-              LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
-              WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti
+              JOIN spolu AS cs USING (id_pobyt) 
+              LEFT JOIN tvori AS ct USING (id_osoba) 
+              WHERE ca.druh=1 AND ct.id_rodina=r.id_rodina AND cp.i0_rodina=r.id_rodina
+            ) AS _ucasti
           FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND p.skupina!=0
+          JOIN spolu AS s USING (id_pobyt)
+          JOIN osoba AS o USING (id_osoba)
+          LEFT JOIN tvori AS t USING (id_osoba)
+          LEFT JOIN rodina AS r USING (id_rodina)
+          WHERE p.id_akce='$akce' AND p.skupina!=0 AND r.id_rodina=p.i0_rodina
           GROUP BY id_pobyt HAVING _ucasti IN (1,2)
           ORDER BY nazev";
   $res= pdo_qry($qry);
