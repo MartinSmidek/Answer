@@ -1072,22 +1072,29 @@ panel mapa [,,700,450] { type:'popup', title:'mapa účastníků'
       }
     }
   }
-  panel mapa_parm [,,220,50] { type:'popup', title:'parametrizace mapy'
+  panel mapa_parm [,,260,100] { type:'popup', title:'parametrizace mapy'
     use p: form {
-      field cnd [30,5,100,] { title:'cond', format:'t', value:"funkce=1" }
-      field fil [170,5,40,] { title:'fill', format:'t', value:"red"  }
-      button [10,30,,] { title:'Add' 
-        func onclick() {
-          cond= cnd;
-          fill= fil;
+      func add_marks(_cnd,_fil) {
+          cond= _cnd;
+          fill= _fil;
           metoda= 'akce+';
           ukaz_psc(); 
-      }}
-      button [90,30,,] { title:'Clear' 
+      }
+      field cnd1 [30,5,100,] { title:'cond', format:'t', value:"funkce=1" }
+      field fil1 [170,5,40,] { title:'fill', format:'t', value:"red"  }
+      button [220,5,,] { title:'Add', func onclick() { add_marks(cnd1,fil1) }}
+      field cnd2 [30,30,100,] { title:'cond', format:'t', value:"skupina=0 AND funkce=0" }
+      field fil2 [170,30,40,] { title:'fill', format:'t', value:"yellow"  }
+      button [220,30,,] { title:'Add', func onclick() { add_marks(cnd2,fil2) }}
+      field cnd3 [30,55,100,] { title:'cond', format:'t', value:"skupina=1" }
+      field fil3 [170,55,40,] { title:'fill', format:'t', value:"green"  }
+      button [220,55,,] { title:'Add', func onclick() { add_marks(cnd3,fil3) }}
+
+      button [90,85,,] { title:'Clear' 
         func onclick() {
           f.cr.set({mark:''});
       }}
-      button [140,30,,] { title:'Exit' 
+      button [140,85,,] { title:'Exit' 
         func onclick() {
           metoda= 'akce';
           panel.close();
