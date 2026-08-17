@@ -236,7 +236,7 @@ function geos_manual($id,$lat,$lon,$table,$stav) {
 # --------------------------------------------------------------------------------------- akce2 mapa
 # získání seznamu souřadnic bydlišť účastníků akce 
 # s případným filtrem - např. bez pečounů: pobyt.funkce!=99
-function akce2_mapa($akce,$filtr='') {  trace();
+function akce2_mapa($akce,$filtr='',$fillColor='') {  trace();
   global $ezer_version;
   // dotaz
   $psc= $obec= array();
@@ -263,9 +263,11 @@ function akce2_mapa($akce,$filtr='') {  trace();
     $obec[$p]= $obec[$p] ?: $m;
   }
 //                                         debug($psc);
-  $icon= "./ezer$ezer_version/client/img/circle_gold_15x15.png,7,7";
+  $icon= $fillColor 
+      ? "CIRCLE,$fillColor,#333,7"
+      : "./ezer$ezer_version/client/img/circle_gold_15x15.png,7,7";
   $ret= mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
-//  debug($ret);
+  debug($ret);
   return $ret;
 }
 # ------------------------------------------------------------------------------------ mapa2 skupiny

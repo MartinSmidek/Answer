@@ -972,11 +972,12 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
   }
 }
 # ============================================================================================> MAPA
-panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
+panel mapa [,,700,450] { type:'popup', title:'mapa účastníků'
   var metoda='', 
       id_akce:number, pecouni:number,       // metoda=akce - id akce a počet pečounů
       id_mailist:number,                    // metoda=mail
-      mrop_par:object, mrop_body:number     // metoda=mrop
+      mrop_par:object, mrop_body:number,    // metoda=mrop
+      cond:text, fill:text                  // metoda=akce+ podmínka a barva
   func onfirstfocus() { 
     spinner(1); 
 //    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
@@ -986,6 +987,8 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     spinner(0) 
   }
   func onfocus() { 
+    cond= '';
+    fill= '';
     ukaz_psc(); 
   }
   func ukaz_psc() { var ret: object, adr:object, smazat: number, psc:text, gps:text, filtr:text
@@ -998,6 +1001,10 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
         filtr= confirm("Mám zobrazit i PSČ pečounů?") ? '' : "pobyt.funkce!=99";
       };
       ret= php.akce2_mapa(id_akce,filtr); 
+      break;
+    case 'akce+': 
+      smazat= 0;
+      ret= php.akce2_mapa(id_akce,cond,fill); 
       break;
     case 'mail': 
       ret= php.mail2_mapa(id_mailist); 
@@ -1014,8 +1021,10 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
       break;
     }
     if ( ret.err ) warning(ret.err);
-    if ( smazat ) f.cr.set(object('mark',''));
-    f.cr.set(object('mark',ret.mark));
+    if ( smazat ) 
+      f.cr.set({mark:ret.mark,clear:1});
+    else
+      f.cr.set({mark:ret.mark,clear:0});
     if ( eq(metoda,'mrop','ms') ) panel.title= ret.title;
     echo(debug(ret.chybi,ret.err));      
     if ( (has_skill('yaa+;faa+;caa+') && array_length(ret.chybi)) 
@@ -1041,7 +1050,43 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   }
   use f: form _f [0,0,,]
   form _f [,,*,*] {
-    label cr [0,0,640,400] { type:'map' }
+    label cr [0,0,700,450] { type:'map' }
+    label [-6,6,28,26] { css:'ae_parm', style:"z-index:1", skill:'m' }
+    button op [-10,10,,] { title:'[fa-navicon]', skill:'m|m' 
+      menu cm { type:'context', par:{trigger:'click'} # ==> . kontextové menu
+        item { title:'[fa-question]vyber podle SQL'
+          func onclick() { 
+            mapa_parm.popup();
+        }}
+//        item { title:'[fa-question]vyber všechny'
+//          func onclick() { 
+//            metoda= 'akce';
+//            ukaz_psc(); 
+//        }}
+      }
+    }
+  }
+  panel mapa_parm [,,220,50] { type:'popup', title:'parametrizace mapy'
+    use p: form {
+      field cnd [30,5,100,] { title:'cond', format:'t', value:"funkce=1" }
+      field fil [170,5,40,] { title:'fill', format:'t', value:"red"  }
+      button [10,30,,] { title:'Add' 
+        func onclick() {
+          cond= cnd;
+          fill= fil;
+          metoda= 'akce+';
+          ukaz_psc(); 
+      }}
+      button [90,30,,] { title:'Clear' 
+        func onclick() {
+          f.cr.set({mark:''});
+      }}
+      button [140,30,,] { title:'Exit' 
+        func onclick() {
+          metoda= 'akce';
+          panel.close();
+      }}
+    }
   }
 }
 # =======================================================================================> formuláře
