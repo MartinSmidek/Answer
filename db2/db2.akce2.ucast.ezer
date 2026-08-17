@@ -113,11 +113,12 @@ func ucast_pobyt(_idp)  {
   panel.focus(); u.b.raise('onrowclick',_idp);
 }
 # označení pobytů na stejné akci
-func ucast_pobyty(_idps)  {
+func ucast_pobyty(_idps)  { var idp:number
   panel.focus(); 
   u.b.selected('set',_idps);
   u.b.selected('use');
-  u.b.browse_refresh();
+  idp= split(_idps,',',0);
+  u.b.raise('onrowclick',idp);
 }
 # ukázání pobytu s případným přepnutím akce
 func ucast_pobyt_akce(_idp,_ida)  {
