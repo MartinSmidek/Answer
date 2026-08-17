@@ -239,10 +239,10 @@ function geos_manual($id,$lat,$lon,$table,$stav) {
 function akce2_mapa($akce,$filtr='',$fillColor='') {  trace();
   global $ezer_version;
   // dotaz
-  $psc= $obec= array();
+  $psc= $obec= $psc_ids= array();
   $AND= $filtr ? " AND $filtr" : '';
   $qo=  "
-    SELECT prijmeni,adresa,REPLACE(psc, ' ', '') AS psc,obec,
+    SELECT id_pobyt,prijmeni,adresa,REPLACE(psc, ' ', '') AS psc,obec,
       (SELECT MIN(CONCAT(role,RPAD(REPLACE(psc, ' ', ''),5,' '),'x',obec))
        FROM tvori AS ot JOIN rodina AS r USING (id_rodina)
        WHERE ot.id_osoba=o.id_osoba 
@@ -257,16 +257,20 @@ function akce2_mapa($akce,$filtr='',$fillColor='') {  trace();
   // najdeme použitá PSČ
   $ro= pdo_qry($qo);
   while ( $ro && ($o= pdo_fetch_object($ro)) ) {
+    $idp= $o->id_pobyt;
     $p= $o->adresa ? $o->psc : substr($o->r_psc,1,5);
     $m= $o->adresa ? $o->obec : substr($o->r_psc,7);
     $psc[$p].= "$o->prijmeni ";
     $obec[$p]= $obec[$p] ?: $m;
+    if (!isset($psc_ids[$p]) || !in_array($idp,$psc_ids[$p])) {
+      $psc_ids[$p][]= $idp;
+    }
   }
-//                                         debug($psc);
+                                         debug($psc_ids);
   $icon= $fillColor 
       ? "CIRCLE,$fillColor,#333,7"
       : "./ezer$ezer_version/client/img/circle_gold_15x15.png,7,7";
-  $ret= mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+  $ret= mapa2_psc($psc,$obec,1,$icon,$psc_ids); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
   debug($ret);
   return $ret;
 }
@@ -341,7 +345,7 @@ function mapa2_psc_list($psc_lst) {
 # ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
 # icon = CIRCLE[,scale:1-10][,ontop:1]|cesta k bitmapě nebo pole psc->icon
-function mapa2_psc($psc,$obec,$psc_as_id=0,$icon='') {
+function mapa2_psc($psc,$obec,$psc_as_id=0,$icon='',$ids_as_id=null) {
 //                                                debug($psc,"mapa2_psc");
   // k PSČ zjistíme LAN,LNG
   $ret= (object)array('mark'=>'','n'=>0);
@@ -364,7 +368,12 @@ function mapa2_psc($psc,$obec,$psc_as_id=0,$icon='') {
         $n++;
         $o= isset($obec[$p]) ? $obec[$p] : $p;
         $title= str_replace(',','',"$o:$tit");
-        $id= $psc_as_id ? $p : $n;
+        if ($ids_as_id) {
+          $id= implode('_',$ids_as_id[$p]);
+        }
+        else {
+          $id= $psc_as_id ? $p : $n;
+        }
         if ( is_array($icon) )
           $ic= ",{$icon[$p]}";
         $marks.= "{$del}$id,{$s->lat},{$s->lon},$title$ic"; $del= ';';

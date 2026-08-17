@@ -112,6 +112,13 @@ func ucast_hnizda() { var opts:object
 func ucast_pobyt(_idp)  {
   panel.focus(); u.b.raise('onrowclick',_idp);
 }
+# označení pobytů na stejné akci
+func ucast_pobyty(_idps)  {
+  panel.focus(); 
+  u.b.selected('set',_idps);
+  u.b.selected('use');
+  u.b.browse_refresh();
+}
 # ukázání pobytu s případným přepnutím akce
 func ucast_pobyt_akce(_idp,_ida)  {
   if (_ida!=the_duakce_local) akce_load(_ida);
@@ -1027,7 +1034,10 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
             prijeti_prihlasky() 
       } }
       item { title:'zrušit výběr'
-        func onclick () { b.selected('clear') } }
+        func onclick () { 
+          b.selected('clear');
+          b.browse_refresh();
+      } }
       item { title:'-přesunout do vybraného pobytu'
         func onclick () { var ret:object /* {msg,err} */, goal:number /* ID cílového pobytu */
           goal= b.selected('get');

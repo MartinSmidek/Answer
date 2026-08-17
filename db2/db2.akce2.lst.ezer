@@ -1470,7 +1470,8 @@ form _info [,,*,50] {
         mapa.pecouni= sey.pecou;
       if ( mapa.id_akce ) {
         mapa.metoda= 'akce';
-        mapa.modal(20,100,nazev_akce(mapa.id_akce));
+        mapa.popup(20,100);
+//        mapa.modal(20,100,nazev_akce(mapa.id_akce));
       }
     }
   }

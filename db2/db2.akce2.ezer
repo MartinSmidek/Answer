@@ -166,6 +166,7 @@ panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'
   func reaccess() {}
   func ucast_hnizda() {}                        // nastavení pro akci v hnízdech
   func ucast_pobyt(_idp) {}                     // ukázání pobytu na běžné akci
+  func ucast_pobyty(_idps) {}                   // označení pobytů na běžné akci
   func ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
   func clear_ucast2() {}                        // volání zajistí obnovu při onfucus
   #func init_ucast2() {}
@@ -1050,7 +1051,12 @@ panel mapa [,,700,450] { type:'popup', title:'mapa účastníků'
   }
   use f: form _f [0,0,,]
   form _f [,,*,*] {
-    label cr [0,0,700,450] { type:'map' }
+    label cr [0,0,700,450] { type:'map' 
+      func onmarkclick(mark:object) { 
+        // mark.id obsahuje podržítkem oddělený seznam id_pobyt zobrazeného PSČ
+        ucast.ucast_pobyty(replace(mark.id,'_',',')); 
+      }    
+    }
     label [-6,6,28,26] { css:'ae_parm', style:"z-index:1", skill:'m' }
     button op [-10,10,,] { title:'[fa-navicon]', skill:'m|m' 
       menu cm { type:'context', par:{trigger:'click'} # ==> . kontextové menu
