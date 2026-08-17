@@ -307,9 +307,7 @@ menu m {type:'left', //active:*
   # -------------------------------------------------------------------------------------==> seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
     item {title:'Sestava (C) Carlos'                                                          skill:'y;f'
-                                        ,par:{typ:'p',
-//                                                cv:'1',
-                                                exp:'Excel2',cnd:"p.funkce!=99"
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
                                         ,tit:'příjmení:15,jména:20,deti:20,občanky:40,telefony:35,SPZ,diety,PPS,pokoj,skupina'
                                         ,fld:'prijmeni,jmena2,*deti,*obcanky,*telefony,r_spz,*diety,_vps,pokoj,skupina,^id_pobyt'}}
     item {title:'Sestava (c) Carlos'                                                          skill:'c'

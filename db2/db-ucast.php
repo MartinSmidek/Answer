@@ -1553,13 +1553,17 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
       while ( $resu && ($u= pdo_fetch_object($resu)) ) {
         $mark= '';
         if ( $par && $par->mark=='novic' ) {
-          // minulé účasti
+          // minulé účasti 
           $ids= $u->ids_osoba;
-          $rqry= "SELECT count(*) as _pocet
+          $rqry= "SELECT IFNULL(COUNT(DISTINCT id_pobyt),0)+IFNULL(r_ms,0)-1 AS _pocet
                   FROM akce AS a
                   JOIN pobyt AS p ON a.id_duakce=p.id_akce
                   JOIN spolu AS s USING(id_pobyt)
-                  WHERE a.druh=1 AND s.id_osoba IN ($ids) AND p.id_akce!=$akce $jen_hnizdo";
+                  JOIN tvori AS ct USING (id_osoba) 
+                  JOIN rodina AS r USING (id_rodina)
+                  WHERE a.druh=1 AND s.id_osoba IN ($ids) 
+                    AND i0_rodina=id_rodina AND role IN ('a','b')
+                    /*AND p.id_akce!=$akce*/ $jen_hnizdo " ;
           $rres= pdo_qry($rqry);
           if ( $rres && ($r= pdo_fetch_object($rres)) ) {
             $mark= $r->_pocet;
@@ -1799,7 +1803,7 @@ end:
 //                                                 debug($ret,'ucast2_pridej_rodinu');
   return $ret;
 }
-# ------------------------------------------------------------------------------ ucast2_pridej_osobu
+# ------------------------------------------------------------------------------ ucast2 pridej_osobu
 # ASK přidání osoby k pobytu, případně k rodině a upraví access
 #   je-li zadáno access, opraví je v OSOBA
 #   není-li zadán pobyt, vytvoří nový, přidá SPOLU - hlídá duplicity
@@ -1832,7 +1836,8 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     goto end;
   }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
-  list($datum_od,$ma_cenik)= select("datum_od,ma_cenik","akce","id_duakce=$ida");
+  list($datum_od,$ma_cenik,$ma_cenik_verze)= 
+      select("datum_od,ma_cenik,ma_cenik_verze","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
   $kat= 0; $srole= 1;                                         // default= účastník, nedítě
   if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
@@ -1861,6 +1866,9 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     (object)array('fld'=>'dite_kat', 'op'=>'i','val'=>$kat)
   );
   $ret->spolu= ezer_qry("INSERT",'spolu',0,$chng);
+  if ($ma_cenik_verze==2) {
+    akce_dny_default_but($ida,$ret->spolu);
+  }
   # přidání do rodiny
   if ( $idr && $role ) {
     $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
@@ -1883,7 +1891,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
 //    dum_update_host($ret->spolu);
   }
 end:
-//                                                 debug($ret,'ucast2_pridej_osobu / $vek $kat $srole');
+//                                                 debug($ret,'ucast2 pridej_osobu / $vek $kat $srole');
   return $ret;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_copy

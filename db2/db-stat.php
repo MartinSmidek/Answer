@@ -848,9 +848,9 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     $vps1= $org==1 ? '3,17' : '3';
     $order= 'r.nazev';
     if ( $par->podtyp=='pary' ) {
-      $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
+      $tits= array("pár:26","emaily:20","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","č.člen od:10","(ID)");
-      $flds= array('jm','od','n','do','vps_i','clen','^id_rodina');
+      $flds= array('jm','emaily','od','n','do','vps_i','clen','^id_rodina');
     }
     else if ( $par->podtyp=='skupinky' ) {
       $behy= isset($par->behy) ? $par->behy : 1;
@@ -869,22 +869,24 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $order= 'MONTH(o.narozeni),DAY(o.narozeni)';
     }
     else { // osoby
-      $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
+      $tits= array("jméno:20","email:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","č.člen od:10","bydliště:25","narození:10","(ID)");
-      $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
+      $flds= array('jm','email','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     }
     $rx= pdo_qry("SELECT
-        r.id_rodina,r.nazev,r.svatba,r.datsvatba,r.rozvod,
+        r.id_rodina,r.nazev,r.svatba,r.datsvatba,r.rozvod,r.emaily,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.umrti,'') SEPARATOR '') as umrti_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.email,'') SEPARATOR '') as email_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',IF(o.adresa,o.obec,r.obec),'') SEPARATOR '') as obec_m,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.umrti,'') SEPARATOR '') as umrti_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') as id_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.email,'') SEPARATOR '') as email_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',IF(o.adresa,o.obec,r.obec),'') SEPARATOR '') as obec_z,
         MIN(IF(druh=1 AND funkce=1,YEAR(datum_od),9999)) AS OD,
@@ -935,8 +937,12 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $cclen= $_cinny_od ?: '-';
       // odpověď
       if ( $par->podtyp=='pary' ) {
+        $emaily= array_merge(preg_split('/[,;]/',$x->email_m),preg_split('/[,;]/',$x->email_z),
+            preg_split('/[,;]\s*/',$x->emaily));
+        $emaily= trim(implode(', ',$emaily),',; ');
         $clmn[]= array(
           'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
+          'emaily'=>$emaily,
           'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
           'vps_i'=>$skola ?: '-',
           'clen'=>$cclen,'^id_rodina'=>$x->id_rodina
@@ -991,13 +997,15 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       }
       else { // osoby
         $clmn[]= array(
-          'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'email'=>$x->email_m,
+          'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
           'vps_i'=>$skola ?: '-', 'cert'=>$c1, 'clen'=>$cclen, 'byd'=>$x->obec_m,
           'nar'=>substr($x->narozeni_m,2,2).substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2),
           '^id_osoba'=>$x->id_m
         );
         $clmn[]= array(
-          'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'email'=>$x->email_z,
+          'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
           'vps_i'=>$skola ?: '-', 'cert'=>$c2, 'clen'=>$cclen, 'byd'=>$x->obec_z,
           'nar'=>substr($x->narozeni_z,2,2).substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2),
           '^id_osoba'=>$x->id_z

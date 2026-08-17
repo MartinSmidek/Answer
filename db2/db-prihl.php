@@ -143,6 +143,26 @@ function web_zmena_ok($id_pobyt,$doit=0) {  trace();
   }
   return $msg;
 }
+# ----------------------------------------------------------------------------- akce prihlaska_diety
+# načte seznam diet z přihlášek pro select v Rozpis noclehů a stravy
+function akce_prihlaska_diety($ida) {
+  $options= "";
+  // údaje o akci
+  $json= select1('web_online','akce',"id_duakce=$ida");
+  // získání definice přihlášky kvůli výčtu diet
+  $json= str_replace("\n", "\\n", $json);
+  $p_akce= json_decode($json); // definice přihlášky
+  $p_diety= $p_akce->p_diety??'';
+  if ($p_diety) {
+    $p_diety= explode(';',$p_diety);
+    $options[1]= '-';
+    for ($d= 0; $d<count($p_diety); $d++) {
+      list($zkratka,)= explode(':',$p_diety[$d]); // $zkratka:$nazev
+      $options.= ",$zkratka";
+    }
+  }
+  return $options;
+}
 # ------------------------------------------------------------------------------ akce prihlaska_load
 # načte data z přihlášek pro cenu podle číselníku verze 2
 # pro pobyty nevzniklé online přihláškou doplní defaultní hodnoty 

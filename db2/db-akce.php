@@ -291,12 +291,12 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { //trace();
           $pobyt->typ= ($fce==1||$fce==2) ? 'vps' : ($fce==0 
               ? ($p->_ucasti_ms==0 ? 'nov' : 'rep') : ($fce==9 ? 'nah' : 'tym'));
         }
-      }
-      // online přihlášky
-      if ( $p->web_zmena!='0000-00-00' || $p->web_changes ) {
-        $web++;
-        if ( $p->web_changes )   $web_online++;
-        if ( $p->web_changes&4 ) $web_novi++;
+        // online přihlášky
+        if ( $p->web_zmena!='0000-00-00' || $p->web_changes ) {
+          $web++;
+          if ( $p->web_changes )   $web_online++;
+          if ( $p->web_changes&4 ) $web_novi++;
+        }
       }
 /*      
       // sčítání úhrad 

@@ -587,27 +587,6 @@ form _cmd [,,623,30] {
       mode.set('novy_singl');
       foreach(array(os1.prijmeni,os1.jmeno,os1.sex,os1.narozeni,os1.access),obligatory); ];
   }
-//  proc see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
-//    // kontrola oprávněnosti - dotazem
-//    { function('x','y','return x&y;',the_org.get,os1.access.get)        // stejná org jako má akce?
-//    | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
-//      os1.access.set(3); os1.access.change
-//    | zpet.Click; return                                                // nic
-//    };
-//    // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
-//    [ or(not(rod.key),os1.role.get) 
-//    | // doplnění chybějící role v rodině
-//      os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
-//    ];
-//    h.set(0);
-//    [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
-//    ret.set(ask('ucast2_pridej_osobu',
-//      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get,h));
-//    { ret.msg; alert(ret.msg)
-//    | the_pobyt.set(ret.pobyt);
-//      _reload(1,os1.key);
-//    }
-//  }
   func see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
     // kontrola oprávněnosti - dotazem
     if (!(the_org & os1.access)) { // stejná org jako má akce?
@@ -714,63 +693,6 @@ form _cmd [,,623,30] {
     }
     else error("Uložit co?")
   }
-  
-//  proc ulozit() { var ok:number, idr:number, ido:number, war:text, ret:object
-//    war.set('');
-//    // uložení změn
-//    eq(mode.get,'novy_singl');
-//    # ---------------------==> . new singl
-//    // osoba a spolu
-//    os1.kontakt.change; os1.adresa.change; // singl má jen osobní údaje
-//    ido.set(os1.insert);
-//    sp1.key_spolu.set(the_pobyt.get); sp1.key_spolu.change;
-//    sp1.key_osoba.set(ido); sp1.key_osoba.change;
-//    ret.set(ask('ucast2_pridej_osobu',
-//      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
-//    the_pobyt.set(ret.pobyt);
-//    _reload(1,ido)
-//  | eq(mode.get,'novy_clen');
-//    # ---------------------==> . new člen
-//    [ os1.same
-//    | ido.set(os1.insert);
-//      tvori.insert_record(object('id_osoba',ido,'id_rodina',rod.key_rodina.get,
-//        'role',os1.role.get));
-//      // možná přidáme do pobytu
-//      confirm("Rovnou přidat na akci?");
-//      sp1.pridat.na_akci(ido,rod.key_rodina.get,os1.role.get);
-//    ];
-//    _reload(1,ido)
-//  | eq(mode.get,'novy_pobyt');
-//    rod.rodiny0.rod_end;
-//    # ---------------------==> . new pobyt,rodina
-//    // 1.osoba a rodina - kontrola dostatečnosti údajů
-//    [ rod.rodiny0.get  | war.set(conc(war,' název rodiny, ')) ];
-//    [ war; alert("Pozor: název rodiny je povinný"); return ];
-//    // rodina
-//    [ rod.same; idr.set(0) | idr.set(rod.insert); rod.plain ];
-//    // pobyt
-//    pob.key_akce.set(the_duakce.get); pob.key_akce.change;
-//    [ idr; pob.i0_rodina.set(idr); pob.i0_rodina.change ];
-//    the_pobyt.set(pob.insert);
-//    _reload(1,ido)
-//  | the_pobyt.get;
-//    # ---------------------==> ... oprava
-//    [ rod.same
-//    | rod.r.key(rod.key_rodina.get); [ rod.r.save ]; ask('table_lock','off','rodina',rod.r.key);
-//      rod.t_role.changed;
-//      ask('akce2_save_role',rod.cleni.key_tvori.get,rod.t_role.get) ];
-//    [ pob.same | pob.save; ask('table_lock','off','pobyt',pob.key) ];
-//    [ os1.same | os1.key; os1.save_osoba; ask('table_lock','off','osoba',os1.key) ];
-//    [ os2.same | os2.key; os2.save_osoba; ask('table_lock','off','osoba',os2.key) ];
-//    [ sp1.same
-//    | sp1.key;
-//      // pokud byl chůvou nebo chovaným dítětem, je třeba ošetřit vazbu
-//      [ eq(sp1.s_role.key,3,5);          ];
-//      sp1.save; ];
-//    [ sp2.same | sp2.key; sp2.save; ];
-//    [ rod.cleni.browse_count; _reload(1,rod.cleni.key_osoba.get) | _reload(1,0) ]
-//  | error("Uložit co?")
-//  }
 }
 # ==========================================================================================> SEZNAM
 # --------------------------------------------------------------------------------------- _header
@@ -2048,21 +1970,6 @@ form _spolu [,,0,270] {
       elseif (ret.tvori) cmd._reload(1,ido);
       else alert(ret.msg);
     }
-//    proc na_akci(ido,idr,role) { var ret:object
-//      Onclick;
-//      // kontrola oprávněnosti - dotazem
-//      { function('x','y','return x&y;',the_org.get,os.access.get)       // stejná org jako má akce?
-//      | confirm("máme od této osoby souhlas?");                         // čestné prohlášení
-//        os.access.set(3); os.access.change
-//      | alert('tak ji nemohu přidat'); return                           // nic
-//      };
-//
-//      // přidání se zamezením duplicit a s definicí kategorie pro děti
-//      ret.set(ask('ucast2_pridej_osobu',ido,os.access.get,the_duakce.get,pob.key,idr,role));
-//      { ret.spolu; _reload_spolu(ido)
-//      | ret.tvori; cmd._reload(1,ido) }
-//    | alert(ret.msg)
-//    }
   }
 }
 # ----------------------------------------------------------------------------------------==> RODINA

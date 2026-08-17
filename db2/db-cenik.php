@@ -386,7 +386,7 @@ function akce_sov2dny($sov,$ida,$n='L') { trace();
 function akce_dny2sov($ids,$dny) { //trace();
   $ret= (object)['n'=>'L','sov'=>'SOV','xN'=>0,'xS'=>0,'xO'=>0,'xV'=>0];
   // zjisti default nocí a strav
-  list($kn,$noci,$oddo)= select('kat_nocleh,DATEDIFF(datum_do,datum_od),strava_oddo',
+  list($kn,$kd,$noci,$oddo)= select('kat_nocleh,kat_dieta,DATEDIFF(datum_do,datum_od),strava_oddo',
       'spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
       "id_spolu=$ids");
   $xs_def= $xv_def= $noci;
@@ -413,6 +413,7 @@ function akce_dny2sov($ids,$dny) { //trace();
   $ret->xS= $xs;
   $ret->xO= $xo;
   $ret->xV= $xv;
+  $ret->dieta= $kd;
 //  debug($ret,"akce_dny2sov($ids,$dny)");
   return $ret;
 }
@@ -437,12 +438,13 @@ function akce_dny_default($ida,$ids) {
   query($qry);
 }
 # ----------------------------------------------------------------------------- akce dny_default_but
-# 
-# JEDNORÁZOVÁ OPRAVA 30.7.2026 PRO OFFLINE PŘIHLÁŠENÉ na LK FA
-#                                  -------
+# pokud je ids=null provede se JEDNORÁZOVÁ OPRAVA 30.7.2026 PRO OFFLINE PŘIHLÁŠENÉ na LK FA
+# jinak se nastaví default pro danou osobu
 # nastaví spolu.kat_nocleh či spolu.kat_porce podle kategorie dítěte
 #   dietu vezme z osoba.dieta kde 1=BL a 4=BM ostatní ignoruje
-function akce_dny_default_but($ida) {
+function akce_dny_default_but($ida,$ids=null) {
+  // pro jedinou osobu zadanou id_spolu ...
+  $cond= $ids ? "id_spolu=$ids " : "id_akce=$ida AND c.ikona!=1 AND kat_nocleh=''";
   // pro všechny účastníky nepřihlášené online získání diety a případně kategorie dítěte
   $rp= pdo_qry(" 
     SELECT id_spolu,IF(s_role IN (2,3,4),1,0) AS _dite,dite_kat,dieta
@@ -450,7 +452,7 @@ function akce_dny_default_but($ida) {
     JOIN spolu AS s USING (id_pobyt)
     JOIN osoba AS o USING (id_osoba)
     JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
-    WHERE id_akce=$ida AND c.ikona!=1 AND kat_nocleh=''
+    WHERE $cond
   ");
   while ($rp && (list($ids,$je_dite,$kat,$dieta)= pdo_fetch_array($rp))) {
     if ($je_dite) {
