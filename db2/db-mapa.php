@@ -240,7 +240,7 @@ function akce2_mapa($akce,$filtr='',$fillColor='') {  trace();
   global $ezer_version;
   // dotaz
   $psc= $obec= $psc_ids= array();
-  $AND= $filtr ? " AND $filtr" : '';
+  $AND= $filtr ? " AND ($filtr)" : '';
   $qo=  "
     SELECT id_pobyt,prijmeni,adresa,REPLACE(psc, ' ', '') AS psc,obec,
       (SELECT MIN(CONCAT(role,RPAD(REPLACE(psc, ' ', ''),5,' '),'x',obec))
