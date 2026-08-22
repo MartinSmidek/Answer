@@ -869,7 +869,6 @@ form _page [,,275,360] {
         p_diety= prompt2(`zapiš možné diety poskytnuté mimo normální stravu ve tvaru 
               zkratka:název (zkratku na 2 velká písmena), více možných diet odděl středníkem. Například 
               <br>BL:bezlepková;BM:bezmasá`,p_diety);
-//        this.set_attrib('help',p_diety);
     }}
 //  label [13,390,200,20] { tag:'pri,J' title:'<b>Nastavení pro akce jednotlivců</b>' }
 //    check p_reg_rodina [30,410,350,] { tag:'pri,J', title:'umožnit registraci rodiny, vyžádat rodinnou adresu místo osobní'}
@@ -903,6 +902,10 @@ form _page [,,275,360] {
       // kontroly konzistence
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
+        return;
+      }
+      elseif (p_diety && !match("^(?:[A-Z]{2}:[\p{L}\s-]+)(?:;(?:[A-Z]{2}:[\p{L}\s-]+))*$",p_diety,'u')) {
+        alert("popis možných diet nemá požadovaný formát");
         return;
       }
       elseif (p_strava && ma_cenik_verze!=2) {
