@@ -3838,7 +3838,7 @@ function gen_html_E($to_save=0) {
     $html.= "<p>$TEXT->EROP_1</p>";
     // redakce citlivých údajů
     $udaje= [
-      ['1. Účastnil se setkání pro muže',     $p->XakceQ ? $p->Xakce : '-'],
+      ['1. Účastnil ses setkání pro muže',    $p->XakceQ ? $p->Xakce : '-'],
       ['2. Proč se chceš zúčastnit ...',      $p->Xerop_2],
       ['3. Jak ses o EROP dozvěděl ...',      $p->Xerop_3],
       ['4. Existuje společenství, ve ...',    $p->XspolcaQ ? $p->Xspolca : '-'],
