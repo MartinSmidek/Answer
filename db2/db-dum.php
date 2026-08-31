@@ -4,6 +4,50 @@ define('org_ds',64);
 define ('POZOR',"<br><span style='color:red;background:yellow'>POZOR</span>");
 
 # ------------------------------------------------------------------------------------ ds ceny_group
+# vygeneruje menu.group pro knihu hostů daného roku
+function ds_kniha_group($rok) { //debug($par);
+  $mesice= array(1=>'leden','únor','březen','duben','květen','červen',
+      'červenec','srpen','září','říjen','listopad','prosinec');
+  // doplnění leftmenu.group pro každý měíc
+  // item {title:'[fa-calendar] leden', par:{rok:'2026',mes:1} }
+  // item {title:'... podrobně', par:{rok:'2026',mes:1,spolu:1} }
+  // ...
+  $itms= array();
+  for ($m= 1; $m<=12; $m++) {
+    $mesic= $mesice[$m];
+    $itms["m$m"]= (object)array(
+        'type'=>'item',
+        'options'=>(object)array(
+          'title'=>"[fa-calendar] $mesic",
+          'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>$m))
+      ));
+    $itms["m{$m}p"]= (object)array(
+        'type'=>'item',
+        'options'=>(object)array(
+          'title'=>"... podrobně",
+          'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>$m,'spolu'=>1))
+      ));
+  }
+  // item {title:'Celý rok -------------', par:{rok:'2026',mes:0} }
+  // item {title:'... podrobně',           par:{rok:'2026',mes:0,spolu:1} }
+  $itms["n{$m}"]= (object)array(
+      'type'=>'item',
+      'options'=>(object)array(
+        'title'=>"Celý rok -------------",
+        'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>0))
+    ));
+  $itms["n{$m}p"]= (object)array(
+    'type'=>'item',
+    'options'=>(object)array(
+      'title'=>"... podrobně",
+      'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>0,'spolu'=>1))
+  ));
+
+  $group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+//  debug($group);
+  return $group;
+}
+# ------------------------------------------------------------------------------------ ds ceny_group
 # vygeneruje menu.group pro 7 let 
 function ds_ceny_group() { //debug($par);
   global $ezer_version,$setkani_db;
@@ -24,7 +68,9 @@ function ds_ceny_group() { //debug($par);
             : (object)array('rok'=>$rok)
       ));
   }
-  return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+  $group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+//  debug($group);
+  return $group;
 }
 # ------------------------------------------------------------------------------------- ds xls_hoste
 # kopie ceníku
@@ -1621,6 +1667,7 @@ function dum_browse_pobyt($x) {
 //    $ds_strava= map_cis('ds_strava','zkratka');
     $neubytovani= [];
     $vzorec_pobyt= '';
+    $pobyt_ma_cleny= 0;
     $id_order= 0;
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
@@ -1636,7 +1683,7 @@ function dum_browse_pobyt($x) {
         JOIN akce AS a ON id_akce=id_duakce 
         JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
         JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=id_duakce
-     WHERE $x->cond
+     WHERE $x->cond 
       -- GROUP BY id_pobyt
       ORDER BY narozeni
     ");
@@ -1646,6 +1693,7 @@ function dum_browse_pobyt($x) {
         )= pdo_fetch_array($rp))) {
       $rok_ceniku= $rok;
       $id_order= $idd;
+      $pobyt_ma_cleny++;
       // od nejstaršího vezmeme adresu a další údaje
       if (!$suma->adresa) {
         $suma->adresa= "$jmeno $prijmeni<br>$ulice<br>$psc $obec";
@@ -1733,18 +1781,19 @@ function dum_browse_pobyt($x) {
     }
     // dopočet sumy přehled a účtování
 //    debug($suma->rozpis,"dum_browse_order/rozpis = ");
-    $cena= dum_vzorec_cena($vzorec_pobyt,$rok_ceniku,$id_order,$suma->pobyt);
-//    debug($cena,"*dum_vzorec_cena($vzorec_pobyt,$rok_ceniku)");
-    $suma->celkem= $cena['celkem'];
-    $suma->druh= $cena['druh'];
-    $suma->abbr= $cena['abbr'];
-    $suma->dph= $cena['dph'];
-    ksort($suma->pokoj);
-    $suma->pokoje= implode(',',array_keys($suma->pokoj));
-    // zpráva o neubytovaných
-    $suma->neubytovani= '';
-    if (count($neubytovani)) {
-      $suma->neubytovani= $neubytovani[0].(count($neubytovani)>1 ? ' ... a další' : '');
+    if ($pobyt_ma_cleny) {
+      $cena= dum_vzorec_cena($vzorec_pobyt,$rok_ceniku,$id_order,$suma->pobyt);
+      $suma->celkem= $cena['celkem'];
+      $suma->druh= $cena['druh'];
+      $suma->abbr= $cena['abbr'];
+      $suma->dph= $cena['dph'];
+      ksort($suma->pokoj);
+      $suma->pokoje= implode(',',array_keys($suma->pokoj));
+      // zpráva o neubytovaných
+      $suma->neubytovani= '';
+      if (count($neubytovani)) {
+        $suma->neubytovani= $neubytovani[0].(count($neubytovani)>1 ? ' ... a další' : '');
+      }
     }
   }
 end:
@@ -1781,11 +1830,12 @@ end:
 # ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
 # par.rozklad=1 přidá na konec čerpání ceníkových položek
-function dum_kniha_hostu($par,$export=0) {
+function dum_kniha_hostu($par,$export=0) { 
+//  debug($par,"dum_kniha_hostu(...,$export)"); return;
   global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda, $setkani_db;
   $time_start= getmicrotime();
   // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
-  $res= (object)['err'=>'','html'=>'','ref'=>'','t1'=>0,'t2'=>0]; 
+  $res= (object)['err'=>'','html'=>'','ref'=>'','t1'=>0,'t2'=>0,'empties_idd'=>'','empties_idp'=>'']; 
 
   // tab: n -> sloupec -> value, kde sloupec=typ určuje formát řádku
   $tab= []; 
@@ -1984,7 +2034,9 @@ function dum_kniha_hostu($par,$export=0) {
 //          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                     /*DEBUG*/
           if ($up->osobonoci==0) {
             display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
-            fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
+//            fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
+            $res->empties_idd.= ($res->empties_idd ? ',' : '').$idd;
+            $res->empties_idp.= ($res->empties_idp ? ',' : '').$idp;
             continue;
           }
           $row= [];

@@ -45,6 +45,12 @@ form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto'
 panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 //  func onfocus() { m.roky.i.click(); }
   var last_item:ezer
+  func onfirstfocus() { 
+    // vytvoř itemy pro letošní a loňskou knihu hostů
+    m.letos.attach_code(php.ds_kniha_group(fdate('Y'))); 
+    m.vloni.attach_code(php.ds_kniha_group(fdate('Y')-1)); 
+    m.letos.part('m1').click();
+  }
   func kniha_show (i:ezer,export) { var x:object, y:object
     clear();
     info.header(i);
@@ -55,78 +61,18 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
     if (y.err) 
       alert(y.err);
     echo(`Výpočet trval ${y.t1} ms a generování exportu ${y.t2} ms`);
+    if (y.empties_idd 
+        && confirm(`v objednávkách <b>${y.empties_idd}</b> jsou pobyty bez členů - mám je vyřadit?`)) {
+      echo(y.empties_idp);
+      pobyt.delete_record(`id_pobyt IN (${y.empties_idp})`,9999);
+    }
     if (y.ref) 
       info.append(`Knihu hostů ve formátu XLSX lze stáhnout ${y.ref}<br><br>`);
     info.append(y.html);
   }
   menu m {type:'left', format:'f', active:*
-    menu {title:'Kniha hostů 2026',type:'group'
-      item {title:'[fa-calendar] leden',        par:{rok:'2026',mes:1} }
-      item {title:'... podrobně', par:{rok:'2026',mes:1,spolu:1} }
-      item {title:'[fa-calendar] únor',         par:{rok:'2026',mes:2} }
-      item {title:'... podrobně', par:{rok:'2026',mes:2,spolu:1} }
-      item {title:'[fa-calendar] březen',       par:{rok:'2026',mes:3} }
-      item {title:'... podrobně', par:{rok:'2026',mes:3,spolu:1} }
-      item {title:'[fa-calendar] duben',        par:{rok:'2026',mes:4} }
-      item {title:'... podrobně', par:{rok:'2026',mes:4,spolu:1} }
-      item {title:'[fa-calendar] květen',       par:{rok:'2026',mes:5} }
-      item {title:'... podrobně', par:{rok:'2026',mes:5,spolu:1} }
-      item {title:'[fa-calendar] červen',       par:{rok:'2026',mes:6} }
-      item {title:'... podrobně', par:{rok:'2026',mes:6,spolu:1} }
-      item {title:'[fa-calendar] červenec',     par:{rok:'2026',mes:7} }
-      item {title:'... podrobně', par:{rok:'2026',mes:7,spolu:1} }
-      item {title:'[fa-calendar] srpen',        par:{rok:'2026',mes:8} }
-      item {title:'... podrobně', par:{rok:'2026',mes:8,spolu:1} }
-      item {title:'[fa-calendar] září',         par:{rok:'2026',mes:9} }
-      item {title:'... podrobně', par:{rok:'2026',mes:9,spolu:1} }
-      item {title:'[fa-calendar] říjen',        par:{rok:'2026',mes:10} }
-      item {title:'... podrobně', par:{rok:'2026',mes:10,spolu:1} }
-      item {title:'[fa-calendar] listopad',     par:{rok:'2026',mes:11} }
-      item {title:'... podrobně', par:{rok:'2026',mes:11,spolu:1} }
-      item {title:'[fa-calendar] prosinec',     par:{rok:'2026',mes:12} }
-      item {title:'... podrobně', par:{rok:'2026',mes:12,spolu:1} }
-      item {title:'Celý rok -------------', par:{rok:'2026',mes:0} }
-      item {title:'... podrobně',           par:{rok:'2026',mes:0,spolu:1} }
-    }
-    menu roky {title:'Kniha hostů 2025',type:'group'
-      item {title:'[fa-calendar] leden',        par:{rok:'2025',mes:1} }
-      item {title:'... podrobně', par:{rok:'2025',mes:1,spolu:1} }
-      item {title:'[fa-calendar] únor',         par:{rok:'2025',mes:2} }
-      item {title:'... podrobně', par:{rok:'2025',mes:2,spolu:1} }
-      item {title:'[fa-calendar] březen',       par:{rok:'2025',mes:3} }
-      item {title:'... podrobně', par:{rok:'2025',mes:3,spolu:1} }
-      item {title:'[fa-calendar] duben',        par:{rok:'2025',mes:4} }
-      item {title:'... podrobně', par:{rok:'2025',mes:4,spolu:1} }
-      item {title:'[fa-calendar] květen',       par:{rok:'2025',mes:5} }
-      item {title:'... podrobně', par:{rok:'2025',mes:5,spolu:1} }
-      item {title:'[fa-calendar] červen',       par:{rok:'2025',mes:6} }
-      item {title:'... podrobně', par:{rok:'2025',mes:6,spolu:1} }
-      item {title:'[fa-calendar] červenec',     par:{rok:'2025',mes:7} }
-      item {title:'... podrobně', par:{rok:'2025',mes:7,spolu:1} }
-      item {title:'[fa-calendar] srpen',        par:{rok:'2025',mes:8} }
-      item {title:'... podrobně', par:{rok:'2025',mes:8,spolu:1} }
-      item {title:'[fa-calendar] září',         par:{rok:'2025',mes:9} }
-      item {title:'... podrobně', par:{rok:'2025',mes:9,spolu:1} }
-      item {title:'[fa-calendar] říjen',        par:{rok:'2025',mes:10} }
-      item {title:'... podrobně', par:{rok:'2025',mes:10,spolu:1} }
-      item {title:'[fa-calendar] listopad',     par:{rok:'2025',mes:11} }
-      item {title:'... podrobně', par:{rok:'2025',mes:11,spolu:1} }
-      item {title:'[fa-calendar] prosinec',     par:{rok:'2025',mes:12} }
-      item {title:'... podrobně', par:{rok:'2025',mes:12,spolu:1} }
-      item {title:'Celý rok -------------', par:{rok:'2025',mes:0} }
-      item {title:'... podrobně',           par:{rok:'2025',mes:0,spolu:1} }
-    }
-//    menu {title:'... testy ...',type:'group',skill:'m'
-//      item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
-//      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2442,spolu:1} }
-//      item {title:'... a do Excelu',  par:{rok:'2024',mes:2,obj:2442,spolu:1,export:1} }
-//      item {title:'únor - obj.2404',  par:{rok:'2024',mes:2,obj:2404} }
-//      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
-//      item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
-//      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
-//      item {title:'květen - obj.2502',par:{rok:'2024',mes:5,obj:2502} }
-//      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2502,spolu:1} }
-//    }
+    menu letos {title:'Letošní kniha hostů',type:'group' }
+    menu vloni {title:'Loňská kniha hostů',type:'group' }
     func onclick (i:ezer) { 
       last_item= i;
       kniha_show(i,0);
