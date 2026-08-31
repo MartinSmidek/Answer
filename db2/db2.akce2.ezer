@@ -1064,12 +1064,15 @@ panel mapa [,,700,450] { type:'popup', title:'mapa účastníků'
           func onclick() { 
             mapa_parm.popup();
         }}
-//        item { title:'[fa-question]vyber všechny'
-//          func onclick() { 
-//            metoda= 'akce';
-//            ukaz_psc(); 
-//        }}
+        item { title:'[fa-question]mapka PSČ'
+          func onclick() { mapa_psc.popup() }
+        }
       }
+    }
+  }
+  panel mapa_psc [,,200,110] { type:'popup', title:'PSČ v krajích 1960'
+    use i: form {
+      label [0,0,,] { title:"<img src='/img/mapka_psc_mini.png' width='100%'>" }
     }
   }
   panel mapa_parm [,,260,150] { type:'popup', title:'parametrizace mapy'

@@ -4,6 +4,50 @@ define('org_ds',64);
 define ('POZOR',"<br><span style='color:red;background:yellow'>POZOR</span>");
 
 # ------------------------------------------------------------------------------------ ds ceny_group
+# vygeneruje menu.group pro knihu hostů daného roku
+function ds_kniha_group($rok) { //debug($par);
+  $mesice= array(1=>'leden','únor','březen','duben','květen','červen',
+      'červenec','srpen','září','říjen','listopad','prosinec');
+  // doplnění leftmenu.group pro každý měíc
+  // item {title:'[fa-calendar] leden', par:{rok:'2026',mes:1} }
+  // item {title:'... podrobně', par:{rok:'2026',mes:1,spolu:1} }
+  // ...
+  $itms= array();
+  for ($m= 1; $m<=12; $m++) {
+    $mesic= $mesice[$m];
+    $itms["m$m"]= (object)array(
+        'type'=>'item',
+        'options'=>(object)array(
+          'title'=>"[fa-calendar] $mesic",
+          'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>$m))
+      ));
+    $itms["m{$m}p"]= (object)array(
+        'type'=>'item',
+        'options'=>(object)array(
+          'title'=>"... podrobně",
+          'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>$m,'spolu'=>1))
+      ));
+  }
+  // item {title:'Celý rok -------------', par:{rok:'2026',mes:0} }
+  // item {title:'... podrobně',           par:{rok:'2026',mes:0,spolu:1} }
+  $itms["n{$m}"]= (object)array(
+      'type'=>'item',
+      'options'=>(object)array(
+        'title'=>"Celý rok -------------",
+        'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>0))
+    ));
+  $itms["n{$m}p"]= (object)array(
+    'type'=>'item',
+    'options'=>(object)array(
+      'title'=>"... podrobně",
+      'par'=> (object)array('*'=>(object)array('rok'=>$rok,'mes'=>0,'spolu'=>1))
+  ));
+
+  $group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+//  debug($group);
+  return $group;
+}
+# ------------------------------------------------------------------------------------ ds ceny_group
 # vygeneruje menu.group pro 7 let 
 function ds_ceny_group() { //debug($par);
   global $ezer_version,$setkani_db;
@@ -24,7 +68,9 @@ function ds_ceny_group() { //debug($par);
             : (object)array('rok'=>$rok)
       ));
   }
-  return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+  $group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+//  debug($group);
+  return $group;
 }
 # ------------------------------------------------------------------------------------- ds xls_hoste
 # kopie ceníku
@@ -1781,7 +1827,8 @@ end:
 # ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
 # par.rozklad=1 přidá na konec čerpání ceníkových položek
-function dum_kniha_hostu($par,$export=0) {
+function dum_kniha_hostu($par,$export=0) { 
+//  debug($par,"dum_kniha_hostu(...,$export)"); return;
   global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda, $setkani_db;
   $time_start= getmicrotime();
   // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
