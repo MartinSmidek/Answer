@@ -61,6 +61,11 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
     if (y.err) 
       alert(y.err);
     echo(`Výpočet trval ${y.t1} ms a generování exportu ${y.t2} ms`);
+    if (y.empties_idd 
+        && confirm(`v objednávkách <b>${y.empties_idd}</b> jsou pobyty bez členů - mám je vyřadit?`)) {
+      echo(y.empties_idp);
+      pobyt.delete_record(`id_pobyt IN (${y.empties_idp})`,9999);
+    }
     if (y.ref) 
       info.append(`Knihu hostů ve formátu XLSX lze stáhnout ${y.ref}<br><br>`);
     info.append(y.html);
