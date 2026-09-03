@@ -127,6 +127,15 @@ func akce_work(id_akce) {
     id_akce= php.select('id_duakce','akce',`YEAR(datum_od)='${the_rok}' AND access=${my_org}`);
   info.rok= id_akce && info.volba_akce(id_akce) ? the_rok : fdate('Y');
 }
+# ochrana proti neuložení změny akce (jen sey)
+func neni_ulozeno() { var no: number
+  no= the_source=='sey' && !page.same();
+  if (no) { 
+    warning(`neuložené změny pro akci <b>${a_title}</b> použij [Zpět] nebo [Uložit]`);
+    info.sey.browse_active(info.old_row);
+  }
+  return no;
+}
 # zobrazí přehled hnízd
 func ukaz_hnizda(ida) { 
   HNIZDA.prehled(ida)
@@ -298,7 +307,8 @@ func akce_vsechny(cond) {
 }
 # ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
-  var a_akce: number
+  var a_akce: number,
+      a_akce_lock: text         // 'on' pokud došlo k zamknutí záznamu akce
   # ---------------------------==> . ochrana editace více uživateli
   func onchanged() { 
     akce_lock('on') 
@@ -306,6 +316,8 @@ form _page [,,275,360] {
   func akce_lock(on) { var lock:object 
     if (key_akce) {
       lock= php.table_lock(on,'akce',key_akce); 
+      if (has_skill('m')) warning(`akce ${key_akce} lock:${on} => ${lock.note}`);
+      a_akce_lock= on;
       if ((on=='on') && (!lock.ok)) {
         alert(lock.info);
         akce_zpet();
@@ -345,7 +357,7 @@ form _page [,,275,360] {
   func show_akce(id_akce) {
     page.a_akce= id_akce;
     if (the_source=='sey') { if (info.sey.browse_count()) show_page(id_akce) else init_page() }
-    if (the_source=='dum') { show_page(id_akce) }
+    else if (the_source=='dum') { show_page(id_akce) }
   }
   func show_page(id_akce) { var ret:object
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
@@ -755,6 +767,8 @@ form _page [,,275,360] {
         ch.init();
     }
     akci= '???';
+    p_json.web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2026'; 
+    p_json.p_mode= 1;
     p_json.p_css= 1;
     p_json.p_kontakt= 1; p_json.p_rod_adresa= 1; 
     p_json.p_registrace= 1; p_json.p_souhlas= 1; 
@@ -786,7 +800,8 @@ form _page [,,275,360] {
     }
     p_enable_title= `povolit online přihlášení na ${akci}`;
     if (!web_online) { // vytvoř prázdný popis přihlášky
-      web_online= json_encode(p_json); web_online.change();
+      web_online= json_encode(p_json); 
+//      web_online.change(); // uloží se jen pokud bude nějaká změna proti defaultu
     }
     p_json= json_decode(web_online);
     p_diety= p_json.p_diety;
@@ -797,15 +812,15 @@ form _page [,,275,360] {
         ? "Zaslané údaje zpracujeme a do týdne vám pošleme odpověď." 
         : "V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.";
     }
-    if (!p_json.web_prihlaska) {
-      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2026'; 
-      web_prihlaska.change();
-      p_json.web_prihlaska= web_prihlaska;
-    }
-    if (!p_json.p_mode) {
-      p_mode.key(1); 
-      p_mode.change();
-    }
+//    if (!p_json.web_prihlaska) { --- přesunuto do default hodnot
+//      web_prihlaska= has_skill('b') ? 'prihlaska_asc' : 'prihlaska_2026'; 
+//      web_prihlaska.change(1);
+//      p_json.web_prihlaska= web_prihlaska;
+//    }
+//    if (!p_json.p_mode) { --- přesunuto do default hodnot
+//      p_mode.key(1); 
+//      p_mode.change(1);
+//    }
     copy_by_name(p_json,form);
     // pro obnovu přepiš dotaz službu VPS/PPS
     if (p_tag=='O') {
@@ -933,6 +948,7 @@ form _page [,,275,360] {
       if (p_tag=='O') {
         p_json.p_sluzba_vps= p_sluzba_vps_obnova;
       }
+      p_json.web_prihlaska= web_prihlaska;
       p_json.tp_pracovni= tp_pracovni;
       p_json.veta_potvrzeni= veta_potvrzeni;
       p_json.veta_zadost= p_zadost ? veta_zadost : '';
@@ -1318,6 +1334,7 @@ form _info [,,*,50] {
   }
   # --------------------------------------------------------------------------------==> . seznam SEY
   # přechod na účastníky je omezen datovými právy
+  var old_row= 0
   view da2: table akce
   view ds2: table ds_order  {join_type:'LEFT',join:'ON ds2.id_akce=da2.id_duakce', skill:'#e'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
@@ -1385,10 +1402,13 @@ form _info [,,*,50] {
       pracovni() 
     }
     func onrowclick() { 
-      the_order= idd;
-      a_title= nazev; 
-      page.show_akce(id_akce); 
-      if (has_skill('yas')) page.DocBrowse();
+      if (!neni_ulozeno()) { // warning
+        old_row= sey.browse_active();
+        the_order= idd;
+        a_title= nazev; 
+        page.show_akce(id_akce); 
+        if (has_skill('yas')) page.DocBrowse();
+      }
     }
     menu { type:'context'
       item { title:'Vybrat akci jako pracovní', func onclick() { pracovni() }}
