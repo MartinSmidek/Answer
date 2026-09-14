@@ -1087,7 +1087,7 @@ function dum_objednavka_info($ido,$ida,$html_akce,$show_create=1) { // trace();
   return $html;
 }
 # ----------------------------------------------------------------------------- dum clone_objednavka
-# udělej klon objednávky
+# udělej klon objednávky - nesmí to být akce YMCA
 function dum_objednavka_clone($id_order) {  
   global $setkani_db, $answer_db;
   $id_akce= select('id_akce',"$setkani_db.tx_gnalberice_order","uid=$id_order");

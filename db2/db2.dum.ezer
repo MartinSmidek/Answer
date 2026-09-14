@@ -402,9 +402,23 @@ form _obj {
   button [342,15,,] { tag:'obj', title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
-    obj= the_order;
-    if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) return;
-    alert(php.dum_objednavka_clone(obj));
+    if (eq(state.key(),3,5)) { // objednávka akce YMCA Setkání (s programem či bez)
+      alert(`Kopii pro objednávku akce YMCA je třeba udělat jinak. 
+              <br><br>
+              Opusť tuto objednávku a v levém menu 
+              <br><b>AKCE ZADANÉHO ROKU</b> zobraz akce YMCA.
+              <br>V seznamu najdi tu akci YMCA, kterou chceš zkopírovat 
+              a v pravé části vyber podkartu <b>Úprava</b>.
+              <br><br>Potom použij tlačítko 
+              [<b>Opakuj akci v roce ...</b>]. Datum potom změň 
+              (klidně i na jiný rok než je v tlačítku).`);
+    }
+    else {
+      obj= the_order;
+      if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) 
+        return;
+      alert(php.dum_objednavka_clone(obj));
+    }
   }}
   select state [0,55,155,] {tag:'new,obj,closed', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
   field id_akce [162,55,38,] {tag:'obj,closed', title:'^akce YMCA', format:'r' }
