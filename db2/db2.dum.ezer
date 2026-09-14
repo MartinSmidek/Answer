@@ -402,7 +402,7 @@ form _obj {
   button [342,15,,] { tag:'obj', title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
-    if (state.key()==3) { // objednávka akce YMCA Setkání
+    if (eq(state.key(),3,5)) { // objednávka akce YMCA Setkání (s programem či bez)
       alert(`Kopii pro objednávku akce YMCA je třeba udělat jinak. 
               <br><br>
               Opusť tuto objednávku a v levém menu 
