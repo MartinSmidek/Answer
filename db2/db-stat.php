@@ -2760,8 +2760,8 @@ function chart_akce($par) { debug($par,'chart_akce','','T');
         // zjistíme, jestli v daném roce byl MROP/EROP/firming
         $akce_cond= 
             $akce=='MROP' ? "mrop=1" : (
-            $par->akce=='FIRM' ? "firm=1" : 
-            'id_duakce=1501'); // zatím EROP podle ID
+            $par->akce=='FIRM' ? "firm=1" : (
+            $par->akce=='EROP' ? "erop=1" : 0 ));
         list($id_akce,$datum_od)= 
             select('id_duakce,datum_od','akce',"$akce_cond AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$datum_od) continue;
