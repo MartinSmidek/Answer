@@ -838,9 +838,11 @@ panel DnySpolu [,,235,220] { type:'popup', title:'Rozpis noclehů a stravy'
     u.load(ids);
     u.warn.display(0);
     if (!u.kat_dny) { // doplnění defaultních hodnot
-      php.akce_dny_default(the_duakce,ids);
-      u.load(ids);
-      u.warn.display(1);
+      if (confirm("Nemá objednanou stravu, mám vložit standardní?")) {
+        php.akce_dny_default(the_duakce,ids);
+        u.load(ids);
+        u.warn.display(1);
+      }
     }
     js.dny_zobraz(&u.matrix,u.kat_dny,the_datum_od,the_datum_do,the_strava_oddo);
     return(panel.modal(730,220,'',0,0,1));
@@ -1066,7 +1068,7 @@ panel mapa [,,700,450] { type:'popup', title:'mapa účastníků'
         }}
         item { title:'[fa-question]mapka PSČ'
           func onclick() { mapa_psc.popup() }
-      }
+        }
       }
     }
   }
