@@ -863,8 +863,12 @@ form _page [,,275,360] {
   edit tp_pracovni [13,110,438,40] { tag:'pri,M,O,R,J,E', title:"^Nápovědný text nad poznámkou k pobytu na akci (hvězdičkou učiníte poznámku povinnou)"}
   label [13,160,131,] { tag:'pri,M,O', title:'<b>rodinné přihlášení</b>'}
   label [13,160,131,] { tag:'pri,R', title:'<b>přihlášení rodiče s dětmi</b>'}
-    check p_deti [30,180,78,] { tag:'pri,M,O,R', title:'včetně dětí'} 
-    check p_deti_but [130,180,247,] { tag:'pri,M,O,R', title:'zobrazit děti až stiskem tlačítka'} 
+    check p_deti [30,180,78,] { tag:'pri,M,O,R', title:'včetně dětí'
+      func onchange() { if (!p_deti && p_deti_but) { p_deti_but= 0; p_deti_but.change(); }}
+    } 
+    check p_deti_but [111,180,192,] { tag:'pri,M,O,R', title:'zobrazit je až stiskem tlačítka'
+      func onchange() { if (p_deti_but && !p_deti) { p_deti= 1; p_deti.change(); }}
+    } 
     check p_pecouni [30,200,258,] { tag:'pri,M,O', title:'umožnit vložení osobních pečovatelů '} 
     check p_rod_adresa [30,220,253,] { tag:'pri,M,O,R', title:'umožnit kontrolu a úpravu rodinné adresy'}
   label [13,250,400,20] { tag:'pri,M,O,R' title:'<b>Povolené úpravy dospělých účastníků</b>' }
@@ -920,6 +924,10 @@ form _page [,,275,360] {
     func onclick() { onclick_ulozit() }
     func onclick_ulozit() { var elem:ezer, typ:text, js_diety:text, diety:object
       // kontroly konzistence
+      if (p_deti_but && !p_deti) {
+        alert("chybí zaškrtnutí <i>včetně dětí</i>");
+        return;
+      }
       if (p_registrace && !(p_kontakt && (p_rod_adresa || p_oso_adresa))) {
         alert("pro registraci je potřeba kontakt a rodinná nebo osobní adresa");
         return;
